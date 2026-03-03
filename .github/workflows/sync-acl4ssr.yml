@@ -1,0 +1,43 @@
+name: sync-acl4ssr_rules
+
+on:
+  schedule:
+    # 每天 UTC 01:30（台北时间 +8 => 09:30）
+    - cron: "30 1 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch upstream (keep old file if fetch fails)
+        run: |
+          set -e
+          mkdir -p rules/upstream/acl4ssr
+
+          fetch() {
+            url="$1"
+            out="$2"
+            tmp="${out}.tmp"
+            echo "Fetching $url"
+            # 只有成功下载才覆盖，避免 404/网络波动把你的文件刷成空/坏文件
+            curl -fsSL "$url" -o "$tmp"
+            mv "$tmp" "$out"
+          }
+
+          fetch "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/OneDrive.list"  "rules/upstream/acl4ssr/onedrive.list"
+          fetch "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Microsoft.list" "rules/upstream/acl4ssr/microsoft.list"
+
+      - name: Commit & push if changed
+        run: |
+          if git diff --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add rules/upstream/acl4ssr/*.list
+          git commit -m "sync: acl4ssr rules"
+          git push
