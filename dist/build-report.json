@@ -141,10 +141,10 @@
       "category": "direct",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 6,
-        "surge_domainset": 5,
-        "mihomo_classical": 6,
-        "mihomo_domain": 5,
+        "surge_rules": 5,
+        "surge_domainset": 4,
+        "mihomo_classical": 5,
+        "mihomo_domain": 4,
         "mihomo_ipcidr": 0
       },
       "dist": {
