@@ -27,6 +27,8 @@ RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/surge-config/main/dist/sur
 RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/surge-config/main/dist/surge/rules/direct/cn_direct.list,DIRECT
 RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/surge-config/main/dist/surge/rules/proxy/global_media.list,PROXY
 RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/surge-config/main/dist/surge/rules/proxy/telegram.list,PROXY
+RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/surge-config/main/dist/surge/rules/region/hk/aws_ipv4.list,HK-AUTO,no-resolve
+RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/surge-config/main/dist/surge/rules/region/jp/aws_ipv4.list,JP-AUTO,no-resolve
 RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/surge-config/main/dist/surge/rules/region/jp/jp_socks5_ipcidr.list,JP-AUTO,no-resolve
 ```
 
@@ -70,6 +72,8 @@ RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/surge-config/main/dist/sur
 RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/surge-config/main/dist/surge/rules/proxy/global_media.list,PROXY
 
 # 5. ip rules
+RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/surge-config/main/dist/surge/rules/region/hk/aws_ipv4.list,HK-AUTO,no-resolve
+RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/surge-config/main/dist/surge/rules/region/jp/aws_ipv4.list,JP-AUTO,no-resolve
 RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/surge-config/main/dist/surge/rules/region/jp/jp_socks5_ipcidr.list,JP-AUTO,no-resolve
 
 # 6. final

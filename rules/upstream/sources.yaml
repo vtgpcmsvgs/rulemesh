@@ -111,6 +111,19 @@ sources:
         - repo: self
           note: 当前是你自己维护的日本 SOCKS5 端点 CIDR
 
+    hk/aws_ipv4.list:
+      preferred:
+        - repo: self
+          note: Keep a stable source-layer INCLUDE for AWS Hong Kong IPv4 rules.
+        - repo: AWS ip-ranges.json
+          note: Sync all ap-east-1 IPv4 prefixes daily into rules/upstream/aws/hk_ipv4.txt
+    jp/aws_ipv4.list:
+      preferred:
+        - repo: self
+          note: Keep a stable source-layer INCLUDE for AWS Japan IPv4 rules.
+        - repo: AWS ip-ranges.json
+          note: Sync all ap-northeast-1 and ap-northeast-3 IPv4 prefixes daily into rules/upstream/aws/jp_ipv4.txt
+
   device:
     srcip_pc01.list:
       preferred:

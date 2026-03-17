@@ -130,6 +130,22 @@ rule-providers:
     url: https://raw.githubusercontent.com/vtgpcmsvgs/surge-config/main/dist/mihomo/classical/proxy/telegram.yaml
     interval: 86400
 
+  aws-hk-classical:
+    type: http
+    behavior: classical
+    format: yaml
+    path: ./rule-providers/region/aws_hk_ipv4.yaml
+    url: https://raw.githubusercontent.com/vtgpcmsvgs/surge-config/main/dist/mihomo/classical/region/hk/aws_ipv4.yaml
+    interval: 86400
+
+  aws-jp-classical:
+    type: http
+    behavior: classical
+    format: yaml
+    path: ./rule-providers/region/aws_jp_ipv4.yaml
+    url: https://raw.githubusercontent.com/vtgpcmsvgs/surge-config/main/dist/mihomo/classical/region/jp/aws_ipv4.yaml
+    interval: 86400
+
   jp-socks5-classical:
     type: http
     behavior: classical
@@ -153,6 +169,8 @@ rules:
   - RULE-SET,global-media-classical,PROXY
   - RULE-SET,telegram-classical,PROXY
 
+  - RULE-SET,aws-hk-classical,HK-AUTO,no-resolve
+  - RULE-SET,aws-jp-classical,JP-AUTO,no-resolve
   - RULE-SET,jp-socks5-classical,JP-AUTO,no-resolve
 
   - MATCH,PROXY

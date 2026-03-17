@@ -1,10 +1,10 @@
 {
   "summary": {
     "domain-only": 2,
-    "ipcidr-only": 1,
+    "ipcidr-only": 3,
     "classical/mixed": 25,
     "empty": 0,
-    "total_sources": 28,
+    "total_sources": 30,
     "total_warnings": 1
   },
   "sources": [
@@ -256,6 +256,19 @@
       }
     },
     {
+      "source": "rules/region/hk/aws_ipv4.list",
+      "category": "region",
+      "classification": "ipcidr-only",
+      "counts": {
+        "surge_rules": 99,
+        "mihomo_classical": 99
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/region/hk/aws_ipv4.list",
+        "mihomo_classical": "dist/mihomo/classical/region/hk/aws_ipv4.yaml"
+      }
+    },
+    {
       "source": "rules/region/hk/domains_to_hk.list",
       "category": "region",
       "classification": "classical/mixed",
@@ -266,6 +279,19 @@
       "dist": {
         "surge_rules": "dist/surge/rules/region/hk/domains_to_hk.list",
         "mihomo_classical": "dist/mihomo/classical/region/hk/domains_to_hk.yaml"
+      }
+    },
+    {
+      "source": "rules/region/jp/aws_ipv4.list",
+      "category": "region",
+      "classification": "ipcidr-only",
+      "counts": {
+        "surge_rules": 407,
+        "mihomo_classical": 407
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/region/jp/aws_ipv4.list",
+        "mihomo_classical": "dist/mihomo/classical/region/jp/aws_ipv4.yaml"
       }
     },
     {

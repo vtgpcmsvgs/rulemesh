@@ -79,6 +79,20 @@ merge_plan:
       - keep_manual_keyword_entries
       - include_blackmatrix7_openai
 
+  - id: aws-hk-ipv4
+    target: rules/region/hk/aws_ipv4.list
+    purpose: AWS Hong Kong IPv4 routing entry
+    strategy:
+      - keep_source_file_as_single_include
+      - sync_aws_ap_east_1_ipv4_daily
+
+  - id: aws-jp-ipv4
+    target: rules/region/jp/aws_ipv4.list
+    purpose: AWS Japan IPv4 routing entry
+    strategy:
+      - keep_source_file_as_single_include
+      - sync_aws_ap_northeast_1_and_3_ipv4_daily
+
   - id: reject
     target: rules/reject/reject.list
     purpose: 强主观的拦截与限制规则

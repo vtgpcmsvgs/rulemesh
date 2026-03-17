@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import ipaddress
 import json
+import os
 import shutil
 import sys
 from collections import OrderedDict
@@ -13,11 +14,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable
 
+import sync_upstream_rules
+
 
 ROOT = Path(__file__).resolve().parents[1]
 RULES_ROOT = ROOT / "rules"
 DIST_ROOT = ROOT / "dist"
 SOURCE_GROUPS = ("reject", "direct", "proxy", "region", "device")
+AWS_UPSTREAM_BOOTSTRAP_PATH = RULES_ROOT / "upstream" / "aws" / "ip-ranges.json"
 DOMAIN_CHARS = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._")
 DOMAIN_WILDCARD_CHARS = DOMAIN_CHARS | set("*?+")
 SUPPORTED_CLASSICAL_TOKENS = {
@@ -617,6 +621,11 @@ def run_build() -> int:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build Surge and Mihomo rule artifacts.")
+    parser.add_argument(
+        "--sync-upstream",
+        action="store_true",
+        help="refresh rules/upstream snapshots before rebuilding dist",
+    )
     return parser.parse_args()
 
 
@@ -631,10 +640,29 @@ def configure_stdio() -> None:
             continue
 
 
+def aws_snapshots_need_sync() -> bool:
+    if not AWS_UPSTREAM_BOOTSTRAP_PATH.exists():
+        return True
+    try:
+        payload = json.loads(read_text(AWS_UPSTREAM_BOOTSTRAP_PATH))
+    except json.JSONDecodeError:
+        return True
+    return isinstance(payload, dict) and payload.get("syncToken") == "bootstrap"
+
+
 def main() -> int:
     configure_stdio()
-    parse_args()
+    args = parse_args()
     try:
+        should_sync_upstream = (
+            args.sync_upstream
+            or os.environ.get("SURGE_CONFIG_SYNC_UPSTREAM") == "1"
+            or aws_snapshots_need_sync()
+        )
+        if should_sync_upstream:
+            sync_status = sync_upstream_rules.main()
+            if sync_status != 0:
+                return sync_status
         return run_build()
     except BuildError as exc:
         print(f"[ERROR] {exc}", file=sys.stderr)
