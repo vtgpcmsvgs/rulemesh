@@ -33,7 +33,7 @@ tools/
 
 说明：
 
-- `rules/` 下参与构建的源规则文件统一使用 `.list` 命名；不再接受无扩展名历史写法
+- `rules/` 下参与构建的源规则文件统一使用 `.list` 命名
 - 例如 `rules/region/tw/google_tw.list` 会生成 `dist/surge/rules/region/tw/google_tw.list` 与 `dist/mihomo/classical/region/tw/google_tw.yaml`
 - `dist/build-report.json` 会记录每个源文件被识别为 `domain-only`、`ipcidr-only` 或 `classical/mixed`，以及构建 warning
 - 这些 classification 只用于维护诊断，不再对应额外的 `domainset` / `domain` / `ipcidr` 产物目录
