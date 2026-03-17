@@ -1,8 +1,8 @@
 {
   "summary": {
-    "domain-only": 3,
+    "domain-only": 1,
     "ipcidr-only": 1,
-    "classical/mixed": 24,
+    "classical/mixed": 26,
     "empty": 0,
     "total_sources": 28,
     "total_warnings": 1
@@ -143,8 +143,8 @@
       "category": "direct",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 2,
-        "mihomo_classical": 2
+        "surge_rules": 127722,
+        "mihomo_classical": 127722
       },
       "dist": {
         "surge_rules": "dist/surge/rules/direct/cn_direct.list",
@@ -193,10 +193,10 @@
     {
       "source": "rules/proxy/gfw.list",
       "category": "proxy",
-      "classification": "domain-only",
+      "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 8,
-        "mihomo_classical": 8
+        "surge_rules": 8115,
+        "mihomo_classical": 8115
       },
       "dist": {
         "surge_rules": "dist/surge/rules/proxy/gfw.list",
@@ -206,10 +206,10 @@
     {
       "source": "rules/proxy/global_media.list",
       "category": "proxy",
-      "classification": "domain-only",
+      "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 12,
-        "mihomo_classical": 12
+        "surge_rules": 358,
+        "mihomo_classical": 358
       },
       "dist": {
         "surge_rules": "dist/surge/rules/proxy/global_media.list",
@@ -221,8 +221,8 @@
       "category": "proxy",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 8,
-        "mihomo_classical": 8
+        "surge_rules": 54,
+        "mihomo_classical": 54
       },
       "dist": {
         "surge_rules": "dist/surge/rules/proxy/google.list",
@@ -247,8 +247,8 @@
       "category": "proxy",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 7,
-        "mihomo_classical": 7
+        "surge_rules": 19,
+        "mihomo_classical": 19
       },
       "dist": {
         "surge_rules": "dist/surge/rules/proxy/telegram.list",
@@ -299,8 +299,8 @@
       "category": "region",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 5,
-        "mihomo_classical": 5
+        "surge_rules": 21,
+        "mihomo_classical": 21
       },
       "dist": {
         "surge_rules": "dist/surge/rules/region/tw/ai_tw.list",
