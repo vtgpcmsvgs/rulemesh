@@ -138,12 +138,36 @@ rule-providers:
     url: https://raw.githubusercontent.com/vtgpcmsvgs/surge-config/main/dist/mihomo/classical/region/hk/aws_ipv4.yaml
     interval: 86400
 
-  aws-jp-classical:
+  aws-tokyo-classical:
     type: http
     behavior: classical
     format: yaml
-    path: ./rule-providers/region/aws_jp_ipv4.yaml
-    url: https://raw.githubusercontent.com/vtgpcmsvgs/surge-config/main/dist/mihomo/classical/region/jp/aws_ipv4.yaml
+    path: ./rule-providers/region/aws_tokyo_ipv4.yaml
+    url: https://raw.githubusercontent.com/vtgpcmsvgs/surge-config/main/dist/mihomo/classical/region/jp/tokyo_aws_ipv4.yaml
+    interval: 86400
+
+  aws-osaka-classical:
+    type: http
+    behavior: classical
+    format: yaml
+    path: ./rule-providers/region/aws_osaka_ipv4.yaml
+    url: https://raw.githubusercontent.com/vtgpcmsvgs/surge-config/main/dist/mihomo/classical/region/jp/osaka_aws_ipv4.yaml
+    interval: 86400
+
+  aws-seoul-classical:
+    type: http
+    behavior: classical
+    format: yaml
+    path: ./rule-providers/region/aws_seoul_ipv4.yaml
+    url: https://raw.githubusercontent.com/vtgpcmsvgs/surge-config/main/dist/mihomo/classical/region/kr/seoul_aws_ipv4.yaml
+    interval: 86400
+
+  aws-tw-classical:
+    type: http
+    behavior: classical
+    format: yaml
+    path: ./rule-providers/region/aws_tw_ipv4.yaml
+    url: https://raw.githubusercontent.com/vtgpcmsvgs/surge-config/main/dist/mihomo/classical/region/tw/aws_ipv4.yaml
     interval: 86400
 
   jp-socks5-classical:
@@ -170,7 +194,10 @@ rules:
   - RULE-SET,telegram-classical,PROXY
 
   - RULE-SET,aws-hk-classical,HK-AUTO,no-resolve
-  - RULE-SET,aws-jp-classical,JP-AUTO,no-resolve
+  - RULE-SET,aws-tokyo-classical,TOKYO-AUTO,no-resolve
+  - RULE-SET,aws-osaka-classical,OSAKA-AUTO,no-resolve
+  - RULE-SET,aws-seoul-classical,SEOUL-AUTO,no-resolve
+  - RULE-SET,aws-tw-classical,TW-AUTO,no-resolve
   - RULE-SET,jp-socks5-classical,JP-AUTO,no-resolve
 
   - MATCH,PROXY

@@ -1,0 +1,4 @@
+# AWS Tokyo IPv4 prefixes.
+# Region mapping: ap-northeast-1 = Tokyo.
+# The upstream snapshot is refreshed daily by GitHub Actions.
+INCLUDE,upstream/aws/tokyo_ipv4.txt

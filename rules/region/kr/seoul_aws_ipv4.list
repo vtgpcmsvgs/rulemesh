@@ -1,0 +1,4 @@
+# AWS Seoul IPv4 prefixes.
+# Region mapping: ap-northeast-2 = Seoul.
+# The upstream snapshot is refreshed daily by GitHub Actions.
+INCLUDE,upstream/aws/seoul_ipv4.txt

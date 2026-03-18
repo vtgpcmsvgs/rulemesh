@@ -117,12 +117,30 @@ sources:
           note: Keep a stable source-layer INCLUDE for AWS Hong Kong IPv4 rules.
         - repo: AWS ip-ranges.json
           note: Sync all ap-east-1 IPv4 prefixes daily into rules/upstream/aws/hk_ipv4.txt
-    jp/aws_ipv4.list:
+    jp/tokyo_aws_ipv4.list:
       preferred:
         - repo: self
-          note: Keep a stable source-layer INCLUDE for AWS Japan IPv4 rules.
+          note: Keep a stable source-layer INCLUDE for AWS Tokyo IPv4 rules.
         - repo: AWS ip-ranges.json
-          note: Sync all ap-northeast-1 and ap-northeast-3 IPv4 prefixes daily into rules/upstream/aws/jp_ipv4.txt
+          note: Sync all ap-northeast-1 IPv4 prefixes daily into rules/upstream/aws/tokyo_ipv4.txt
+    jp/osaka_aws_ipv4.list:
+      preferred:
+        - repo: self
+          note: Keep a stable source-layer INCLUDE for AWS Osaka IPv4 rules.
+        - repo: AWS ip-ranges.json
+          note: Sync all ap-northeast-3 IPv4 prefixes daily into rules/upstream/aws/osaka_ipv4.txt
+    kr/seoul_aws_ipv4.list:
+      preferred:
+        - repo: self
+          note: Keep a stable source-layer INCLUDE for AWS Seoul IPv4 rules.
+        - repo: AWS ip-ranges.json
+          note: Sync all ap-northeast-2 IPv4 prefixes daily into rules/upstream/aws/seoul_ipv4.txt
+    tw/aws_ipv4.list:
+      preferred:
+        - repo: self
+          note: Keep a stable source-layer INCLUDE for AWS Taiwan IPv4 rules.
+        - repo: AWS ip-ranges.json
+          note: Sync all ap-east-2 IPv4 prefixes daily into rules/upstream/aws/taiwan_ipv4.txt
 
   device:
     srcip_pc01.list:

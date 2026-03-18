@@ -1,0 +1,4 @@
+# AWS Taiwan IPv4 prefixes.
+# Region mapping: ap-east-2 = Taiwan.
+# The upstream snapshot is refreshed daily by GitHub Actions.
+INCLUDE,upstream/aws/taiwan_ipv4.txt

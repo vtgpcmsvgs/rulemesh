@@ -643,6 +643,15 @@ def configure_stdio() -> None:
 def aws_snapshots_need_sync() -> bool:
     if not AWS_UPSTREAM_BOOTSTRAP_PATH.exists():
         return True
+    expected_snapshot_paths = [
+        RULES_ROOT / "upstream" / snapshot.path
+        for snapshot in sync_upstream_rules.AWS_REGION_SNAPSHOTS
+    ]
+    for path in expected_snapshot_paths:
+        if not path.exists():
+            return True
+        if "Placeholder file kept in repo" in read_text(path):
+            return True
     try:
         payload = json.loads(read_text(AWS_UPSTREAM_BOOTSTRAP_PATH))
     except json.JSONDecodeError:

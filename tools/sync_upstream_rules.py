@@ -53,9 +53,24 @@ AWS_REGION_SNAPSHOTS = (
         title="AWS Hong Kong IPv4 (ap-east-1)",
     ),
     AwsRegionSnapshot(
-        path=Path("aws/jp_ipv4.txt"),
-        regions=("ap-northeast-1", "ap-northeast-3"),
-        title="AWS Japan IPv4 (ap-northeast-1 Tokyo + ap-northeast-3 Osaka)",
+        path=Path("aws/tokyo_ipv4.txt"),
+        regions=("ap-northeast-1",),
+        title="AWS Tokyo IPv4 (ap-northeast-1)",
+    ),
+    AwsRegionSnapshot(
+        path=Path("aws/osaka_ipv4.txt"),
+        regions=("ap-northeast-3",),
+        title="AWS Osaka IPv4 (ap-northeast-3)",
+    ),
+    AwsRegionSnapshot(
+        path=Path("aws/seoul_ipv4.txt"),
+        regions=("ap-northeast-2",),
+        title="AWS Seoul IPv4 (ap-northeast-2)",
+    ),
+    AwsRegionSnapshot(
+        path=Path("aws/taiwan_ipv4.txt"),
+        regions=("ap-east-2",),
+        title="AWS Taiwan IPv4 (ap-east-2)",
     ),
 )
 

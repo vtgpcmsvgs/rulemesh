@@ -1,10 +1,10 @@
 {
   "summary": {
     "domain-only": 2,
-    "ipcidr-only": 3,
+    "ipcidr-only": 6,
     "classical/mixed": 25,
     "empty": 0,
-    "total_sources": 30,
+    "total_sources": 33,
     "total_warnings": 1
   },
   "sources": [
@@ -282,19 +282,6 @@
       }
     },
     {
-      "source": "rules/region/jp/aws_ipv4.list",
-      "category": "region",
-      "classification": "ipcidr-only",
-      "counts": {
-        "surge_rules": 407,
-        "mihomo_classical": 407
-      },
-      "dist": {
-        "surge_rules": "dist/surge/rules/region/jp/aws_ipv4.list",
-        "mihomo_classical": "dist/mihomo/classical/region/jp/aws_ipv4.yaml"
-      }
-    },
-    {
       "source": "rules/region/jp/domains_to_jp.list",
       "category": "region",
       "classification": "classical/mixed",
@@ -321,6 +308,45 @@
       }
     },
     {
+      "source": "rules/region/jp/osaka_aws_ipv4.list",
+      "category": "region",
+      "classification": "ipcidr-only",
+      "counts": {
+        "surge_rules": 114,
+        "mihomo_classical": 114
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/region/jp/osaka_aws_ipv4.list",
+        "mihomo_classical": "dist/mihomo/classical/region/jp/osaka_aws_ipv4.yaml"
+      }
+    },
+    {
+      "source": "rules/region/jp/tokyo_aws_ipv4.list",
+      "category": "region",
+      "classification": "ipcidr-only",
+      "counts": {
+        "surge_rules": 293,
+        "mihomo_classical": 293
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/region/jp/tokyo_aws_ipv4.list",
+        "mihomo_classical": "dist/mihomo/classical/region/jp/tokyo_aws_ipv4.yaml"
+      }
+    },
+    {
+      "source": "rules/region/kr/seoul_aws_ipv4.list",
+      "category": "region",
+      "classification": "ipcidr-only",
+      "counts": {
+        "surge_rules": 177,
+        "mihomo_classical": 177
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/region/kr/seoul_aws_ipv4.list",
+        "mihomo_classical": "dist/mihomo/classical/region/kr/seoul_aws_ipv4.yaml"
+      }
+    },
+    {
       "source": "rules/region/tw/ai_tw.list",
       "category": "region",
       "classification": "classical/mixed",
@@ -331,6 +357,19 @@
       "dist": {
         "surge_rules": "dist/surge/rules/region/tw/ai_tw.list",
         "mihomo_classical": "dist/mihomo/classical/region/tw/ai_tw.yaml"
+      }
+    },
+    {
+      "source": "rules/region/tw/aws_ipv4.list",
+      "category": "region",
+      "classification": "ipcidr-only",
+      "counts": {
+        "surge_rules": 45,
+        "mihomo_classical": 45
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/region/tw/aws_ipv4.list",
+        "mihomo_classical": "dist/mihomo/classical/region/tw/aws_ipv4.yaml"
       }
     },
     {

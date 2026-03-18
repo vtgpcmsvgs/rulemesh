@@ -1,4 +1,0 @@
-# AWS Japan IPv4 prefixes.
-# Region mapping: ap-northeast-1 = Tokyo, ap-northeast-3 = Osaka.
-# The upstream snapshot is refreshed daily by GitHub Actions.
-INCLUDE,upstream/aws/jp_ipv4.txt

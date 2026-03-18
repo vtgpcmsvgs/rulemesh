@@ -86,12 +86,33 @@ merge_plan:
       - keep_source_file_as_single_include
       - sync_aws_ap_east_1_ipv4_daily
 
-  - id: aws-jp-ipv4
-    target: rules/region/jp/aws_ipv4.list
-    purpose: AWS Japan IPv4 routing entry
+  - id: aws-tokyo-ipv4
+    target: rules/region/jp/tokyo_aws_ipv4.list
+    purpose: AWS Tokyo IPv4 routing entry
     strategy:
       - keep_source_file_as_single_include
-      - sync_aws_ap_northeast_1_and_3_ipv4_daily
+      - sync_aws_ap_northeast_1_ipv4_daily
+
+  - id: aws-osaka-ipv4
+    target: rules/region/jp/osaka_aws_ipv4.list
+    purpose: AWS Osaka IPv4 routing entry
+    strategy:
+      - keep_source_file_as_single_include
+      - sync_aws_ap_northeast_3_ipv4_daily
+
+  - id: aws-seoul-ipv4
+    target: rules/region/kr/seoul_aws_ipv4.list
+    purpose: AWS Seoul IPv4 routing entry
+    strategy:
+      - keep_source_file_as_single_include
+      - sync_aws_ap_northeast_2_ipv4_daily
+
+  - id: aws-taiwan-ipv4
+    target: rules/region/tw/aws_ipv4.list
+    purpose: AWS Taiwan IPv4 routing entry
+    strategy:
+      - keep_source_file_as_single_include
+      - sync_aws_ap_east_2_ipv4_daily
 
   - id: reject
     target: rules/reject/reject.list
