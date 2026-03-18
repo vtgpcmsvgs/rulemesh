@@ -1,8 +1,8 @@
 {
   "summary": {
-    "domain-only": 2,
+    "domain-only": 3,
     "ipcidr-only": 6,
-    "classical/mixed": 25,
+    "classical/mixed": 24,
     "empty": 0,
     "total_sources": 33,
     "total_warnings": 1
@@ -128,10 +128,10 @@
     {
       "source": "rules/direct/bytedance_direct.list",
       "category": "direct",
-      "classification": "classical/mixed",
+      "classification": "domain-only",
       "counts": {
-        "surge_rules": 6,
-        "mihomo_classical": 6
+        "surge_rules": 58,
+        "mihomo_classical": 58
       },
       "dist": {
         "surge_rules": "dist/surge/rules/direct/bytedance_direct.list",
