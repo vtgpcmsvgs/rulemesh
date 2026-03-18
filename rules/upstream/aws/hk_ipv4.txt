@@ -1,7 +1,7 @@
 # Generated from https://ip-ranges.amazonaws.com/ip-ranges.json
 # title: AWS Hong Kong IPv4 (ap-east-1)
-# syncToken: 1773704284
-# createDate: 2026-03-16-23-38-04
+# syncToken: 1773787084
+# createDate: 2026-03-17-22-38-04
 # regions: ap-east-1
 # services: all published IPv4 prefixes for the listed AWS regions
 # total IPv4 prefixes: 99
