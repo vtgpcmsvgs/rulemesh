@@ -2,6 +2,7 @@
 # kind: rules
 # Do not edit dist directly.
 
+DOMAIN-SUFFIX,cn
 DOMAIN,265.com
 DOMAIN,2mdn-cn.net
 DOMAIN,2mdn.net
@@ -25437,7 +25438,6 @@ DOMAIN-SUFFIX,cmzd.com
 DOMAIN-SUFFIX,cmzi.com
 DOMAIN-SUFFIX,cmzj.net
 DOMAIN-SUFFIX,cmzyk.com
-DOMAIN-SUFFIX,cn
 DOMAIN-SUFFIX,cn-5.com
 DOMAIN-SUFFIX,cn-833.org
 DOMAIN-SUFFIX,cn-ab.com

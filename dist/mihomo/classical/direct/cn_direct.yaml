@@ -1,6 +1,7 @@
 # Generated from rules/direct/cn_direct.list
 # behavior: classical
 payload:
+  - "DOMAIN-SUFFIX,cn"
   - "DOMAIN,265.com"
   - "DOMAIN,2mdn-cn.net"
   - "DOMAIN,2mdn.net"
@@ -25436,7 +25437,6 @@ payload:
   - "DOMAIN-SUFFIX,cmzi.com"
   - "DOMAIN-SUFFIX,cmzj.net"
   - "DOMAIN-SUFFIX,cmzyk.com"
-  - "DOMAIN-SUFFIX,cn"
   - "DOMAIN-SUFFIX,cn-5.com"
   - "DOMAIN-SUFFIX,cn-833.org"
   - "DOMAIN-SUFFIX,cn-ab.com"
