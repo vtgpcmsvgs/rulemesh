@@ -31,7 +31,9 @@ sources:
     bytedance_direct.list:
       preferred:
         - repo: self
-          note: 当前继续以本仓库小范围关键词为主
+          note: 保留源层入口，仅通过 INCLUDE 组装上游快照
+        - repo: blackmatrix7/ios_rule_script
+          note: 负责 ByteDance.list 与 DouYin.list 主体，持续同步
     netease_direct.list:
       preferred:
         - repo: self
@@ -44,11 +46,6 @@ sources:
           note: 保留少量高频兜底
         - repo: blackmatrix7/ios_rule_script
           note: 负责 Bilibili.list 补充
-    direct.list:
-      preferred:
-        - repo: self
-          note: 保留你自己的通用直连补充与特殊端口 / ASN 规则
-
   proxy:
     proxy.list:
       preferred:

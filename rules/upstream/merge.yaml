@@ -20,63 +20,70 @@ merge_plan:
     target: rules/direct/cn_direct.list
     purpose: 中国大陆基础直连兜底，尽量避免国内站点误走代理
     strategy:
-      - keep_manual_cn_overrides_first
+      - include_loyalsoldier_first_then_local_cn_fallback
       - include_loyalsoldier_direct_and_cncidr
 
   - id: microsoft-direct
     target: rules/direct/microsoft_direct.list
     purpose: Microsoft / OneDrive 直连
     strategy:
-      - keep_process_rules_first
+      - include_blackmatrix7_first_then_local_process_fallback
       - include_blackmatrix7_onedrive_and_microsoft
 
   - id: bilibili-direct
     target: rules/direct/bilibili_direct.list
     purpose: 哔哩哔哩直连
     strategy:
-      - keep_manual_domain_entries
+      - include_upstream_first_then_local_domain_fallback
       - include_blackmatrix7_bilibili
+
+  - id: bytedance-direct
+    target: rules/direct/bytedance_direct.list
+    purpose: 字节系直连
+    strategy:
+      - keep_source_file_as_include_entry
+      - include_blackmatrix7_bytedance_and_douyin
 
   - id: netease-direct
     target: rules/direct/netease_direct.list
     purpose: 网易直连
     strategy:
-      - keep_manual_domain_entries
+      - include_upstream_first_then_local_domain_fallback
       - include_blackmatrix7_netease_music
 
   - id: google-proxy
     target: rules/proxy/google.list
     purpose: Google / YouTube 代理
     strategy:
-      - keep_manual_keyword_entries
+      - include_upstream_first_then_local_keyword_fallback
       - include_blackmatrix7_google_and_youtube
 
   - id: telegram-proxy
     target: rules/proxy/telegram.list
     purpose: Telegram 代理
     strategy:
-      - keep_manual_domain_entries
+      - include_upstream_first_then_local_domain_fallback
       - include_loyalsoldier_telegram_cidr
 
   - id: gfw-proxy
     target: rules/proxy/gfw.list
     purpose: GFW 代理兜底
     strategy:
-      - keep_manual_core_entries
+      - include_upstream_first_then_local_core_fallback
       - include_loyalsoldier_gfw_and_tld_not_cn
 
   - id: global-media
     target: rules/proxy/global_media.list
     purpose: 国际流媒体代理
     strategy:
-      - keep_manual_core_entries
+      - include_upstream_first_then_local_core_fallback
       - include_blackmatrix7_global_media
 
   - id: tw-ai
     target: rules/region/tw/ai_tw.list
     purpose: AI 平台走台湾策略
     strategy:
-      - keep_manual_keyword_entries
+      - include_upstream_first_then_local_keyword_fallback
       - include_blackmatrix7_openai
 
   - id: aws-hk-ipv4

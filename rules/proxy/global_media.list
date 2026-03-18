@@ -1,4 +1,5 @@
-# 国际流媒体代理规则
+# Global media proxy rules: upstream first, local fallback second.
+INCLUDE,upstream/blackmatrix7/global_media.list
 DOMAIN-SUFFIX,disneyplus.com
 DOMAIN-SUFFIX,dssott.com
 DOMAIN-SUFFIX,hbomax.com
@@ -11,4 +12,3 @@ DOMAIN-SUFFIX,nflxso.net
 DOMAIN-SUFFIX,nflxvideo.net
 DOMAIN-SUFFIX,spotify.com
 DOMAIN-SUFFIX,spotifycdn.com
-INCLUDE,upstream/blackmatrix7/global_media.list

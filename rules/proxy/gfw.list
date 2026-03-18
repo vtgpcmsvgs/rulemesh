@@ -1,5 +1,6 @@
-# 最小可用 GFW 代理规则
-# 手写高频规则优先，后面再叠加每日同步的上游列表。
+# GFW proxy rules: upstream first, local fallback second.
+INCLUDE,upstream/loyalsoldier/gfw.txt
+INCLUDE,upstream/loyalsoldier/tld-not-cn.txt
 DOMAIN-SUFFIX,facebook.com
 DOMAIN-SUFFIX,fbcdn.net
 DOMAIN-SUFFIX,instagram.com
@@ -8,5 +9,3 @@ DOMAIN-SUFFIX,twitter.com
 DOMAIN-SUFFIX,whatsapp.com
 DOMAIN-SUFFIX,whatsapp.net
 DOMAIN-SUFFIX,x.com
-INCLUDE,upstream/loyalsoldier/gfw.txt
-INCLUDE,upstream/loyalsoldier/tld-not-cn.txt

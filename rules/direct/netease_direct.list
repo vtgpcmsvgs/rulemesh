@@ -1,6 +1,6 @@
-# 网易直连基础规则
+# NetEase direct rules: upstream first, local fallback second.
+INCLUDE,upstream/blackmatrix7/netease_music.list
 DOMAIN-KEYWORD,netease
 DOMAIN-SUFFIX,126.net
 DOMAIN-SUFFIX,126.com
 DOMAIN-SUFFIX,163.com
-INCLUDE,upstream/blackmatrix7/netease_music.list

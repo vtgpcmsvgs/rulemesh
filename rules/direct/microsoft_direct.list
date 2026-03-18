@@ -1,6 +1,7 @@
-# Microsoft / OneDrive 直连规则
-# 手写规则放前面，主体由 blackmatrix7 每日同步。
-PROCESS-NAME,OneDrive
-PROCESS-NAME,OneDriveUpdater
+# Microsoft / OneDrive direct rules: upstream first, local fallback second.
 INCLUDE,upstream/blackmatrix7/onedrive.list
 INCLUDE,upstream/blackmatrix7/microsoft.list
+PROCESS-NAME,OneDrive
+PROCESS-NAME,OneDriveUpdater
+DOMAIN-KEYWORD,microsoft
+DOMAIN-KEYWORD,onedrive

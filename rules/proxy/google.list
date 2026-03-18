@@ -1,4 +1,6 @@
-# Google / YouTube 通用代理规则
+# Google / YouTube proxy rules: upstream first, local fallback second.
+INCLUDE,upstream/blackmatrix7/google_fcm.list
+INCLUDE,upstream/blackmatrix7/youtube.list
 DOMAIN-KEYWORD,google
 DOMAIN-KEYWORD,googleapis
 DOMAIN-KEYWORD,googlevideo
@@ -7,5 +9,3 @@ DOMAIN-KEYWORD,youtube
 DOMAIN-SUFFIX,google.com
 DOMAIN-SUFFIX,youtu.be
 DOMAIN-SUFFIX,youtube.com
-INCLUDE,upstream/blackmatrix7/google_fcm.list
-INCLUDE,upstream/blackmatrix7/youtube.list

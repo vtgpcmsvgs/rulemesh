@@ -1,6 +1,5 @@
-# 中国大陆基础直连兜底
-# 手写规则永远放在前面，后面的 INCLUDE 由每日同步补强。
-DOMAIN-SUFFIX,cn
-GEOIP,CN
+# China direct rules: upstream first, local fallback second.
 INCLUDE,upstream/loyalsoldier/direct.txt
 INCLUDE,upstream/loyalsoldier/cncidr.txt
+DOMAIN-SUFFIX,cn
+GEOIP,CN

@@ -116,3 +116,12 @@ python tools/build_rules.py
 - 新增规则前，先想清楚它是 `reject`、`direct`、`proxy`、`region` 还是 `device`
 - 如果一个源文件开始变得很大，优先补 `sources.yaml` 与 `merge.yaml`，再考虑引入更多上游素材
 - 提交前看一眼 `dist/build-report.json` 的 warnings，特别是 Mihomo 不支持的规则类型
+## 规则方法论：Upstream First + Fallback
+
+本仓库统一采用“上游优先精准匹配 + 本地规则兜底覆盖”的编排方式：
+
+- 先写 `INCLUDE,upstream/...`，优先命中第三方持续维护的精细规则。
+- 再写本地兜底规则，优先使用 `DOMAIN-KEYWORD` 与 `DOMAIN-SUFFIX` 提升覆盖韧性。
+- 兜底规则只补“高频且长期稳定”的关键词/后缀，避免把本地规则膨胀成上游镜像。
+- 当某类规则暂无可靠上游时，可先保留手写规则；一旦有稳定上游，再迁移到 upstream-first 结构。
+- 目标是同时兼顾：上游的精准全面 + 本地兜底的抗失效能力。

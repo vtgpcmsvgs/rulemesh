@@ -1,5 +1,5 @@
-# Telegram 代理基础规则
-# 手写域名入口放前面，CIDR 由 Loyalsoldier 每日同步补齐。
+# Telegram proxy rules: upstream first, local fallback second.
+INCLUDE,upstream/loyalsoldier/telegramcidr.txt
 DOMAIN-KEYWORD,telegram
 DOMAIN-SUFFIX,t.me
 DOMAIN-SUFFIX,tdesktop.com
@@ -7,4 +7,3 @@ DOMAIN-SUFFIX,telegram.me
 DOMAIN-SUFFIX,telegram.org
 DOMAIN-SUFFIX,telesco.pe
 DOMAIN-SUFFIX,tlgrm.app
-INCLUDE,upstream/loyalsoldier/telegramcidr.txt
