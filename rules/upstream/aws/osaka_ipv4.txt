@@ -1,7 +1,7 @@
 # Generated from https://ip-ranges.amazonaws.com/ip-ranges.json
 # title: AWS Osaka IPv4 (ap-northeast-3)
-# syncToken: 1773801485
-# createDate: 2026-03-18-02-38-05
+# syncToken: 1773873485
+# createDate: 2026-03-18-22-38-05
 # regions: ap-northeast-3
 # services: all published IPv4 prefixes for the listed AWS regions
 # total IPv4 prefixes: 114
