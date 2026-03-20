@@ -76,7 +76,9 @@ sources:
     tw/crypto_tw.list:
       preferred:
         - repo: self
-          note: 当前是你自己的台湾加密货币站点入口
+          note: 保持单文件入口稳定，承接本地补充（如 g42.ai、预测市场、新兴 DeFi/分析站点）
+        - repo: blackmatrix7/ios_rule_script
+          note: 负责 Cryptocurrency.list 主体；通过 INCLUDE 并入该文件
     tw/google_tw.list:
       preferred:
         - repo: self

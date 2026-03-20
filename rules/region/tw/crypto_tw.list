@@ -1,25 +1,25 @@
-# 使用台湾节点访问加密货币网站
+# 加密货币规则统一入口（台湾策略）：上游优先 + 本地兜底。
+# 说明：
+# 1) 主体来自 blackmatrix7 的 Cryptocurrency.list，持续同步。
+# 2) 本地补充保留第三方暂未覆盖站点（例如 g42.ai、预测市场、部分链上分析工具）。
+INCLUDE,upstream/blackmatrix7/cryptocurrency.list
+
+# local fallback: exchange infra
+DOMAIN-KEYWORD,bitget
+DOMAIN-KEYWORD,saasexch
+DOMAIN-KEYWORD,onetrust
+
+# local fallback: explorer / analytics / defi / prediction market
 DOMAIN-KEYWORD,privy
 DOMAIN-KEYWORD,aspecta
 DOMAIN-KEYWORD,mempool
 DOMAIN-KEYWORD,rootdata
 DOMAIN-KEYWORD,lighter
-DOMAIN-KEYWORD,bybit
-DOMAIN-KEYWORD,bitget
-DOMAIN-KEYWORD,okx
-DOMAIN-KEYWORD,binance
-DOMAIN-KEYWORD,bnbstatic
-DOMAIN-KEYWORD,bntrace
-DOMAIN-KEYWORD,saasexch
-DOMAIN-KEYWORD,onetrust
 DOMAIN-SUFFIX,g42.ai
 DOMAIN-SUFFIX,polymarket.com
 DOMAIN-SUFFIX,kalshi.com
-DOMAIN-SUFFIX,coinmarketcap.com
-DOMAIN-SUFFIX,coingecko.com
 DOMAIN-SUFFIX,dune.com
 DOMAIN-SUFFIX,defillama.com
-DOMAIN-SUFFIX,etherscan.io
 DOMAIN-SUFFIX,arbiscan.io
 DOMAIN-SUFFIX,basescan.org
 DOMAIN-SUFFIX,solscan.io

@@ -88,6 +88,16 @@ merge_plan:
       - include_upstream_first_then_local_keyword_fallback
       - include_blackmatrix7_openai
 
+  - id: tw-crypto
+    target: rules/region/tw/crypto_tw.list
+    purpose: 加密货币相关网站走台湾策略
+    strategy:
+      - keep_single_entry_file_for_client_stability
+      - include_upstream_first_then_local_category_fallback
+      - include_blackmatrix7_cryptocurrency
+    notes:
+      - 覆盖区块浏览器 / 交易所 / DeFi / 预测市场；本地保留第三方未覆盖站点（如 g42.ai）。
+
   - id: aws-hk-ipv4
     target: rules/region/hk/aws_ipv4.list
     purpose: AWS Hong Kong IPv4 routing entry

@@ -312,8 +312,8 @@
       "category": "region",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 24,
-        "mihomo_classical": 24
+        "surge_rules": 59,
+        "mihomo_classical": 59
       },
       "dist": {
         "surge_rules": "dist/surge/rules/region/tw/crypto_tw.list",

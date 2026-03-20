@@ -1,7 +1,9 @@
-# Generated from rules/region/tw/crypto_tw.list
-# kind: rules
-# Do not edit dist directly.
-
+# NAME: Cryptocurrency
+# AUTHOR: blackmatrix7
+# REPO: https://github.com/blackmatrix7/ios_rule_script
+# UPDATED: 2025-06-06 09:17:51
+# DOMAIN-SUFFIX: 43
+# TOTAL: 43
 DOMAIN-SUFFIX,aex.com
 DOMAIN-SUFFIX,aicoin.com
 DOMAIN-SUFFIX,aimoon.com
@@ -45,19 +47,3 @@ DOMAIN-SUFFIX,poloniex.com
 DOMAIN-SUFFIX,sushi.com
 DOMAIN-SUFFIX,uniswap.org
 DOMAIN-SUFFIX,zb.com
-DOMAIN-KEYWORD,bitget
-DOMAIN-KEYWORD,saasexch
-DOMAIN-KEYWORD,onetrust
-DOMAIN-KEYWORD,privy
-DOMAIN-KEYWORD,aspecta
-DOMAIN-KEYWORD,mempool
-DOMAIN-KEYWORD,rootdata
-DOMAIN-KEYWORD,lighter
-DOMAIN-SUFFIX,g42.ai
-DOMAIN-SUFFIX,polymarket.com
-DOMAIN-SUFFIX,kalshi.com
-DOMAIN-SUFFIX,dune.com
-DOMAIN-SUFFIX,defillama.com
-DOMAIN-SUFFIX,arbiscan.io
-DOMAIN-SUFFIX,basescan.org
-DOMAIN-SUFFIX,solscan.io

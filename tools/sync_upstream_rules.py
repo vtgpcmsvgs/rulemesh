@@ -38,6 +38,7 @@ UPSTREAM_FILES = (
     UpstreamFile(Path("loyalsoldier/telegramcidr.txt"), "https://raw.githubusercontent.com/Loyalsoldier/surge-rules/release/telegramcidr.txt"),
     UpstreamFile(Path("blackmatrix7/bilibili.list"), "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/BiliBili/BiliBili.list"),
     UpstreamFile(Path("blackmatrix7/bytedance.list"), "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/ByteDance/ByteDance.list"),
+    UpstreamFile(Path("blackmatrix7/cryptocurrency.list"), "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Cryptocurrency/Cryptocurrency.list"),
     UpstreamFile(Path("blackmatrix7/douyin.list"), "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/DouYin/DouYin.list"),
     UpstreamFile(Path("blackmatrix7/google_fcm.list"), "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/GoogleFCM/GoogleFCM.list"),
     UpstreamFile(Path("blackmatrix7/global_media.list"), "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/GlobalMedia/GlobalMedia.list"),
