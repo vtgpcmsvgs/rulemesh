@@ -1,6 +1,14 @@
-# 将Google系使用台湾节点的2个原因：第一，解锁Google Play下载，例如ChatGPT。第二，解锁Gemini
+# Google 全量规则统一入口（唯一入口）
+# 维护约束：
+# 1) Google 相关（含 Google Play / Gemini / YouTube / FCM）只在本文件维护。
+# 2) 本规则集设计目标固定为台湾节点，客户端请绑定 TW-AUTO（或等价台湾策略组）。
+# 3) 禁止再在 rules/proxy/google.list 或其他文件重复维护 Google 规则。
+INCLUDE,upstream/blackmatrix7/google_fcm.list
+INCLUDE,upstream/blackmatrix7/youtube.list
 DOMAIN-KEYWORD,google
+DOMAIN-KEYWORD,googleapis
 DOMAIN-KEYWORD,googlevideo
 DOMAIN-KEYWORD,gstatic
-DOMAIN-KEYWORD,googleapis
 DOMAIN-KEYWORD,youtube
+DOMAIN-KEYWORD,gemini
+DOMAIN-SUFFIX,google.com

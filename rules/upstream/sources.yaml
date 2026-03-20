@@ -47,12 +47,6 @@ sources:
         - repo: blackmatrix7/ios_rule_script
           note: 负责 Bilibili.list 补充
   proxy:
-    google.list:
-      preferred:
-        - repo: self
-          note: 保留少量关键词兜底
-        - repo: blackmatrix7/ios_rule_script
-          note: 负责 GoogleFCM.list 与 YouTube.list 补充
     telegram.list:
       preferred:
         - repo: self
@@ -86,7 +80,9 @@ sources:
     tw/google_tw.list:
       preferred:
         - repo: self
-          note: 当前是你自己的 Google -> TW 路由入口
+          note: Google 相关（含 Play / Gemini / YouTube / FCM）唯一入口，统一走台湾节点
+        - repo: blackmatrix7/ios_rule_script
+          note: 负责 GoogleFCM.list 与 YouTube.list 补充；通过 INCLUDE 并入该文件
     jp/domains_to_jp.list:
       preferred:
         - repo: self

@@ -2,9 +2,9 @@
   "summary": {
     "domain-only": 2,
     "ipcidr-only": 6,
-    "classical/mixed": 21,
+    "classical/mixed": 20,
     "empty": 0,
-    "total_sources": 29,
+    "total_sources": 28,
     "total_warnings": 1
   },
   "sources": [
@@ -204,19 +204,6 @@
       }
     },
     {
-      "source": "rules/proxy/google.list",
-      "category": "proxy",
-      "classification": "classical/mixed",
-      "counts": {
-        "surge_rules": 229,
-        "mihomo_classical": 229
-      },
-      "dist": {
-        "surge_rules": "dist/surge/rules/proxy/google.list",
-        "mihomo_classical": "dist/mihomo/classical/proxy/google.yaml"
-      }
-    },
-    {
       "source": "rules/proxy/telegram.list",
       "category": "proxy",
       "classification": "classical/mixed",
@@ -312,8 +299,8 @@
       "category": "region",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 39,
-        "mihomo_classical": 39
+        "surge_rules": 38,
+        "mihomo_classical": 38
       },
       "dist": {
         "surge_rules": "dist/surge/rules/region/tw/ai_tw.list",
@@ -338,8 +325,8 @@
       "category": "region",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 5,
-        "mihomo_classical": 5
+        "surge_rules": 230,
+        "mihomo_classical": 230
       },
       "dist": {
         "surge_rules": "dist/surge/rules/region/tw/google_tw.list",

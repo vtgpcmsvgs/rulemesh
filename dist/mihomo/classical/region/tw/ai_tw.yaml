@@ -39,4 +39,3 @@ payload:
   - "DOMAIN-SUFFIX,arc.net"
   - "DOMAIN-KEYWORD,chatgpt"
   - "DOMAIN-KEYWORD,claude"
-  - "DOMAIN-KEYWORD,gemini"

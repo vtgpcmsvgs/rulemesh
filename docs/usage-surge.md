@@ -7,6 +7,7 @@
 - 本仓库统一输出显式规则行，供 `RULE-SET` 使用
 - 纯域名规则也会在产物里写成 `DOMAIN` / `DOMAIN-SUFFIX`，不会再生成单独的纯域名目录
 - `DOMAIN-KEYWORD`、`DOMAIN-WILDCARD`、`IP-CIDR`、`SRC-IP`、`AND/OR` 这类规则同样统一走 `RULE-SET`
+- Google 相关（含 Google Play / Gemini / YouTube / FCM）统一接 `region/tw/google_tw.list` 并绑定 `TW-AUTO`
 
 本文示例统一使用当前仓库主分支的 raw 地址：
 
@@ -25,6 +26,7 @@ RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/r
 RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/rules/reject/reject.list,REJECT
 RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/rules/direct/microsoft_direct.list,DIRECT
 RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/rules/direct/cn_direct.list,DIRECT
+RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/rules/region/tw/google_tw.list,TW-AUTO
 RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/rules/proxy/global_media.list,PROXY
 RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/rules/proxy/telegram.list,PROXY
 RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/rules/region/hk/aws_ipv4.list,HK-AUTO,no-resolve
@@ -46,6 +48,8 @@ RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/r
 5. IP 规则
 6. `FINAL`
 
+注意：`region/tw/google_tw.list` 必须放在 `proxy/global_media.list` 等广谱代理规则之前，保证 Google 优先走 TW。
+
 一个最小可用的 `[Rule]` 片段可以写成：
 
 ```ini
@@ -61,13 +65,13 @@ RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/r
 
 # 3. region
 RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/rules/region/tw/ai_tw.list,TW-AUTO
+RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/rules/region/tw/google_tw.list,TW-AUTO
 RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/rules/region/tw/crypto_tw.list,TW-AUTO
 RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/rules/region/jp/domains_to_jp.list,JP-AUTO
 
 # 4. direct / proxy
 RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/rules/direct/microsoft_direct.list,DIRECT
 RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/rules/direct/cn_direct.list,DIRECT
-RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/rules/proxy/google.list,PROXY
 RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/rules/proxy/telegram.list,PROXY
 RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/rules/proxy/global_media.list,PROXY
 

@@ -51,12 +51,14 @@ merge_plan:
       - include_upstream_first_then_local_domain_fallback
       - include_blackmatrix7_netease_music
 
-  - id: google-proxy
-    target: rules/proxy/google.list
-    purpose: Google / YouTube 代理
+  - id: google-tw
+    target: rules/region/tw/google_tw.list
+    purpose: Google / YouTube / Gemini 统一走台湾策略
     strategy:
       - include_upstream_first_then_local_keyword_fallback
       - include_blackmatrix7_google_and_youtube
+    notes:
+      - Google 相关规则只维护在 rules/region/tw/google_tw.list，避免 proxy 与 region 双入口分叉。
 
   - id: telegram-proxy
     target: rules/proxy/telegram.list

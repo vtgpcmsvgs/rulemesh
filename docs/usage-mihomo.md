@@ -14,6 +14,7 @@
 - 纯域名规则会写成 `DOMAIN` / `DOMAIN-SUFFIX`
 - CIDR 规则会写成 `IP-CIDR` / `IP-CIDR6`
 - mixed、关键词、设备源地址、组合规则也统一落到 `classical`
+- Google 相关（含 Google Play / Gemini / YouTube / FCM）统一接 `region/tw/google_tw.yaml` 并绑定 `TW-AUTO`
 
 本文示例统一使用当前仓库主分支的 raw 地址：
 
@@ -53,6 +54,8 @@ rule-providers:
 3. region
 4. direct / proxy
 5. `MATCH`
+
+注意：`region/tw/google_tw.yaml` 对应的规则需要放在 `proxy/global_media.yaml` 等广谱代理规则之前，确保 Google 优先命中 TW。
 
 一个最小可用示例：
 
@@ -96,6 +99,14 @@ rule-providers:
     format: yaml
     path: ./rule-providers/region/ai_tw.yaml
     url: https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/tw/ai_tw.yaml
+    interval: 86400
+
+  tw-google-classical:
+    type: http
+    behavior: classical
+    format: yaml
+    path: ./rule-providers/region/google_tw.yaml
+    url: https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/tw/google_tw.yaml
     interval: 86400
 
   microsoft-classical:
@@ -186,6 +197,7 @@ rules:
   - RULE-SET,adblock-classical,REJECT
 
   - RULE-SET,tw-ai-classical,TW-AUTO
+  - RULE-SET,tw-google-classical,TW-AUTO
 
   - RULE-SET,microsoft-classical,DIRECT
   - RULE-SET,cn-direct-classical,DIRECT
