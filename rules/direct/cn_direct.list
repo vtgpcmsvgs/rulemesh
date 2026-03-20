@@ -1,4 +1,5 @@
 # 中国大陆直连规则：上游为主，本地补充。
 INCLUDE,upstream/loyalsoldier/direct.txt
 INCLUDE,upstream/loyalsoldier/cncidr.txt
+DOMAIN-SUFFIX,cn
 GEOIP,CN
