@@ -104,7 +104,7 @@ python tools/build_rules.py
 - Google 相关（含 Google Play / Gemini / YouTube / FCM）只在 `rules/region/tw/google_tw.list` 维护
 - 客户端应接入 `dist/surge/rules/region/tw/google_tw.list` 或 `dist/mihomo/classical/region/tw/google_tw.yaml`
 - Google 规则必须绑定 `TW-AUTO`（或等价台湾策略组），不再提供 `proxy/google` 双入口
-- 规则顺序必须先放 Google TW 规则，再放 `proxy/global_media` 等广谱代理规则，确保优先命中台湾策略
+- 规则顺序必须先放 Google TW 规则，再放 `region/hk/global_media` 等广谱区域规则，确保优先命中台湾策略
 - 新增或调整 Google 规则时，先改该源文件，再执行构建同步 `dist/`
 
 ## 上游维护方式

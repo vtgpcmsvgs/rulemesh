@@ -60,12 +60,15 @@ merge_plan:
     notes:
       - Google 相关规则只维护在 rules/region/tw/google_tw.list，避免 proxy 与 region 双入口分叉。
 
-  - id: telegram-proxy
-    target: rules/proxy/telegram.list
-    purpose: Telegram 代理
+  - id: hk-telegram
+    target: rules/region/hk/telegram.list
+    purpose: Telegram 走香港区域策略
     strategy:
       - include_upstream_first_then_local_domain_fallback
       - include_loyalsoldier_telegram_cidr
+    notes:
+      - 香港节点一般更稳定、速度更快，适合 Telegram 大流量场景。
+      - 香港地区内容生态与支付方式更友好。
 
   - id: gfw-proxy
     target: rules/proxy/gfw.list
@@ -74,12 +77,15 @@ merge_plan:
       - include_upstream_first_then_local_core_fallback
       - include_loyalsoldier_gfw_and_tld_not_cn
 
-  - id: global-media
-    target: rules/proxy/global_media.list
-    purpose: 国际流媒体代理
+  - id: hk-global-media
+    target: rules/region/hk/global_media.list
+    purpose: 国际流媒体走香港区域策略
     strategy:
       - include_upstream_first_then_local_core_fallback
       - include_blackmatrix7_global_media
+    notes:
+      - 香港节点一般更稳定、速度更快，适合 global media 大流量场景。
+      - 香港地区内容更贴近华语用户，且支付方式更友好。
 
   - id: tw-ai
     target: rules/region/tw/ai_tw.list

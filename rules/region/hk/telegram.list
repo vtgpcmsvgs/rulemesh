@@ -1,0 +1,13 @@
+# Telegram 香港区域策略规则：上游优先，本地兜底。
+# 迁移到 region/hk 的原因：
+# 1) 香港节点一般更稳定、速度更快，适合 Telegram 和大流量场景。
+# 2) 香港地区的流媒体内容对华语用户更友好。
+# 3) 香港地区支付方式更友好。
+INCLUDE,upstream/loyalsoldier/telegramcidr.txt
+DOMAIN-KEYWORD,telegram
+DOMAIN-SUFFIX,t.me
+DOMAIN-SUFFIX,tdesktop.com
+DOMAIN-SUFFIX,telegram.me
+DOMAIN-SUFFIX,telegram.org
+DOMAIN-SUFFIX,telesco.pe
+DOMAIN-SUFFIX,tlgrm.app

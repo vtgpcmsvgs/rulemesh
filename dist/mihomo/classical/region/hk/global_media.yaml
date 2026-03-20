@@ -1,4 +1,4 @@
-# 生成来源：rules/proxy/global_media.list
+# 生成来源：rules/region/hk/global_media.list
 # 行为：classical
 payload:
   - "DOMAIN,ai.google.dev"

@@ -1,9 +1,0 @@
-# Telegram 代理规则：上游优先，本地兜底。
-INCLUDE,upstream/loyalsoldier/telegramcidr.txt
-DOMAIN-KEYWORD,telegram
-DOMAIN-SUFFIX,t.me
-DOMAIN-SUFFIX,tdesktop.com
-DOMAIN-SUFFIX,telegram.me
-DOMAIN-SUFFIX,telegram.org
-DOMAIN-SUFFIX,telesco.pe
-DOMAIN-SUFFIX,tlgrm.app

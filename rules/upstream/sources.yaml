@@ -59,26 +59,26 @@ sources:
         - repo: blackmatrix7/ios_rule_script
           note: 负责 Bilibili.list 补充
   proxy:
-    telegram.list:
-      preferred:
-        - repo: self
-          note: 保留域名入口在高优先级
-        - repo: Loyalsoldier/surge-rules
-          note: 负责 telegramcidr.txt 补充
     gfw.list:
       preferred:
         - repo: self
           note: 保留少量高频站点在高优先级
         - repo: Loyalsoldier/surge-rules
           note: 负责 gfw.txt 与 tld-not-cn.txt 主体
-    global_media.list:
-      preferred:
-        - repo: self
-          note: 保留少量常用流媒体入口
-        - repo: blackmatrix7/ios_rule_script
-          note: 负责 GlobalMedia.list 主体
 
   region:
+    hk/global_media.list:
+      preferred:
+        - repo: self
+          note: 统一走香港区域策略；香港节点更稳更快，流媒体内容与支付方式也更友好
+        - repo: blackmatrix7/ios_rule_script
+          note: 负责 GlobalMedia.list 主体
+    hk/telegram.list:
+      preferred:
+        - repo: self
+          note: 统一走香港区域策略；香港节点更稳更快，适合 Telegram 大流量场景
+        - repo: Loyalsoldier/surge-rules
+          note: 负责 telegramcidr.txt 补充
     tw/ai_tw.list:
       preferred:
         - repo: self

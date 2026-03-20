@@ -52,10 +52,10 @@ rule-providers:
 1. 设备规则
 2. 拒绝规则
 3. 区域规则
-4. 直连 / 代理
+4. 直连 / 香港区域
 5. `MATCH`
 
-注意：`region/tw/google_tw.yaml` 对应的规则需要放在 `proxy/global_media.yaml` 等广谱代理规则之前，确保 Google 优先命中 TW。
+注意：`region/tw/google_tw.yaml` 对应的规则需要放在 `region/hk/global_media.yaml` 等广谱区域规则之前，确保 Google 优先命中 TW。
 
 一个最小可用示例：
 
@@ -117,20 +117,20 @@ rule-providers:
     url: https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/direct/cn_direct.yaml
     interval: 86400
 
-  global-media-classical:
+  hk-global-media-classical:
     type: http
     behavior: classical
     format: yaml
-    path: ./rule-providers/proxy/global_media.yaml
-    url: https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/proxy/global_media.yaml
+    path: ./rule-providers/region/hk/global_media.yaml
+    url: https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/hk/global_media.yaml
     interval: 86400
 
-  telegram-classical:
+  hk-telegram-classical:
     type: http
     behavior: classical
     format: yaml
-    path: ./rule-providers/proxy/telegram.yaml
-    url: https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/proxy/telegram.yaml
+    path: ./rule-providers/region/hk/telegram.yaml
+    url: https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/hk/telegram.yaml
     interval: 86400
 
   aws-hk-classical:
@@ -193,8 +193,8 @@ rules:
   - RULE-SET,microsoft-classical,DIRECT
   - RULE-SET,cn-direct-classical,DIRECT
 
-  - RULE-SET,global-media-classical,PROXY
-  - RULE-SET,telegram-classical,PROXY
+  - RULE-SET,hk-global-media-classical,HK-AUTO
+  - RULE-SET,hk-telegram-classical,HK-AUTO
 
   - RULE-SET,aws-hk-classical,HK-AUTO,no-resolve
   - RULE-SET,aws-tokyo-classical,TOKYO-AUTO,no-resolve

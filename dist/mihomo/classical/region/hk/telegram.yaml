@@ -1,4 +1,4 @@
-# 生成来源：rules/proxy/telegram.list
+# 生成来源：rules/region/hk/telegram.list
 # 行为：classical
 payload:
   - "IP-CIDR,91.105.192.0/23"

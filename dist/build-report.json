@@ -165,32 +165,6 @@
       }
     },
     {
-      "source": "rules/proxy/global_media.list",
-      "category": "proxy",
-      "classification": "classical/mixed",
-      "counts": {
-        "surge_rules": 2265,
-        "mihomo_classical": 2265
-      },
-      "dist": {
-        "surge_rules": "dist/surge/rules/proxy/global_media.list",
-        "mihomo_classical": "dist/mihomo/classical/proxy/global_media.yaml"
-      }
-    },
-    {
-      "source": "rules/proxy/telegram.list",
-      "category": "proxy",
-      "classification": "classical/mixed",
-      "counts": {
-        "surge_rules": 19,
-        "mihomo_classical": 19
-      },
-      "dist": {
-        "surge_rules": "dist/surge/rules/proxy/telegram.list",
-        "mihomo_classical": "dist/mihomo/classical/proxy/telegram.yaml"
-      }
-    },
-    {
       "source": "rules/region/hk/aws_ipv4.list",
       "category": "region",
       "classification": "ipcidr-only",
@@ -201,6 +175,32 @@
       "dist": {
         "surge_rules": "dist/surge/rules/region/hk/aws_ipv4.list",
         "mihomo_classical": "dist/mihomo/classical/region/hk/aws_ipv4.yaml"
+      }
+    },
+    {
+      "source": "rules/region/hk/global_media.list",
+      "category": "region",
+      "classification": "classical/mixed",
+      "counts": {
+        "surge_rules": 2265,
+        "mihomo_classical": 2265
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/region/hk/global_media.list",
+        "mihomo_classical": "dist/mihomo/classical/region/hk/global_media.yaml"
+      }
+    },
+    {
+      "source": "rules/region/hk/telegram.list",
+      "category": "region",
+      "classification": "classical/mixed",
+      "counts": {
+        "surge_rules": 19,
+        "mihomo_classical": 19
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/region/hk/telegram.list",
+        "mihomo_classical": "dist/mihomo/classical/region/hk/telegram.yaml"
       }
     },
     {
