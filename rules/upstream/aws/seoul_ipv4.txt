@@ -1,7 +1,7 @@
 # Generated from https://ip-ranges.amazonaws.com/ip-ranges.json
 # title: AWS Seoul IPv4 (ap-northeast-2)
-# syncToken: 1773873485
-# createDate: 2026-03-18-22-38-05
+# syncToken: 1773961085
+# createDate: 2026-03-19-22-58-05
 # regions: ap-northeast-2
 # services: all published IPv4 prefixes for the listed AWS regions
 # total IPv4 prefixes: 177
