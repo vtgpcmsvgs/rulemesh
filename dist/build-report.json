@@ -2,90 +2,12 @@
   "summary": {
     "domain-only": 3,
     "ipcidr-only": 6,
-    "classical/mixed": 20,
+    "classical/mixed": 14,
     "empty": 0,
-    "total_sources": 29,
+    "total_sources": 23,
     "total_warnings": 1
   },
   "sources": [
-    {
-      "source": "rules/device/srcip_pc01.list",
-      "category": "device",
-      "classification": "classical/mixed",
-      "counts": {
-        "surge_rules": 1,
-        "mihomo_classical": 1
-      },
-      "dist": {
-        "surge_rules": "dist/surge/rules/device/srcip_pc01.list",
-        "mihomo_classical": "dist/mihomo/classical/device/srcip_pc01.yaml"
-      }
-    },
-    {
-      "source": "rules/device/srcip_pc02.list",
-      "category": "device",
-      "classification": "classical/mixed",
-      "counts": {
-        "surge_rules": 1,
-        "mihomo_classical": 1
-      },
-      "dist": {
-        "surge_rules": "dist/surge/rules/device/srcip_pc02.list",
-        "mihomo_classical": "dist/mihomo/classical/device/srcip_pc02.yaml"
-      }
-    },
-    {
-      "source": "rules/device/srcip_pc03.list",
-      "category": "device",
-      "classification": "classical/mixed",
-      "counts": {
-        "surge_rules": 1,
-        "mihomo_classical": 1
-      },
-      "dist": {
-        "surge_rules": "dist/surge/rules/device/srcip_pc03.list",
-        "mihomo_classical": "dist/mihomo/classical/device/srcip_pc03.yaml"
-      }
-    },
-    {
-      "source": "rules/device/srcip_pc04.list",
-      "category": "device",
-      "classification": "classical/mixed",
-      "counts": {
-        "surge_rules": 1,
-        "mihomo_classical": 1
-      },
-      "dist": {
-        "surge_rules": "dist/surge/rules/device/srcip_pc04.list",
-        "mihomo_classical": "dist/mihomo/classical/device/srcip_pc04.yaml"
-      }
-    },
-    {
-      "source": "rules/device/srcip_pc05.list",
-      "category": "device",
-      "classification": "classical/mixed",
-      "counts": {
-        "surge_rules": 1,
-        "mihomo_classical": 1
-      },
-      "dist": {
-        "surge_rules": "dist/surge/rules/device/srcip_pc05.list",
-        "mihomo_classical": "dist/mihomo/classical/device/srcip_pc05.yaml"
-      }
-    },
-    {
-      "source": "rules/device/srcip_pc06.list",
-      "category": "device",
-      "classification": "classical/mixed",
-      "counts": {
-        "surge_rules": 1,
-        "mihomo_classical": 1
-      },
-      "dist": {
-        "surge_rules": "dist/surge/rules/device/srcip_pc06.list",
-        "mihomo_classical": "dist/mihomo/classical/device/srcip_pc06.yaml"
-      }
-    },
     {
       "source": "rules/direct/aliyun_ssh_direct.list",
       "category": "direct",

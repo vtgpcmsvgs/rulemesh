@@ -17,7 +17,6 @@ rules/
   direct/      # 直连类源规则
   proxy/       # 代理类源规则
   region/      # 区域策略类源规则
-  device/      # 局域网设备源地址规则
   upstream/    # 上游来源登记与未来合并模板
 
 dist/
@@ -97,7 +96,6 @@ python tools/build_rules.py
 - 上游来源只作为参考素材，不直接暴露给客户端
 - 统一输出显式规则行，不再生成额外的客户端专用精简产物
 - 域名规则、CIDR 规则、关键词规则都通过 `RULE-SET` / `behavior: classical` 接入
-- 设备源地址规则统一走 `rules/device/`
 
 ## Google 路由强约束
 
@@ -121,7 +119,7 @@ python tools/build_rules.py
 ## 维护建议
 
 - 优先改 `rules/`，不要直接手改 `dist/`
-- 新增规则前，先想清楚它是 `reject`、`direct`、`proxy`、`region` 还是 `device`
+- 新增规则前，先想清楚它是 `reject`、`direct`、`proxy` 还是 `region`
 - 如果一个源文件开始变得很大，优先补 `sources.yaml` 与 `merge.yaml`，再考虑引入更多上游素材
 - 提交前看一眼 `dist/build-report.json` 的 warnings，特别是 Mihomo 不支持的规则类型
 ## 规则方法论：上游优先 + 本地兜底

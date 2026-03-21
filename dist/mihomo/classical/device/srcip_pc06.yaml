@@ -1,4 +1,0 @@
-# 生成来源：rules/device/srcip_pc06.list
-# 行为：classical
-payload:
-  - "SRC-IP-CIDR,192.168.25.26/32"

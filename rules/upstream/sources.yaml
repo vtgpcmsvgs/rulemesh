@@ -140,29 +140,3 @@ sources:
           note: 保持源规则层 AWS 台北 IPv4 的单一 INCLUDE 入口稳定。
         - repo: AWS ip-ranges.json
           note: 每日同步全部 ap-east-2 IPv4 前缀到 rules/upstream/aws/taipei_ipv4.txt
-
-  device:
-    srcip_pc01.list:
-      preferred:
-        - repo: self
-          note: 来自当前局域网设备源地址映射
-    srcip_pc02.list:
-      preferred:
-        - repo: self
-          note: 来自当前局域网设备源地址映射
-    srcip_pc03.list:
-      preferred:
-        - repo: self
-          note: 来自当前局域网设备源地址映射
-    srcip_pc04.list:
-      preferred:
-        - repo: self
-          note: 来自当前局域网设备源地址映射
-    srcip_pc05.list:
-      preferred:
-        - repo: self
-          note: 来自当前局域网设备源地址映射
-    srcip_pc06.list:
-      preferred:
-        - repo: self
-          note: 来自当前局域网设备源地址映射

@@ -20,7 +20,7 @@ import sync_upstream_rules
 ROOT = Path(__file__).resolve().parents[1]
 RULES_ROOT = ROOT / "rules"
 DIST_ROOT = ROOT / "dist"
-SOURCE_GROUPS = ("reject", "direct", "proxy", "region", "device")
+SOURCE_GROUPS = ("reject", "direct", "proxy", "region")
 AWS_UPSTREAM_BOOTSTRAP_PATH = RULES_ROOT / "upstream" / "aws" / "ip-ranges.json"
 DOMAIN_CHARS = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._")
 DOMAIN_WILDCARD_CHARS = DOMAIN_CHARS | set("*?+")
@@ -113,7 +113,7 @@ def validate_source_files(files: Iterable[Path]) -> None:
     if invalid:
         joined = ", ".join(f"rules/{item}" for item in invalid)
         raise BuildError(
-            "rules/{reject,direct,proxy,region,device} 下的源文件"
+            "rules/{reject,direct,proxy,region} 下的源文件"
             f"都必须使用 .list 扩展名：{joined}"
         )
 

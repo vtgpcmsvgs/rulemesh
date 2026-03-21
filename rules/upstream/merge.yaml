@@ -181,12 +181,3 @@ merge_plan:
     strategy:
       - keep_small_and_readable
       - manual_only
-
-  - id: device-srcip
-    target: rules/device/srcip_pc01.list ~ rules/device/srcip_pc06.list
-    purpose: 局域网设备源地址绑定
-    strategy:
-      - manual_single_source_of_truth
-      - one_device_one_file
-    notes:
-      - 不建议从第三方拉取，直接维护本地源地址即可

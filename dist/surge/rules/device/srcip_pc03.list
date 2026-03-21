@@ -1,5 +1,0 @@
-# 生成来源：rules/device/srcip_pc03.list
-# 类型：rules
-# 请勿直接编辑 dist。
-
-SRC-IP,192.168.25.23/32
