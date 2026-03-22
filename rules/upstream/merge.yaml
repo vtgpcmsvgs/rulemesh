@@ -51,6 +51,17 @@ merge_plan:
       - include_upstream_first_then_local_domain_fallback
       - include_blackmatrix7_netease_music
 
+  - id: alicloud-hk-ssh-direct
+    target: rules/direct/alicloud_hk_ssh_direct.list
+    purpose: 阿里云香港 SSH TCP/22 直连入口
+    strategy:
+      - keep_source_file_as_single_include
+      - sync_alicloud_cn_hongkong_ipv4_daily_via_official_openapi
+      - derive_ssh_tcp_22_rules_from_official_ipv4_prefixes
+    notes:
+      - 数据源为阿里云官方 VPC OpenAPI DescribePublicIpAddress
+      - 首次同步需要具备该接口读取权限的 AccessKey 或 STS 临时凭证
+
   - id: google-tw
     target: rules/region/tw/google_tw.list
     purpose: Google / YouTube / Gemini 统一走台湾策略
@@ -110,16 +121,6 @@ merge_plan:
     strategy:
       - keep_source_file_as_single_include
       - sync_aws_ap_east_1_ipv4_daily
-
-  - id: alicloud-hk-ipv4
-    target: rules/region/hk/alicloud_ipv4.list
-    purpose: 阿里云香港 IPv4 路由入口
-    strategy:
-      - keep_source_file_as_single_include
-      - sync_alicloud_cn_hongkong_ipv4_daily_via_official_openapi
-    notes:
-      - 数据源为阿里云官方 VPC OpenAPI DescribePublicIpAddress
-      - 首次同步需要具备该接口读取权限的 AccessKey 或 STS 临时凭证
 
   - id: aws-tokyo-ipv4
     target: rules/region/jp/tokyo_aws_ipv4.list

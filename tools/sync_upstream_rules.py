@@ -58,6 +58,7 @@ class AlicloudCredentials:
 @dataclass(frozen=True)
 class AlicloudRegionSnapshot:
     path: Path
+    ssh_path: Path
     metadata_path: Path
     region_id: str
     endpoint: str
@@ -163,6 +164,7 @@ AWS_REGION_SNAPSHOTS = (
 ALICLOUD_REGION_SNAPSHOTS = (
     AlicloudRegionSnapshot(
         path=Path("alicloud/hk_ipv4.txt"),
+        ssh_path=Path("alicloud/hk_ssh22.txt"),
         metadata_path=Path("alicloud/hk_ipv4.json"),
         region_id="cn-hongkong",
         endpoint="vpc.cn-hongkong.aliyuncs.com",
@@ -585,11 +587,46 @@ def build_alicloud_snapshot_text(
     return "\n".join(lines)
 
 
+def build_alicloud_ssh_snapshot_text(
+    payload: dict[str, Any],
+    snapshot: AlicloudRegionSnapshot,
+) -> str:
+    prefixes = ordered_unique(
+        [
+            item.strip()
+            for item in payload.get("publicIpAddress", [])
+            if isinstance(item, str) and item.strip()
+        ]
+    )
+    synced_at = str(payload.get("syncedAt", "unknown"))
+    reported_total_count = payload.get("reportedTotalCount", len(prefixes))
+    page_count = payload.get("pageCount", "unknown")
+
+    lines = [
+        f"# Source doc: {ALICLOUD_PUBLIC_IP_DOC_URL}",
+        f"# Endpoint doc: {ALICLOUD_VPC_ENDPOINT_DOC_URL}",
+        f"# API: {ALICLOUD_ACTION}",
+        f"# Title: {snapshot.title} SSH TCP/22 direct rules",
+        f"# Endpoint: {snapshot.endpoint}",
+        f"# Region: {snapshot.region_id}",
+        "# Scope: all official Alibaba Cloud Hong Kong public IPv4 prefixes converted to SSH TCP/22 rules.",
+        "# Derived from: alicloud/hk_ipv4.txt",
+        f"# Synced at: {synced_at}",
+        f"# Pages fetched: {page_count}",
+        f"# Reported total count: {reported_total_count}",
+        f"# SSH rule count: {len(prefixes)}",
+        "",
+    ]
+    lines.extend(f"AND,((IP-CIDR,{prefix}),(DST-PORT,22))" for prefix in prefixes)
+    lines.append("")
+    return "\n".join(lines)
+
+
 def sync_alicloud_snapshots() -> tuple[int, int]:
     credentials = resolve_alicloud_credentials()
     if credentials is None:
         print(
-            "[WARN] alicloud/hk_ipv4.txt skipped: missing credentials. "
+            "[WARN] alicloud/hk_ipv4.txt and alicloud/hk_ssh22.txt skipped: missing credentials. "
             "Set RULEMESH_ALICLOUD_ACCESS_KEY_ID and "
             "RULEMESH_ALICLOUD_ACCESS_KEY_SECRET (or the standard Alibaba Cloud env vars)."
         )
@@ -619,6 +656,13 @@ def sync_alicloud_snapshots() -> tuple[int, int]:
             changed += 1
         else:
             print(f"[SKIP] {snapshot.path.as_posix()}")
+
+        ssh_snapshot_text = build_alicloud_ssh_snapshot_text(payload, snapshot)
+        if write_if_changed(UPSTREAM_ROOT / snapshot.ssh_path, ssh_snapshot_text):
+            print(f"[UPDATE] {snapshot.ssh_path.as_posix()}")
+            changed += 1
+        else:
+            print(f"[SKIP] {snapshot.ssh_path.as_posix()}")
 
     return changed, failed
 

@@ -1,4 +1,0 @@
-# Alibaba Cloud Hong Kong IPv4 prefixes.
-# Region mapping: cn-hongkong = China (Hong Kong).
-# Upstream snapshot is refreshed from the official VPC DescribePublicIpAddress API.
-INCLUDE,upstream/alicloud/hk_ipv4.txt

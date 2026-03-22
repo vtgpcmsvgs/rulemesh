@@ -34,6 +34,12 @@ sources:
           note: 保留 DOMAIN-SUFFIX,cn 与 GEOIP,CN 等高优先级兜底
         - repo: Loyalsoldier/surge-rules
           note: 负责 direct.txt 与 cncidr.txt，尽量保证国内站点直连
+    alicloud_hk_ssh_direct.list:
+      preferred:
+        - repo: self
+          note: 保持阿里云香港 SSH TCP/22 直连入口稳定，源规则只保留单一 INCLUDE
+        - repo: Alibaba Cloud DescribePublicIpAddress
+          note: 每日同步 cn-hongkong 的全部公网 IPv4 前缀到 rules/upstream/alicloud/hk_ipv4.txt，并派生 SSH 22 直连规则到 rules/upstream/alicloud/hk_ssh22.txt
     microsoft_direct.list:
       preferred:
         - repo: self
@@ -112,12 +118,6 @@ sources:
           note: 保持源规则层 AWS 香港 IPv4 的单一 INCLUDE 入口稳定
         - repo: AWS ip-ranges.json
           note: 每日同步全部 ap-east-1 IPv4 前缀到 rules/upstream/aws/hk_ipv4.txt
-    hk/alicloud_ipv4.list:
-      preferred:
-        - repo: self
-          note: 保持源规则层阿里云香港 IPv4 的单一 INCLUDE 入口稳定
-        - repo: Alibaba Cloud DescribePublicIpAddress
-          note: 通过官方 VPC OpenAPI 每日同步 cn-hongkong 的全部公网 IPv4 前缀到 rules/upstream/alicloud/hk_ipv4.txt
     jp/tokyo_aws_ipv4.list:
       preferred:
         - repo: self

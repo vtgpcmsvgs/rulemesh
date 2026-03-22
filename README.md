@@ -89,7 +89,7 @@ python tools/build_rules.py
 - [docs/usage-surge.md](docs/usage-surge.md)
 - [docs/usage-mihomo.md](docs/usage-mihomo.md)
 - [docs/aws-region-rules.md](docs/aws-region-rules.md)
-- [docs/alicloud-region-rules.md](docs/alicloud-region-rules.md)
+- [docs/alicloud-direct-rules.md](docs/alicloud-direct-rules.md)
 
 ## 当前设计原则
 

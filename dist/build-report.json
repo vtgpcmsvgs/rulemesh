@@ -1,13 +1,26 @@
 {
   "summary": {
     "domain-only": 3,
-    "ipcidr-only": 7,
-    "classical/mixed": 13,
+    "ipcidr-only": 6,
+    "classical/mixed": 14,
     "empty": 0,
     "total_sources": 23,
     "total_warnings": 0
   },
   "sources": [
+    {
+      "source": "rules/direct/alicloud_hk_ssh_direct.list",
+      "category": "direct",
+      "classification": "classical/mixed",
+      "counts": {
+        "surge_rules": 834,
+        "mihomo_classical": 834
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/direct/alicloud_hk_ssh_direct.list",
+        "mihomo_classical": "dist/mihomo/classical/direct/alicloud_hk_ssh_direct.yaml"
+      }
+    },
     {
       "source": "rules/direct/bilibili_direct.list",
       "category": "direct",
@@ -84,19 +97,6 @@
       "dist": {
         "surge_rules": "dist/surge/rules/proxy/gfw.list",
         "mihomo_classical": "dist/mihomo/classical/proxy/gfw.yaml"
-      }
-    },
-    {
-      "source": "rules/region/hk/alicloud_ipv4.list",
-      "category": "region",
-      "classification": "ipcidr-only",
-      "counts": {
-        "surge_rules": 834,
-        "mihomo_classical": 834
-      },
-      "dist": {
-        "surge_rules": "dist/surge/rules/region/hk/alicloud_ipv4.list",
-        "mihomo_classical": "dist/mihomo/classical/region/hk/alicloud_ipv4.yaml"
       }
     },
     {

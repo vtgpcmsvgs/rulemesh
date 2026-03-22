@@ -664,10 +664,10 @@ def alicloud_snapshots_need_sync() -> bool:
     if not sync_upstream_rules.has_alicloud_credentials():
         return False
 
-    expected_snapshot_paths = [
-        RULES_ROOT / "upstream" / snapshot.path
-        for snapshot in sync_upstream_rules.ALICLOUD_REGION_SNAPSHOTS
-    ]
+    expected_snapshot_paths: list[Path] = []
+    for snapshot in sync_upstream_rules.ALICLOUD_REGION_SNAPSHOTS:
+        expected_snapshot_paths.append(RULES_ROOT / "upstream" / snapshot.path)
+        expected_snapshot_paths.append(RULES_ROOT / "upstream" / snapshot.ssh_path)
     for path in expected_snapshot_paths:
         if not path.exists():
             return True
