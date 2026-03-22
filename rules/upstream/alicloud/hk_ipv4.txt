@@ -5,7 +5,7 @@
 # Endpoint: vpc.cn-hongkong.aliyuncs.com
 # Region: cn-hongkong
 # Scope: all VPC public IPv4 CIDR blocks returned by the official Alibaba Cloud API.
-# Synced at: 2026-03-22T12:39:47+00:00
+# Synced at: 2026-03-22T12:45:54+00:00
 # Pages fetched: 9
 # Reported total count: 834
 # IPv4 prefix count: 834
