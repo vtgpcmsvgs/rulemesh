@@ -78,14 +78,15 @@ function Resolve-PythonCommand {
 
 $python = Resolve-PythonCommand
 $env:PYTHONUTF8 = "1"
+$env:PYTHONDONTWRITEBYTECODE = "1"
 
 Write-Host ("[build_rules.ps1] 使用 {0}: {1}" -f $python.Label, $python.Value)
 
 if ($python.Kind -eq "Launcher") {
-    & $python.Value -3 -X utf8 $pythonScript @ScriptArgs
+    & $python.Value -3 -B -X utf8 $pythonScript @ScriptArgs
 }
 else {
-    & $python.Value -X utf8 $pythonScript @ScriptArgs
+    & $python.Value -B -X utf8 $pythonScript @ScriptArgs
 }
 
 exit $LASTEXITCODE

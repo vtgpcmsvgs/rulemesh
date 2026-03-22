@@ -1,14 +1,14 @@
-# Source doc: https://help.aliyun.com/zh/eip/developer-reference/api-vpc-2016-04-28-describepublicipaddress-eips
-# Endpoint doc: https://www.alibabacloud.com/help/en/vpc/developer-reference/api-vpc-2016-04-28-endpoint
+# 来源文档: https://help.aliyun.com/zh/eip/developer-reference/api-vpc-2016-04-28-describepublicipaddress-eips
+# 终端节点文档: https://www.alibabacloud.com/help/en/vpc/developer-reference/api-vpc-2016-04-28-endpoint
 # API: DescribePublicIpAddress
-# Title: Alibaba Cloud Hong Kong IPv4 (cn-hongkong)
-# Endpoint: vpc.cn-hongkong.aliyuncs.com
-# Region: cn-hongkong
-# Scope: all VPC public IPv4 CIDR blocks returned by the official Alibaba Cloud API.
-# Synced at: 2026-03-22T12:45:54+00:00
-# Pages fetched: 9
-# Reported total count: 834
-# IPv4 prefix count: 834
+# 标题: 阿里云香港 IPv4（cn-hongkong）
+# 终端节点: vpc.cn-hongkong.aliyuncs.com
+# 区域: cn-hongkong
+# 范围: 官方阿里云 API 返回的全部 VPC 公网 IPv4 CIDR 前缀。
+# 同步时间: 2026-03-22T12:45:54+00:00
+# 抓取页数: 9
+# 上游总数: 834
+# IPv4 前缀数量: 834
 
 103.142.100.0/24
 103.142.101.0/24

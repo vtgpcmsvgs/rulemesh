@@ -7,6 +7,7 @@ import argparse
 import ipaddress
 import json
 import os
+import re
 import shutil
 import sys
 from collections import OrderedDict
@@ -54,6 +55,13 @@ SUPPORTED_CLASSICAL_TOKENS = {
     "URL-REGEX",
     "MATCH",
 }
+COMMENT_MARKERS = ("//", "#", ";")
+COMMENTED_RULE_PREFIXES = tuple(sorted((*SUPPORTED_CLASSICAL_TOKENS, "INCLUDE")))
+CJK_RE = re.compile(r"[\u3400-\u4dbf\u4e00-\u9fff]")
+ASCII_WORD_RE = re.compile(r"[A-Za-z]+")
+COMMENTED_RULE_RE = re.compile(
+    r"^(?:" + "|".join(re.escape(token) for token in COMMENTED_RULE_PREFIXES) + r"),"
+)
 
 
 @dataclass
@@ -201,6 +209,66 @@ def expand_source_lines(path: Path, stack: tuple[Path, ...] = ()) -> list[Source
 def is_comment_or_blank(raw: str) -> bool:
     stripped = raw.strip()
     return not stripped or stripped.startswith("#") or stripped.startswith(";") or stripped.startswith("//")
+
+
+def extract_comment_body(raw: str) -> str | None:
+    stripped = raw.strip()
+    for marker in COMMENT_MARKERS:
+        if stripped.startswith(marker):
+            return stripped[len(marker) :].strip()
+    return None
+
+
+def detect_non_chinese_comment(raw: str) -> str | None:
+    body = extract_comment_body(raw)
+    if not body:
+        return None
+
+    if CJK_RE.search(body):
+        return None
+
+    normalized = body.lstrip("-* ").strip()
+    if not normalized:
+        return None
+    if normalized.startswith(("http://", "https://", "===", "---")):
+        return None
+    if COMMENTED_RULE_RE.match(normalized):
+        return None
+    if not ASCII_WORD_RE.search(normalized):
+        return None
+    return body
+
+
+def find_non_chinese_comment_lines(path: Path) -> list[tuple[int, str]]:
+    violations: list[tuple[int, str]] = []
+    for line_no, raw in enumerate(read_text(path).splitlines(), start=1):
+        comment_body = detect_non_chinese_comment(raw)
+        if comment_body is not None:
+            violations.append((line_no, comment_body))
+    return violations
+
+
+def validate_source_comment_language(files: Iterable[Path]) -> None:
+    violations: list[str] = []
+    for path in files:
+        for line_no, comment_body in find_non_chinese_comment_lines(path):
+            violations.append(
+                f"{repo_relative_path(path)}:{line_no} 注释必须使用中文：{comment_body}"
+            )
+
+    if not violations:
+        return
+
+    preview = "\n".join(f"- {item}" for item in violations[:20])
+    remainder = len(violations) - 20
+    suffix = ""
+    if remainder > 0:
+        suffix = f"\n- 其余 {remainder} 处请在仓库中继续修正"
+    raise BuildError(
+        "rules/ 源规则中的自写注释必须使用中文。\n"
+        "请将英文说明改为中文后再重新构建：\n"
+        f"{preview}{suffix}"
+    )
 
 
 def is_domain_literal(value: str) -> bool:
@@ -501,7 +569,6 @@ def classify_file(source_types: list[str]) -> str:
 def build_source(path: Path) -> SourceBuildResult:
     relative = path.relative_to(RULES_ROOT)
     category = relative.parts[0]
-    source_label = Path("rules") / relative
     source_types: list[str] = []
     warnings: list[str] = []
 
@@ -587,6 +654,7 @@ def build_report(results: list[SourceBuildResult], path_map: dict[str, dict[str,
 def run_build() -> int:
     source_files = iter_source_files()
     validate_source_files(source_files)
+    validate_source_comment_language(source_files)
 
     reset_output_roots()
     results: list[SourceBuildResult] = []

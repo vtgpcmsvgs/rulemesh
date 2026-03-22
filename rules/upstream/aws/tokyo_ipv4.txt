@@ -1,11 +1,11 @@
-# Source: https://ip-ranges.amazonaws.com/ip-ranges.json
-# Title: AWS Tokyo IPv4 (ap-northeast-1)
-# Sync token: 1774058284
-# Upstream create date: 2026-03-21-01-58-04
-# Regions: ap-northeast-1
-# Scope: all published IPv4 prefixes returned for the selected AWS region(s).
-# IPv4 prefix count: 293
-# ap-northeast-1: 293 prefix(es)
+# 来源: https://ip-ranges.amazonaws.com/ip-ranges.json
+# 标题: AWS 东京 IPv4（ap-northeast-1）
+# 同步令牌: 1774058284
+# 上游创建时间: 2026-03-21-01-58-04
+# 区域: ap-northeast-1
+# 范围: 所选 AWS 区域公开发布的全部 IPv4 前缀。
+# IPv4 前缀数量: 293
+# ap-northeast-1: 293 条前缀
 
 69.107.12.24/29
 15.221.34.0/24

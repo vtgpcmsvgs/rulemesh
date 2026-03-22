@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: upstream-sync
     env:
+      PYTHONDONTWRITEBYTECODE: "1"
       RULEMESH_ALICLOUD_ACCESS_KEY_ID: ${{ secrets.RULEMESH_ALICLOUD_ACCESS_KEY_ID }}
       RULEMESH_ALICLOUD_ACCESS_KEY_SECRET: ${{ secrets.RULEMESH_ALICLOUD_ACCESS_KEY_SECRET }}
       RULEMESH_ALICLOUD_SECURITY_TOKEN: ${{ secrets.RULEMESH_ALICLOUD_SECURITY_TOKEN }}
@@ -25,11 +26,14 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: 运行单元测试
+        run: python -m unittest discover -s tests -p "test_*.py"
+
       - name: 同步上游快照
-        run: python tools/sync_upstream_rules.py
+        run: python -B tools/sync_upstream_rules.py
 
       - name: 构建 dist
-        run: python tools/build_rules.py
+        run: python -B tools/build_rules.py
 
       - name: 上传 dist 构建产物
         uses: actions/upload-artifact@v4

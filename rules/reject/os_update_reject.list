@@ -3,12 +3,12 @@
 # 1) 强主观规则，保持本地手工维护，不走上游订阅
 # 2) 仅覆盖系统更新链路，避免扩展到通用生态域名
 
-# Windows Update
+# Windows 系统更新
 DOMAIN-WILDCARD,*.windowsupdate.microsoft.com
 DOMAIN-WILDCARD,*.update.microsoft.com
 DOMAIN-WILDCARD,*.windowsupdate.com
 
-# Apple Software Update (macOS / iOS / iPadOS)
+# Apple 系统更新（macOS / iOS / iPadOS）
 DOMAIN,gdmf.apple.com
 DOMAIN,mesu.apple.com
 DOMAIN,swscan.apple.com

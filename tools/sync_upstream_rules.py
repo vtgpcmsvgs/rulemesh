@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sync selected upstream rule snapshots into rules/upstream/."""
+"""将选定的上游规则快照同步到 rules/upstream/。"""
 
 from __future__ import annotations
 
@@ -137,27 +137,27 @@ AWS_REGION_SNAPSHOTS = (
     AwsRegionSnapshot(
         path=Path("aws/hk_ipv4.txt"),
         regions=("ap-east-1",),
-        title="AWS Hong Kong IPv4 (ap-east-1)",
+        title="AWS 香港 IPv4（ap-east-1）",
     ),
     AwsRegionSnapshot(
         path=Path("aws/tokyo_ipv4.txt"),
         regions=("ap-northeast-1",),
-        title="AWS Tokyo IPv4 (ap-northeast-1)",
+        title="AWS 东京 IPv4（ap-northeast-1）",
     ),
     AwsRegionSnapshot(
         path=Path("aws/osaka_ipv4.txt"),
         regions=("ap-northeast-3",),
-        title="AWS Osaka IPv4 (ap-northeast-3)",
+        title="AWS 大阪 IPv4（ap-northeast-3）",
     ),
     AwsRegionSnapshot(
         path=Path("aws/seoul_ipv4.txt"),
         regions=("ap-northeast-2",),
-        title="AWS Seoul IPv4 (ap-northeast-2)",
+        title="AWS 首尔 IPv4（ap-northeast-2）",
     ),
     AwsRegionSnapshot(
         path=Path("aws/taipei_ipv4.txt"),
         regions=("ap-east-2",),
-        title="AWS Taipei IPv4 (ap-east-2)",
+        title="AWS 台北 IPv4（ap-east-2）",
     ),
 )
 
@@ -168,7 +168,7 @@ ALICLOUD_REGION_SNAPSHOTS = (
         metadata_path=Path("alicloud/hk_ipv4.json"),
         region_id="cn-hongkong",
         endpoint="vpc.cn-hongkong.aliyuncs.com",
-        title="Alibaba Cloud Hong Kong IPv4 (cn-hongkong)",
+        title="阿里云香港 IPv4（cn-hongkong）",
     ),
 )
 
@@ -287,16 +287,16 @@ def build_aws_snapshot_text(payload: dict[str, object], snapshot: AwsRegionSnaps
     create_date = str(payload.get("createDate", "unknown"))
 
     lines = [
-        f"# Source: {AWS_IP_RANGES_URL}",
-        f"# Title: {snapshot.title}",
-        f"# Sync token: {sync_token}",
-        f"# Upstream create date: {create_date}",
-        f"# Regions: {', '.join(snapshot.regions)}",
-        "# Scope: all published IPv4 prefixes returned for the selected AWS region(s).",
-        f"# IPv4 prefix count: {len(prefixes)}",
+        f"# 来源: {AWS_IP_RANGES_URL}",
+        f"# 标题: {snapshot.title}",
+        f"# 同步令牌: {sync_token}",
+        f"# 上游创建时间: {create_date}",
+        f"# 区域: {', '.join(snapshot.regions)}",
+        "# 范围: 所选 AWS 区域公开发布的全部 IPv4 前缀。",
+        f"# IPv4 前缀数量: {len(prefixes)}",
     ]
     lines.extend(
-        f"# {region}: {len(region_prefixes)} prefix(es)"
+        f"# {region}: {len(region_prefixes)} 条前缀"
         for region, region_prefixes in per_region
     )
     lines.append("")
@@ -569,17 +569,17 @@ def build_alicloud_snapshot_text(
     page_count = payload.get("pageCount", "unknown")
 
     lines = [
-        f"# Source doc: {ALICLOUD_PUBLIC_IP_DOC_URL}",
-        f"# Endpoint doc: {ALICLOUD_VPC_ENDPOINT_DOC_URL}",
+        f"# 来源文档: {ALICLOUD_PUBLIC_IP_DOC_URL}",
+        f"# 终端节点文档: {ALICLOUD_VPC_ENDPOINT_DOC_URL}",
         f"# API: {ALICLOUD_ACTION}",
-        f"# Title: {snapshot.title}",
-        f"# Endpoint: {snapshot.endpoint}",
-        f"# Region: {snapshot.region_id}",
-        "# Scope: all VPC public IPv4 CIDR blocks returned by the official Alibaba Cloud API.",
-        f"# Synced at: {synced_at}",
-        f"# Pages fetched: {page_count}",
-        f"# Reported total count: {reported_total_count}",
-        f"# IPv4 prefix count: {len(prefixes)}",
+        f"# 标题: {snapshot.title}",
+        f"# 终端节点: {snapshot.endpoint}",
+        f"# 区域: {snapshot.region_id}",
+        "# 范围: 官方阿里云 API 返回的全部 VPC 公网 IPv4 CIDR 前缀。",
+        f"# 同步时间: {synced_at}",
+        f"# 抓取页数: {page_count}",
+        f"# 上游总数: {reported_total_count}",
+        f"# IPv4 前缀数量: {len(prefixes)}",
         "",
     ]
     lines.extend(prefixes)
@@ -603,18 +603,18 @@ def build_alicloud_ssh_snapshot_text(
     page_count = payload.get("pageCount", "unknown")
 
     lines = [
-        f"# Source doc: {ALICLOUD_PUBLIC_IP_DOC_URL}",
-        f"# Endpoint doc: {ALICLOUD_VPC_ENDPOINT_DOC_URL}",
+        f"# 来源文档: {ALICLOUD_PUBLIC_IP_DOC_URL}",
+        f"# 终端节点文档: {ALICLOUD_VPC_ENDPOINT_DOC_URL}",
         f"# API: {ALICLOUD_ACTION}",
-        f"# Title: {snapshot.title} SSH TCP/22 direct rules",
-        f"# Endpoint: {snapshot.endpoint}",
-        f"# Region: {snapshot.region_id}",
-        "# Scope: all official Alibaba Cloud Hong Kong public IPv4 prefixes converted to SSH TCP/22 rules.",
-        "# Derived from: alicloud/hk_ipv4.txt",
-        f"# Synced at: {synced_at}",
-        f"# Pages fetched: {page_count}",
-        f"# Reported total count: {reported_total_count}",
-        f"# SSH rule count: {len(prefixes)}",
+        f"# 标题: {snapshot.title} SSH TCP/22 直连规则",
+        f"# 终端节点: {snapshot.endpoint}",
+        f"# 区域: {snapshot.region_id}",
+        "# 范围: 将官方阿里云香港公网 IPv4 前缀转换为 SSH TCP/22 直连规则。",
+        "# 派生自: alicloud/hk_ipv4.txt",
+        f"# 同步时间: {synced_at}",
+        f"# 抓取页数: {page_count}",
+        f"# 上游总数: {reported_total_count}",
+        f"# SSH 规则数量: {len(prefixes)}",
         "",
     ]
     lines.extend(f"AND,((IP-CIDR,{prefix}),(DST-PORT,22))" for prefix in prefixes)

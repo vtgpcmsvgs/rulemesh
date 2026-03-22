@@ -1,11 +1,11 @@
-# Source: https://ip-ranges.amazonaws.com/ip-ranges.json
-# Title: AWS Taipei IPv4 (ap-east-2)
-# Sync token: 1774058284
-# Upstream create date: 2026-03-21-01-58-04
-# Regions: ap-east-2
-# Scope: all published IPv4 prefixes returned for the selected AWS region(s).
-# IPv4 prefix count: 45
-# ap-east-2: 45 prefix(es)
+# 来源: https://ip-ranges.amazonaws.com/ip-ranges.json
+# 标题: AWS 台北 IPv4（ap-east-2）
+# 同步令牌: 1774058284
+# 上游创建时间: 2026-03-21-01-58-04
+# 区域: ap-east-2
+# 范围: 所选 AWS 区域公开发布的全部 IPv4 前缀。
+# IPv4 前缀数量: 45
+# ap-east-2: 45 条前缀
 
 15.190.244.0/22
 16.12.80.0/24

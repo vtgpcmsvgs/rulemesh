@@ -57,6 +57,7 @@ python tools/build_rules.py
 - 自动生成 `dist/surge/rules/` 与 `dist/mihomo/classical/`
 - 将纯域名规则规范化成显式规则行，例如 `.example.com` 会输出成 `DOMAIN-SUFFIX,example.com`
 - 尝试识别 `domain-only`、`ipcidr-only`、`classical/mixed`
+- 强制校验 `rules/{reject,direct,proxy,region}/` 中的自写注释为中文；若出现纯英文注释会直接失败
 - 对不能安全转换到目标客户端格式的行输出 warning，而不是静默吞掉
 - 保证重复执行结果一致
 
@@ -72,6 +73,7 @@ python tools/build_rules.py
 仓库已新增最小 GitHub Actions 工作流：
 
 - push 到 `main` 时自动构建 `dist/`
+- push 到 `main` 时会先运行单元测试，确保中文注释约束与上游中文模板没有退化
 - 支持手动触发
 - 若 `dist/` 有差异，会自动提交构建产物
 - 这个自动回写行为定义在 [`.github/workflows/build-dist.yml`](.github/workflows/build-dist.yml)，网页端直接编辑并提交到 `main` 也会触发同一个工作流
@@ -123,6 +125,7 @@ python tools/build_rules.py
 - 新增规则前，先想清楚它是 `reject`、`direct`、`proxy` 还是 `region`
 - 如果一个源文件开始变得很大，优先补 `sources.yaml` 与 `merge.yaml`，再考虑引入更多上游素材
 - 提交前看一眼 `dist/build-report.json` 的 warnings，特别是 Mihomo 不支持的规则类型
+- 自写注释、生成说明、文档说明默认统一写中文，不要再放英文占位注释
 ## 规则方法论：上游优先 + 本地兜底
 
 本仓库统一采用“上游优先精准匹配 + 本地规则兜底覆盖”的编排方式：
