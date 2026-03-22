@@ -1,0 +1,6 @@
+{
+  "upstream_alert": {
+    "feishu_webhook_url": "https://open.feishu.cn/open-apis/bot/v2/hook/请替换为你自己的 webhook",
+    "feishu_secret": "请替换为你自己的签名密钥"
+  }
+}

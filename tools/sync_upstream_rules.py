@@ -33,6 +33,8 @@ ALICLOUD_VPC_ENDPOINT_DOC_URL = (
 )
 ALICLOUD_API_VERSION = "2016-04-28"
 ALICLOUD_ACTION = "DescribePublicIpAddress"
+LOCAL_CONFIG_PATH = ROOT / ".rulemesh.local.json"
+MAX_FAILURES_IN_WEBHOOK = 8
 
 
 @dataclass(frozen=True)
@@ -63,6 +65,21 @@ class AlicloudRegionSnapshot:
     region_id: str
     endpoint: str
     title: str
+
+
+@dataclass(frozen=True)
+class FeishuWebhookConfig:
+    url: str
+    secret: str | None = None
+
+
+@dataclass(frozen=True)
+class UpstreamFailure:
+    source: str
+    resource: str
+    url: str
+    category: str
+    detail: str
 
 
 UPSTREAM_FILES = (
@@ -228,13 +245,152 @@ def write_if_changed(path: Path, text: str) -> bool:
     return True
 
 
-def sync_one(item: UpstreamFile) -> tuple[bool, bool]:
+def collapse_whitespace(text: str) -> str:
+    return " ".join(text.replace("\r", "\n").split())
+
+
+def trim_text(text: str, limit: int = 240) -> str:
+    collapsed = collapse_whitespace(text)
+    if len(collapsed) <= limit:
+        return collapsed
+    if limit <= 3:
+        return collapsed[:limit]
+    return collapsed[: limit - 3] + "..."
+
+
+def format_exception_message(exc: BaseException) -> str:
+    message = trim_text(str(exc))
+    if message:
+        return message
+    return exc.__class__.__name__
+
+
+def classify_fetch_failure(exc: BaseException) -> str:
+    if isinstance(exc, urllib.error.HTTPError):
+        if exc.code in (401, 403):
+            return "鉴权失败"
+        if exc.code == 404:
+            return "上游资源不存在"
+        if exc.code >= 500:
+            return "上游服务异常"
+        return f"HTTP {exc.code} 错误"
+
+    lowered = format_exception_message(exc).lower()
+    if "timed out" in lowered or "timeout" in lowered:
+        return "请求超时"
+    if any(
+        keyword in lowered
+        for keyword in (
+            "name or service not known",
+            "temporary failure in name resolution",
+            "nodename nor servname",
+            "getaddrinfo failed",
+            "connection refused",
+            "connection reset",
+            "network is unreachable",
+            "no route to host",
+            "remote end closed connection",
+        )
+    ):
+        return "上游不可达"
+    return "抓取失败"
+
+
+def classify_alicloud_failure(exc: BaseException) -> str:
+    if isinstance(exc, (urllib.error.URLError, TimeoutError, OSError)):
+        return classify_fetch_failure(exc)
+
+    lowered = format_exception_message(exc).lower()
+    if any(
+        keyword in lowered
+        for keyword in (
+            "signature",
+            "security token",
+            "invalidaccesskeyid",
+            "forbidden",
+            "unauthorized",
+            "accesskey",
+            "authentication",
+        )
+    ) or "http 401" in lowered or "http 403" in lowered:
+        return "鉴权失败"
+    if "http 404" in lowered or "not found" in lowered:
+        return "上游资源不存在"
+    if any(keyword in lowered for keyword in ("json", "payload", "missing")):
+        return "返回内容异常"
+    return "API 返回异常"
+
+
+def record_failure(
+    failures: list[UpstreamFailure],
+    *,
+    source: str,
+    resource: str,
+    url: str,
+    category: str,
+    detail: str,
+) -> None:
+    failures.append(
+        UpstreamFailure(
+            source=source,
+            resource=resource,
+            url=url,
+            category=category,
+            detail=trim_text(detail, limit=280),
+        )
+    )
+
+
+def load_local_config() -> dict[str, Any]:
+    if not LOCAL_CONFIG_PATH.exists():
+        return {}
+
+    try:
+        raw = decode_text(LOCAL_CONFIG_PATH.read_bytes())
+    except OSError as exc:
+        print(f"[WARN] {LOCAL_CONFIG_PATH.name} read failed: {exc}", file=sys.stderr)
+        return {}
+
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        print(f"[WARN] {LOCAL_CONFIG_PATH.name} parse failed: {exc}", file=sys.stderr)
+        return {}
+
+    if not isinstance(payload, dict):
+        print(f"[WARN] {LOCAL_CONFIG_PATH.name} must contain a JSON object.", file=sys.stderr)
+        return {}
+    return payload
+
+
+def sync_one(item: UpstreamFile, failures: list[UpstreamFailure]) -> tuple[bool, bool]:
     destination = UPSTREAM_ROOT / item.path
 
     try:
         latest = fetch_text(item.url)
     except (urllib.error.URLError, TimeoutError, OSError) as exc:
         print(f"[WARN] {item.path.as_posix()} fetch failed: {exc}")
+        record_failure(
+            failures,
+            source="通用上游规则",
+            resource=item.path.as_posix(),
+            url=item.url,
+            category=classify_fetch_failure(exc),
+            detail=format_exception_message(exc),
+        )
+        return False, True
+
+    if not latest.strip():
+        detail = "上游返回空内容"
+        print(f"[WARN] {item.path.as_posix()} fetch failed: {detail}")
+        record_failure(
+            failures,
+            source="通用上游规则",
+            resource=item.path.as_posix(),
+            url=item.url,
+            category="上游内容为空",
+            detail=detail,
+        )
         return False, True
 
     if not write_if_changed(destination, latest):
@@ -305,20 +461,52 @@ def build_aws_snapshot_text(payload: dict[str, object], snapshot: AwsRegionSnaps
     return "\n".join(lines)
 
 
-def sync_aws_snapshots() -> tuple[int, int]:
+def sync_aws_snapshots(failures: list[UpstreamFailure]) -> tuple[int, int]:
     try:
         raw_text = fetch_text(AWS_IP_RANGES_URL)
     except (urllib.error.URLError, TimeoutError, OSError) as exc:
         print(f"[WARN] aws/ip-ranges.json fetch failed: {exc}")
+        record_failure(
+            failures,
+            source="AWS 官方地址池",
+            resource=AWS_JSON_PATH.as_posix(),
+            url=AWS_IP_RANGES_URL,
+            category=classify_fetch_failure(exc),
+            detail=format_exception_message(exc),
+        )
         return 0, 1
 
     try:
         payload = validate_aws_payload(json.loads(raw_text))
     except (json.JSONDecodeError, ValueError) as exc:
         print(f"[WARN] aws/ip-ranges.json parse failed: {exc}")
+        record_failure(
+            failures,
+            source="AWS 官方地址池",
+            resource=AWS_JSON_PATH.as_posix(),
+            url=AWS_IP_RANGES_URL,
+            category="返回内容异常",
+            detail=format_exception_message(exc),
+        )
+        return 0, 1
+
+    prefixes = payload.get("prefixes")
+    assert isinstance(prefixes, list)
+    if not prefixes:
+        detail = "AWS payload prefixes 数组为空"
+        print(f"[WARN] aws/ip-ranges.json parse failed: {detail}")
+        record_failure(
+            failures,
+            source="AWS 官方地址池",
+            resource=AWS_JSON_PATH.as_posix(),
+            url=AWS_IP_RANGES_URL,
+            category="上游内容为空",
+            detail=detail,
+        )
         return 0, 1
 
     changed = 0
+    failed = 0
 
     if write_if_changed(
         UPSTREAM_ROOT / AWS_JSON_PATH,
@@ -330,6 +518,21 @@ def sync_aws_snapshots() -> tuple[int, int]:
         print(f"[SKIP] {AWS_JSON_PATH.as_posix()}")
 
     for snapshot in AWS_REGION_SNAPSHOTS:
+        snapshot_prefixes, _ = collect_aws_ipv4_prefixes(payload, snapshot.regions)
+        if not snapshot_prefixes:
+            detail = f"{', '.join(snapshot.regions)} 在 AWS payload 中没有任何 IPv4 前缀"
+            print(f"[WARN] {snapshot.path.as_posix()} sync failed: {detail}")
+            record_failure(
+                failures,
+                source="AWS 区域快照",
+                resource=snapshot.path.as_posix(),
+                url=AWS_IP_RANGES_URL,
+                category="区域前缀为空",
+                detail=detail,
+            )
+            failed += 1
+            continue
+
         rendered = build_aws_snapshot_text(payload, snapshot)
         if write_if_changed(UPSTREAM_ROOT / snapshot.path, rendered):
             print(f"[UPDATE] {snapshot.path.as_posix()}")
@@ -337,7 +540,7 @@ def sync_aws_snapshots() -> tuple[int, int]:
         else:
             print(f"[SKIP] {snapshot.path.as_posix()}")
 
-    return changed, 0
+    return changed, failed
 
 
 def env_value(*names: str) -> str | None:
@@ -346,6 +549,144 @@ def env_value(*names: str) -> str | None:
         if value and value.strip():
             return value.strip()
     return None
+
+
+def resolve_feishu_webhook_config() -> FeishuWebhookConfig | None:
+    local_payload = load_local_config()
+    local_alert = local_payload.get("upstream_alert")
+    local_url = None
+    local_secret = None
+    if isinstance(local_alert, dict):
+        raw_url = local_alert.get("feishu_webhook_url")
+        raw_secret = local_alert.get("feishu_secret")
+        if isinstance(raw_url, str) and raw_url.strip():
+            local_url = raw_url.strip()
+        if isinstance(raw_secret, str) and raw_secret.strip():
+            local_secret = raw_secret.strip()
+
+    webhook_url = env_value(
+        "RULEMESH_UPSTREAM_ALERT_FEISHU_WEBHOOK_URL",
+        "RULEMESH_FEISHU_WEBHOOK_URL",
+    ) or local_url
+    if not webhook_url:
+        return None
+
+    webhook_secret = env_value(
+        "RULEMESH_UPSTREAM_ALERT_FEISHU_SECRET",
+        "RULEMESH_FEISHU_WEBHOOK_SECRET",
+    ) or local_secret
+    return FeishuWebhookConfig(url=webhook_url, secret=webhook_secret)
+
+
+def build_feishu_sign(timestamp: str, secret: str) -> str:
+    string_to_sign = f"{timestamp}\n{secret}"
+    digest = hmac.new(string_to_sign.encode("utf-8"), digestmod=hashlib.sha256).digest()
+    return base64.b64encode(digest).decode("utf-8")
+
+
+def build_feishu_webhook_payload(
+    message: str,
+    config: FeishuWebhookConfig,
+    *,
+    timestamp: str | None = None,
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "msg_type": "text",
+        "content": {"text": message},
+    }
+    if config.secret:
+        effective_timestamp = timestamp or str(int(dt.datetime.now(dt.timezone.utc).timestamp()))
+        payload["timestamp"] = effective_timestamp
+        payload["sign"] = build_feishu_sign(effective_timestamp, config.secret)
+    return payload
+
+
+def validate_feishu_webhook_response(body: str) -> None:
+    stripped = body.strip()
+    if not stripped:
+        return
+
+    try:
+        payload = json.loads(stripped)
+    except json.JSONDecodeError:
+        return
+
+    if not isinstance(payload, dict):
+        return
+
+    code = payload.get("code")
+    status_code = payload.get("StatusCode")
+    if code in (None, 0) and status_code in (None, 0):
+        return
+
+    message = payload.get("msg") or payload.get("StatusMessage") or stripped
+    raise ValueError(f"Feishu webhook returned an error: {message}")
+
+
+def send_feishu_webhook_message(
+    config: FeishuWebhookConfig,
+    message: str,
+    *,
+    timestamp: str | None = None,
+) -> None:
+    payload = build_feishu_webhook_payload(message, config, timestamp=timestamp)
+    body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    request = urllib.request.Request(
+        config.url,
+        data=body,
+        headers={
+            "Content-Type": "application/json; charset=utf-8",
+            "User-Agent": USER_AGENT,
+        },
+    )
+    with urllib.request.urlopen(request, timeout=15) as response:
+        response_body = decode_text(response.read())
+    validate_feishu_webhook_response(response_body)
+
+
+def build_upstream_failure_message(failures: list[UpstreamFailure]) -> str:
+    now_text = dt.datetime.now().astimezone().isoformat(timespec="seconds")
+    host = os.environ.get("COMPUTERNAME") or os.environ.get("HOSTNAME") or "unknown"
+
+    lines = [
+        "RuleMesh upstream 告警",
+        f"时间: {now_text}",
+        f"主机: {host}",
+        f"失败数: {len(failures)}",
+        "说明: 本次已保留旧快照，没有用异常上游结果覆盖现有文件。",
+        "",
+    ]
+
+    for index, failure in enumerate(failures[:MAX_FAILURES_IN_WEBHOOK], start=1):
+        lines.append(f"{index}. [{failure.category}] {failure.resource}")
+        lines.append(f"来源: {failure.source}")
+        lines.append(f"详情: {failure.detail}")
+        lines.append(f"URL: {failure.url}")
+        lines.append("")
+
+    remaining = len(failures) - MAX_FAILURES_IN_WEBHOOK
+    if remaining > 0:
+        lines.append(f"其余 {remaining} 项失败已省略，请查看同步日志。")
+
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def send_upstream_failure_alerts(failures: list[UpstreamFailure]) -> None:
+    if not failures:
+        return
+
+    config = resolve_feishu_webhook_config()
+    if config is None:
+        print("[WARN] upstream failures detected but Feishu webhook is not configured.", file=sys.stderr)
+        return
+
+    try:
+        send_feishu_webhook_message(config, build_upstream_failure_message(failures))
+    except (urllib.error.URLError, TimeoutError, OSError, ValueError) as exc:
+        print(f"[WARN] upstream failure webhook send failed: {exc}", file=sys.stderr)
+        return
+
+    print(f"[INFO] upstream failure webhook sent ({len(failures)} item(s)).")
 
 
 def resolve_alicloud_credentials() -> AlicloudCredentials | None:
@@ -463,6 +804,16 @@ def alicloud_rpc_get(
     return payload
 
 
+def extract_alicloud_public_ip_prefixes(payload: dict[str, Any]) -> list[str]:
+    return ordered_unique(
+        [
+            item.strip()
+            for item in payload.get("publicIpAddress", [])
+            if isinstance(item, str) and item.strip()
+        ]
+    )
+
+
 def validate_alicloud_page(
     payload: dict[str, Any],
     snapshot: AlicloudRegionSnapshot,
@@ -557,13 +908,7 @@ def build_alicloud_snapshot_text(
     payload: dict[str, Any],
     snapshot: AlicloudRegionSnapshot,
 ) -> str:
-    prefixes = ordered_unique(
-        [
-            item.strip()
-            for item in payload.get("publicIpAddress", [])
-            if isinstance(item, str) and item.strip()
-        ]
-    )
+    prefixes = extract_alicloud_public_ip_prefixes(payload)
     synced_at = str(payload.get("syncedAt", "unknown"))
     reported_total_count = payload.get("reportedTotalCount", len(prefixes))
     page_count = payload.get("pageCount", "unknown")
@@ -591,13 +936,7 @@ def build_alicloud_ssh_snapshot_text(
     payload: dict[str, Any],
     snapshot: AlicloudRegionSnapshot,
 ) -> str:
-    prefixes = ordered_unique(
-        [
-            item.strip()
-            for item in payload.get("publicIpAddress", [])
-            if isinstance(item, str) and item.strip()
-        ]
-    )
+    prefixes = extract_alicloud_public_ip_prefixes(payload)
     synced_at = str(payload.get("syncedAt", "unknown"))
     reported_total_count = payload.get("reportedTotalCount", len(prefixes))
     page_count = payload.get("pageCount", "unknown")
@@ -622,7 +961,7 @@ def build_alicloud_ssh_snapshot_text(
     return "\n".join(lines)
 
 
-def sync_alicloud_snapshots() -> tuple[int, int]:
+def sync_alicloud_snapshots(failures: list[UpstreamFailure]) -> tuple[int, int]:
     credentials = resolve_alicloud_credentials()
     if credentials is None:
         print(
@@ -640,6 +979,29 @@ def sync_alicloud_snapshots() -> tuple[int, int]:
             payload = fetch_alicloud_region_snapshot(snapshot, credentials)
         except (urllib.error.URLError, TimeoutError, OSError, ValueError) as exc:
             print(f"[WARN] {snapshot.path.as_posix()} sync failed: {exc}")
+            record_failure(
+                failures,
+                source="阿里云官方 API",
+                resource=snapshot.path.as_posix(),
+                url=f"https://{snapshot.endpoint}/",
+                category=classify_alicloud_failure(exc),
+                detail=format_exception_message(exc),
+            )
+            failed += 1
+            continue
+
+        prefixes = extract_alicloud_public_ip_prefixes(payload)
+        if not prefixes:
+            detail = f"{snapshot.region_id} 返回的 publicIpAddress 为空"
+            print(f"[WARN] {snapshot.path.as_posix()} sync failed: {detail}")
+            record_failure(
+                failures,
+                source="阿里云官方 API",
+                resource=snapshot.path.as_posix(),
+                url=f"https://{snapshot.endpoint}/",
+                category="上游内容为空",
+                detail=detail,
+            )
             failed += 1
             continue
 
@@ -670,19 +1032,23 @@ def sync_alicloud_snapshots() -> tuple[int, int]:
 def main() -> int:
     changed = 0
     failed = 0
+    failures: list[UpstreamFailure] = []
 
     for item in UPSTREAM_FILES:
-        updated, fetch_failed = sync_one(item)
+        updated, fetch_failed = sync_one(item, failures)
         changed += int(updated)
         failed += int(fetch_failed)
 
-    aws_changed, aws_failed = sync_aws_snapshots()
+    aws_changed, aws_failed = sync_aws_snapshots(failures)
     changed += aws_changed
     failed += aws_failed
 
-    alicloud_changed, alicloud_failed = sync_alicloud_snapshots()
+    alicloud_changed, alicloud_failed = sync_alicloud_snapshots(failures)
     changed += alicloud_changed
     failed += alicloud_failed
+
+    if failures:
+        send_upstream_failure_alerts(failures)
 
     print(f"[DONE] Updated {changed} file(s); fetch failures: {failed}.")
     return 0
