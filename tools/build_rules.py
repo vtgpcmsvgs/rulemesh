@@ -506,6 +506,25 @@ def parse_line(raw: str) -> ParsedLine:
     return parse_simple_rule(token, rest)
 
 
+TARGET_RULE_REPLACEMENTS = {
+    "surge": (
+        ("DST-PORT,", "DEST-PORT,"),
+        ("SRC-IP-CIDR,", "SRC-IP,"),
+    ),
+    "mihomo_classical": (
+        ("DEST-PORT,", "DST-PORT,"),
+        ("SRC-IP,", "SRC-IP-CIDR,"),
+    ),
+}
+
+
+def normalize_rule_for_target(rule: str, target: str) -> str:
+    normalized = rule
+    for source, replacement in TARGET_RULE_REPLACEMENTS.get(target, ()):
+        normalized = normalized.replace(source, replacement)
+    return normalized
+
+
 def reset_output_roots() -> None:
     DIST_ROOT.mkdir(parents=True, exist_ok=True)
     for child_name in ("surge", "mihomo"):
@@ -580,9 +599,11 @@ def build_source(path: Path) -> SourceBuildResult:
         if parsed.source_type:
             source_types.append(parsed.source_type)
         if parsed.surge_rule:
-            surge_rules.append(parsed.surge_rule)
+            surge_rules.append(normalize_rule_for_target(parsed.surge_rule, "surge"))
         if parsed.mihomo_classical:
-            mihomo_classical.append(parsed.mihomo_classical)
+            mihomo_classical.append(
+                normalize_rule_for_target(parsed.mihomo_classical, "mihomo_classical")
+            )
         for message in parsed.warnings:
             warnings.append(f"{repo_relative_path(source_line.path)}:{source_line.line_no} {message}")
 

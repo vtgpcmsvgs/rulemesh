@@ -89,6 +89,72 @@ class TempRepoBuildRulesTests(unittest.TestCase):
         self.assertEqual(result.outputs["mihomo_classical"], ["DOMAIN,example.com"])
         self.assertEqual(result.warnings, [])
 
+    def test_build_source_normalizes_target_specific_aliases(self) -> None:
+        path = self.rules_root / "direct" / "ports.list"
+        path.write_text(
+            "DST-PORT,80\n"
+            "AND,((PROCESS-NAME,chrome.exe),(DST-PORT,80))\n"
+            "DEST-PORT,443\n"
+            "AND,((PROCESS-NAME,firefox.exe),(DEST-PORT,443))\n",
+            encoding="utf-8",
+        )
+
+        with self.patch_repo_paths():
+            result = build_rules.build_source(path)
+
+        self.assertEqual(
+            result.outputs["surge_rules"],
+            [
+                "DEST-PORT,80",
+                "AND,((PROCESS-NAME,chrome.exe),(DEST-PORT,80))",
+                "DEST-PORT,443",
+                "AND,((PROCESS-NAME,firefox.exe),(DEST-PORT,443))",
+            ],
+        )
+        self.assertEqual(
+            result.outputs["mihomo_classical"],
+            [
+                "DST-PORT,80",
+                "AND,((PROCESS-NAME,chrome.exe),(DST-PORT,80))",
+                "DST-PORT,443",
+                "AND,((PROCESS-NAME,firefox.exe),(DST-PORT,443))",
+            ],
+        )
+        self.assertEqual(result.warnings, [])
+
+    def test_build_source_normalizes_src_ip_aliases_for_targets(self) -> None:
+        path = self.rules_root / "direct" / "src_ip.list"
+        path.write_text(
+            "SRC-IP,198.51.100.0/24\n"
+            "AND,((PROCESS-NAME,chrome.exe),(SRC-IP,198.51.100.0/24))\n"
+            "SRC-IP-CIDR,203.0.113.0/24\n"
+            "AND,((PROCESS-NAME,firefox.exe),(SRC-IP-CIDR,203.0.113.0/24))\n",
+            encoding="utf-8",
+        )
+
+        with self.patch_repo_paths():
+            result = build_rules.build_source(path)
+
+        self.assertEqual(
+            result.outputs["surge_rules"],
+            [
+                "SRC-IP,198.51.100.0/24",
+                "AND,((PROCESS-NAME,chrome.exe),(SRC-IP,198.51.100.0/24))",
+                "SRC-IP,203.0.113.0/24",
+                "AND,((PROCESS-NAME,firefox.exe),(SRC-IP,203.0.113.0/24))",
+            ],
+        )
+        self.assertEqual(
+            result.outputs["mihomo_classical"],
+            [
+                "SRC-IP-CIDR,198.51.100.0/24",
+                "AND,((PROCESS-NAME,chrome.exe),(SRC-IP-CIDR,198.51.100.0/24))",
+                "SRC-IP-CIDR,203.0.113.0/24",
+                "AND,((PROCESS-NAME,firefox.exe),(SRC-IP-CIDR,203.0.113.0/24))",
+            ],
+        )
+        self.assertEqual(result.warnings, [])
+
     def test_include_cycle_raises_build_error(self) -> None:
         path_a = self.rules_root / "direct" / "a.list"
         path_b = self.rules_root / "direct" / "b.list"
