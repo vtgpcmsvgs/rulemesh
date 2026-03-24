@@ -2,9 +2,9 @@
   "summary": {
     "domain-only": 3,
     "ipcidr-only": 6,
-    "classical/mixed": 16,
+    "classical/mixed": 15,
     "empty": 0,
-    "total_sources": 25,
+    "total_sources": 24,
     "total_warnings": 0
   },
   "sources": [
@@ -97,19 +97,6 @@
       "dist": {
         "surge_rules": "dist/surge/rules/direct/netease_direct.list",
         "mihomo_classical": "dist/mihomo/classical/direct/netease_direct.yaml"
-      }
-    },
-    {
-      "source": "rules/proxy/adspower.list",
-      "category": "proxy",
-      "classification": "classical/mixed",
-      "counts": {
-        "surge_rules": 17,
-        "mihomo_classical": 17
-      },
-      "dist": {
-        "surge_rules": "dist/surge/rules/proxy/adspower.list",
-        "mihomo_classical": "dist/mihomo/classical/proxy/adspower.yaml"
       }
     },
     {

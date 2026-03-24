@@ -72,17 +72,6 @@ merge_plan:
     notes:
       - 仅覆盖 github.com:22 与 ssh.github.com:443
       - 客户端顺序必须放在 proxy/gfw 前
-
-  - id: adspower-proxy
-    target: rules/proxy/adspower.list
-    purpose: AdsPower 官方站点与接口走代理
-    strategy:
-      - include_curated_official_host_snapshot_first
-      - keep_local_keyword_fallback_small
-    notes:
-      - 官方主机名来自人工核对后的官网、帮助中心与文档页面
-      - 只对 adspower.com 做关键词兜底，避免误伤 local.adspower.net 这类本地地址
-
   - id: google-tw
     target: rules/region/tw/google_tw.list
     purpose: Google / YouTube / Gemini 统一走台湾策略

@@ -23,7 +23,7 @@
 - 总开关 + 手动切换 + 自动测速切换
 - 香港、台湾、日本、新加坡、美国、韩国的区域自动组
 - `reject`、`direct`、`proxy`、`region` 四类 RuleMesh 产物接入
-- `proxy/adspower.list` 专项代理规则与 `proxy/gfw.list` 广谱代理规则的分层顺序
+- 1 条 `DOMAIN-KEYWORD,adspower` 内联规则与 `proxy/gfw.list` 广谱代理规则的顺序关系
 - `skip-proxy`、`always-real-ip`、基础 DNS 与测速参数
 
 ## 模板刻意移除了什么
@@ -42,7 +42,7 @@
 1. 拒绝规则
 2. 区域精确规则
 3. GitHub 仓库 SSH 定向直连
-4. 专项代理规则（如 AdsPower）
+4. 少量内联关键词代理规则（如 AdsPower）
 5. 代理优先规则
 6. 直连规则
 7. IP 规则
@@ -52,8 +52,7 @@
 
 - `region/tw/google_tw.list` 必须放在 `region/hk/global_media.list` 等广谱区域规则前。
 - `direct/github_ssh_direct.list` 必须放在 `proxy/gfw.list` 前，只给 `github.com:22` 与 `ssh.github.com:443` 直连，避免把 GitHub 网页误放直连。
-- `proxy/adspower.list` 建议放在 `proxy/gfw.list` 前；当前公开模板已按这个顺序接入，便于后续稳定扩展 AdsPower 官方域名。
-- `proxy/adspower.list` 只覆盖 AdsPower 官方站点、控制台、API 与文档主机，不主动代理 `local.adspower.net` 这类本地 Local API 地址。
+- `DOMAIN-KEYWORD,adspower` 建议放在 `proxy/gfw.list` 前；当前公开模板只保留这一条 AdsPower 关键词规则，方便按你的实际环境自行继续细化。
 - `proxy/gfw.list` 建议放在其他普通 `direct/*.list` 前，减少广谱直连误伤。
 - 浏览器明文 HTTP 拦截推荐直接接 `plain_http_reject.list`，不要再手写重复规则。
 

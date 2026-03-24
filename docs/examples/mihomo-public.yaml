@@ -331,15 +331,6 @@ rule-providers:
     interval: 86400
     proxy: "🚀 节点选择"
 
-  proxy_adspower:
-    type: http
-    behavior: classical
-    format: yaml
-    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/proxy/adspower.yaml"
-    path: ./ruleset/proxy/adspower.yaml
-    interval: 86400
-    proxy: "🚀 节点选择"
-
   direct_github_ssh:
     type: http
     behavior: classical
@@ -473,8 +464,8 @@ rules:
   # GitHub 仓库 SSH 定向直连必须放在 gfw 前，避免把整个 GitHub 放直连。
   - RULE-SET,direct_github_ssh,DIRECT
 
-  # AdsPower 专项代理规则放在 gfw 前，便于后续继续精确扩展。
-  - RULE-SET,proxy_adspower,🚀 节点选择
+  # 4) 代理优先（先放 1 条 AdsPower 关键词规则，再接 gfw）
+  - DOMAIN-KEYWORD,adspower,🚀 节点选择
 
   - RULE-SET,proxy_gfw,🚀 节点选择
 

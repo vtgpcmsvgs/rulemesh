@@ -1,8 +1,0 @@
-# AdsPower 指纹浏览器代理规则：官方主机快照优先，本地兜底补充。
-# 说明：
-# 1) 主体使用可在线核实的官方主机名，便于后续单独维护。
-# 2) 仅对 adspower.com 使用关键字兜底，避免误伤 local.adspower.net 这类本地 Local API 地址。
-INCLUDE,upstream/adspower/official_hosts.list
-
-# 本地兜底：覆盖未来新增的 adspower.com 官方子域
-DOMAIN-KEYWORD,adspower.com

@@ -119,19 +119,19 @@ python tools/build_rules.py
   - 对应 Surge 的“个人终端版”
   - 保留完整 `General + Proxy Group + Rule` 结构
   - 已移除设备分流、私有订阅地址与 `[MITM]`
-  - 默认接入 `proxy/adspower` 专项代理规则与 `proxy/gfw` 广谱代理规则
+  - 默认接入 1 条 `DOMAIN-KEYWORD,adspower` 内联规则与 `proxy/gfw` 广谱代理规则
 - `docs/examples/mihomo-public.yaml`
   - 保留完整 `dns + proxy-providers + proxy-groups + rule-providers + rules` 结构
   - 已移除真实机场订阅链接、供应商命名与控制面参数
-  - 默认接入 `proxy/adspower` 专项代理规则与 `proxy/gfw` 广谱代理规则
+  - 默认接入 1 条 `DOMAIN-KEYWORD,adspower` 内联规则与 `proxy/gfw` 广谱代理规则
 
 ## 当前设计原则
 
 - 源规则尽量保持小而清晰，优先你自己的审阅结果
 - 上游来源只作为参考素材，不直接暴露给客户端
 - 统一输出显式规则行，不再生成额外的客户端专用精简产物
-- 域名规则、CIDR 规则、关键词规则都通过 `RULE-SET` / `behavior: classical` 接入
-- 专项代理规则优先于广谱代理规则；例如 `proxy/adspower` 应放在 `proxy/gfw` 前，减少未来上游扩张带来的顺序漂移
+- 域名规则、CIDR 规则与大多数关键词规则都通过 `RULE-SET` / `behavior: classical` 接入
+- 少量必须内联的关键词规则应先于广谱代理规则；例如 `DOMAIN-KEYWORD,adspower` 应放在 `proxy/gfw` 前，避免被更广的代理规则吞没
 
 ## Google 路由强约束
 

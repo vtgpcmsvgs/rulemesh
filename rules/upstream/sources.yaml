@@ -71,12 +71,6 @@ sources:
         - repo: GitHub Docs
           note: 参考 github.com:22 与 ssh.github.com:443 的 SSH 接入说明，避免把网页流量误放直连
   proxy:
-    adspower.list:
-      preferred:
-        - repo: self
-          note: 保持官方主机快照入口与本地兜底规则分层，避免把本地 Local API 地址误并入代理
-        - repo: AdsPower 官方站点与文档
-          note: 人工核对官网、帮助中心与官方文档页主机名，写入 rules/upstream/adspower/official_hosts.list
     gfw.list:
       preferred:
         - repo: self
