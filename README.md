@@ -104,6 +104,12 @@ python tools/build_rules.py
 - [docs/alicloud-direct-rules.md](docs/alicloud-direct-rules.md)
 - [docs/github-ssh-direct-rules.md](docs/github-ssh-direct-rules.md)
 
+补充约定：
+
+- 浏览器明文 HTTP 拦截统一维护在 `rules/reject/plain_http_reject.list`
+- 客户端请直接引用 `dist/surge/rules/reject/plain_http_reject.list` 或 `dist/mihomo/classical/reject/plain_http_reject.yaml`
+- 不要在本地配置里重复手写同一组 `PROCESS-NAME + PORT 80` 拦截规则
+
 其中 Surge 当前建议明确区分两种使用版本：
 
 - 软路由集群版

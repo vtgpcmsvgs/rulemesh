@@ -1,4 +1,5 @@
 # === 仅浏览器进程禁止明文 HTTP 出站 ===
+# 客户端请直接引用构建产物，不要在配置里重复手写同一组浏览器 HTTP 拦截规则。
 AND,((PROCESS-NAME,chrome.exe),(DST-PORT,80))
 AND,((PROCESS-NAME,brave.exe),(DST-PORT,80))
 AND,((PROCESS-NAME,msedge.exe),(DST-PORT,80))
