@@ -40,6 +40,7 @@
 - 若本次修改影响使用方式、规则组织、构建方式、产物结构或维护约定，必须同步更新相关文档
 - 私有 `rulemesh-substore-surge-work-whitelist.conf` 属于长期特化的工作路由白名单配置；它与 `rulemesh-substore-surge-personal.conf`、`rulemesh-substore-mihomo-personal.yaml` 从现在起允许永久不一致，不得因为“统一模板”或“对齐 personal 配置”而回滚
 - 维护 `rulemesh-substore-surge-work-whitelist.conf` 时，默认应维持“仅放行明确白名单入口，其余流量对工作电脑统一 REJECT”的原则；若要恢复广谱放行（如 `proxy/gfw`、广谱 `direct`、`FINAL` 兜底放行），必须得到用户明确确认
+- 当前该工作路由白名单默认允许入口包括：设备分流、区域精确规则、GitHub SSH、AdsPower、`LAN,DIRECT`、`direct/microsoft_direct`、阿里云指定直连、`direct/bytedance_direct` 与 IP 规则；其他源 IP 默认 `FINAL,REJECT`
 - 上述工作路由白名单特化只适用于工作路由文件本身，不自动扩散到两个 `personal` 配置，也不要把 `personal` 配置的通用结构反向覆盖到该工作路由文件
 - 只要工作路由白名单逻辑、适用范围、维护边界发生变化，必须同步更新 `docs/surge-work-cluster-whitelist.md`、`README.md` 与相关使用说明，避免后续失忆式回滚
 - 若本次任务产生了实际文件变更，且用户没有明确禁止提交，则默认在验证完成后提交 git commit

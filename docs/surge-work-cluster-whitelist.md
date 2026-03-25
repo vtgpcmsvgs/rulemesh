@@ -22,15 +22,17 @@
 - 区域精确规则继续保留，且 `Google TW` 必须先于广谱区域规则
 - GitHub 仓库 SSH 定向直连继续保留独立 carve-out；如果将来重新启用 `proxy/gfw`，它仍必须放在 `gfw` 前
 - AdsPower 继续维持 `adspower_reject`、`adspower_direct`、`adspower_proxy` 三段细分
+- `LAN,DIRECT` 继续保留在白名单直连入口中
+- `direct/microsoft_direct` 继续保留 `DIRECT`
 - `alicloud_hk_ssh_direct` 与阿里云抢占式 IP 直连继续保留
 - `bytedance_direct.list` 继续保留 `DIRECT`
 - `dist/surge/rules/region/` 下现有 IP 规则继续完整接入
-- 除上述白名单入口外，其余流量统一 `REJECT`
+- 其他源 IP 与未命中白名单的流量最终统一落到 `FINAL,REJECT`
 
 ## 永久差异约定
 
 - 这份工作路由白名单是对工作软路由的长期特化，不再追求和两个 `personal` 配置完全一致
-- 后续如果调整个人模板、公开模板或 Mihomo 模板，不要顺手把工作路由改回通用 `proxy/gfw + 广谱 direct + FINAL` 结构
+- 后续如果调整个人模板、公开模板或 Mihomo 模板，不要顺手把工作路由改回通用 `proxy/gfw + 广谱 direct + 放行型 FINAL` 结构
 - 反过来，工作路由里的白名单 `REJECT` 兜底也不要迁移到个人模板或 Mihomo 模板
 
 ## 维护时必须保留的顺序
@@ -42,16 +44,13 @@
 5. AdsPower 细分规则
 6. 指定直连入口
 7. IP 规则
-8. 仅对白名单工作电脑生效的兜底 `REJECT`
-9. 其他源 IP 的默认兜底
+8. 全局 `FINAL,REJECT` 兜底
 
 ## 不要误恢复的广谱放行项
 
 若需求没有重新明确变更，不要把下列广谱放行项重新塞回工作路由白名单阶段：
 
 - `proxy/gfw`
-- `LAN,DIRECT`
-- `direct/microsoft_direct`
 - `direct/netease_direct`
 - `direct/bilibili_direct`
 - `direct/cn_direct`
