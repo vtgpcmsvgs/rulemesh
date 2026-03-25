@@ -6,6 +6,10 @@
 
 sources:
   reject:
+    adspower_reject.list:
+      preferred:
+        - repo: self
+          note: AdsPower 专项拒绝规则由 rules/app/adspower.txt 单一主清单派生，统一维护隐私追踪与可安全阻断端点
     plain_http_reject.list:
       preferred:
         - repo: self
@@ -28,6 +32,10 @@ sources:
           note: 广告拦截继续保持小而可读，不引入额外大体量上游
 
   direct:
+    adspower_direct.list:
+      preferred:
+        - repo: self
+          note: AdsPower 专项直连规则由 rules/app/adspower.txt 单一主清单派生，承接代理检测与网络环境测试放行
     cn_direct.list:
       preferred:
         - repo: self
@@ -71,6 +79,10 @@ sources:
         - repo: GitHub Docs
           note: 参考 github.com:22 与 ssh.github.com:443 的 SSH 接入说明，避免把网页流量误放直连
   proxy:
+    adspower_proxy.list:
+      preferred:
+        - repo: self
+          note: AdsPower 专项节点选择规则由 rules/app/adspower.txt 单一主清单派生，承接必须走代理的核心服务
     gfw.list:
       preferred:
         - repo: self

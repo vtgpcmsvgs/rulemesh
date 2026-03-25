@@ -1,0 +1,15 @@
+# AdsPower 专项直连规则。
+# 生成来源：rules/app/adspower.txt
+# 请修改主清单，不要直接编辑本文件。
+
+# 代理检测与网络环境测试（关键放行）
+# 代理网络连通性扫描（包含 ip-scan 与 ipv2-scan）
+DOMAIN-KEYWORD,scan.adspower.com
+DOMAIN-KEYWORD,scan.adspower.net
+DOMAIN,check.adspower.com
+DOMAIN,check.adspower.net
+
+# 第三方 IP 数据服务（默认关闭）
+# DOMAIN,api.data4.net
+# WebRTC 测试服务（默认关闭）：stun.l.google.com
+# DOMAIN,check.myclientip.com

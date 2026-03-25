@@ -1,0 +1,7 @@
+# 生成来源：rules/direct/adspower_direct.list
+# 行为：classical
+payload:
+  - "DOMAIN-KEYWORD,scan.adspower.com"
+  - "DOMAIN-KEYWORD,scan.adspower.net"
+  - "DOMAIN,check.adspower.com"
+  - "DOMAIN,check.adspower.net"

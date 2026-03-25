@@ -1,0 +1,20 @@
+# 生成来源：rules/reject/adspower_reject.list
+# 类型：rules
+# 请勿直接编辑 dist。
+
+DOMAIN,sentry.adspower.com
+DOMAIN,sentry.adspower.net
+DOMAIN,logger.adspower.com
+DOMAIN,logger.adspower.net
+DOMAIN-SUFFIX,clarity.ms
+DOMAIN-SUFFIX,salesmartly.com
+DOMAIN,download.adspower.com
+DOMAIN,download.adspower.net
+DOMAIN,version.adspower.com
+DOMAIN,version.adspower.net
+DOMAIN,api.saasbase.cn
+DOMAIN,sys.adspower.com
+DOMAIN,sys.adspower.net
+DOMAIN,api.adspower.com
+DOMAIN,api.adspower.net
+DOMAIN,api.adspowerapp.com

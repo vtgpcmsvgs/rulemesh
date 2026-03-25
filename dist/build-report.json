@@ -1,13 +1,26 @@
 {
   "summary": {
-    "domain-only": 3,
+    "domain-only": 5,
     "ipcidr-only": 6,
-    "classical/mixed": 15,
+    "classical/mixed": 16,
     "empty": 0,
-    "total_sources": 24,
+    "total_sources": 27,
     "total_warnings": 0
   },
   "sources": [
+    {
+      "source": "rules/direct/adspower_direct.list",
+      "category": "direct",
+      "classification": "classical/mixed",
+      "counts": {
+        "surge_rules": 4,
+        "mihomo_classical": 4
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/direct/adspower_direct.list",
+        "mihomo_classical": "dist/mihomo/classical/direct/adspower_direct.yaml"
+      }
+    },
     {
       "source": "rules/direct/alicloud_hk_ssh_direct.list",
       "category": "direct",
@@ -97,6 +110,19 @@
       "dist": {
         "surge_rules": "dist/surge/rules/direct/netease_direct.list",
         "mihomo_classical": "dist/mihomo/classical/direct/netease_direct.yaml"
+      }
+    },
+    {
+      "source": "rules/proxy/adspower_proxy.list",
+      "category": "proxy",
+      "classification": "domain-only",
+      "counts": {
+        "surge_rules": 6,
+        "mihomo_classical": 6
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/proxy/adspower_proxy.list",
+        "mihomo_classical": "dist/mihomo/classical/proxy/adspower_proxy.yaml"
       }
     },
     {
@@ -279,6 +305,19 @@
       "dist": {
         "surge_rules": "dist/surge/rules/reject/adblock_reject.list",
         "mihomo_classical": "dist/mihomo/classical/reject/adblock_reject.yaml"
+      }
+    },
+    {
+      "source": "rules/reject/adspower_reject.list",
+      "category": "reject",
+      "classification": "domain-only",
+      "counts": {
+        "surge_rules": 16,
+        "mihomo_classical": 16
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/reject/adspower_reject.list",
+        "mihomo_classical": "dist/mihomo/classical/reject/adspower_reject.yaml"
       }
     },
     {

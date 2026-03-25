@@ -16,6 +16,16 @@ defaults:
     manual_entries_first: true
 
 merge_plan:
+  - id: adspower-direct
+    target: rules/direct/adspower_direct.list
+    purpose: AdsPower 代理检测与网络环境测试直连放行
+    strategy:
+      - generated_from_rules_app_adspower_manifest
+      - keep_single_source_of_truth
+    notes:
+      - 统一由 rules/app/adspower.txt 维护，不直接手改该源文件
+      - adspower.com 与 adspower.net 在主清单中必须成对出现
+
   - id: cn-direct
     target: rules/direct/cn_direct.list
     purpose: 中国大陆基础直连兜底，尽量避免国内站点误走代理
@@ -97,6 +107,16 @@ merge_plan:
     strategy:
       - include_upstream_first_then_local_core_fallback
       - include_loyalsoldier_gfw_and_tld_not_cn
+
+  - id: adspower-proxy
+    target: rules/proxy/adspower_proxy.list
+    purpose: AdsPower 必须走节点选择的核心服务
+    strategy:
+      - generated_from_rules_app_adspower_manifest
+      - keep_single_source_of_truth
+    notes:
+      - 统一由 rules/app/adspower.txt 维护，不直接手改该源文件
+      - 规则顺序应先于 proxy/gfw，避免被广谱代理入口吞没
 
   - id: hk-global-media
     target: rules/region/hk/global_media.list
@@ -204,6 +224,16 @@ merge_plan:
       - prefer_exact_domain_over_suffix
     notes:
       - 候选来源以 anti-AD 与 blackmatrix7 为主，但只保留人工确认的低误伤子域
+
+  - id: reject-adspower
+    target: rules/reject/adspower_reject.list
+    purpose: AdsPower 隐私追踪与可安全阻断端点拦截
+    strategy:
+      - generated_from_rules_app_adspower_manifest
+      - keep_single_source_of_truth
+    notes:
+      - 统一由 rules/app/adspower.txt 维护，不直接手改该源文件
+      - 规则应与其他 reject 入口一起放在最前，先做阻断再做放行
 
   - id: adblock
     target: rules/reject/adblock_reject.list

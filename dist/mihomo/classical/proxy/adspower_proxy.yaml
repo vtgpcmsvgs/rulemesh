@@ -1,0 +1,9 @@
+# 生成来源：rules/proxy/adspower_proxy.list
+# 行为：classical
+payload:
+  - "DOMAIN,api-global.adspower.com"
+  - "DOMAIN,api-global.adspower.net"
+  - "DOMAIN,app-global.adspower.com"
+  - "DOMAIN,app-global.adspower.net"
+  - "DOMAIN,start.adspower.com"
+  - "DOMAIN,start.adspower.net"

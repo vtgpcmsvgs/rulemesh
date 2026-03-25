@@ -1,0 +1,8 @@
+# 生成来源：rules/direct/adspower_direct.list
+# 类型：rules
+# 请勿直接编辑 dist。
+
+DOMAIN-KEYWORD,scan.adspower.com
+DOMAIN-KEYWORD,scan.adspower.net
+DOMAIN,check.adspower.com
+DOMAIN,check.adspower.net

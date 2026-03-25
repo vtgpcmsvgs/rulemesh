@@ -268,6 +268,15 @@ rule-providers:
     interval: 86400
     proxy: "🚀 节点选择"
 
+  reject_adspower:
+    type: http
+    behavior: classical
+    format: yaml
+    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/reject/adspower_reject.yaml"
+    path: ./ruleset/reject/adspower_reject.yaml
+    interval: 86400
+    proxy: "🚀 节点选择"
+
   tw_google:
     type: http
     behavior: classical
@@ -322,6 +331,15 @@ rule-providers:
     interval: 86400
     proxy: "🚀 节点选择"
 
+  proxy_adspower:
+    type: http
+    behavior: classical
+    format: yaml
+    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/proxy/adspower_proxy.yaml"
+    path: ./ruleset/proxy/adspower_proxy.yaml
+    interval: 86400
+    proxy: "🚀 节点选择"
+
   proxy_gfw:
     type: http
     behavior: classical
@@ -337,6 +355,15 @@ rule-providers:
     format: yaml
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/direct/github_ssh_direct.yaml"
     path: ./ruleset/direct/github_ssh_direct.yaml
+    interval: 86400
+    proxy: "🚀 节点选择"
+
+  direct_adspower:
+    type: http
+    behavior: classical
+    format: yaml
+    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/direct/adspower_direct.yaml"
+    path: ./ruleset/direct/adspower_direct.yaml
     interval: 86400
     proxy: "🚀 节点选择"
 
@@ -453,6 +480,7 @@ rules:
   - RULE-SET,reject_os_update,REJECT
   - RULE-SET,reject_plain_http,REJECT
   - RULE-SET,reject_wps,REJECT
+  - RULE-SET,reject_adspower,REJECT
 
   - RULE-SET,tw_google,🇨🇳 台湾-自动选择
   - RULE-SET,tw_ai,🇨🇳 台湾-自动选择
@@ -464,11 +492,16 @@ rules:
   # GitHub 仓库 SSH 定向直连必须放在 gfw 前，避免把整个 GitHub 放直连。
   - RULE-SET,direct_github_ssh,DIRECT
 
-  # 4) 代理优先（先放 1 条 AdsPower 关键词规则，再接 gfw）
-  - DOMAIN-KEYWORD,adspower,🚀 节点选择
+  # 4) AdsPower 细分直连（必须放在广谱代理前）
+  - RULE-SET,direct_adspower,DIRECT
 
+  # 5) AdsPower 细分节点选择（必须放在 gfw 前）
+  - RULE-SET,proxy_adspower,🚀 节点选择
+
+  # 6) 代理优先
   - RULE-SET,proxy_gfw,🚀 节点选择
 
+  # 7) 直连规则
   - DOMAIN-SUFFIX,local,DIRECT
   - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
   - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
@@ -482,6 +515,7 @@ rules:
   - RULE-SET,direct_bilibili,DIRECT
   - RULE-SET,direct_cn,DIRECT
 
+  # 8) IP 规则
   - RULE-SET,hk_aws_ipv4,🇭🇰 香港-自动选择,no-resolve
   - RULE-SET,jp_tokyo_aws_ipv4,🇯🇵 日本-自动选择,no-resolve
   - RULE-SET,jp_osaka_aws_ipv4,🇯🇵 日本-自动选择,no-resolve
@@ -489,6 +523,7 @@ rules:
   - RULE-SET,tw_taipei_aws_ipv4,🇨🇳 台湾-自动选择,no-resolve
   - RULE-SET,jp_socks5_ipcidr,🇯🇵 日本-自动选择,no-resolve
 
+  # 9) 最终兜底
   - MATCH,🚀 节点选择
 
 # 公开模板刻意不包含：

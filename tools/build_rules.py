@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable
 
+import sync_adspower_rules
 import sync_upstream_rules
 
 
@@ -673,6 +674,15 @@ def build_report(results: list[SourceBuildResult], path_map: dict[str, dict[str,
 
 
 def run_build() -> int:
+    adspower_sync = sync_adspower_rules.sync_adspower_rules(ROOT, RULES_ROOT)
+    if adspower_sync.manifest_path is not None:
+        print(
+            "[SYNC] AdsPower 主清单 -> "
+            f"reject={adspower_sync.rule_counts.get('reject', 0)}, "
+            f"direct={adspower_sync.rule_counts.get('direct', 0)}, "
+            f"proxy={adspower_sync.rule_counts.get('proxy', 0)}"
+        )
+
     source_files = iter_source_files()
     validate_source_files(source_files)
     validate_source_comment_language(source_files)

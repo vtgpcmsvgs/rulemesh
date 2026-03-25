@@ -13,6 +13,7 @@
 
 ```text
 rules/
+  app/         # 应用级主清单（构建前自动派生）
   reject/      # 拒绝类源规则
   direct/      # 直连类源规则
   proxy/       # 代理类源规则
@@ -33,6 +34,7 @@ tools/
 说明：
 
 - `rules/` 下参与构建的源规则文件统一使用 `.list` 命名
+- `rules/app/` 用于维护单一应用的主清单；例如 `rules/app/adspower.txt` 会在构建前自动派生到 `rules/reject/`、`rules/direct/` 与 `rules/proxy/`
 - 例如 `rules/region/tw/google_tw.list` 会生成 `dist/surge/rules/region/tw/google_tw.list` 与 `dist/mihomo/classical/region/tw/google_tw.yaml`
 - `dist/build-report.json` 会记录每个源文件被识别为 `domain-only`、`ipcidr-only` 或 `classical/mixed`，以及构建警告
 - 这些分类结果只用于维护诊断，不再对应额外的 `domainset` / `domain` / `ipcidr` 产物目录
@@ -61,6 +63,7 @@ python tools/build_rules.py
 
 构建脚本会：
 
+- 先把 `rules/app/adspower.txt` 自动派生到 `rules/reject/adspower_reject.list`、`rules/direct/adspower_direct.list` 与 `rules/proxy/adspower_proxy.list`
 - 从 `rules/` 读取源规则
 - 自动生成 `dist/surge/rules/` 与 `dist/mihomo/classical/`
 - 将纯域名规则规范化成显式规则行，例如 `.example.com` 会输出成 `DOMAIN-SUFFIX,example.com`
@@ -73,7 +76,7 @@ python tools/build_rules.py
 
 最小发布流程：
 
-1. 修改 `rules/` 源规则
+1. 修改 `rules/app/` 主清单或 `rules/` 源规则
 2. 运行 `powershell -ExecutionPolicy Bypass -File tools/build_rules.ps1`
 3. 检查 `dist/` 与 `dist/build-report.json`
 4. 提交 `rules/`、`dist/`、文档与 CI 改动
@@ -109,6 +112,8 @@ python tools/build_rules.py
 - 浏览器明文 HTTP 拦截统一维护在 `rules/reject/plain_http_reject.list`
 - 客户端请直接引用 `dist/surge/rules/reject/plain_http_reject.list` 或 `dist/mihomo/classical/reject/plain_http_reject.yaml`
 - 不要在本地配置里重复手写同一组 `PROCESS-NAME + PORT 80` 拦截规则
+- AdsPower 专项规则统一维护在 `rules/app/adspower.txt`
+- 客户端应显式接入 `reject/adspower_reject`、`direct/adspower_direct` 与 `proxy/adspower_proxy`，不要再退回单条 `DOMAIN-KEYWORD,adspower` 兜底
 
 其中 Surge 当前建议明确区分两种使用版本：
 
@@ -125,11 +130,11 @@ python tools/build_rules.py
   - 对应 Surge 的“个人终端版”
   - 保留完整 `General + Proxy Group + Rule` 结构
   - 已移除设备分流、私有订阅地址与 `[MITM]`
-  - 默认接入 1 条 `DOMAIN-KEYWORD,adspower` 内联规则与 `proxy/gfw` 广谱代理规则
+  - 默认接入 AdsPower 专项 `reject/direct/proxy` 规则集，并保持在 `proxy/gfw` 前完成细分控制
 - `docs/examples/mihomo-public.yaml`
   - 保留完整 `dns + proxy-providers + proxy-groups + rule-providers + rules` 结构
   - 已移除真实机场订阅链接、供应商命名与控制面参数
-  - 默认接入 1 条 `DOMAIN-KEYWORD,adspower` 内联规则与 `proxy/gfw` 广谱代理规则
+  - 默认接入 AdsPower 专项 `reject/direct/proxy` 规则集，并保持在 `proxy/gfw` 前完成细分控制
 
 ## 当前设计原则
 
@@ -137,7 +142,8 @@ python tools/build_rules.py
 - 上游来源只作为参考素材，不直接暴露给客户端
 - 统一输出显式规则行，不再生成额外的客户端专用精简产物
 - 域名规则、CIDR 规则与大多数关键词规则都通过 `RULE-SET` / `behavior: classical` 接入
-- 少量必须内联的关键词规则应先于广谱代理规则；例如 `DOMAIN-KEYWORD,adspower` 应放在 `proxy/gfw` 前，避免被更广的代理规则吞没
+- 单一应用如果同时涉及 `reject`、`direct`、`proxy` 多种动作，优先使用 `rules/app/*.txt` 主清单统一维护，再派生到现有四类源规则
+- AdsPower 专项规则应先命中 `reject/adspower_reject`、`direct/adspower_direct`、`proxy/adspower_proxy`，再落到 `proxy/gfw`
 
 ## Google 路由强约束
 
@@ -176,6 +182,7 @@ python tools/build_rules.py
 
 - 优先改 `rules/`，不要直接手改 `dist/`
 - 新增规则前，先想清楚它是 `reject`、`direct`、`proxy` 还是 `region`
+- 遇到单一应用同时涉及多种动作时，优先维护 `rules/app/*.txt` 主清单，再由构建前同步派生到现有分类
 - 新增、删除或重命名 `rules/{reject,direct,proxy,region}/` 下的 `.list` 源规则文件时，同步更新 `rules/upstream/sources.yaml` 与 `rules/upstream/merge.yaml`
 - 新增或调整默认对外使用的规则入口、顺序、策略含义时，同步更新 `README.md`、`docs/usage-surge.md`、`docs/usage-mihomo.md` 与两份公开模板
 - 如果一个源文件开始变得很大，优先补 `sources.yaml` 与 `merge.yaml`，再考虑引入更多上游素材
