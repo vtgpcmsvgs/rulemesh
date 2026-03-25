@@ -351,8 +351,8 @@
       "category": "reject",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 8,
-        "mihomo_classical": 8
+        "surge_rules": 9,
+        "mihomo_classical": 9
       },
       "dist": {
         "surge_rules": "dist/surge/rules/reject/plain_http_reject.list",
