@@ -60,7 +60,7 @@
 - `reject/adspower_reject.list` 应和其他拒绝规则一起放在最前，先拦截隐私追踪与可安全阻断端点。
 - `proxy/gfw.list` 建议放在其他普通 `direct/*.list` 前，减少广谱直连误伤。
 - 浏览器明文 HTTP 拦截推荐直接接 `plain_http_reject.list`，不要再手写重复规则。
-- 私有 `rulemesh-substore-surge-work-whitelist.conf` 是白名单例外：它保留设备分流、区域精确、GitHub SSH、AdsPower、`LAN,DIRECT`、`direct/microsoft_direct`、阿里云指定直连、ByteDance 与 IP 规则，其余未列出的流量以及其他源 IP 最终统一 `REJECT`；不要把公开模板里的广谱放行段机械同步回去。
+- 私有 `rulemesh-substore-surge-work-whitelist.conf` 是白名单例外：它保留设备分流、区域精确、GitHub SSH、AdsPower、`LAN,DIRECT`、`direct/microsoft_direct`、阿里云指定直连、ByteDance 与 IP 规则；其中 AdsPower 细分规则后还故意保留一条广覆盖 `DOMAIN-KEYWORD,adspower` 观察兜底，用来发现漏网之鱼；其余未列出的流量以及其他源 IP 最终统一 `REJECT`。不要把公开模板里的广谱放行段机械同步回去。
 
 ## 使用原则
 
