@@ -1,0 +1,6 @@
+# 生成来源：rules/direct/os_time_direct.list
+# 行为：classical
+payload:
+  - "DOMAIN,time.windows.com"
+  - "DOMAIN,time.apple.com"
+  - "DOMAIN,time-macos.apple.com"

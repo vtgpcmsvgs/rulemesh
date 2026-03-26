@@ -40,6 +40,18 @@ merge_plan:
       - include_blackmatrix7_first_then_local_process_fallback
       - include_blackmatrix7_onedrive_and_microsoft
 
+  - id: os-time-direct
+    target: rules/direct/os_time_direct.list
+    purpose: 操作系统时间同步直连
+    strategy:
+      - manual_only
+      - keep_scope_small_and_stable
+      - match_only_official_time_hosts
+    notes:
+      - Windows 独立设备默认时间源使用 time.windows.com；域成员通常跟随域时间层级，这里不扩展到域控体系
+      - Apple 官方示例与企业网络文档包含 time.apple.com 与 time-macos.apple.com；两者统一保留
+      - 时间同步更依赖原生链路对称性，默认保持 DIRECT，不并入节点选择
+
   - id: macos-update-direct
     target: rules/direct/macos_update_direct.list
     purpose: macOS 系统更新直连

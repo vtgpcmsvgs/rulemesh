@@ -1,10 +1,10 @@
 {
   "summary": {
-    "domain-only": 7,
+    "domain-only": 8,
     "ipcidr-only": 7,
     "classical/mixed": 18,
     "empty": 0,
-    "total_sources": 32,
+    "total_sources": 33,
     "total_warnings": 0
   },
   "sources": [
@@ -123,6 +123,19 @@
       "dist": {
         "surge_rules": "dist/surge/rules/direct/netease_direct.list",
         "mihomo_classical": "dist/mihomo/classical/direct/netease_direct.yaml"
+      }
+    },
+    {
+      "source": "rules/direct/os_time_direct.list",
+      "category": "direct",
+      "classification": "domain-only",
+      "counts": {
+        "surge_rules": 3,
+        "mihomo_classical": 3
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/direct/os_time_direct.list",
+        "mihomo_classical": "dist/mihomo/classical/direct/os_time_direct.yaml"
       }
     },
     {

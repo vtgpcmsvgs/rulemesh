@@ -1,0 +1,8 @@
+# 操作系统时间同步直连规则。
+# 维护原则：
+# 1) 只保留系统默认或官方示例明确提到的时间同步主机，避免把其他 Apple / Microsoft 服务误放直连。
+# 2) 时间同步更依赖原生链路可达性与链路对称性，默认走 DIRECT，不并入节点选择。
+# 3) Windows 域成员通常跟随域时间层级；这里仅覆盖独立设备常见的默认公网时间主机与 Apple 官方时间主机。
+DOMAIN,time.windows.com
+DOMAIN,time.apple.com
+DOMAIN,time-macos.apple.com

@@ -395,6 +395,15 @@ rule-providers:
     interval: 86400
     proxy: "🚀 节点选择"
 
+  direct_os_time:
+    type: http
+    behavior: classical
+    format: yaml
+    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/direct/os_time_direct.yaml"
+    path: ./ruleset/direct/os_time_direct.yaml
+    interval: 86400
+    proxy: "🚀 节点选择"
+
   direct_alicloud_hk_ssh:
     type: http
     behavior: classical
@@ -515,7 +524,7 @@ rule-providers:
 rules:
   - RULE-SET,reject_adblock,REJECT
   - RULE-SET,reject_os_update,REJECT
-  # 需要临时升级 Windows / macOS 时，可注释上一条拒绝规则，让后面的系统升级直连规则接管。
+  # 需要临时升级 Windows / macOS 时，可注释上一条拒绝规则，让后面的系统升级直连规则接管；系统时间同步仍由 os_time_direct 保持直连。
   - RULE-SET,reject_plain_http,REJECT
   - RULE-SET,reject_wps,REJECT
   - RULE-SET,reject_adspower,REJECT
@@ -548,13 +557,14 @@ rules:
   # 9) 代理优先
   - RULE-SET,proxy_gfw,🚀 节点选择
 
-  # 10) 直连规则
+  # 10) 直连规则（先放系统时间同步，再接其他直连入口）
   - DOMAIN-SUFFIX,local,DIRECT
   - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
   - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
   - IP-CIDR,172.16.0.0/12,DIRECT,no-resolve
   - IP-CIDR,192.168.0.0/16,DIRECT,no-resolve
   - IP-CIDR,100.64.0.0/10,DIRECT,no-resolve
+  - RULE-SET,direct_os_time,DIRECT
   - RULE-SET,direct_alicloud_hk_ssh,DIRECT
   - RULE-SET,direct_microsoft,DIRECT
   - RULE-SET,direct_macos_update,DIRECT

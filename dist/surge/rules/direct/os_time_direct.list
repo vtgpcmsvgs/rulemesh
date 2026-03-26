@@ -1,0 +1,7 @@
+# 生成来源：rules/direct/os_time_direct.list
+# 类型：rules
+# 请勿直接编辑 dist。
+
+DOMAIN,time.windows.com
+DOMAIN,time.apple.com
+DOMAIN,time-macos.apple.com

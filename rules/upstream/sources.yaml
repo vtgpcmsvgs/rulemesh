@@ -54,6 +54,14 @@ sources:
           note: 保留 OneDrive 进程规则放在最前面
         - repo: blackmatrix7/ios_rule_script
           note: 负责 Microsoft.list 与 OneDrive.list 主体
+    os_time_direct.list:
+      preferred:
+        - repo: self
+          note: 操作系统时间同步直连入口保持极小且稳定，只覆盖明确的官方时间主机
+        - repo: Microsoft Learn
+          note: 参考 Windows Time 文档，保留独立 Windows 设备默认的 time.windows.com
+        - repo: Apple Support
+          note: 参考 Apple 官方网络说明与 systemsetup 示例，保留 time.apple.com 与 time-macos.apple.com
     macos_update_direct.list:
       preferred:
         - repo: self
