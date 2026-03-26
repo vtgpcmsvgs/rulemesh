@@ -131,6 +131,7 @@ python tools/build_rules.py
   - 在该白名单里，`direct/microsoft_direct` 与 `direct/macos_update_direct` 都属于允许保留的系统升级直连入口。
   - 其中 `proxy/polygon_rpc_proxy` 与 `proxy/google_public_dns_ipv4_proxy` 都是允许保留的节点选择入口，用于白名单模式下显式放行指定代理端点。
   - 其中 GitHub 在 `github_ssh_direct` 之后额外保留 `DOMAIN,raw.githubusercontent.com` 下载入口与 `DOMAIN-KEYWORD,github` 观察兜底，统一走节点选择。
+  - 其中 `raw.githubusercontent.com` 额外绑定 `server:system`，同时 `dns-server` 保留 `system + 公共 DNS`，用于降低 GitHub Raw 外部资源偶发超时。
   - 原单独 `IP 规则` 段已删除，避免与设备分流重复。
   - 其中 AdsPower 在精细规则后允许额外保留一条广覆盖观察兜底，用于发现细分规则漏网之鱼。
   - 这份工作路由白名单与两个 `personal` 配置永久有意不一致，后续维护不要按“统一模板”思路把它改回去。

@@ -23,6 +23,7 @@
 - 区域精确规则继续保留，且 `Google TW` 必须先于广谱区域规则
 - GitHub 仓库 SSH 定向直连继续保留独立 carve-out
 - GitHub 相关 HTTPS 访问额外保留 `DOMAIN,raw.githubusercontent.com` 下载入口与 `DOMAIN-KEYWORD,github` 观察兜底，策略继续走节点选择，用于白名单模式下拉取规则产物并发现 SSH / Raw 之外的漏网之鱼
+- `raw.githubusercontent.com` 继续额外绑定 `server:system` 解析，`dns-server` 也保留 `system + 公共 DNS` 组合，用于降低 GitHub Raw 外部资源偶发超时
 - AdsPower 继续维持 `adspower_reject`、`adspower_direct`、`adspower_proxy` 三段细分
 - 在 `adspower_direct` 与 `adspower_proxy` 之后，额外保留一条广覆盖 `DOMAIN-KEYWORD,adspower` 观察兜底；策略仍走节点选择，专门用于发现细分规则漏网之鱼
 - `proxy/polygon_rpc_proxy.list` 继续保留 `🚀 节点选择`，用于白名单模式下显式放行 Polygon 主网 RPC 域名

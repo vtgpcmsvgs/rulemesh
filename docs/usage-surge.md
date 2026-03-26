@@ -67,7 +67,7 @@
 - 如果你希望默认禁用系统更新、升级时再临时放行，建议同时接入 `reject/os_update_reject.list`、`direct/microsoft_direct.list` 与 `direct/macos_update_direct.list`；平时由 `reject` 先拦截，需要升级 Windows / macOS 时再临时注释对应 `reject` 入口。
 - `proxy/gfw.list` 建议放在其他普通 `direct/*.list` 前，减少广谱直连误伤。
 - 浏览器明文 HTTP 拦截推荐直接接 `plain_http_reject.list`，不要再手写重复规则。
-- 私有 `rulemesh-substore-surge-work-whitelist.conf` 是白名单例外：它保留设备分流、区域精确、GitHub SSH、GitHub Raw 下载入口、GitHub 观察兜底、AdsPower、Polygon 主网 RPC、Google Public DNS 主 IPv4 端点、`LAN,DIRECT`、`direct/microsoft_direct`、`direct/macos_update_direct`、阿里云指定直连与 ByteDance；其中只有设备分流继续保留 `SRC-IP` 约束，后续规则不再额外限制源 IP，原独立 `IP 规则` 段已移除；GitHub 在 `github_ssh_direct` 后额外保留 `DOMAIN,raw.githubusercontent.com` 与 `DOMAIN-KEYWORD,github`，统一走节点选择；AdsPower 细分规则后还故意保留一条广覆盖 `DOMAIN-KEYWORD,adspower` 观察兜底，用来发现漏网之鱼；未命中上述入口的流量最终统一 `REJECT`。不要把公开模板里的广谱放行段机械同步回去。
+- 私有 `rulemesh-substore-surge-work-whitelist.conf` 是白名单例外：它保留设备分流、区域精确、GitHub SSH、GitHub Raw 下载入口、GitHub 观察兜底、AdsPower、Polygon 主网 RPC、Google Public DNS 主 IPv4 端点、`LAN,DIRECT`、`direct/microsoft_direct`、`direct/macos_update_direct`、阿里云指定直连与 ByteDance；其中只有设备分流继续保留 `SRC-IP` 约束，后续规则不再额外限制源 IP，原独立 `IP 规则` 段已移除；GitHub 在 `github_ssh_direct` 后额外保留 `DOMAIN,raw.githubusercontent.com` 与 `DOMAIN-KEYWORD,github`，统一走节点选择，并为 `raw.githubusercontent.com` 额外绑定 `server:system`、保留 `system + 公共 DNS` 组合作为解析兜底；AdsPower 细分规则后还故意保留一条广覆盖 `DOMAIN-KEYWORD,adspower` 观察兜底，用来发现漏网之鱼；未命中上述入口的流量最终统一 `REJECT`。不要把公开模板里的广谱放行段机械同步回去。
 
 ## 使用原则
 
