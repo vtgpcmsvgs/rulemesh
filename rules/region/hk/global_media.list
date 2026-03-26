@@ -4,3 +4,10 @@
 # 2) 香港地区的流媒体内容对华语用户更友好。
 # 3) 香港地区支付方式更友好。
 INCLUDE,upstream/blackmatrix7/global_media.list
+
+# 本地兜底：X / Twitter 网页、短链与静态资源统一走香港自动组，避免回落到通用 gfw 出口。
+DOMAIN-SUFFIX,x.com
+DOMAIN-SUFFIX,t.co
+DOMAIN-SUFFIX,twimg.com
+DOMAIN-SUFFIX,twitter.com
+DOMAIN-SUFFIX,twitter.jp

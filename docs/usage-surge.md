@@ -27,6 +27,7 @@
 - 总开关 + 手动切换 + 自动测速切换
 - 香港、台湾、日本、新加坡、美国、韩国的区域自动组
 - `reject`、`direct`、`proxy`、`region` 四类 RuleMesh 产物接入
+- `region/hk/global_media.list` 额外承接 X / Twitter 网页、短链与静态资源，并默认绑定 `🇭🇰 香港-自动选择`
 - AdsPower 专项 `reject/direct/proxy` 规则集与 `proxy/gfw.list` 广谱代理规则的顺序关系
 - Polygon 主网 RPC 专项 `proxy/polygon_rpc_proxy.list` 与 `proxy/gfw.list` 的顺序关系
 - BSC 主网 RPC 专项 `proxy/bsc_rpc_proxy.list` 与 `proxy/gfw.list` 的顺序关系
@@ -72,6 +73,7 @@
 注意：
 
 - `region/tw/google_tw.list` 必须放在 `region/hk/global_media.list` 等广谱区域规则前。
+- `region/hk/global_media.list` 当前还承接 `x.com`、`t.co`、`twimg.com` 与 `twitter.com` 等 X / Twitter 网页域名，默认应继续绑定 `🇭🇰 香港-自动选择`，不要再让它们回落到 `proxy/gfw.list`。
 - `direct/github_ssh_direct.list` 必须放在 `proxy/gfw.list` 前，只给 `github.com:22` 与 `ssh.github.com:443` 直连，避免把 GitHub 网页误放直连。
 - `direct/adspower_direct.list` 与 `proxy/adspower_proxy.list` 都应放在 `proxy/gfw.list` 前，确保 AdsPower 的细分直连与节点选择优先命中。
 - `proxy/polygon_rpc_proxy.list` 应放在 `proxy/gfw.list` 前，确保 Polygon 主网 RPC 域名优先走 `🚀 节点选择`。

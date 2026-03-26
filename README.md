@@ -125,6 +125,7 @@ python tools/build_rules.py
 - 客户端应显式接入 `proxy/polygon_rpc_proxy` 与 `proxy/bsc_rpc_proxy`，并放在 `proxy/gfw` 前，让 `🚀 节点选择` 先命中这些 RPC 域名
 - Google Public DNS 主 IPv4 端点专项规则统一维护在 `rules/proxy/google_public_dns_ipv4_proxy.list`
 - 客户端应显式接入 `proxy/google_public_dns_ipv4_proxy`，并放在 `proxy/gfw` 前，让 `🚀 节点选择` 先命中 `8.8.8.8/32`
+- `rules/region/hk/global_media.list` 额外承接 `x.com`、`t.co`、`twimg.com` 与 `twitter.com` 等 X / Twitter 网页域名，默认绑定 `🇭🇰 香港-自动选择`，减少回落到通用 `proxy/gfw` 的页面超时
 - 1Password 核心连接专项规则统一维护在 `rules/proxy/onepassword_proxy.list`
 - 上游快照由 `tools/sync_upstream_rules.py` 每日抓取 1Password 官方《ports and domains》支持页，保守收敛到核心一方域名与更新/基础设施端点
 - 如需启用，请显式接入 `proxy/onepassword_proxy` 并放在 `proxy/gfw` 前；公开模板默认不内置这条重度用户特化入口
@@ -164,6 +165,7 @@ python tools/build_rules.py
 - 默认接入 Polygon 主网 RPC 专项 `proxy/polygon_rpc_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
 - 默认接入 BSC 主网 RPC 专项 `proxy/bsc_rpc_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
 - 默认接入 Google Public DNS 主 IPv4 端点专项 `proxy/google_public_dns_ipv4_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
+- 默认让 X / Twitter 网页、短链与静态资源优先命中 `region/hk/global_media`，避免落回通用 `proxy/gfw`
   - 刻意不承载私有工作路由白名单结构，避免把本地工作特化误当成公开模板默认值
 - `docs/examples/mihomo-public.yaml`
   - 保留完整 `dns + proxy-providers + proxy-groups + rule-providers + rules` 结构
@@ -173,6 +175,7 @@ python tools/build_rules.py
 - 默认接入 Polygon 主网 RPC 专项 `proxy/polygon_rpc_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
 - 默认接入 BSC 主网 RPC 专项 `proxy/bsc_rpc_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
 - 默认接入 Google Public DNS 主 IPv4 端点专项 `proxy/google_public_dns_ipv4_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
+- 默认让 X / Twitter 网页、短链与静态资源优先命中 `region/hk/global_media`，避免落回通用 `proxy/gfw`
   - 同样不承载私有 Surge 工作路由白名单特化
 
 ## 当前设计原则
@@ -186,6 +189,7 @@ python tools/build_rules.py
 - Polygon 主网 RPC 专项规则应先命中 `proxy/polygon_rpc_proxy`，再落到 `proxy/gfw`
 - BSC 主网 RPC 专项规则应先命中 `proxy/bsc_rpc_proxy`，再落到 `proxy/gfw`
 - Google Public DNS 主 IPv4 端点专项规则应先命中 `proxy/google_public_dns_ipv4_proxy`，再落到 `proxy/gfw`
+- X / Twitter 网页、短链与静态资源应先命中 `region/hk/global_media`，再落到 `proxy/gfw`
 - 1Password 核心连接专项规则如启用，应先命中 `proxy/onepassword_proxy`，再落到 `proxy/gfw`
 - 操作系统时间同步专项规则应先命中 `direct/os_time_direct`，再落到其他普通 `direct/*`
 - Surge 私有工作路由白名单与两个 `personal` 配置永久允许结构不一致，维护时不要互相回抄

@@ -534,6 +534,7 @@ rules:
   - RULE-SET,tw_crypto,🇨🇳 台湾-自动选择
   - RULE-SET,jp_domains,🇯🇵 日本-自动选择
   - RULE-SET,hk_telegram,🇭🇰 香港-自动选择
+  # X / Twitter 网页、短链与静态资源也并入这组，避免回落到通用 gfw 节点选择。
   - RULE-SET,hk_global_media,🇭🇰 香港-自动选择
 
   # GitHub 仓库 SSH 定向直连必须放在 gfw 前，避免把整个 GitHub 放直连。

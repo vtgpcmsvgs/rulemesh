@@ -234,8 +234,8 @@
       "category": "region",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 2265,
-        "mihomo_classical": 2265
+        "surge_rules": 2270,
+        "mihomo_classical": 2270
       },
       "dist": {
         "surge_rules": "dist/surge/rules/region/hk/global_media.list",
