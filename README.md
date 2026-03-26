@@ -117,6 +117,8 @@ python tools/build_rules.py
 - 客户端应显式接入 `reject/adspower_reject`、`direct/adspower_direct` 与 `proxy/adspower_proxy`，不要再退回单条 `DOMAIN-KEYWORD,adspower` 兜底
 - Polygon 主网 RPC 专项规则统一维护在 `rules/proxy/polygon_rpc_proxy.list`
 - 客户端应显式接入 `proxy/polygon_rpc_proxy`，并放在 `proxy/gfw` 前，让 `🚀 节点选择` 先命中这些 RPC 域名
+- Google Public DNS 主 IPv4 端点专项规则统一维护在 `rules/proxy/google_public_dns_ipv4_proxy.list`
+- 客户端应显式接入 `proxy/google_public_dns_ipv4_proxy`，并放在 `proxy/gfw` 前，让 `🚀 节点选择` 先命中 `8.8.8.8/32`
 - 如果你采用“默认禁更，升级时手动临时放行”的习惯，请把 `reject/os_update_reject` 与 `direct/microsoft_direct`、`direct/macos_update_direct` 配套接入；平时由 `reject` 先拦截，需要升级 Windows / macOS 时再临时注释对应 `reject` 入口
 
 其中 Surge 当前建议明确区分两种使用版本：
@@ -125,9 +127,9 @@ python tools/build_rules.py
   - 只在本地私有环境维护，用于工作电脑集群接入软路由 Surge。
   - 允许包含按局域网源 IP 的设备分流、私有 `policy-path`、`[MITM]` 与证书参数。
   - 其中私有 `rulemesh-substore-surge-work-whitelist.conf` 当前采用工作电脑白名单模式：只保留明确列出的放行入口，未列入白名单的流量统一 `REJECT`。
-  - 其中只有设备分流继续按局域网源 IP 约束；区域精确、GitHub SSH、AdsPower、Polygon 主网 RPC 与指定直连不再额外限制源 IP。
+  - 其中只有设备分流继续按局域网源 IP 约束；区域精确、GitHub SSH、AdsPower、Polygon 主网 RPC、Google Public DNS 主 IPv4 端点与指定直连不再额外限制源 IP。
   - 在该白名单里，`direct/microsoft_direct` 与 `direct/macos_update_direct` 都属于允许保留的系统升级直连入口。
-  - 其中 `proxy/polygon_rpc_proxy` 也是允许保留的节点选择入口，用于白名单模式下显式放行 Polygon 主网 RPC 域名。
+  - 其中 `proxy/polygon_rpc_proxy` 与 `proxy/google_public_dns_ipv4_proxy` 都是允许保留的节点选择入口，用于白名单模式下显式放行指定代理端点。
   - 原单独 `IP 规则` 段已删除，避免与设备分流重复。
   - 其中 AdsPower 在精细规则后允许额外保留一条广覆盖观察兜底，用于发现细分规则漏网之鱼。
   - 这份工作路由白名单与两个 `personal` 配置永久有意不一致，后续维护不要按“统一模板”思路把它改回去。
@@ -146,6 +148,7 @@ python tools/build_rules.py
   - 默认同时接入 `reject/os_update_reject`、`direct/microsoft_direct` 与 `direct/macos_update_direct`，便于临时放开 Windows / macOS 系统升级直连
   - 默认接入 AdsPower 专项 `reject/direct/proxy` 规则集，并保持在 `proxy/gfw` 前完成细分控制
   - 默认接入 Polygon 主网 RPC 专项 `proxy/polygon_rpc_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
+  - 默认接入 Google Public DNS 主 IPv4 端点专项 `proxy/google_public_dns_ipv4_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
   - 刻意不承载私有工作路由白名单结构，避免把本地工作特化误当成公开模板默认值
 - `docs/examples/mihomo-public.yaml`
   - 保留完整 `dns + proxy-providers + proxy-groups + rule-providers + rules` 结构
@@ -153,6 +156,7 @@ python tools/build_rules.py
   - 默认同时接入 `reject/os_update_reject`、`direct/microsoft_direct` 与 `direct/macos_update_direct`，便于临时放开 Windows / macOS 系统升级直连
   - 默认接入 AdsPower 专项 `reject/direct/proxy` 规则集，并保持在 `proxy/gfw` 前完成细分控制
   - 默认接入 Polygon 主网 RPC 专项 `proxy/polygon_rpc_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
+  - 默认接入 Google Public DNS 主 IPv4 端点专项 `proxy/google_public_dns_ipv4_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
   - 同样不承载私有 Surge 工作路由白名单特化
 
 ## 当前设计原则
@@ -164,6 +168,7 @@ python tools/build_rules.py
 - 单一应用如果同时涉及 `reject`、`direct`、`proxy` 多种动作，优先使用 `rules/app/*.txt` 主清单统一维护，再派生到现有四类源规则
 - AdsPower 专项规则应先命中 `reject/adspower_reject`、`direct/adspower_direct`、`proxy/adspower_proxy`，再落到 `proxy/gfw`
 - Polygon 主网 RPC 专项规则应先命中 `proxy/polygon_rpc_proxy`，再落到 `proxy/gfw`
+- Google Public DNS 主 IPv4 端点专项规则应先命中 `proxy/google_public_dns_ipv4_proxy`，再落到 `proxy/gfw`
 - Surge 私有工作路由白名单与两个 `personal` 配置永久允许结构不一致，维护时不要互相回抄
 
 ## Google 路由强约束

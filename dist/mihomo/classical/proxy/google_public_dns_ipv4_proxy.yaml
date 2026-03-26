@@ -1,0 +1,4 @@
+# 生成来源：rules/proxy/google_public_dns_ipv4_proxy.list
+# 行为：classical
+payload:
+  - "IP-CIDR,8.8.8.8/32"

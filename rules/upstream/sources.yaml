@@ -93,6 +93,10 @@ sources:
       preferred:
         - repo: self
           note: Polygon 主网 RPC 域名专项节点选择入口，统一收敛根域名与通配符子域名，避免继续散落在客户端配置里手写
+    google_public_dns_ipv4_proxy.list:
+      preferred:
+        - repo: self
+          note: Google Public DNS 主 IPv4 端点专项节点选择入口，当前只精确匹配 8.8.8.8/32，不再绑定单一端口
     gfw.list:
       preferred:
         - repo: self

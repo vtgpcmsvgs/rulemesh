@@ -28,6 +28,7 @@
 - `reject`、`direct`、`proxy`、`region` 四类 RuleMesh 产物接入
 - AdsPower 专项 `reject/direct/proxy` 规则集与 `proxy/gfw.list` 广谱代理规则的顺序关系
 - Polygon 主网 RPC 专项 `proxy/polygon_rpc_proxy.list` 与 `proxy/gfw.list` 的顺序关系
+- Google Public DNS 主 IPv4 端点专项 `proxy/google_public_dns_ipv4_proxy.list` 与 `proxy/gfw.list` 的顺序关系
 - `skip-proxy`、`always-real-ip`、基础 DNS 与测速参数
 
 ## 模板刻意移除了什么
@@ -49,10 +50,11 @@
 4. AdsPower 细分直连规则
 5. AdsPower 细分节点选择规则
 6. Polygon 主网 RPC 节点选择规则
-7. 代理优先规则
-8. 直连规则
-9. IP 规则
-10. `FINAL`
+7. Google Public DNS 主 IPv4 端点节点选择规则
+8. 代理优先规则
+9. 直连规则
+10. IP 规则
+11. `FINAL`
 
 注意：
 
@@ -60,11 +62,12 @@
 - `direct/github_ssh_direct.list` 必须放在 `proxy/gfw.list` 前，只给 `github.com:22` 与 `ssh.github.com:443` 直连，避免把 GitHub 网页误放直连。
 - `direct/adspower_direct.list` 与 `proxy/adspower_proxy.list` 都应放在 `proxy/gfw.list` 前，确保 AdsPower 的细分直连与节点选择优先命中。
 - `proxy/polygon_rpc_proxy.list` 应放在 `proxy/gfw.list` 前，确保 Polygon 主网 RPC 域名优先走 `🚀 节点选择`。
+- `proxy/google_public_dns_ipv4_proxy.list` 应放在 `proxy/gfw.list` 前，确保 `8.8.8.8/32` 优先走 `🚀 节点选择`。
 - `reject/adspower_reject.list` 应和其他拒绝规则一起放在最前，先拦截隐私追踪与可安全阻断端点。
 - 如果你希望默认禁用系统更新、升级时再临时放行，建议同时接入 `reject/os_update_reject.list`、`direct/microsoft_direct.list` 与 `direct/macos_update_direct.list`；平时由 `reject` 先拦截，需要升级 Windows / macOS 时再临时注释对应 `reject` 入口。
 - `proxy/gfw.list` 建议放在其他普通 `direct/*.list` 前，减少广谱直连误伤。
 - 浏览器明文 HTTP 拦截推荐直接接 `plain_http_reject.list`，不要再手写重复规则。
-- 私有 `rulemesh-substore-surge-work-whitelist.conf` 是白名单例外：它保留设备分流、区域精确、GitHub SSH、AdsPower、Polygon 主网 RPC、`LAN,DIRECT`、`direct/microsoft_direct`、`direct/macos_update_direct`、阿里云指定直连与 ByteDance；其中只有设备分流继续保留 `SRC-IP` 约束，后续规则不再额外限制源 IP，原独立 `IP 规则` 段已移除；AdsPower 细分规则后还故意保留一条广覆盖 `DOMAIN-KEYWORD,adspower` 观察兜底，用来发现漏网之鱼；未命中上述入口的流量最终统一 `REJECT`。不要把公开模板里的广谱放行段机械同步回去。
+- 私有 `rulemesh-substore-surge-work-whitelist.conf` 是白名单例外：它保留设备分流、区域精确、GitHub SSH、AdsPower、Polygon 主网 RPC、Google Public DNS 主 IPv4 端点、`LAN,DIRECT`、`direct/microsoft_direct`、`direct/macos_update_direct`、阿里云指定直连与 ByteDance；其中只有设备分流继续保留 `SRC-IP` 约束，后续规则不再额外限制源 IP，原独立 `IP 规则` 段已移除；AdsPower 细分规则后还故意保留一条广覆盖 `DOMAIN-KEYWORD,adspower` 观察兜底，用来发现漏网之鱼；未命中上述入口的流量最终统一 `REJECT`。不要把公开模板里的广谱放行段机械同步回去。
 
 ## 使用原则
 

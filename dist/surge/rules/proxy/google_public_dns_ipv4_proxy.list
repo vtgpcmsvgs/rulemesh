@@ -1,0 +1,5 @@
+# 生成来源：rules/proxy/google_public_dns_ipv4_proxy.list
+# 类型：rules
+# 请勿直接编辑 dist。
+
+IP-CIDR,8.8.8.8/32

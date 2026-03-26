@@ -139,6 +139,18 @@ merge_plan:
       - 仅收敛明确指定的 Polygon 主网 RPC 域名，不扩展为其他链或泛 RPC 分类
       - 客户端顺序应放在 proxy/gfw 前，避免被广谱代理入口提前命中
 
+  - id: google-public-dns-ipv4-proxy
+    target: rules/proxy/google_public_dns_ipv4_proxy.list
+    purpose: Google Public DNS 主 IPv4 端点专项节点选择
+    strategy:
+      - manual_only
+      - keep_scope_small_and_stable
+      - match_exact_ipv4_endpoint_without_port_binding
+    notes:
+      - 当前只精确匹配 8.8.8.8/32，不再绑定 53 端口，方便后续复用到其他端口探活
+      - 不并入 rules/region/tw/google_tw.list，避免与 Google 台湾区域策略混用
+      - 客户端顺序应放在 proxy/gfw 前，避免被广谱代理入口提前命中
+
   - id: hk-global-media
     target: rules/region/hk/global_media.list
     purpose: 国际流媒体走香港区域策略

@@ -1,10 +1,10 @@
 {
   "summary": {
     "domain-only": 6,
-    "ipcidr-only": 6,
+    "ipcidr-only": 7,
     "classical/mixed": 17,
     "empty": 0,
-    "total_sources": 29,
+    "total_sources": 30,
     "total_warnings": 0
   },
   "sources": [
@@ -149,6 +149,19 @@
       "dist": {
         "surge_rules": "dist/surge/rules/proxy/gfw.list",
         "mihomo_classical": "dist/mihomo/classical/proxy/gfw.yaml"
+      }
+    },
+    {
+      "source": "rules/proxy/google_public_dns_ipv4_proxy.list",
+      "category": "proxy",
+      "classification": "ipcidr-only",
+      "counts": {
+        "surge_rules": 1,
+        "mihomo_classical": 1
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/proxy/google_public_dns_ipv4_proxy.list",
+        "mihomo_classical": "dist/mihomo/classical/proxy/google_public_dns_ipv4_proxy.yaml"
       }
     },
     {
