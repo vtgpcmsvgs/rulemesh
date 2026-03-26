@@ -149,3 +149,47 @@ class RepoInvariantTests(unittest.TestCase):
 
     def test_merge_yaml_covers_all_rule_sources(self) -> None:
         self.assertEqual(collect_merge_yaml_targets(), collect_source_rule_paths())
+
+    def test_all_scheduled_workflows_keep_webhook_guardrails(self) -> None:
+        workflow_root = ROOT / ".github" / "workflows"
+        offenders: list[str] = []
+
+        for path in sorted(workflow_root.glob("*.yml")):
+            workflow = path.read_text(encoding="utf-8")
+            if "schedule:" not in workflow:
+                continue
+
+            missing = [
+                needle
+                for needle in (
+                    'RULEMESH_UPSTREAM_ALERT_REQUIRED: "1"',
+                    "RULEMESH_UPSTREAM_ALERT_FEISHU_WEBHOOK_URL",
+                    "RULEMESH_UPSTREAM_ALERT_FEISHU_SECRET",
+                    "marker: upstream-webhook-healthcheck",
+                    "marker: upstream-workflow-failure-alert",
+                    'if: ${{ failure() }}',
+                    "python3 - <<'PY'",
+                    "id: webhook_health",
+                    "id: workflow_failure_alert",
+                )
+                if needle not in workflow
+            ]
+            if missing:
+                offenders.append(f"{path.name}: missing {missing}")
+
+        self.assertEqual(offenders, [])
+
+    def test_sync_workflow_keeps_expected_step_ids(self) -> None:
+        workflow = (ROOT / ".github" / "workflows" / "sync-upstream-rules.yml").read_text(
+            encoding="utf-8"
+        )
+
+        for needle in (
+            "id: checkout_repo",
+            "id: setup_python",
+            "id: unit_tests",
+            "id: sync_upstream",
+            "id: build_dist",
+            "id: commit_changes",
+        ):
+            self.assertIn(needle, workflow)

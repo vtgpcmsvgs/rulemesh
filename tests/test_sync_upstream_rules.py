@@ -1,4 +1,6 @@
+import inspect
 import json
+import os
 import sys
 import unittest
 from pathlib import Path
@@ -10,6 +12,7 @@ if str(TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(TOOLS_DIR))
 
 import sync_upstream_rules  # noqa: E402
+import send_upstream_alert  # noqa: E402
 
 
 class BuildAwsSnapshotTextTests(unittest.TestCase):
@@ -238,6 +241,65 @@ class FeishuWebhookTests(unittest.TestCase):
         )
 
 
+class SyncTaskRegistryTests(unittest.TestCase):
+    def test_all_top_level_sync_functions_are_registered_or_explicit_helpers(self) -> None:
+        sync_function_names = {
+            name
+            for name, obj in inspect.getmembers(sync_upstream_rules, inspect.isfunction)
+            if name.startswith("sync_")
+        }
+        registered_names = {task.runner.__name__ for task in sync_upstream_rules.SYNC_TASKS}
+
+        self.assertEqual(
+            sync_function_names - sync_upstream_rules.SYNC_HELPER_FUNCTIONS,
+            registered_names,
+        )
+
+
+class UpstreamWebhookRequirementTests(unittest.TestCase):
+    def test_upstream_webhook_required_respects_truthy_env_values(self) -> None:
+        with mock.patch.dict(os.environ, {"RULEMESH_UPSTREAM_ALERT_REQUIRED": "1"}, clear=False):
+            self.assertTrue(sync_upstream_rules.upstream_webhook_required())
+
+    def test_ensure_upstream_failure_alerts_sent_raises_when_required_but_missing_config(self) -> None:
+        failures = [
+            sync_upstream_rules.UpstreamFailure(
+                source="test",
+                resource="demo.txt",
+                url="https://example.com/demo.txt",
+                category="抓取失败",
+                detail="timeout",
+            )
+        ]
+
+        with mock.patch.dict(os.environ, {"RULEMESH_UPSTREAM_ALERT_REQUIRED": "1"}, clear=False), mock.patch(
+            "sync_upstream_rules.resolve_feishu_webhook_config",
+            return_value=None,
+        ):
+            with self.assertRaises(RuntimeError):
+                sync_upstream_rules.ensure_upstream_failure_alerts_sent(failures)
+
+
+class SendUpstreamAlertScriptTests(unittest.TestCase):
+    def test_build_heartbeat_message_contains_github_run_url(self) -> None:
+        env = {
+            "GITHUB_SERVER_URL": "https://github.com",
+            "GITHUB_REPOSITORY": "vtgpcmsvgs/rulemesh",
+            "GITHUB_RUN_ID": "123456",
+            "GITHUB_WORKFLOW": "sync-upstream-rules",
+            "GITHUB_EVENT_NAME": "schedule",
+            "GITHUB_RUN_ATTEMPT": "2",
+            "GITHUB_SHA": "0123456789abcdef",
+        }
+
+        with mock.patch.dict(os.environ, env, clear=False):
+            message = send_upstream_alert.build_heartbeat_message()
+
+        self.assertIn("RuleMesh upstream webhook 健康检查", message)
+        self.assertIn("https://github.com/vtgpcmsvgs/rulemesh/actions/runs/123456", message)
+        self.assertIn("提交: 0123456789ab", message)
+
+
 class SyncFailureTests(unittest.TestCase):
     def test_sync_one_records_empty_upstream_content(self) -> None:
         failures: list[sync_upstream_rules.UpstreamFailure] = []
@@ -273,6 +335,20 @@ class SyncFailureTests(unittest.TestCase):
         self.assertEqual((changed, failed), (0, 1))
         self.assertEqual(len(failures), 1)
         self.assertEqual(failures[0].category, "鉴权失败")
+        self.assertEqual(failures[0].resource, "alicloud/hk_ipv4.txt")
+
+    def test_sync_alicloud_snapshots_records_missing_credentials(self) -> None:
+        failures: list[sync_upstream_rules.UpstreamFailure] = []
+
+        with mock.patch(
+            "sync_upstream_rules.resolve_alicloud_credentials",
+            return_value=None,
+        ):
+            changed, failed = sync_upstream_rules.sync_alicloud_snapshots(failures)
+
+        self.assertEqual((changed, failed), (0, len(sync_upstream_rules.ALICLOUD_REGION_SNAPSHOTS)))
+        self.assertEqual(len(failures), len(sync_upstream_rules.ALICLOUD_REGION_SNAPSHOTS))
+        self.assertEqual(failures[0].category, "缺少凭据")
         self.assertEqual(failures[0].resource, "alicloud/hk_ipv4.txt")
 
 

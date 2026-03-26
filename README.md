@@ -86,6 +86,8 @@ python tools/build_rules.py
 - push 到 `main` 时会运行单元测试、重建 `dist/`，并校验已提交的 `rules/upstream` 与 `dist/` 是否和仓库源码一致
 - `pull request` 到 `main` 时会校验单元测试、构建流程，以及 `rules/upstream` 与 `dist/` 是否已经提交最新结果
 - 每天 `09:30 Asia/Shanghai` 的上游同步、重建与自动回写由 [`.github/workflows/sync-upstream-rules.yml`](.github/workflows/sync-upstream-rules.yml) 单独负责
+- 这条每日上游工作流会在 `checkout` 前先发送一次 Feishu webhook 健康检查；只要 webhook 缺失、失效或发送失败，工作流会直接失败
+- 通用上游、Chainlist、1Password、AWS、阿里云等 upstream 抓取失败会统一聚合告警；如果工作流其他步骤失败，还会再发一条不依赖仓库 checkout 的工作流级失败兜底告警
 - 支持手动触发
 - [`.github/workflows/build-dist.yml`](.github/workflows/build-dist.yml) 不再自动拉上游或自动修复提交；如果网页端直接编辑 `main` 却漏提 `dist/`，工作流会明确报错提醒补齐
 
@@ -214,7 +216,7 @@ python tools/build_rules.py
 约定如下：
 
 - `.rulemesh.local.json` 只用于本地私有环境，已经被 `.gitignore` 忽略，不应提交到公开仓库
-- 缺少本地配置时，不影响构建与上游同步主流程，只会跳过 Feishu 告警发送
+- 缺少本地配置时，不影响本地构建与手工同步主流程，只会跳过本地 Feishu 告警发送；但 GitHub Actions 的每日 upstream 工作流会要求 webhook secrets 可用
 - 真实 Webhook、密钥、私有订阅地址、MITM 参数与本地长期使用配置应继续保留在公开仓库外部，例如 `%USERPROFILE%\Desktop\rulemesh-local\current`
 - 私有订阅更新直连当前也统一保留在 `%USERPROFILE%\Desktop\rulemesh-local\current` 中：使用 `private_subscription_direct.list` 作为单一源文件，再通过 `sync_private_subscription_direct.ps1` 同步到三份本地私有配置
 - 这组私有订阅直连规则只记录在本地目录与私有文档约定中，不回写公开 `rules/`、`dist/` 或公开模板

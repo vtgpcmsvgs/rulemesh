@@ -2,7 +2,7 @@ name: sync-upstream-rules
 
 on:
   schedule:
-    # 每天 UTC 01:30（北京时间 09:30）同步上游快照并重建 dist
+    # Daily at 09:30 Asia/Shanghai (UTC 01:30)
     - cron: "30 1 * * *"
   workflow_dispatch: {}
 
@@ -19,28 +19,126 @@ jobs:
     environment: upstream-sync
     env:
       PYTHONDONTWRITEBYTECODE: "1"
+      RULEMESH_UPSTREAM_ALERT_REQUIRED: "1"
       RULEMESH_ALICLOUD_ACCESS_KEY_ID: ${{ secrets.RULEMESH_ALICLOUD_ACCESS_KEY_ID }}
       RULEMESH_ALICLOUD_ACCESS_KEY_SECRET: ${{ secrets.RULEMESH_ALICLOUD_ACCESS_KEY_SECRET }}
       RULEMESH_ALICLOUD_SECURITY_TOKEN: ${{ secrets.RULEMESH_ALICLOUD_SECURITY_TOKEN }}
       RULEMESH_UPSTREAM_ALERT_FEISHU_WEBHOOK_URL: ${{ secrets.RULEMESH_UPSTREAM_ALERT_FEISHU_WEBHOOK_URL }}
       RULEMESH_UPSTREAM_ALERT_FEISHU_SECRET: ${{ secrets.RULEMESH_UPSTREAM_ALERT_FEISHU_SECRET }}
     steps:
+      # marker: upstream-webhook-healthcheck
+      - name: Send upstream webhook heartbeat
+        id: webhook_health
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import base64
+          import datetime as dt
+          import hashlib
+          import hmac
+          import json
+          import os
+          import urllib.request
+
+          USER_AGENT = "rulemesh-upstream-sync/1.0"
+
+          def build_payload(message: str) -> bytes:
+              payload = {"msg_type": "text", "content": {"text": message}}
+              secret = os.environ.get("RULEMESH_UPSTREAM_ALERT_FEISHU_SECRET", "").strip()
+              if secret:
+                  timestamp = str(int(dt.datetime.now(dt.timezone.utc).timestamp()))
+                  string_to_sign = f"{timestamp}\n{secret}"
+                  digest = hmac.new(
+                      string_to_sign.encode("utf-8"),
+                      digestmod=hashlib.sha256,
+                  ).digest()
+                  payload["timestamp"] = timestamp
+                  payload["sign"] = base64.b64encode(digest).decode("utf-8")
+              return json.dumps(payload, ensure_ascii=False).encode("utf-8")
+
+          def validate_response(body: str) -> None:
+              stripped = body.strip()
+              if not stripped:
+                  return
+              try:
+                  payload = json.loads(stripped)
+              except json.JSONDecodeError:
+                  return
+              if not isinstance(payload, dict):
+                  return
+              code = payload.get("code")
+              status_code = payload.get("StatusCode")
+              if code in (None, 0) and status_code in (None, 0):
+                  return
+              message = payload.get("msg") or payload.get("StatusMessage") or stripped
+              raise SystemExit(f"Feishu webhook returned an error: {message}")
+
+          url = os.environ.get("RULEMESH_UPSTREAM_ALERT_FEISHU_WEBHOOK_URL", "").strip()
+          if not url:
+              raise SystemExit("RULEMESH_UPSTREAM_ALERT_FEISHU_WEBHOOK_URL is missing.")
+
+          repository = os.environ.get("GITHUB_REPOSITORY", "unknown")
+          workflow = os.environ.get("GITHUB_WORKFLOW", "unknown")
+          event_name = os.environ.get("GITHUB_EVENT_NAME", "unknown")
+          run_attempt = os.environ.get("GITHUB_RUN_ATTEMPT", "unknown")
+          sha = os.environ.get("GITHUB_SHA", "")[:12]
+          now_text = dt.datetime.now().astimezone().isoformat(timespec="seconds")
+
+          run_url = ""
+          server = os.environ.get("GITHUB_SERVER_URL")
+          run_id = os.environ.get("GITHUB_RUN_ID")
+          if server and repository and run_id:
+              run_url = f"{server}/{repository}/actions/runs/{run_id}"
+
+          lines = [
+              "RuleMesh upstream webhook 健康检查",
+              f"时间: {now_text}",
+              f"仓库: {repository}",
+              f"工作流: {workflow}",
+              f"事件: {event_name}",
+              f"尝试次数: {run_attempt}",
+          ]
+          if sha:
+              lines.append(f"提交: {sha}")
+          if run_url:
+              lines.append(f"运行链接: {run_url}")
+
+          request = urllib.request.Request(
+              url,
+              data=build_payload("\n".join(lines) + "\n"),
+              headers={
+                  "Content-Type": "application/json; charset=utf-8",
+                  "User-Agent": USER_AGENT,
+              },
+          )
+          with urllib.request.urlopen(request, timeout=15) as response:
+              body = response.read().decode("utf-8", errors="replace")
+          validate_response(body)
+          print("[INFO] upstream webhook heartbeat sent.")
+          PY
+
       - uses: actions/checkout@v4
+        id: checkout_repo
 
       - uses: actions/setup-python@v5
+        id: setup_python
         with:
           python-version: "3.11"
 
-      - name: 运行单元测试
+      - name: Run unit tests
+        id: unit_tests
         run: python -m unittest discover -s tests -p "test_*.py"
 
-      - name: 同步上游快照
+      - name: Sync upstream snapshots
+        id: sync_upstream
         run: python -B tools/sync_upstream_rules.py
 
-      - name: 构建 dist
+      - name: Build dist
+        id: build_dist
         run: python -B tools/build_rules.py
 
-      - name: 若有变更则提交并推送
+      - name: Commit changes if needed
+        id: commit_changes
         run: |
           if git diff --quiet; then
             echo "无变更"
@@ -51,3 +149,111 @@ jobs:
           git add rules/upstream dist
           git commit -m "sync: upstream rules and rebuild dist"
           git push
+
+      # marker: upstream-workflow-failure-alert
+      - name: Send workflow failure alert
+        id: workflow_failure_alert
+        if: ${{ failure() }}
+        shell: bash
+        env:
+          RULEMESH_STEP_RESULTS: >-
+            webhook_health=${{ steps.webhook_health.outcome }};
+            checkout_repo=${{ steps.checkout_repo.outcome }};
+            setup_python=${{ steps.setup_python.outcome }};
+            unit_tests=${{ steps.unit_tests.outcome }};
+            sync_upstream=${{ steps.sync_upstream.outcome }};
+            build_dist=${{ steps.build_dist.outcome }};
+            commit_changes=${{ steps.commit_changes.outcome }}
+        run: |
+          python3 - <<'PY'
+          import base64
+          import datetime as dt
+          import hashlib
+          import hmac
+          import json
+          import os
+          import urllib.request
+
+          USER_AGENT = "rulemesh-upstream-sync/1.0"
+
+          def build_payload(message: str) -> bytes:
+              payload = {"msg_type": "text", "content": {"text": message}}
+              secret = os.environ.get("RULEMESH_UPSTREAM_ALERT_FEISHU_SECRET", "").strip()
+              if secret:
+                  timestamp = str(int(dt.datetime.now(dt.timezone.utc).timestamp()))
+                  string_to_sign = f"{timestamp}\n{secret}"
+                  digest = hmac.new(
+                      string_to_sign.encode("utf-8"),
+                      digestmod=hashlib.sha256,
+                  ).digest()
+                  payload["timestamp"] = timestamp
+                  payload["sign"] = base64.b64encode(digest).decode("utf-8")
+              return json.dumps(payload, ensure_ascii=False).encode("utf-8")
+
+          def validate_response(body: str) -> None:
+              stripped = body.strip()
+              if not stripped:
+                  return
+              try:
+                  payload = json.loads(stripped)
+              except json.JSONDecodeError:
+                  return
+              if not isinstance(payload, dict):
+                  return
+              code = payload.get("code")
+              status_code = payload.get("StatusCode")
+              if code in (None, 0) and status_code in (None, 0):
+                  return
+              message = payload.get("msg") or payload.get("StatusMessage") or stripped
+              raise SystemExit(f"Feishu webhook returned an error: {message}")
+
+          url = os.environ.get("RULEMESH_UPSTREAM_ALERT_FEISHU_WEBHOOK_URL", "").strip()
+          if not url:
+              raise SystemExit("RULEMESH_UPSTREAM_ALERT_FEISHU_WEBHOOK_URL is missing.")
+
+          repository = os.environ.get("GITHUB_REPOSITORY", "unknown")
+          workflow = os.environ.get("GITHUB_WORKFLOW", "unknown")
+          event_name = os.environ.get("GITHUB_EVENT_NAME", "unknown")
+          run_attempt = os.environ.get("GITHUB_RUN_ATTEMPT", "unknown")
+          job_name = os.environ.get("GITHUB_JOB", "unknown")
+          ref_name = os.environ.get("GITHUB_REF_NAME", "unknown")
+          sha = os.environ.get("GITHUB_SHA", "")[:12]
+          now_text = dt.datetime.now().astimezone().isoformat(timespec="seconds")
+          step_results = os.environ.get("RULEMESH_STEP_RESULTS", "").strip()
+
+          run_url = ""
+          server = os.environ.get("GITHUB_SERVER_URL")
+          run_id = os.environ.get("GITHUB_RUN_ID")
+          if server and repository and run_id:
+              run_url = f"{server}/{repository}/actions/runs/{run_id}"
+
+          lines = [
+              "RuleMesh upstream 工作流失败",
+              f"时间: {now_text}",
+              f"仓库: {repository}",
+              f"工作流: {workflow}",
+              f"任务: {job_name}",
+              f"事件: {event_name}",
+              f"分支: {ref_name}",
+              f"尝试次数: {run_attempt}",
+          ]
+          if sha:
+              lines.append(f"提交: {sha}")
+          if run_url:
+              lines.append(f"运行链接: {run_url}")
+          if step_results:
+              lines.append(f"步骤结果: {step_results}")
+
+          request = urllib.request.Request(
+              url,
+              data=build_payload("\n".join(lines) + "\n"),
+              headers={
+                  "Content-Type": "application/json; charset=utf-8",
+                  "User-Agent": USER_AGENT,
+              },
+          )
+          with urllib.request.urlopen(request, timeout=15) as response:
+              body = response.read().decode("utf-8", errors="replace")
+          validate_response(body)
+          print("[INFO] upstream workflow failure alert sent.")
+          PY

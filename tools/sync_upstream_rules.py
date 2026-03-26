@@ -17,7 +17,7 @@ import urllib.request
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -68,6 +68,7 @@ ONEPASSWORD_REQUIRED_RULES = frozenset(
         "DOMAIN,cache.agilebits.com",
     }
 )
+SYNC_HELPER_FUNCTIONS = frozenset({"sync_one"})
 
 
 @dataclass(frozen=True)
@@ -121,6 +122,12 @@ class UpstreamFailure:
     url: str
     category: str
     detail: str
+
+
+@dataclass(frozen=True)
+class SyncTask:
+    name: str
+    runner: Callable[[list["UpstreamFailure"]], tuple[int, int]]
 
 
 UPSTREAM_FILES = (
@@ -457,6 +464,16 @@ def sync_one(item: UpstreamFile, failures: list[UpstreamFailure]) -> tuple[bool,
 
     print(f"[UPDATE] {item.path.as_posix()}")
     return True, False
+
+
+def sync_generic_upstreams(failures: list[UpstreamFailure]) -> tuple[int, int]:
+    changed = 0
+    failed = 0
+    for item in UPSTREAM_FILES:
+        updated, fetch_failed = sync_one(item, failures)
+        changed += int(updated)
+        failed += int(fetch_failed)
+    return changed, failed
 
 
 def extract_domain_candidates(text: str) -> list[str]:
@@ -1033,6 +1050,39 @@ def send_upstream_failure_alerts(failures: list[UpstreamFailure]) -> None:
     print(f"[INFO] upstream failure webhook sent ({len(failures)} item(s)).")
 
 
+def upstream_webhook_required() -> bool:
+    value = env_value(
+        "RULEMESH_UPSTREAM_ALERT_REQUIRED",
+        "RULEMESH_REQUIRE_UPSTREAM_WEBHOOK",
+    )
+    if value is None:
+        return False
+    return value.lower() in {"1", "true", "yes", "on"}
+
+
+def ensure_upstream_failure_alerts_sent(failures: list[UpstreamFailure]) -> None:
+    if not failures:
+        return
+
+    config = resolve_feishu_webhook_config()
+    if config is None:
+        message = "upstream failures detected but Feishu webhook is not configured."
+        print(f"[WARN] {message}", file=sys.stderr)
+        if upstream_webhook_required():
+            raise RuntimeError(message)
+        return
+
+    try:
+        send_feishu_webhook_message(config, build_upstream_failure_message(failures))
+    except (urllib.error.URLError, TimeoutError, OSError, ValueError) as exc:
+        print(f"[WARN] upstream failure webhook send failed: {exc}", file=sys.stderr)
+        if upstream_webhook_required():
+            raise RuntimeError(f"upstream failure webhook send failed: {exc}") from exc
+        return
+
+    print(f"[INFO] upstream failure webhook sent ({len(failures)} item(s)).")
+
+
 def resolve_alicloud_credentials() -> AlicloudCredentials | None:
     access_key_id = env_value(
         "RULEMESH_ALICLOUD_ACCESS_KEY_ID",
@@ -1308,12 +1358,21 @@ def build_alicloud_ssh_snapshot_text(
 def sync_alicloud_snapshots(failures: list[UpstreamFailure]) -> tuple[int, int]:
     credentials = resolve_alicloud_credentials()
     if credentials is None:
-        print(
-            "[WARN] alicloud/hk_ipv4.txt and alicloud/hk_ssh22.txt skipped: missing credentials. "
-            "Set RULEMESH_ALICLOUD_ACCESS_KEY_ID and "
-            "RULEMESH_ALICLOUD_ACCESS_KEY_SECRET (or the standard Alibaba Cloud env vars)."
+        detail = (
+            "缺少阿里云凭据。请设置 RULEMESH_ALICLOUD_ACCESS_KEY_ID 和 "
+            "RULEMESH_ALICLOUD_ACCESS_KEY_SECRET（或标准阿里云环境变量）。"
         )
-        return 0, 0
+        print(f"[WARN] alicloud sync failed: {detail}")
+        for snapshot in ALICLOUD_REGION_SNAPSHOTS:
+            record_failure(
+                failures,
+                source="阿里云官方 API",
+                resource=snapshot.path.as_posix(),
+                url=f"https://{snapshot.endpoint}/",
+                category="缺少凭据",
+                detail=detail,
+            )
+        return 0, len(ALICLOUD_REGION_SNAPSHOTS)
 
     changed = 0
     failed = 0
@@ -1373,34 +1432,27 @@ def sync_alicloud_snapshots(failures: list[UpstreamFailure]) -> tuple[int, int]:
     return changed, failed
 
 
+SYNC_TASKS = (
+    SyncTask(name="generic_upstreams", runner=sync_generic_upstreams),
+    SyncTask(name="onepassword", runner=sync_onepassword_snapshot),
+    SyncTask(name="chainlist", runner=sync_chainlist_rpc_snapshots),
+    SyncTask(name="aws", runner=sync_aws_snapshots),
+    SyncTask(name="alicloud", runner=sync_alicloud_snapshots),
+)
+
+
 def main() -> int:
     changed = 0
     failed = 0
     failures: list[UpstreamFailure] = []
 
-    for item in UPSTREAM_FILES:
-        updated, fetch_failed = sync_one(item, failures)
-        changed += int(updated)
-        failed += int(fetch_failed)
-
-    onepassword_changed, onepassword_failed = sync_onepassword_snapshot(failures)
-    changed += onepassword_changed
-    failed += onepassword_failed
-
-    chainlist_changed, chainlist_failed = sync_chainlist_rpc_snapshots(failures)
-    changed += chainlist_changed
-    failed += chainlist_failed
-
-    aws_changed, aws_failed = sync_aws_snapshots(failures)
-    changed += aws_changed
-    failed += aws_failed
-
-    alicloud_changed, alicloud_failed = sync_alicloud_snapshots(failures)
-    changed += alicloud_changed
-    failed += alicloud_failed
+    for task in SYNC_TASKS:
+        task_changed, task_failed = task.runner(failures)
+        changed += task_changed
+        failed += task_failed
 
     if failures:
-        send_upstream_failure_alerts(failures)
+        ensure_upstream_failure_alerts_sent(failures)
 
     print(f"[DONE] Updated {changed} file(s); fetch failures: {failed}.")
     return 0
