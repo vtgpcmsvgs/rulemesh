@@ -35,6 +35,16 @@
 
 推荐使用最小权限 RAM 用户或 STS 临时凭证，只需要 `vpc:DescribePublicIpAddress` 的读取权限。
 
+如果本地 Windows / Codex / 计划任务也要主动执行 `tools/sync_upstream_rules.py`，可额外任选一种本地配置方式：
+
+- 环境变量：`RULEMESH_ALICLOUD_ACCESS_KEY_ID`、`RULEMESH_ALICLOUD_ACCESS_KEY_SECRET`、`RULEMESH_ALICLOUD_SECURITY_TOKEN`
+- 私有配置：在 `.rulemesh.local.json` 中填写 `alicloud.access_key_id`、`alicloud.access_key_secret`、`alicloud.security_token`
+
+维护约定补充：
+
+- GitHub Actions 场景仍保持严格要求；如果 `upstream-sync` 环境缺少阿里云 secret，应继续失败并报警
+- 非 GitHub Actions 场景如果未配置阿里云凭据、但仓库里已经有上次成功同步的阿里云快照，脚本会跳过阿里云 upstream 并保留现有文件，不再把这类“本地无凭据”误报成 webhook 告警
+
 ## 产物链接
 
 Surge：

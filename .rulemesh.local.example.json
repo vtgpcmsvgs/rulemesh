@@ -2,5 +2,10 @@
   "upstream_alert": {
     "feishu_webhook_url": "https://open.feishu.cn/open-apis/bot/v2/hook/请替换为你自己的 webhook",
     "feishu_secret": "请替换为你自己的签名密钥"
+  },
+  "alicloud": {
+    "access_key_id": "请替换为本地阿里云 AccessKey ID；如仅依赖 GitHub Actions 可删除整个 alicloud 节点",
+    "access_key_secret": "请替换为本地阿里云 AccessKey Secret",
+    "security_token": "可选；使用 STS 时再填写"
   }
 }

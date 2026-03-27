@@ -227,10 +227,13 @@ python tools/build_rules.py
 
 ## 本地私有配置
 
-仓库提供 [`.rulemesh.local.example.json`](.rulemesh.local.example.json) 作为本地私有配置模板。复制为 `.rulemesh.local.json` 后，可给 `tools/sync_upstream_rules.py` 提供本地告警配置；当前支持：
+仓库提供 [`.rulemesh.local.example.json`](.rulemesh.local.example.json) 作为本地私有配置模板。复制为 `.rulemesh.local.json` 后，可给 `tools/sync_upstream_rules.py` 提供本地告警与阿里云上游鉴权配置；当前支持：
 
 - `upstream_alert.feishu_webhook_url`
 - `upstream_alert.feishu_secret`
+- `alicloud.access_key_id`
+- `alicloud.access_key_secret`
+- `alicloud.security_token`
 
 约定如下：
 

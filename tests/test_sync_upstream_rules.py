@@ -298,6 +298,32 @@ class UpstreamWebhookRequirementTests(unittest.TestCase):
                 sync_upstream_rules.ensure_upstream_failure_alerts_sent(failures)
 
 
+class AlicloudCredentialResolutionTests(unittest.TestCase):
+    def test_resolve_alicloud_credentials_falls_back_to_local_config(self) -> None:
+        local_payload = {
+            "alicloud": {
+                "access_key_id": "local-ak",
+                "access_key_secret": "local-sk",
+                "security_token": "local-sts",
+            }
+        }
+
+        with mock.patch.dict(os.environ, {}, clear=True), mock.patch(
+            "sync_upstream_rules.load_local_config",
+            return_value=local_payload,
+        ):
+            credentials = sync_upstream_rules.resolve_alicloud_credentials()
+
+        self.assertEqual(
+            credentials,
+            sync_upstream_rules.AlicloudCredentials(
+                access_key_id="local-ak",
+                access_key_secret="local-sk",
+                security_token="local-sts",
+            ),
+        )
+
+
 class SendUpstreamAlertScriptTests(unittest.TestCase):
     def test_build_workflow_failure_message_contains_step_results_and_run_url(self) -> None:
         env = {
@@ -365,6 +391,9 @@ class SyncFailureTests(unittest.TestCase):
         with mock.patch(
             "sync_upstream_rules.resolve_alicloud_credentials",
             return_value=None,
+        ), mock.patch(
+            "sync_upstream_rules.can_skip_alicloud_sync_without_credentials",
+            return_value=False,
         ):
             changed, failed = sync_upstream_rules.sync_alicloud_snapshots(failures)
 
@@ -372,6 +401,21 @@ class SyncFailureTests(unittest.TestCase):
         self.assertEqual(len(failures), len(sync_upstream_rules.ALICLOUD_REGION_SNAPSHOTS))
         self.assertEqual(failures[0].category, "缺少凭据")
         self.assertEqual(failures[0].resource, "alicloud/hk_ipv4.txt")
+
+    def test_sync_alicloud_snapshots_skips_missing_credentials_when_snapshot_exists(self) -> None:
+        failures: list[sync_upstream_rules.UpstreamFailure] = []
+
+        with mock.patch(
+            "sync_upstream_rules.resolve_alicloud_credentials",
+            return_value=None,
+        ), mock.patch(
+            "sync_upstream_rules.can_skip_alicloud_sync_without_credentials",
+            return_value=True,
+        ):
+            changed, failed = sync_upstream_rules.sync_alicloud_snapshots(failures)
+
+        self.assertEqual((changed, failed), (0, 0))
+        self.assertEqual(failures, [])
 
 
 if __name__ == "__main__":
