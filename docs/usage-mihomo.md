@@ -10,15 +10,18 @@
 
 - 完整公开参考模板：[`docs/examples/mihomo-public.yaml`](examples/mihomo-public.yaml)
 - 规则产物入口：`dist/mihomo/classical/`
+- Tun / DNS / 嗅探维护方法论：[`docs/mihomo-tun-dns-methodology.md`](mihomo-tun-dns-methodology.md)
 
 这个模板是基于本地长期使用的 Mihomo 配置整理出来的公开版，保留了多订阅聚合、区域自动切换、`rule-providers` 与完整规则顺序，但移除了真实机场地址和其他不适合公开仓库的私有信息。
 
 ## 模板保留了什么
 
-- `dns + proxy-providers + proxy-groups + rule-providers + rules` 的完整结构
+- `tun + sniffer + dns + proxy-providers + proxy-groups + rule-providers + rules` 的完整结构
 - `geodata-mode: false` + `geox-url.mmdb` 显式固定到与 Surge 共用的 `MetaCubeX/meta-rules-dat/country.mmdb`
 - 多订阅聚合后的统一总开关与区域自动组
 - `reject`、`direct`、`proxy`、`region` 四类 RuleMesh `classical` 产物接入
+- 默认采用“国际域名优先国外加密 DNS、明确的国内直连域名集单独走国内加密 DNS”的分流思路
+- 默认启用 Tun 全量接管与域名嗅探，优先把 Mihomo 的实际体验拉到接近 Surge 的水位
 - `region/hk/global_media.yaml` 额外承接 X / Twitter 网页、短链与静态资源，并默认绑定 `🇭🇰 香港-自动选择`
 - AdsPower 专项 `reject/direct/proxy` 规则集与 `proxy/gfw.yaml` 广谱代理规则的顺序关系
 - Polygon 主网 RPC 专项 `proxy/polygon_rpc_proxy.yaml` 与 `proxy/gfw.yaml` 的顺序关系
@@ -40,6 +43,19 @@
 
 1. 把模板里 `provider_a`、`provider_b`、`provider_c` 的 `url` 改成你自己的订阅地址。
 2. 如果你不希望最终兜底走总开关，可以把 `MATCH,🚀 节点选择` 改成你想固定兜底的区域组。
+
+另请注意：
+
+- Clash Verge Rev 等支持 Tun 的客户端，建议同时开启 Tun 模式；这份模板默认按 Tun + 嗅探 + 分流 DNS 设计，关闭 Tun 会明显削弱体验。
+- 这份模板不会把“所有 DIRECT 都交给国内 DNS”；像 GitHub SSH、Microsoft、macOS 更新这类“允许直连但不适合回到国内解析”的国外入口，仍保持默认国外解析。
+
+## Tun / DNS / 嗅探方法论
+
+- Mihomo 的体验优化优先级，不是继续堆规则，而是先把 `tun`、`sniffer`、`dns` 这层运行时补齐。
+- DNS 分流不按 `DIRECT` / `PROXY` 两分，而按“国内直连域名集”和“国际域名”拆开；前者走国内加密 DNS，后者默认走国外加密 DNS。
+- 新增直连规则时，要先判断它属于“国内直连域名集”还是“国外直连例外”。只有前者才应进入 `nameserver-policy` 的国内解析名单。
+- `proxy-server-nameserver` 要与业务 DNS 分开维护；前者只负责节点域名解析，避免规则 DNS 与节点 DNS 互相依赖。
+- 详细维护边界、风险提示与检查清单见 [docs/mihomo-tun-dns-methodology.md](mihomo-tun-dns-methodology.md)。
 
 ## 私有订阅更新直连约定
 

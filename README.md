@@ -105,6 +105,7 @@ python tools/build_rules.py
 - [docs/usage-mihomo.md](docs/usage-mihomo.md)
 - [docs/examples/surge-public.conf](docs/examples/surge-public.conf)
 - [docs/examples/mihomo-public.yaml](docs/examples/mihomo-public.yaml)
+- [docs/mihomo-tun-dns-methodology.md](docs/mihomo-tun-dns-methodology.md)
 - [docs/geoip-upstream.md](docs/geoip-upstream.md)
 - [docs/surge-work-cluster-whitelist.md](docs/surge-work-cluster-whitelist.md)
 - [docs/private-subscription-direct-sync.md](docs/private-subscription-direct-sync.md)
@@ -172,7 +173,7 @@ python tools/build_rules.py
 - 默认让 X / Twitter 网页、短链与静态资源优先命中 `region/hk/global_media`，避免落回通用 `proxy/gfw`
   - 刻意不承载私有工作路由白名单结构，避免把本地工作特化误当成公开模板默认值
 - `docs/examples/mihomo-public.yaml`
-  - 保留完整 `dns + proxy-providers + proxy-groups + rule-providers + rules` 结构
+  - 保留完整 `tun + sniffer + dns + proxy-providers + proxy-groups + rule-providers + rules` 结构
   - 已移除真实机场订阅链接、供应商命名与控制面参数
 - 默认同时接入 `direct/os_time_direct`，并配套接入 `reject/os_update_reject`、`direct/microsoft_direct` 与 `direct/macos_update_direct`；前者负责系统时间同步，后两者便于临时放开 Windows / macOS 系统升级直连
 - 默认接入 AdsPower 专项 `reject/direct/proxy` 规则集，并保持在 `proxy/gfw` 前完成细分控制
@@ -180,6 +181,7 @@ python tools/build_rules.py
 - 默认接入 BSC 主网 RPC 专项 `proxy/bsc_rpc_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
 - 默认接入 Google Public DNS 主 IPv4 端点专项 `proxy/google_public_dns_ipv4_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
 - 默认让 X / Twitter 网页、短链与静态资源优先命中 `region/hk/global_media`，避免落回通用 `proxy/gfw`
+  - 默认采用 Tun 全量接管、域名嗅探与分流 DNS；国际域名默认优先国外加密 DNS，明确的国内直连域名集单独走国内加密 DNS
   - 同样不承载私有 Surge 工作路由白名单特化
 
 ## 当前设计原则
@@ -244,6 +246,7 @@ python tools/build_rules.py
 - 遇到单一应用同时涉及多种动作时，优先维护 `rules/app/*.txt` 主清单，再由构建前同步派生到现有分类
 - 新增、删除或重命名 `rules/{reject,direct,proxy,region}/` 下的 `.list` 源规则文件时，同步更新 `rules/upstream/sources.yaml` 与 `rules/upstream/merge.yaml`
 - 新增或调整默认对外使用的规则入口、顺序、策略含义时，同步更新 `README.md`、`docs/usage-surge.md`、`docs/usage-mihomo.md` 与两份公开模板
+- 新增或调整 Mihomo 默认的 Tun、嗅探、DNS 分流、安全边界或性能取舍时，同步更新 `docs/mihomo-tun-dns-methodology.md`
 - 如果一个源文件开始变得很大，优先补 `sources.yaml` 与 `merge.yaml`，再考虑引入更多上游素材
 - 提交前优先运行 `powershell -ExecutionPolicy Bypass -File tools/check.ps1`
 - 提交前看一眼 `dist/build-report.json` 的 warnings，特别是 Mihomo 不支持的规则类型

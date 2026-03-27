@@ -8,6 +8,7 @@
 # - https://example.com/subscriptions/provider-a.yaml
 # - https://example.com/subscriptions/provider-b.yaml
 # - https://example.com/subscriptions/provider-c.yaml
+# 如果客户端支持，请同时开启 TUN 模式；这份模板默认按 Tun + 嗅探 + 分流 DNS 设计。
 
 mixed-port: 7897
 allow-lan: false
@@ -37,26 +38,97 @@ geo-update-interval: 24
 geox-url:
   mmdb: "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/country.mmdb"
 
-# > 跳过代理
-# Mihomo 无 Surge 的全局 skip-proxy 等价字段，这里通过直连规则与 fake-ip-filter 覆盖主要场景。
+# > Tun 全量接管
+tun:
+  enable: true
+  stack: mixed
+  dns-hijack:
+    - "any:53"
+    - "tcp://any:53"
+  auto-route: true
+  auto-detect-interface: true
+  strict-route: true
+
+# > 域名嗅探
+sniffer:
+  enable: true
+  force-dns-mapping: true
+  parse-pure-ip: true
+  override-destination: true
+  sniff:
+    HTTP:
+      ports: [80, 8080-8880]
+      override-destination: true
+    TLS:
+      ports: [443, 8443]
+    QUIC:
+      ports: [443, 8443]
+  skip-domain:
+    - "Mijia Cloud"
+    - "+.push.apple.com"
+    - "+.lan"
+    - "+.local"
+
+# > DNS 分流
+# 1) 默认把国际域名交给国外加密 DNS，避免 Google 等站点回到国内解析。
+# 2) 仅把明确的国内直连域名集交给国内加密 DNS，不把所有 DIRECT 粗暴映射到国内 DNS。
+# 3) 代理节点域名解析单独走 proxy-server-nameserver，避免规则 DNS 与节点 DNS 互相缠绕。
 dns:
   enable: true
   ipv6: false
   use-hosts: true
   use-system-hosts: true
   respect-rules: true
+  cache-algorithm: arc
   enhanced-mode: fake-ip
   fake-ip-range: 198.18.0.1/16
-  # > DNS 服务器
-  nameserver:
+  # > DNS 服务器引导解析
+  default-nameserver:
     - 223.5.5.5
     - 119.29.29.29
-  # > DNS 劫持 / 代理服务器解析
-  proxy-server-nameserver:
+    - 1.1.1.1
     - 8.8.8.8
-    - 8.8.4.4
+  # > 国内直连域名优先交给国内加密 DNS
+  nameserver-policy:
+    "rule-set:direct_cn":
+      - https://dns.alidns.com/dns-query
+      - https://doh.pub/dns-query
+    "rule-set:direct_bilibili":
+      - https://dns.alidns.com/dns-query
+      - https://doh.pub/dns-query
+    "rule-set:direct_netease":
+      - https://dns.alidns.com/dns-query
+      - https://doh.pub/dns-query
+    "rule-set:direct_bytedance":
+      - https://dns.alidns.com/dns-query
+      - https://doh.pub/dns-query
+  # > 默认国外加密 DNS
+  nameserver:
+    - https://1.1.1.1/dns-query
+    - https://dns.google/dns-query
+  # > 直连出口解析
+  direct-nameserver:
+    - https://dns.alidns.com/dns-query
+    - https://doh.pub/dns-query
+  direct-nameserver-follow-policy: true
+  # > 代理节点域名解析
+  proxy-server-nameserver:
+    - https://1.1.1.1/dns-query
+    - https://dns.google/dns-query
+  # > 国外备用解析
+  fallback:
+    - https://1.0.0.1/dns-query
+    - https://dns.quad9.net/dns-query
   # > Always Real IP Hosts
   fake-ip-filter:
+    - "+.lan"
+    - "+.local"
+    - "+.home.arpa"
+    - "localhost"
+    - "www.msftconnecttest.com"
+    - "msftconnecttest.com"
+    - "www.msftncsi.com"
+    - "msftncsi.com"
     - "*.srv.nintendo.net"
     - "*.stun.playstation.net"
     - "xbox.*.microsoft.com"
@@ -566,12 +638,17 @@ rules:
   - RULE-SET,proxy_gfw,🚀 节点选择
 
   # 10) 直连规则（先放系统时间同步，再接其他直连入口）
+  - DOMAIN,localhost,DIRECT
   - DOMAIN-SUFFIX,local,DIRECT
+  - DOMAIN-SUFFIX,lan,DIRECT
+  - DOMAIN-SUFFIX,home.arpa,DIRECT
   - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
   - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
   - IP-CIDR,172.16.0.0/12,DIRECT,no-resolve
   - IP-CIDR,192.168.0.0/16,DIRECT,no-resolve
   - IP-CIDR,100.64.0.0/10,DIRECT,no-resolve
+  - IP-CIDR,169.254.0.0/16,DIRECT,no-resolve
+  - IP-CIDR,224.0.0.0/4,DIRECT,no-resolve
   - RULE-SET,direct_os_time,DIRECT
   - RULE-SET,direct_alicloud_hk_ssh,DIRECT
   - RULE-SET,direct_microsoft,DIRECT
@@ -590,6 +667,7 @@ rules:
   - RULE-SET,jp_socks5_ipcidr,🇯🇵 日本-自动选择,no-resolve
 
   # 12) 最终兜底
+  # 极致体验默认回到总开关，不再把所有漏网流量固定锁在某个单一区域。
   - MATCH,🚀 节点选择
 
 # 公开模板刻意不包含：
