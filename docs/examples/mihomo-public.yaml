@@ -30,6 +30,13 @@ profile:
   store-selected: true
   store-fake-ip: true
 
+# > GeoIP 数据库（显式固定为 mmdb，与 Surge 共用同一上游）
+geodata-mode: false
+geo-auto-update: true
+geo-update-interval: 24
+geox-url:
+  mmdb: "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/country.mmdb"
+
 # > 跳过代理
 # Mihomo 无 Surge 的全局 skip-proxy 等价字段，这里通过直连规则与 fake-ip-filter 覆盖主要场景。
 dns:

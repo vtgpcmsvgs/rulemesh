@@ -7,7 +7,7 @@
 - `Surge` 使用 `dist/surge/rules/`
 - `Clash Verge Rev` 与 `Clash Meta for Android` 使用 `dist/mihomo/classical/`
 
-这样做的目标是把“怎么维护规则”与“客户端怎么接入规则”分开，避免客户端继续直接引用第三方上游仓库，也避免源规则和客户端格式绑死。
+这样做的目标是把“怎么维护规则”与“客户端怎么接入规则”分开，避免客户端继续直接引用第三方规则上游仓库，也避免源规则和客户端格式绑死。GeoIP 数据库属于客户端运行时依赖，是当前保留的显式外部上游例外。
 
 ## 目录说明
 
@@ -105,6 +105,7 @@ python tools/build_rules.py
 - [docs/usage-mihomo.md](docs/usage-mihomo.md)
 - [docs/examples/surge-public.conf](docs/examples/surge-public.conf)
 - [docs/examples/mihomo-public.yaml](docs/examples/mihomo-public.yaml)
+- [docs/geoip-upstream.md](docs/geoip-upstream.md)
 - [docs/surge-work-cluster-whitelist.md](docs/surge-work-cluster-whitelist.md)
 - [docs/private-subscription-direct-sync.md](docs/private-subscription-direct-sync.md)
 - [docs/aws-region-rules.md](docs/aws-region-rules.md)
@@ -125,6 +126,8 @@ python tools/build_rules.py
 - 客户端应显式接入 `proxy/polygon_rpc_proxy` 与 `proxy/bsc_rpc_proxy`，并放在 `proxy/gfw` 前，让 `🚀 节点选择` 先命中这些 RPC 域名
 - Google Public DNS 主 IPv4 端点专项规则统一维护在 `rules/proxy/google_public_dns_ipv4_proxy.list`
 - 客户端应显式接入 `proxy/google_public_dns_ipv4_proxy`，并放在 `proxy/gfw` 前，让 `🚀 节点选择` 先命中 `8.8.8.8/32`
+- Surge 与 Mihomo 当前统一把 GeoIP mmdb 显式固定到 `MetaCubeX/meta-rules-dat` 的 `country.mmdb`
+- 对应上游登记与维护约定见 `rules/upstream/geodata/metacubex_country_mmdb.yaml` 与 [docs/geoip-upstream.md](docs/geoip-upstream.md)
 - `rules/region/hk/global_media.list` 额外承接 `x.com`、`t.co`、`twimg.com` 与 `twitter.com` 等 X / Twitter 网页域名，默认绑定 `🇭🇰 香港-自动选择`，减少回落到通用 `proxy/gfw` 的页面超时
 - 1Password 核心连接专项规则统一维护在 `rules/proxy/onepassword_proxy.list`
 - 上游快照由 `tools/sync_upstream_rules.py` 每日抓取 1Password 官方《ports and domains》支持页，保守收敛到核心一方域名与更新/基础设施端点
@@ -182,7 +185,8 @@ python tools/build_rules.py
 ## 当前设计原则
 
 - 源规则尽量保持小而清晰，优先你自己的审阅结果
-- 上游来源只作为参考素材，不直接暴露给客户端
+- 规则类上游只作为参考素材，不直接暴露给客户端
+- GeoIP 数据库属于运行时依赖，当前作为显式例外统一固定到 `MetaCubeX/meta-rules-dat/country.mmdb`
 - 统一输出显式规则行，不再生成额外的客户端专用精简产物
 - 域名规则、CIDR 规则与大多数关键词规则都通过 `RULE-SET` / `behavior: classical` 接入
 - 单一应用如果同时涉及 `reject`、`direct`、`proxy` 多种动作，优先使用 `rules/app/*.txt` 主清单统一维护，再派生到现有四类源规则
@@ -211,8 +215,10 @@ python tools/build_rules.py
   - 记录每个主要源文件建议参考哪些上游
 - `rules/upstream/merge.yaml`
   - 记录未来如何把上游素材并回本仓库源规则
+- `rules/upstream/geodata/metacubex_country_mmdb.yaml`
+  - 记录 Surge 与 Mihomo 共用的 GeoIP mmdb 上游选择与下载入口
 
-这两个文件当前不参与自动构建，只负责把维护策略写清楚，避免后续继续依赖口头约定。
+这几类文件当前都不参与规则构建，只负责把维护策略写清楚，避免后续继续依赖口头约定。
 
 ## 本地私有配置
 

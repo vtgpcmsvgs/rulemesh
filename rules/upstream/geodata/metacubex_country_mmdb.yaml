@@ -1,0 +1,16 @@
+# 来源仓库: https://github.com/MetaCubeX/meta-rules-dat
+# 来源 README: https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/master/README.md
+# 作用: 统一登记 Surge geoip-maxmind-url 与 Mihomo geox-url.mmdb 的共享 GeoIP 上游。
+# 选择原因: Mihomo 官方文档的 geox-url 默认示例指向 MetaCubeX/meta-rules-dat；同时提供 mmdb/dat/db/lite 多格式。
+# 交叉验证: 上游 README 明确标注 country.mmdb / geoip.dat / geoip.db 内容同 Loyalsoldier/v2ray-rules-dat。
+# 维护边界: 这里只登记上游选择与下载入口，不把大体积 mmdb 二进制直接提交进仓库。
+# 同步时间: 2026-03-27T09:41:13+00:00
+
+provider: MetaCubeX/meta-rules-dat
+selected_asset: country.mmdb
+github_release: https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/country.mmdb
+jsdelivr: https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb
+jsdelivr_cf: https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb
+recommended_endpoint: github_release
+recommended_for: surge, mihomo-mmdb
+content_reference: Loyalsoldier/v2ray-rules-dat

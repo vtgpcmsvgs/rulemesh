@@ -16,6 +16,7 @@
 ## 模板保留了什么
 
 - `dns + proxy-providers + proxy-groups + rule-providers + rules` 的完整结构
+- `geodata-mode: false` + `geox-url.mmdb` 显式固定到与 Surge 共用的 `MetaCubeX/meta-rules-dat/country.mmdb`
 - 多订阅聚合后的统一总开关与区域自动组
 - `reject`、`direct`、`proxy`、`region` 四类 RuleMesh `classical` 产物接入
 - `region/hk/global_media.yaml` 额外承接 X / Twitter 网页、短链与静态资源，并默认绑定 `🇭🇰 香港-自动选择`
@@ -87,7 +88,9 @@
 - `rules/` 是源规则层，不建议客户端直接引用
 - 不要把 `classical` 产物误配成别的 `behavior`
 - 不要再找旧的纯域名或纯 CIDR 产物目录；仓库已经统一走 `classical`
+- GeoIP 数据库当前显式固定为 `mmdb`，并统一指向 `MetaCubeX/meta-rules-dat` 的 `country.mmdb`
 - 不要手改 `dist/`，应先改 `rules/` 后重新构建
 - 私有 Surge 工作路由白名单约定见 [docs/surge-work-cluster-whitelist.md](surge-work-cluster-whitelist.md)，但该约定不影响 Mihomo 模板与 Mihomo personal 配置。
 - 私有订阅更新直连同步约定见 [docs/private-subscription-direct-sync.md](private-subscription-direct-sync.md)；该约定影响 Mihomo personal，但不影响公开模板。
 - 1Password 重度用户专项规则约定见 [docs/onepassword-proxy-rules.md](onepassword-proxy-rules.md)；公开模板默认不内置，需要时再显式接入。
+- GeoIP 上游选择与维护边界见 [docs/geoip-upstream.md](geoip-upstream.md)。

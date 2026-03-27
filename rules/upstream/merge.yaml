@@ -310,3 +310,15 @@ merge_plan:
     strategy:
       - keep_small_and_readable
       - manual_only
+
+runtime_plan:
+  - id: shared-geoip-mmdb
+    target: runtime/geodata/shared_country_mmdb
+    purpose: Surge 与 Mihomo 共用的 GeoIP mmdb 上游来源
+    strategy:
+      - sync_selected_geodata_summary_to_rules_upstream_geodata
+      - prefer_mihomo_official_default_provider_metacubex_meta_rules_dat
+      - pin_surge_geoip_maxmind_url_and_mihomo_geox_url_mmdb_to_same_country_mmdb
+    notes:
+      - 不把大体积 mmdb 二进制直接提交到本仓库，只登记上游选择与下载入口
+      - 如需切换来源，先更新 rules/upstream/geodata 快照、README 与两端模板，再同步本地私有 personal 配置

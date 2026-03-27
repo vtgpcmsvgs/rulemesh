@@ -46,6 +46,26 @@ ONEPASSWORD_DOMAIN_PATTERN = DOMAIN_HOST_PATTERN
 CHAINLIST_RPCS_URL = "https://chainlist.org/rpcs.json"
 CHAINLIST_REPO_URL = "https://github.com/DefiLlama/chainlist"
 CHAINLIST_RESOURCE_PATH = Path("chainlist/rpcs.json")
+META_RULES_DAT_REPO = "MetaCubeX/meta-rules-dat"
+META_RULES_DAT_REPO_URL = f"https://github.com/{META_RULES_DAT_REPO}"
+META_RULES_DAT_README_URL = (
+    "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/master/README.md"
+)
+META_RULES_DAT_GEODATA_SNAPSHOT_PATH = Path("geodata/metacubex_country_mmdb.yaml")
+META_RULES_DAT_COUNTRY_MMDB_GITHUB_RELEASE_URL = (
+    "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/country.mmdb"
+)
+META_RULES_DAT_COUNTRY_MMDB_JSDELIVR_URL = (
+    "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb"
+)
+META_RULES_DAT_COUNTRY_MMDB_JSDELIVR_CF_URL = (
+    "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb"
+)
+META_RULES_DAT_REQUIRED_MARKERS = (
+    META_RULES_DAT_COUNTRY_MMDB_GITHUB_RELEASE_URL,
+    META_RULES_DAT_COUNTRY_MMDB_JSDELIVR_URL,
+    "同 [Loyalsoldier/v2ray-rules-dat]",
+)
 ONEPASSWORD_RULE_ORDER = (
     ("DOMAIN-SUFFIX", "1password.com"),
     ("DOMAIN-SUFFIX", "1password.ca"),
@@ -636,6 +656,75 @@ def build_chainlist_rpc_snapshot_text(
     lines.extend(build_chainlist_rpc_rules(cumulative_hosts))
     lines.append("")
     return "\n".join(lines)
+
+
+def validate_meta_rules_dat_readme(readme_text: str) -> None:
+    missing = [marker for marker in META_RULES_DAT_REQUIRED_MARKERS if marker not in readme_text]
+    if not missing:
+        return
+    raise ValueError("MetaCubeX README 缺少关键下载入口或同源说明: " + ", ".join(missing))
+
+
+def build_geodata_snapshot_text() -> str:
+    synced_at = dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat()
+    lines = [
+        f"# 来源仓库: {META_RULES_DAT_REPO_URL}",
+        f"# 来源 README: {META_RULES_DAT_README_URL}",
+        "# 作用: 统一登记 Surge geoip-maxmind-url 与 Mihomo geox-url.mmdb 的共享 GeoIP 上游。",
+        "# 选择原因: Mihomo 官方文档的 geox-url 默认示例指向 MetaCubeX/meta-rules-dat；同时提供 mmdb/dat/db/lite 多格式。",
+        "# 交叉验证: 上游 README 明确标注 country.mmdb / geoip.dat / geoip.db 内容同 Loyalsoldier/v2ray-rules-dat。",
+        "# 维护边界: 这里只登记上游选择与下载入口，不把大体积 mmdb 二进制直接提交进仓库。",
+        f"# 同步时间: {synced_at}",
+        "",
+        f"provider: {META_RULES_DAT_REPO}",
+        "selected_asset: country.mmdb",
+        f"github_release: {META_RULES_DAT_COUNTRY_MMDB_GITHUB_RELEASE_URL}",
+        f"jsdelivr: {META_RULES_DAT_COUNTRY_MMDB_JSDELIVR_URL}",
+        f"jsdelivr_cf: {META_RULES_DAT_COUNTRY_MMDB_JSDELIVR_CF_URL}",
+        "recommended_endpoint: github_release",
+        "recommended_for: surge, mihomo-mmdb",
+        "content_reference: Loyalsoldier/v2ray-rules-dat",
+        "",
+    ]
+    return "\n".join(lines)
+
+
+def sync_geodata_snapshot(failures: list[UpstreamFailure]) -> tuple[int, int]:
+    try:
+        readme_text = fetch_text(META_RULES_DAT_README_URL)
+    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        print(f"[WARN] {META_RULES_DAT_GEODATA_SNAPSHOT_PATH.as_posix()} fetch failed: {exc}")
+        record_failure(
+            failures,
+            source="MetaCubeX 官方 GEO 数据说明",
+            resource=META_RULES_DAT_GEODATA_SNAPSHOT_PATH.as_posix(),
+            url=META_RULES_DAT_README_URL,
+            category=classify_fetch_failure(exc),
+            detail=format_exception_message(exc),
+        )
+        return 0, 1
+
+    try:
+        validate_meta_rules_dat_readme(readme_text)
+    except ValueError as exc:
+        print(f"[WARN] {META_RULES_DAT_GEODATA_SNAPSHOT_PATH.as_posix()} sync failed: {exc}")
+        record_failure(
+            failures,
+            source="MetaCubeX 官方 GEO 数据说明",
+            resource=META_RULES_DAT_GEODATA_SNAPSHOT_PATH.as_posix(),
+            url=META_RULES_DAT_README_URL,
+            category="返回内容异常",
+            detail=format_exception_message(exc),
+        )
+        return 0, 1
+
+    snapshot_text = build_geodata_snapshot_text()
+    if write_if_changed(UPSTREAM_ROOT / META_RULES_DAT_GEODATA_SNAPSHOT_PATH, snapshot_text):
+        print(f"[UPDATE] {META_RULES_DAT_GEODATA_SNAPSHOT_PATH.as_posix()}")
+        return 1, 0
+
+    print(f"[SKIP] {META_RULES_DAT_GEODATA_SNAPSHOT_PATH.as_posix()}")
+    return 0, 0
 
 
 def sync_chainlist_rpc_snapshots(failures: list[UpstreamFailure]) -> tuple[int, int]:
@@ -1434,6 +1523,7 @@ def sync_alicloud_snapshots(failures: list[UpstreamFailure]) -> tuple[int, int]:
 
 SYNC_TASKS = (
     SyncTask(name="generic_upstreams", runner=sync_generic_upstreams),
+    SyncTask(name="geodata", runner=sync_geodata_snapshot),
     SyncTask(name="onepassword", runner=sync_onepassword_snapshot),
     SyncTask(name="chainlist", runner=sync_chainlist_rpc_snapshots),
     SyncTask(name="aws", runner=sync_aws_snapshots),

@@ -196,3 +196,13 @@ sources:
           note: 保持源规则层 AWS 台北 IPv4 的单一 INCLUDE 入口稳定
         - repo: AWS ip-ranges.json
           note: 每日同步全部 ap-east-2 IPv4 前缀到 rules/upstream/aws/taipei_ipv4.txt
+
+runtime:
+  shared_geoip_mmdb:
+    preferred:
+      - repo: MetaCubeX/meta-rules-dat
+        note: Mihomo 官方 geox-url 示例默认指向该仓库；同时提供 country.mmdb / geoip.dat / geoip.db / lite 变体，适合作为 Surge 与 Mihomo 的统一 GeoIP 上游
+      - repo: Loyalsoldier/geoip
+        note: 持续提供 Country.mmdb 与 geoip.dat，可作为内容同源的交叉验证来源
+      - repo: Hackl0us/GeoIP2-CN
+        note: 适合只做 GEOIP,CN 的轻量 CN-only 场景，但不适合作为当前跨 Surge + Mihomo 的统一默认源

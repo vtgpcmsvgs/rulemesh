@@ -1,7 +1,7 @@
 # 来源: https://ip-ranges.amazonaws.com/ip-ranges.json
 # 标题: AWS 首尔 IPv4（ap-northeast-2）
-# 同步令牌: 1774500484
-# 上游创建时间: 2026-03-26-04-48-04
+# 同步令牌: 1774575485
+# 上游创建时间: 2026-03-27-01-38-05
 # 区域: ap-northeast-2
 # 范围: 所选 AWS 区域公开发布的全部 IPv4 前缀。
 # IPv4 前缀数量: 177
