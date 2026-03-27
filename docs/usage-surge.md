@@ -15,6 +15,7 @@
   - 这类内容不适合入公开仓库，建议只在本地私有目录维护。
 - 其中私有 `rulemesh-substore-surge-work-whitelist.conf` 当前使用工作电脑白名单模式，并与两个 `personal` 配置永久有意不一致。
 - 维护这份白名单文件时请同时参考 [docs/surge-work-cluster-whitelist.md](surge-work-cluster-whitelist.md)。
+- 若只新增某个白名单专属的单个直连域名，默认直接维护在 2.9“指定直连”入口，不为单条规则额外新增公开 `rules/` 文件。
 - 如果本地存在需要每日刷新的私有订阅域名，统一维护在 `%USERPROFILE%\Desktop\rulemesh-local\current\private_subscription_direct.list`，再通过同步脚本分发到私有配置。
 - 个人终端版
   - 用于同事个人终端或可公开分享的配置。

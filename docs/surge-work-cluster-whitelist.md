@@ -33,6 +33,7 @@
 - `proxy/google_public_dns_ipv4_proxy.list` 继续保留 `🚀 节点选择`，用于白名单模式下显式放行 `8.8.8.8/32`
 - `LAN,DIRECT` 继续保留在白名单直连入口中
 - `direct/os_time_direct` 继续保留 `DIRECT`，用于 Windows / Apple 系统时间同步，不并入节点选择
+- 单个白名单专属直连域名（例如 `smtp.163.com`）优先直接维护在 2.9“指定直连”入口，不为单条规则额外新增公开 `rules/` 文件
 - `direct/microsoft_direct` 继续保留 `DIRECT`
 - `direct/macos_update_direct` 继续保留 `DIRECT`，用于需要时临时放开 macOS 系统升级；它只匹配 Apple 官方标注为 macOS only 的更新主机
 - `alicloud_hk_ssh_direct` 与阿里云抢占式 IP 直连继续保留
