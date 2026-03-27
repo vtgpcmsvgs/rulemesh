@@ -206,3 +206,6 @@ runtime:
         note: 持续提供 Country.mmdb 与 geoip.dat，可作为内容同源的交叉验证来源
       - repo: Hackl0us/GeoIP2-CN
         note: 适合只做 GEOIP,CN 的轻量 CN-only 场景，但不适合作为当前跨 Surge + Mihomo 的统一默认源
+    delivery:
+      - repo: self
+        note: 客户端运行时统一引用本仓库 GitHub Release 的稳定镜像地址；每日 sync-upstream 与 main 分支 build-dist 都会覆盖上传 geoip-country-mmdb/country.mmdb

@@ -51,6 +51,24 @@ jobs:
         id: build_dist
         run: python -B tools/build_rules.py
 
+      - name: Prepare shared GeoIP asset
+        id: prepare_geoip_asset
+        run: python -B tools/fetch_geoip_asset.py --output .github/tmp/geoip/country.mmdb
+
+      - name: Publish shared GeoIP release asset
+        id: publish_geoip_asset
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: .github/tmp/geoip/country.mmdb
+          asset_name: country.mmdb
+          tag: geoip-country-mmdb
+          overwrite: true
+          release_name: RuleMesh Shared GeoIP
+          body: |
+            RuleMesh 共享 GeoIP 镜像产物。
+            上游选择与维护边界见 rules/upstream/geodata/metacubex_country_mmdb.yaml。
+
       - name: Commit changes if needed
         id: commit_changes
         run: |
@@ -76,6 +94,8 @@ jobs:
             unit_tests=${{ steps.unit_tests.outcome }};
             sync_upstream=${{ steps.sync_upstream.outcome }};
             build_dist=${{ steps.build_dist.outcome }};
+            prepare_geoip_asset=${{ steps.prepare_geoip_asset.outcome }};
+            publish_geoip_asset=${{ steps.publish_geoip_asset.outcome }};
             commit_changes=${{ steps.commit_changes.outcome }}
         run: |
           python3 - <<'PY'

@@ -17,7 +17,7 @@
 ## 模板保留了什么
 
 - `tun + sniffer + dns + proxy-providers + proxy-groups + rule-providers + rules` 的完整结构
-- `geodata-mode: false` + `geox-url.mmdb` 显式固定到与 Surge 共用的 `MetaCubeX/meta-rules-dat/country.mmdb`
+- `geodata-mode: false` + `geox-url.mmdb` 显式固定到与 Surge 共用的本仓库 Release 镜像地址
 - 多订阅聚合后的统一总开关与区域自动组
 - `reject`、`direct`、`proxy`、`region` 四类 RuleMesh `classical` 产物接入
 - 默认采用“国际域名优先国外加密 DNS、明确的国内直连域名集单独走国内加密 DNS”的分流思路
@@ -106,7 +106,7 @@
 - `rules/` 是源规则层，不建议客户端直接引用
 - 不要把 `classical` 产物误配成别的 `behavior`
 - 不要再找旧的纯域名或纯 CIDR 产物目录；仓库已经统一走 `classical`
-- GeoIP 数据库当前显式固定为 `mmdb`，并统一指向 `MetaCubeX/meta-rules-dat` 的 `country.mmdb`
+- GeoIP 数据库当前显式固定为 `mmdb`，并统一指向本仓库的 Release 镜像地址
 - 不要手改 `dist/`，应先改 `rules/` 后重新构建
 - 私有 Surge 工作路由白名单约定见 [docs/surge-work-cluster-whitelist.md](surge-work-cluster-whitelist.md)，但该约定不影响 Mihomo 模板与 Mihomo personal 配置。
 - 私有订阅更新直连同步约定见 [docs/private-subscription-direct-sync.md](private-subscription-direct-sync.md)；该约定影响 Mihomo personal，但不影响公开模板。

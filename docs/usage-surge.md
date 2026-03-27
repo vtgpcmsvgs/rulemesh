@@ -27,7 +27,7 @@
 
 - 总开关 + 手动切换 + 自动测速切换
 - 香港、台湾、日本、新加坡、美国、韩国的区域自动组
-- `geoip-maxmind-url` 显式固定到与 Mihomo 共用的 `MetaCubeX/meta-rules-dat/country.mmdb`
+- `geoip-maxmind-url` 显式固定到与 Mihomo 共用的本仓库 Release 镜像地址
 - `reject`、`direct`、`proxy`、`region` 四类 RuleMesh 产物接入
 - `dns-server = system + 公共 DNS` 与 `raw.githubusercontent.com = server:system` 的 GitHub Raw 解析兜底
 - `region/hk/global_media.list` 额外承接 X / Twitter 网页、短链与静态资源，并默认绑定 `🇭🇰 香港-自动选择`
@@ -98,7 +98,7 @@
 - 客户端只引用 `dist/surge/rules/`
 - `rules/` 是源规则层，不建议在 Surge 配置中直接引用
 - 不要在客户端继续引用第三方原始规则 URL
-- GeoIP 数据库是当前例外：公开模板默认显式固定到 `MetaCubeX/meta-rules-dat` 的 `country.mmdb`
+- GeoIP 数据库是当前例外：公开模板默认显式固定到本仓库的 Release 镜像地址
 - 不要手改 `dist/`，应先改 `rules/` 后重新构建
 - 私有工作路由白名单约定见 [docs/surge-work-cluster-whitelist.md](surge-work-cluster-whitelist.md)；该约定只影响本地 Surge 工作路由文件，不影响公开模板。
 - 私有订阅更新直连同步约定见 [docs/private-subscription-direct-sync.md](private-subscription-direct-sync.md)；该约定同样只影响本地私有配置，不影响公开模板。

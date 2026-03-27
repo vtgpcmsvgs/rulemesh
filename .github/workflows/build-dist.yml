@@ -7,7 +7,7 @@ on:
   workflow_dispatch: {}
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -27,6 +27,23 @@ jobs:
 
       - name: 构建 dist
         run: python -B tools/build_rules.py
+
+      - name: 准备共享 GeoIP 资产
+        run: python -B tools/fetch_geoip_asset.py --output .github/tmp/geoip/country.mmdb
+
+      - name: 发布共享 GeoIP Release 资产
+        if: github.ref == 'refs/heads/main'
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: .github/tmp/geoip/country.mmdb
+          asset_name: country.mmdb
+          tag: geoip-country-mmdb
+          overwrite: true
+          release_name: RuleMesh Shared GeoIP
+          body: |
+            RuleMesh 共享 GeoIP 镜像产物。
+            上游选择与维护边界见 rules/upstream/geodata/metacubex_country_mmdb.yaml。
 
       - name: 上传 dist 构建产物
         uses: actions/upload-artifact@v4

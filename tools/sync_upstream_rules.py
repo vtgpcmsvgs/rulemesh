@@ -23,6 +23,8 @@ from typing import Any, Callable
 ROOT = Path(__file__).resolve().parents[1]
 UPSTREAM_ROOT = ROOT / "rules" / "upstream"
 USER_AGENT = "rulemesh-upstream-sync/1.0"
+RULEMESH_REPO = "vtgpcmsvgs/rulemesh"
+RULEMESH_REPO_URL = f"https://github.com/{RULEMESH_REPO}"
 AWS_IP_RANGES_URL = "https://ip-ranges.amazonaws.com/ip-ranges.json"
 ALICLOUD_PUBLIC_IP_DOC_URL = (
     "https://help.aliyun.com/zh/eip/developer-reference/"
@@ -60,6 +62,12 @@ META_RULES_DAT_COUNTRY_MMDB_JSDELIVR_URL = (
 )
 META_RULES_DAT_COUNTRY_MMDB_JSDELIVR_CF_URL = (
     "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb"
+)
+RULEMESH_GEOIP_RELEASE_TAG = "geoip-country-mmdb"
+RULEMESH_GEOIP_ASSET_NAME = "country.mmdb"
+RULEMESH_GEOIP_MIRROR_URL = (
+    f"{RULEMESH_REPO_URL}/releases/download/"
+    f"{RULEMESH_GEOIP_RELEASE_TAG}/{RULEMESH_GEOIP_ASSET_NAME}"
 )
 META_RULES_DAT_REQUIRED_MARKERS = (
     META_RULES_DAT_COUNTRY_MMDB_GITHUB_RELEASE_URL,
@@ -448,6 +456,18 @@ def load_local_config() -> dict[str, Any]:
     return payload
 
 
+def local_config_value(payload: dict[str, Any], *path: str) -> str | None:
+    current: Any = payload
+    for key in path:
+        if not isinstance(current, dict):
+            return None
+        current = current.get(key)
+
+    if isinstance(current, str) and current.strip():
+        return current.strip()
+    return None
+
+
 def sync_one(item: UpstreamFile, failures: list[UpstreamFailure]) -> tuple[bool, bool]:
     destination = UPSTREAM_ROOT / item.path
 
@@ -684,6 +704,10 @@ def build_geodata_snapshot_text() -> str:
         "recommended_endpoint: github_release",
         "recommended_for: surge, mihomo-mmdb",
         "content_reference: Loyalsoldier/v2ray-rules-dat",
+        f"rulemesh_repo: {RULEMESH_REPO}",
+        f"rulemesh_release_tag: {RULEMESH_GEOIP_RELEASE_TAG}",
+        f"rulemesh_asset_name: {RULEMESH_GEOIP_ASSET_NAME}",
+        f"rulemesh_release_mirror: {RULEMESH_GEOIP_MIRROR_URL}",
         "",
     ]
     return "\n".join(lines)
@@ -1172,17 +1196,46 @@ def ensure_upstream_failure_alerts_sent(failures: list[UpstreamFailure]) -> None
     print(f"[INFO] upstream failure webhook sent ({len(failures)} item(s)).")
 
 
+def running_in_github_actions() -> bool:
+    value = env_value("GITHUB_ACTIONS")
+    return value is not None and value.lower() == "true"
+
+
+def has_available_alicloud_snapshots() -> bool:
+    expected_paths: list[Path] = []
+    for snapshot in ALICLOUD_REGION_SNAPSHOTS:
+        expected_paths.extend([snapshot.path, snapshot.ssh_path, snapshot.metadata_path])
+
+    for relative_path in expected_paths:
+        path = UPSTREAM_ROOT / relative_path
+        if not path.exists():
+            return False
+        existing = read_existing(path)
+        if not existing or "Placeholder file kept in repo" in existing:
+            return False
+    return True
+
+
+def can_skip_alicloud_sync_without_credentials() -> bool:
+    return not running_in_github_actions() and has_available_alicloud_snapshots()
+
+
 def resolve_alicloud_credentials() -> AlicloudCredentials | None:
+    local_payload = load_local_config()
+    local_access_key_id = local_config_value(local_payload, "alicloud", "access_key_id")
+    local_access_key_secret = local_config_value(local_payload, "alicloud", "access_key_secret")
+    local_security_token = local_config_value(local_payload, "alicloud", "security_token")
+
     access_key_id = env_value(
         "RULEMESH_ALICLOUD_ACCESS_KEY_ID",
         "ALIBABA_CLOUD_ACCESS_KEY_ID",
         "ALICLOUD_ACCESS_KEY_ID",
-    )
+    ) or local_access_key_id
     access_key_secret = env_value(
         "RULEMESH_ALICLOUD_ACCESS_KEY_SECRET",
         "ALIBABA_CLOUD_ACCESS_KEY_SECRET",
         "ALICLOUD_ACCESS_KEY_SECRET",
-    )
+    ) or local_access_key_secret
     if not access_key_id or not access_key_secret:
         return None
 
@@ -1190,7 +1243,7 @@ def resolve_alicloud_credentials() -> AlicloudCredentials | None:
         "RULEMESH_ALICLOUD_SECURITY_TOKEN",
         "ALIBABA_CLOUD_SECURITY_TOKEN",
         "ALICLOUD_SECURITY_TOKEN",
-    )
+    ) or local_security_token
     return AlicloudCredentials(
         access_key_id=access_key_id,
         access_key_secret=access_key_secret,
@@ -1449,8 +1502,15 @@ def sync_alicloud_snapshots(failures: list[UpstreamFailure]) -> tuple[int, int]:
     if credentials is None:
         detail = (
             "缺少阿里云凭据。请设置 RULEMESH_ALICLOUD_ACCESS_KEY_ID 和 "
-            "RULEMESH_ALICLOUD_ACCESS_KEY_SECRET（或标准阿里云环境变量）。"
+            "RULEMESH_ALICLOUD_ACCESS_KEY_SECRET（或标准阿里云环境变量；"
+            "本地也可写入 .rulemesh.local.json 的 alicloud 节点）。"
         )
+        if can_skip_alicloud_sync_without_credentials():
+            print(
+                "[SKIP] alicloud sync skipped: 当前环境缺少阿里云凭据，"
+                "但仓库里已有可用快照，继续保留现有文件。"
+            )
+            return 0, 0
         print(f"[WARN] alicloud sync failed: {detail}")
         for snapshot in ALICLOUD_REGION_SNAPSHOTS:
             record_failure(

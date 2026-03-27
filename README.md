@@ -127,7 +127,7 @@ python tools/build_rules.py
 - 客户端应显式接入 `proxy/polygon_rpc_proxy` 与 `proxy/bsc_rpc_proxy`，并放在 `proxy/gfw` 前，让 `🚀 节点选择` 先命中这些 RPC 域名
 - Google Public DNS 主 IPv4 端点专项规则统一维护在 `rules/proxy/google_public_dns_ipv4_proxy.list`
 - 客户端应显式接入 `proxy/google_public_dns_ipv4_proxy`，并放在 `proxy/gfw` 前，让 `🚀 节点选择` 先命中 `8.8.8.8/32`
-- Surge 与 Mihomo 当前统一把 GeoIP mmdb 显式固定到 `MetaCubeX/meta-rules-dat` 的 `country.mmdb`
+- Surge 与 Mihomo 当前统一把 GeoIP mmdb 显式固定到你自己的仓库 Release 镜像：`vtgpcmsvgs/rulemesh/releases/download/geoip-country-mmdb/country.mmdb`
 - 对应上游登记与维护约定见 `rules/upstream/geodata/metacubex_country_mmdb.yaml` 与 [docs/geoip-upstream.md](docs/geoip-upstream.md)
 - `rules/region/hk/global_media.list` 额外承接 `x.com`、`t.co`、`twimg.com` 与 `twitter.com` 等 X / Twitter 网页域名，默认绑定 `🇭🇰 香港-自动选择`，减少回落到通用 `proxy/gfw` 的页面超时
 - 1Password 核心连接专项规则统一维护在 `rules/proxy/onepassword_proxy.list`
@@ -191,7 +191,7 @@ python tools/build_rules.py
 
 - 源规则尽量保持小而清晰，优先你自己的审阅结果
 - 规则类上游只作为参考素材，不直接暴露给客户端
-- GeoIP 数据库属于运行时依赖，当前作为显式例外统一固定到 `MetaCubeX/meta-rules-dat/country.mmdb`
+- GeoIP 数据库属于运行时依赖，当前作为显式例外统一固定到“MetaCubeX upstream + 本仓库 Release 镜像分发”
 - 统一输出显式规则行，不再生成额外的客户端专用精简产物
 - 域名规则、CIDR 规则与大多数关键词规则都通过 `RULE-SET` / `behavior: classical` 接入
 - 单一应用如果同时涉及 `reject`、`direct`、`proxy` 多种动作，优先使用 `rules/app/*.txt` 主清单统一维护，再派生到现有四类源规则

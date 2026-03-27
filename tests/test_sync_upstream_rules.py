@@ -122,6 +122,24 @@ class BuildOnepasswordSnapshotTextTests(unittest.TestCase):
         self.assertIn("DOMAIN-SUFFIX,1password.com", text)
 
 
+class GeodataSnapshotTests(unittest.TestCase):
+    def test_build_geodata_snapshot_text_contains_rulemesh_mirror(self) -> None:
+        text = sync_upstream_rules.build_geodata_snapshot_text()
+
+        self.assertIn(sync_upstream_rules.META_RULES_DAT_REPO_URL, text)
+        self.assertIn(sync_upstream_rules.RULEMESH_GEOIP_MIRROR_URL, text)
+        self.assertIn(sync_upstream_rules.RULEMESH_GEOIP_RELEASE_TAG, text)
+        self.assertIn(sync_upstream_rules.RULEMESH_GEOIP_ASSET_NAME, text)
+
+    def test_validate_meta_rules_dat_readme_requires_known_markers(self) -> None:
+        readme_text = "\n".join(sync_upstream_rules.META_RULES_DAT_REQUIRED_MARKERS)
+
+        sync_upstream_rules.validate_meta_rules_dat_readme(readme_text)
+
+        with self.assertRaises(ValueError):
+            sync_upstream_rules.validate_meta_rules_dat_readme("missing markers")
+
+
 class ChainlistRpcHelpersTests(unittest.TestCase):
     def test_normalize_chainlist_rpc_host_strips_path_query_and_port(self) -> None:
         self.assertEqual(

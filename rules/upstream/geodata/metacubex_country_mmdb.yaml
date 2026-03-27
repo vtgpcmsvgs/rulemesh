@@ -4,7 +4,7 @@
 # 选择原因: Mihomo 官方文档的 geox-url 默认示例指向 MetaCubeX/meta-rules-dat；同时提供 mmdb/dat/db/lite 多格式。
 # 交叉验证: 上游 README 明确标注 country.mmdb / geoip.dat / geoip.db 内容同 Loyalsoldier/v2ray-rules-dat。
 # 维护边界: 这里只登记上游选择与下载入口，不把大体积 mmdb 二进制直接提交进仓库。
-# 同步时间: 2026-03-27T09:41:13+00:00
+# 同步时间: 2026-03-27T13:24:35+00:00
 
 provider: MetaCubeX/meta-rules-dat
 selected_asset: country.mmdb
@@ -14,3 +14,7 @@ jsdelivr_cf: https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/
 recommended_endpoint: github_release
 recommended_for: surge, mihomo-mmdb
 content_reference: Loyalsoldier/v2ray-rules-dat
+rulemesh_repo: vtgpcmsvgs/rulemesh
+rulemesh_release_tag: geoip-country-mmdb
+rulemesh_asset_name: country.mmdb
+rulemesh_release_mirror: https://github.com/vtgpcmsvgs/rulemesh/releases/download/geoip-country-mmdb/country.mmdb
