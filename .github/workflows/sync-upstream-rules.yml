@@ -29,99 +29,7 @@ jobs:
       - name: Warn when upstream webhook is not configured
         if: ${{ env.RULEMESH_UPSTREAM_ALERT_FEISHU_WEBHOOK_URL == '' }}
         run: |
-          echo "::warning::RULEMESH_UPSTREAM_ALERT_FEISHU_WEBHOOK_URL 未配置，跳过飞书心跳与失败告警，不阻断主同步流程。"
-
-      # marker: upstream-webhook-healthcheck
-      - name: Send upstream webhook heartbeat
-        id: webhook_health
-        if: ${{ env.RULEMESH_UPSTREAM_ALERT_FEISHU_WEBHOOK_URL != '' }}
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          import base64
-          import datetime as dt
-          import hashlib
-          import hmac
-          import json
-          import os
-          import urllib.request
-
-          USER_AGENT = "rulemesh-upstream-sync/1.0"
-
-          def build_payload(message: str) -> bytes:
-              payload = {"msg_type": "text", "content": {"text": message}}
-              secret = os.environ.get("RULEMESH_UPSTREAM_ALERT_FEISHU_SECRET", "").strip()
-              if secret:
-                  timestamp = str(int(dt.datetime.now(dt.timezone.utc).timestamp()))
-                  string_to_sign = f"{timestamp}\n{secret}"
-                  digest = hmac.new(
-                      string_to_sign.encode("utf-8"),
-                      digestmod=hashlib.sha256,
-                  ).digest()
-                  payload["timestamp"] = timestamp
-                  payload["sign"] = base64.b64encode(digest).decode("utf-8")
-              return json.dumps(payload, ensure_ascii=False).encode("utf-8")
-
-          def validate_response(body: str) -> None:
-              stripped = body.strip()
-              if not stripped:
-                  return
-              try:
-                  payload = json.loads(stripped)
-              except json.JSONDecodeError:
-                  return
-              if not isinstance(payload, dict):
-                  return
-              code = payload.get("code")
-              status_code = payload.get("StatusCode")
-              if code in (None, 0) and status_code in (None, 0):
-                  return
-              message = payload.get("msg") or payload.get("StatusMessage") or stripped
-              raise SystemExit(f"Feishu webhook returned an error: {message}")
-
-          url = os.environ.get("RULEMESH_UPSTREAM_ALERT_FEISHU_WEBHOOK_URL", "").strip()
-          if not url:
-              raise SystemExit("RULEMESH_UPSTREAM_ALERT_FEISHU_WEBHOOK_URL is missing.")
-
-          repository = os.environ.get("GITHUB_REPOSITORY", "unknown")
-          workflow = os.environ.get("GITHUB_WORKFLOW", "unknown")
-          event_name = os.environ.get("GITHUB_EVENT_NAME", "unknown")
-          run_attempt = os.environ.get("GITHUB_RUN_ATTEMPT", "unknown")
-          sha = os.environ.get("GITHUB_SHA", "")[:12]
-          now_text = dt.datetime.now().astimezone().isoformat(timespec="seconds")
-
-          run_url = ""
-          server = os.environ.get("GITHUB_SERVER_URL")
-          run_id = os.environ.get("GITHUB_RUN_ID")
-          if server and repository and run_id:
-              run_url = f"{server}/{repository}/actions/runs/{run_id}"
-
-          lines = [
-              "RuleMesh upstream webhook 健康检查",
-              f"时间: {now_text}",
-              f"仓库: {repository}",
-              f"工作流: {workflow}",
-              f"事件: {event_name}",
-              f"尝试次数: {run_attempt}",
-          ]
-          if sha:
-              lines.append(f"提交: {sha}")
-          if run_url:
-              lines.append(f"运行链接: {run_url}")
-
-          request = urllib.request.Request(
-              url,
-              data=build_payload("\n".join(lines) + "\n"),
-              headers={
-                  "Content-Type": "application/json; charset=utf-8",
-                  "User-Agent": USER_AGENT,
-              },
-          )
-          with urllib.request.urlopen(request, timeout=15) as response:
-              body = response.read().decode("utf-8", errors="replace")
-          validate_response(body)
-          print("[INFO] upstream webhook heartbeat sent.")
-          PY
+          echo "::warning::RULEMESH_UPSTREAM_ALERT_FEISHU_WEBHOOK_URL 未配置，无法发送 webhook 失败告警；若后续出现上游抓取失败，将按 required 策略直接判定任务失败。"
 
       - uses: actions/checkout@v4
         id: checkout_repo
@@ -163,7 +71,6 @@ jobs:
         shell: bash
         env:
           RULEMESH_STEP_RESULTS: >-
-            webhook_health=${{ steps.webhook_health.outcome }};
             checkout_repo=${{ steps.checkout_repo.outcome }};
             setup_python=${{ steps.setup_python.outcome }};
             unit_tests=${{ steps.unit_tests.outcome }};

@@ -281,7 +281,7 @@ class UpstreamWebhookRequirementTests(unittest.TestCase):
 
 
 class SendUpstreamAlertScriptTests(unittest.TestCase):
-    def test_build_heartbeat_message_contains_github_run_url(self) -> None:
+    def test_build_workflow_failure_message_contains_step_results_and_run_url(self) -> None:
         env = {
             "GITHUB_SERVER_URL": "https://github.com",
             "GITHUB_REPOSITORY": "vtgpcmsvgs/rulemesh",
@@ -290,14 +290,18 @@ class SendUpstreamAlertScriptTests(unittest.TestCase):
             "GITHUB_EVENT_NAME": "schedule",
             "GITHUB_RUN_ATTEMPT": "2",
             "GITHUB_SHA": "0123456789abcdef",
+            "GITHUB_JOB": "sync",
+            "GITHUB_REF_NAME": "main",
         }
 
         with mock.patch.dict(os.environ, env, clear=False):
-            message = send_upstream_alert.build_heartbeat_message()
+            message = send_upstream_alert.build_workflow_failure_message(
+                "checkout_repo=success;sync_upstream=failure"
+            )
 
-        self.assertIn("RuleMesh upstream webhook 健康检查", message)
+        self.assertIn("RuleMesh upstream 工作流失败", message)
         self.assertIn("https://github.com/vtgpcmsvgs/rulemesh/actions/runs/123456", message)
-        self.assertIn("提交: 0123456789ab", message)
+        self.assertIn("步骤结果: checkout_repo=success;sync_upstream=failure", message)
 
 
 class SyncFailureTests(unittest.TestCase):

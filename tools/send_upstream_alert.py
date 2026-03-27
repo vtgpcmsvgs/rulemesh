@@ -26,32 +26,6 @@ def github_run_url() -> str | None:
     return None
 
 
-def build_heartbeat_message() -> str:
-    workflow = os.environ.get("GITHUB_WORKFLOW", "unknown")
-    event_name = os.environ.get("GITHUB_EVENT_NAME", "unknown")
-    repository = os.environ.get("GITHUB_REPOSITORY", "unknown")
-    run_attempt = os.environ.get("GITHUB_RUN_ATTEMPT", "unknown")
-    sha = os.environ.get("GITHUB_SHA", "")[:12]
-    now_text = dt.datetime.now().astimezone().isoformat(timespec="seconds")
-
-    lines = [
-        "RuleMesh upstream webhook 健康检查",
-        f"时间: {now_text}",
-        f"仓库: {repository}",
-        f"工作流: {workflow}",
-        f"事件: {event_name}",
-        f"尝试次数: {run_attempt}",
-    ]
-    if sha:
-        lines.append(f"提交: {sha}")
-
-    run_url = github_run_url()
-    if run_url:
-        lines.append(f"运行链接: {run_url}")
-
-    return "\n".join(lines) + "\n"
-
-
 def build_workflow_failure_message(step_results: str) -> str:
     workflow = os.environ.get("GITHUB_WORKFLOW", "unknown")
     job_name = os.environ.get("GITHUB_JOB", "unknown")
@@ -89,8 +63,6 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="发送 RuleMesh upstream webhook 消息")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    subparsers.add_parser("heartbeat", help="发送 webhook 健康检查消息")
-
     failure_parser = subparsers.add_parser("workflow-failure", help="发送工作流失败消息")
     failure_parser.add_argument(
         "--step-results",
@@ -107,11 +79,7 @@ def main() -> int:
     if config is None:
         raise RuntimeError("Feishu webhook is not configured.")
 
-    if args.command == "heartbeat":
-        message = build_heartbeat_message()
-    else:
-        message = build_workflow_failure_message(args.step_results)
-
+    message = build_workflow_failure_message(args.step_results)
     sync_upstream_rules.send_feishu_webhook_message(config, message)
     print(f"[INFO] webhook message sent: {args.command}")
     return 0

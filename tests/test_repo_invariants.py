@@ -166,13 +166,10 @@ class RepoInvariantTests(unittest.TestCase):
                     "RULEMESH_UPSTREAM_ALERT_FEISHU_WEBHOOK_URL",
                     "RULEMESH_UPSTREAM_ALERT_FEISHU_SECRET",
                     "Warn when upstream webhook is not configured",
-                    "marker: upstream-webhook-healthcheck",
                     "marker: upstream-workflow-failure-alert",
                     "if: ${{ env.RULEMESH_UPSTREAM_ALERT_FEISHU_WEBHOOK_URL == '' }}",
-                    "if: ${{ env.RULEMESH_UPSTREAM_ALERT_FEISHU_WEBHOOK_URL != '' }}",
                     "if: ${{ failure() && env.RULEMESH_UPSTREAM_ALERT_FEISHU_WEBHOOK_URL != '' }}",
                     "python3 - <<'PY'",
-                    "id: webhook_health",
                     "id: workflow_failure_alert",
                 )
                 if needle not in workflow
