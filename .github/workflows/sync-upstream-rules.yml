@@ -26,9 +26,15 @@ jobs:
       RULEMESH_UPSTREAM_ALERT_FEISHU_WEBHOOK_URL: ${{ secrets.RULEMESH_UPSTREAM_ALERT_FEISHU_WEBHOOK_URL }}
       RULEMESH_UPSTREAM_ALERT_FEISHU_SECRET: ${{ secrets.RULEMESH_UPSTREAM_ALERT_FEISHU_SECRET }}
     steps:
+      - name: Warn when upstream webhook is not configured
+        if: ${{ env.RULEMESH_UPSTREAM_ALERT_FEISHU_WEBHOOK_URL == '' }}
+        run: |
+          echo "::warning::RULEMESH_UPSTREAM_ALERT_FEISHU_WEBHOOK_URL 未配置，跳过飞书心跳与失败告警，不阻断主同步流程。"
+
       # marker: upstream-webhook-healthcheck
       - name: Send upstream webhook heartbeat
         id: webhook_health
+        if: ${{ env.RULEMESH_UPSTREAM_ALERT_FEISHU_WEBHOOK_URL != '' }}
         shell: bash
         run: |
           python3 - <<'PY'
@@ -153,7 +159,7 @@ jobs:
       # marker: upstream-workflow-failure-alert
       - name: Send workflow failure alert
         id: workflow_failure_alert
-        if: ${{ failure() }}
+        if: ${{ failure() && env.RULEMESH_UPSTREAM_ALERT_FEISHU_WEBHOOK_URL != '' }}
         shell: bash
         env:
           RULEMESH_STEP_RESULTS: >-
