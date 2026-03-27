@@ -17,5 +17,5 @@ payload:
   - "DOMAIN,api.adspower.com"
   - "DOMAIN,api.adspower.net"
   - "DOMAIN,api.adspowerapp.com"
-  - "DOMAIN-REGEX,^appdo[0-9]+\\.adspower\\.com$"
-  - "DOMAIN-REGEX,^appdo[0-9]+\\.adspower\\.net$"
+  - "DOMAIN-WILDCARD,appdo*.adspower.com"
+  - "DOMAIN-WILDCARD,appdo*.adspower.net"
