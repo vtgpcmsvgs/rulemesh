@@ -19,7 +19,7 @@
 - 工作路由仍以那 6 台固定工作电脑为核心维护对象，并继续采用白名单模式
 - 拒绝规则维持当前逻辑
 - 设备分流继续按“源 IP + AWS 区域”定向到对应设备组
-- 只有 2.1 设备分流继续保留“源 IP + AWS 区域”约束；2.2-2.7 不再额外限制源 IP
+- 只有 2.1 设备分流继续保留“源 IP + AWS 区域”约束；2.2-2.10 不再额外限制源 IP
 - 区域精确规则继续保留，且 `Google TW` 必须先于广谱区域规则
 - GitHub 仓库 SSH 定向直连继续保留独立 carve-out
 - 阿里云广覆盖观察兜底继续保留，并紧跟在 `github_ssh_direct` 后，用于发现 `SSH 22` 端口之外的漏网之鱼
@@ -32,9 +32,10 @@
 - `proxy/polygon_rpc_proxy.list` 继续保留 `🚀 节点选择`，用于白名单模式下显式放行 Polygon 主网 RPC 域名
 - `proxy/bsc_rpc_proxy.list` 继续保留 `🚀 节点选择`，用于白名单模式下显式放行 BSC 主网 RPC 域名
 - `proxy/google_public_dns_ipv4_proxy.list` 继续保留 `🚀 节点选择`，用于白名单模式下显式放行 `8.8.8.8/32`
+- `DOMAIN-SUFFIX,cloudflare-dns.com` 继续保留 `🚀 节点选择`，用于白名单模式下显式放行 Cloudflare DNS 域名
 - `LAN,DIRECT` 继续保留在白名单直连入口中
 - `direct/os_time_direct` 继续保留 `DIRECT`，用于 Windows / Apple 系统时间同步，不并入节点选择
-- 单个白名单专属直连域名（例如 `smtp.163.com`）优先直接维护在 2.9“指定直连”入口，不为单条规则额外新增公开 `rules/` 文件
+- 单个白名单专属直连域名（例如 `smtp.163.com`）优先直接维护在 2.10“指定直连”入口，不为单条规则额外新增公开 `rules/` 文件
 - `direct/microsoft_direct` 继续保留 `DIRECT`
 - `direct/macos_update_direct` 继续保留 `DIRECT`，用于需要时临时放开 macOS 系统升级；它只匹配 Apple 官方标注为 macOS only 的更新主机
 - `alicloud_hk_ssh_direct` 与阿里云广覆盖观察兜底继续保留
@@ -64,8 +65,9 @@
 12. Polygon 主网 RPC 节点选择入口
 13. BSC 主网 RPC 节点选择入口
 14. Google Public DNS 主 IPv4 端点节点选择入口
-15. 指定直连入口
-16. 全局 `FINAL,REJECT` 兜底
+15. Cloudflare DNS 节点选择入口
+16. 指定直连入口
+17. 全局 `FINAL,REJECT` 兜底
 
 ## 不要误恢复的广谱放行项
 
