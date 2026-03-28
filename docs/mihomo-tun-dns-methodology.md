@@ -14,6 +14,12 @@
 - Surge 自带更强的系统整合能力；Mihomo 如果只移植规则，不补运行时，体感通常会明显落后。
 - 因此 Mihomo 不应再追求“和 Surge 长得一样”，而应追求“在 Mihomo 里把该开的能力开起来”。
 
+## 多客户端运行时差异
+
+- 同一套路由骨架，不等于同一个运行时结果；`Surge`、`Clash Verge Rev`、`Clash Meta for Android` 即使策略组、规则顺序和规则产物入口一致，DNS 启动链也可能完全不同。
+- `Surge` 更偏系统整合型客户端，很多解析与连接细节由客户端自身兜底；`Clash Verge Rev` 虽然使用 Mihomo 生态，但运行在桌面系统上；`Clash Meta for Android` 则额外叠加 Android VPN/Tun、蜂窝网络与系统 DNS 行为差异。
+- 因此遇到“Surge 正常、Verge 正常、只有 Clash Meta 异常”的情况时，默认优先怀疑 Android 侧的节点域名解析启动链，而不是先怀疑规则顺序。
+
 ## 默认策略
 
 - 默认开启 `tun`，优先使用 `stack: mixed`。
@@ -29,6 +35,18 @@
 - 不要把“所有 DIRECT 都交给国内 DNS”当成默认方案。
 - 原因很简单：`DIRECT` 里可能混有 GitHub SSH、Microsoft、macOS 更新之类的国外直连例外；如果粗暴映射到国内 DNS，会把这些访问暴露给国内解析链路。
 - 更稳妥的做法是按“域名属性”分，而不是按“出站动作”分。
+
+## 节点 DNS 启动链
+
+- `proxy-server-nameserver` 只负责代理节点域名解析，它和业务 `nameserver`、`fallback` 不应混在一起调。
+- 如果只有 Clash Meta for Android 在移动网络或特定网络环境下失败，而 Clash Verge Rev 正常，优先检查是否是“节点域名解析无法直连国外 DoH”。
+- 这种情况下，第一优先级是单独调整 Android 私有文件的 `proxy-server-nameserver`，而不是立刻把全部业务 DNS 都切回国内。
+- 当前仓库的推荐收敛顺序是：
+  - 先保持规则骨架一致。
+  - 再把 Mihomo 私有配置拆成 `rulemesh-substore-mihomo-clash-verge.yaml` 与 `rulemesh-substore-mihomo-clash-meta.yaml`。
+  - 优先只让 Clash Meta 的 `proxy-server-nameserver` 改走国内可直连加密 DNS。
+  - 只有在这一步仍不稳定时，才继续评估更保守的 Android 专用启动链。
+- 对当前本地长期维护来说，Clash Meta 专用文件的节点域名解析默认优先使用阿里云 / 腾讯云 DoH；这一步只作用于节点域名，不应自动扩散到所有国际业务域名。
 
 ## 国内 DNS 适用范围
 
@@ -50,6 +68,7 @@
 - 如果只是“国外直连例外”，保持默认国外解析，不要为了“DIRECT 看起来应该配国内 DNS”而硬塞进去。
 - 新增需要优先直连的局域网、本地网段或特殊主机名时，同时检查 `rules:` 里的本地直连段与 `dns.fake-ip-filter` 是否也要补。
 - `proxy-server-nameserver` 只负责节点域名解析，不要混入普通业务域名的取舍逻辑。
+- 如果本地同时维护 Clash Verge Rev 与 Clash Meta for Android，两份 Mihomo 私有文件允许长期并存；公共规则骨架尽量一致，但节点 DNS 启动链允许有意识地永久不一致。
 
 ## Tun 与嗅探约定
 
@@ -63,6 +82,8 @@
 - `strict-route` 可能影响部分局域网入站访问、共享或发现类场景；如果用户明确依赖这类能力，再做定向例外，不要先全局关闭。
 - `fake-ip` 可能让少数依赖真实 IP 的服务变得敏感；处理方式优先是补 `fake-ip-filter`，而不是整体放弃 `fake-ip`。
 - 如果把最终兜底锁死到固定区域，未知流量的默认体验通常会变差；只有用户明确追求固定出口地区时，才考虑回退。
+- 如果把 Clash Meta 的 `proxy-server-nameserver` 调到国内 DNS，这通常意味着国内解析方可能看到“代理节点域名解析”这一步；但这不等于全部国际业务域名都回到国内 DNS。
+- 如果威胁模型优先考虑“不要让运营商系统 DNS 看到查询”，阿里云 / 腾讯云这类国内 DoH 往往比 `system` DNS 更可接受；如果威胁模型要求“任何国内解析方都不应看到节点域名”，那就不能把国内 DNS 当作隐私方案，只能继续使用可达的国外解析入口、自建解析或 IP 型节点。
 
 ## 性能优化约定
 
@@ -91,6 +112,7 @@
 - Google 等国际域名是否不再回到国内 DNS。
 - 节点订阅更新、规则更新与节点域名解析是否仍然稳定。
 - 局域网、本地主机名、系统网络探测与系统时间同步是否正常。
+- 如果同时维护 Clash Verge Rev 与 Clash Meta for Android，是否已确认“桌面正常、安卓正常”分别由对应私有文件负责，而不是误把一端的启动链回滚到另一端。
 
 ## 适用范围
 

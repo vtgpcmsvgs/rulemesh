@@ -49,6 +49,9 @@
 
 - Clash Verge Rev 等支持 Tun 的客户端，建议同时开启 Tun 模式；这份模板默认按 Tun + 嗅探 + 分流 DNS 设计，关闭 Tun 会明显削弱体验。
 - 如果你同时维护 Clash Verge Rev 与 Clash Meta for Android，本地私有目录建议拆成 `rulemesh-substore-mihomo-clash-verge.yaml` 与 `rulemesh-substore-mihomo-clash-meta.yaml` 两份；规则骨架可以保持一致，但节点域名解析策略应允许分别维护。
+- 如果出现“Clash Verge Rev 正常、Clash Meta for Android 不通”的情况，默认先排查 Clash Meta 的节点域名解析启动链，而不是先改规则顺序。
+- Android 侧如果只是节点域名解析不稳定，优先只调整 `proxy-server-nameserver`；不要一上来就把全部国际业务 DNS 改回国内。
+- 当前本地私有维护默认允许 Clash Meta 专用文件把 `proxy-server-nameserver` 收敛到阿里云 / 腾讯云 DoH，以提高移动网络下的首连稳定性；这一步只针对节点域名解析。
 - 这份模板不会把“所有 DIRECT 都交给国内 DNS”；像 GitHub SSH、Microsoft、macOS 更新这类“允许直连但不适合回到国内解析”的国外入口，仍保持默认国外解析。
 
 ## Tun / DNS / 嗅探方法论
@@ -57,6 +60,7 @@
 - DNS 分流不按 `DIRECT` / `PROXY` 两分，而按“国内直连域名集”和“国际域名”拆开；前者走国内加密 DNS，后者默认走国外加密 DNS。
 - 新增直连规则时，要先判断它属于“国内直连域名集”还是“国外直连例外”。只有前者才应进入 `nameserver-policy` 的国内解析名单。
 - `proxy-server-nameserver` 要与业务 DNS 分开维护；前者只负责节点域名解析，避免规则 DNS 与节点 DNS 互相依赖。
+- 如果要给 Clash Meta for Android 做定向兼容，优先只动它自己的 `proxy-server-nameserver`，并把变更局限在私有 Android 文件，不要反向污染 Clash Verge Rev 文件。
 - 详细维护边界、风险提示与检查清单见 [docs/mihomo-tun-dns-methodology.md](mihomo-tun-dns-methodology.md)。
 
 ## 私有订阅更新直连约定
