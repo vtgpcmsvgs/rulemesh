@@ -94,6 +94,7 @@
 
 ## 适用范围
 
-- 这份方法论主要约束 Mihomo 模板与 Mihomo personal 配置。
+- 这份方法论主要约束 Mihomo 模板与两份 Mihomo 私有配置。
+- 如果同时维护 Clash Verge Rev 与 Clash Meta for Android，本地私有目录允许拆成两份 Mihomo 配置；规则骨架可保持一致，但节点域名解析策略可以分别维护。
 - Surge 侧可以继续保留 Surge 自己的能力与结构，不要求强行做同构。
 - 私有 Surge 工作路由白名单特化不受本方法论约束，不要反向套用到 Mihomo。

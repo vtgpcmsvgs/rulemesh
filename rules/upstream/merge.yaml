@@ -323,4 +323,4 @@ runtime_plan:
     notes:
       - 不把大体积 mmdb 二进制直接提交到本仓库，只登记上游选择与下载入口
       - 客户端统一引用本仓库 GitHub Release 镜像，不直接引用第三方仓库 release 链接
-      - 如需切换来源，先更新 rules/upstream/geodata 快照、README、workflow 与两端模板，再同步本地私有 personal 配置
+      - 如需切换来源，先更新 rules/upstream/geodata 快照、README、workflow 与两端模板，再同步本地私有 Surge / Mihomo 配置

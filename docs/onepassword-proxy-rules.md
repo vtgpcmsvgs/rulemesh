@@ -9,7 +9,8 @@
 - `tools/sync_upstream_rules.py`
 - 本地私有 `rulemesh-substore-surge-personal.conf`
 - 本地私有 `rulemesh-substore-surge-work-whitelist.conf`
-- 本地私有 `rulemesh-substore-mihomo-personal.yaml`
+- 本地私有 `rulemesh-substore-mihomo-clash-verge.yaml`
+- 本地私有 `rulemesh-substore-mihomo-clash-meta.yaml`
 
 ## 设计目标
 

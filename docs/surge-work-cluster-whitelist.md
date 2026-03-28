@@ -6,7 +6,8 @@
 
 - 仅适用于本地私有 Surge 文件 `rulemesh-substore-surge-work-whitelist.conf`
 - 不适用于 `rulemesh-substore-surge-personal.conf`
-- 不适用于 `rulemesh-substore-mihomo-personal.yaml`
+- 不适用于 `rulemesh-substore-mihomo-clash-verge.yaml`
+- 不适用于 `rulemesh-substore-mihomo-clash-meta.yaml`
 - 不适用于仓库里的公开模板 `docs/examples/surge-public.conf` 与 `docs/examples/mihomo-public.yaml`
 
 ## 隐私边界

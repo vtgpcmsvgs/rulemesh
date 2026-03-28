@@ -37,7 +37,7 @@
 - `external-controller`、`secret` 等控制面参数
 - 按局域网源 IP 的设备分流逻辑
 - 私有 Surge 工作路由白名单特化；那份差异只属于本地 `rulemesh-substore-surge-work-whitelist.conf`
-- 私有订阅更新直连域名；这部分只在本地私有目录维护，并通过同步脚本写入 Mihomo personal 配置
+- 私有订阅更新直连域名；这部分只在本地私有目录维护，并通过同步脚本写入两份 Mihomo 私有配置
 - 1Password 重度用户专项入口；如需启用，请另行接入 `proxy/onepassword_proxy.yaml`
 
 ## 使用前只需要替换两处
@@ -48,6 +48,7 @@
 另请注意：
 
 - Clash Verge Rev 等支持 Tun 的客户端，建议同时开启 Tun 模式；这份模板默认按 Tun + 嗅探 + 分流 DNS 设计，关闭 Tun 会明显削弱体验。
+- 如果你同时维护 Clash Verge Rev 与 Clash Meta for Android，本地私有目录建议拆成 `rulemesh-substore-mihomo-clash-verge.yaml` 与 `rulemesh-substore-mihomo-clash-meta.yaml` 两份；规则骨架可以保持一致，但节点域名解析策略应允许分别维护。
 - 这份模板不会把“所有 DIRECT 都交给国内 DNS”；像 GitHub SSH、Microsoft、macOS 更新这类“允许直连但不适合回到国内解析”的国外入口，仍保持默认国外解析。
 
 ## Tun / DNS / 嗅探方法论
@@ -61,9 +62,9 @@
 ## 私有订阅更新直连约定
 
 - 真实订阅更新域名只在 `%USERPROFILE%\Desktop\rulemesh-local\current\private_subscription_direct.list` 维护，不写回公开模板
-- 修改后运行 `powershell -ExecutionPolicy Bypass -File "%USERPROFILE%\Desktop\rulemesh-local\current\sync_private_subscription_direct.ps1"`，统一同步到 Mihomo personal 与两份 Surge 私有配置
+- 修改后运行 `powershell -ExecutionPolicy Bypass -File "%USERPROFILE%\Desktop\rulemesh-local\current\sync_private_subscription_direct.ps1"`，统一同步到两份 Mihomo 私有配置与两份 Surge 私有配置
 - 这份共享源文件应只保留 Surge / Mihomo 都能直接复用的规则语法；当前优先使用 `DOMAIN`、`DOMAIN-SUFFIX`、`DOMAIN-WILDCARD`
-- 在 Mihomo personal 中，这组规则应继续放在 `proxy_gfw` 前
+- 在两份 Mihomo 私有配置中，这组规则都应继续放在 `proxy_gfw` 前
 - 详细维护方式见 [docs/private-subscription-direct-sync.md](private-subscription-direct-sync.md)
 
 ## 规则顺序建议
@@ -108,7 +109,7 @@
 - 不要再找旧的纯域名或纯 CIDR 产物目录；仓库已经统一走 `classical`
 - GeoIP 数据库当前显式固定为 `mmdb`，并统一指向本仓库的 Release 镜像地址
 - 不要手改 `dist/`，应先改 `rules/` 后重新构建
-- 私有 Surge 工作路由白名单约定见 [docs/surge-work-cluster-whitelist.md](surge-work-cluster-whitelist.md)，但该约定不影响 Mihomo 模板与 Mihomo personal 配置。
-- 私有订阅更新直连同步约定见 [docs/private-subscription-direct-sync.md](private-subscription-direct-sync.md)；该约定影响 Mihomo personal，但不影响公开模板。
+- 私有 Surge 工作路由白名单约定见 [docs/surge-work-cluster-whitelist.md](surge-work-cluster-whitelist.md)，但该约定不影响 Mihomo 模板与两份 Mihomo 私有配置。
+- 私有订阅更新直连同步约定见 [docs/private-subscription-direct-sync.md](private-subscription-direct-sync.md)；该约定影响两份 Mihomo 私有配置，但不影响公开模板。
 - 1Password 重度用户专项规则约定见 [docs/onepassword-proxy-rules.md](onepassword-proxy-rules.md)；公开模板默认不内置，需要时再显式接入。
 - GeoIP 上游选择与维护边界见 [docs/geoip-upstream.md](geoip-upstream.md)。

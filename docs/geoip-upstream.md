@@ -5,7 +5,7 @@
 - RuleMesh 当前统一选择 `MetaCubeX/meta-rules-dat` 的 `country.mmdb` 作为上游
 - 对外分发不再直接引用第三方仓库，而是统一走本仓库 Release 镜像：
   - `https://github.com/vtgpcmsvgs/rulemesh/releases/download/geoip-country-mmdb/country.mmdb`
-- 对应公开模板与本地私有 personal 配置都应显式写明这个镜像地址，避免继续依赖客户端默认值
+- 对应公开模板与本地私有配置都应显式写明这个镜像地址，避免继续依赖客户端默认值
 - 上游登记快照位于 `rules/upstream/geodata/metacubex_country_mmdb.yaml`
 
 ## 为什么选它
@@ -34,4 +34,4 @@
   - `docs/examples/mihomo-public.yaml`
   - `.github/workflows/build-dist.yml`
   - `.github/workflows/sync-upstream-rules.yml`
-  - 本地 `rulemesh-local/current` 中对应的 Surge / Mihomo personal 配置
+  - 本地 `rulemesh-local/current` 中对应的 Surge / Mihomo 私有配置
