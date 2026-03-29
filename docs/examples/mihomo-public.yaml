@@ -223,16 +223,6 @@ proxy-groups:
       - provider_c
     filter: "(?i)🇭🇰|香港|hong kong|\\bhk\\b|🇨🇳|台湾|taiwan|\\btw\\b|🇯🇵|日本|japan|\\bjp\\b|🇸🇬|新加坡|singapore|\\bsg\\b|🇺🇸|美国|united states|\\bus\\b|🇰🇷|韩|korea|\\bkr\\b"
 
-  - name: "❌ 拒绝REJECT"
-    type: select
-    proxies:
-      - REJECT
-
-  - name: "🎯 直连DIRECT"
-    type: select
-    proxies:
-      - DIRECT
-
   - name: "🇭🇰 香港-自动选择"
     type: url-test
     url: "http://www.google.com/generate_204"
