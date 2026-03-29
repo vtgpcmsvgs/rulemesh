@@ -23,13 +23,12 @@
 - 只有 2.1 设备分流继续保留“源 IP + AWS 区域 / 日本 SOCKS5 IP 段”约束；2.2-2.10 不再额外限制源 IP
 - 区域精确规则继续保留，且 `Google TW` 必须先于广谱区域规则
 - GitHub 仓库 SSH 定向直连继续保留独立 carve-out
-- GitHub SSH 之后不再保留旧版阿里云广覆盖观察兜底；阿里云香港 SSH、`aliyuncs.com` 与 `check.myclientip.com` 统一收敛到 2.10“指定直连”段显式放行
-- GitHub 相关 HTTPS 访问额外保留 `DOMAIN,raw.githubusercontent.com` 下载入口与 `DOMAIN-KEYWORD,github` 观察兜底，策略继续走节点选择，用于白名单模式下拉取规则产物并发现 SSH / Raw 之外的漏网之鱼
+- GitHub 相关 HTTPS 访问额外保留 `DOMAIN,raw.githubusercontent.com` 下载入口；其后的 `DOMAIN-KEYWORD,github` 广覆盖观察兜底在工作白名单模式下统一使用 `REJECT`，专门用于发现 SSH / Raw 之外的漏网之鱼
 - `raw.githubusercontent.com` 继续额外绑定 `server:system` 解析，`dns-server` 也保留 `system + 公共 DNS` 组合，用于降低 GitHub Raw 外部资源偶发超时
 - 私有订阅更新直连继续保留独立显式放行入口，顺序位于 GitHub 观察兜底之后、1Password 之前；域名清单统一在 `%USERPROFILE%\Desktop\rulemesh-local\current\private_subscription_direct.list` 维护，再通过同步脚本分发到本地配置
 - `proxy/onepassword_proxy.list` 继续保留 `🚀 节点选择`，用于白名单模式下显式放行 1Password 核心连接；其上游快照由仓库每天自动抓取官方支持页生成，但默认只覆盖官方自有核心域名与更新/基础设施端点
 - AdsPower 继续维持 `adspower_reject`、`adspower_direct`、`adspower_proxy` 三段细分
-- 在 `adspower_direct` 与 `adspower_proxy` 之后，额外保留一条广覆盖 `DOMAIN-KEYWORD,adspower` 观察兜底；策略仍走节点选择，专门用于发现细分规则漏网之鱼
+- 在 `adspower_direct` 与 `adspower_proxy` 之后，额外保留一条广覆盖 `DOMAIN-KEYWORD,adspower,REJECT` 观察兜底，专门用于发现细分规则漏网之鱼
 - `proxy/polygon_rpc_proxy.list` 继续保留 `🚀 节点选择`，用于白名单模式下显式放行 Polygon 主网 RPC 域名
 - `proxy/bsc_rpc_proxy.list` 继续保留 `🚀 节点选择`，用于白名单模式下显式放行 BSC 主网 RPC 域名
 - `proxy/google_public_dns_ipv4_proxy.list` 继续保留 `🚀 节点选择`，用于白名单模式下显式放行 `8.8.8.8/32`
@@ -40,8 +39,8 @@
 - 单个白名单专属拒绝域名，或只用于阻断浏览器扩展更新链路的拒绝规则，优先直接维护在 1)“拒绝规则”入口，不为单条规则额外新增公开 `rules/` 文件
 - `direct/microsoft_direct` 继续保留 `DIRECT`
 - `direct/macos_update_direct` 继续保留 `DIRECT`，用于需要时临时放开 macOS 系统升级；它只匹配 Apple 官方标注为 macOS only 的更新主机
-- `alicloud_hk_ipv4_ssh22_direct`、`DOMAIN-SUFFIX,aliyuncs.com` 与 `DOMAIN,check.myclientip.com` 继续保留
-- 白名单模式下，除 `REJECT` 外不要对 `DIRECT` 或 `PROXY` 规则使用 `extended-matching`；它会把可伪造的 Host / SNI 纳入放行判断，放大绕过白名单的风险
+- `alicloud_hk_ipv4_ssh22_direct`、`DOMAIN-SUFFIX,aliyuncs.com` 与 `DOMAIN,check.myclientip.com` 继续保留；其后额外保留一条阿里云广覆盖 `REJECT` 观察兜底，用于发现上游阿里云规则的漏网之鱼
+- 工作白名单模式下，广覆盖观察规则统一只允许使用 `REJECT`；不要对 `DIRECT` 或 `PROXY` 规则使用 `extended-matching`，否则会把可伪造的 Host / SNI 纳入放行判断，放大绕过白名单的风险
 - `bytedance_direct.list` 继续保留 `DIRECT`
 - 原独立 2.6 `IP 规则` 段已删除，避免与 2.1 设备分流重复
 - 未命中上述白名单入口的流量最终统一落到 `FINAL,REJECT`
@@ -59,16 +58,16 @@
 3. 区域精确规则
 4. GitHub 仓库 SSH 定向直连
 5. GitHub Raw 下载入口
-6. GitHub 广覆盖观察兜底
+6. GitHub 广覆盖 REJECT 观察兜底
 7. 私有订阅更新直连
 8. 1Password 核心连接节点选择入口
 9. AdsPower 细分规则
-10. AdsPower 广覆盖观察兜底
+10. AdsPower 广覆盖 REJECT 观察兜底
 11. Polygon 主网 RPC 节点选择入口
 12. BSC 主网 RPC 节点选择入口
 13. Google Public DNS 主 IPv4 端点节点选择入口
 14. Cloudflare DNS 节点选择入口
-15. 指定直连入口
+15. 指定直连入口（含阿里云广覆盖 REJECT 观察兜底）
 16. 全局 `FINAL,REJECT` 兜底
 
 ## 不要误恢复的广谱放行项

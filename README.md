@@ -150,10 +150,11 @@ python tools/build_rules.py
 - 白名单专属的单个直连域名例外（例如 `smtp.163.com`）默认直接维护在“指定直连”入口，不为单条规则额外拆分公开 `rules/` 文件。
 - 白名单专属的单个拒绝域名，或只用于阻断浏览器扩展更新链路的拒绝规则，也默认直接维护在白名单的“拒绝规则”入口，不为单条规则额外拆分公开 `rules/` 文件。
 - 其中 `proxy/onepassword_proxy`、`proxy/polygon_rpc_proxy`、`proxy/bsc_rpc_proxy`、`proxy/google_public_dns_ipv4_proxy` 与 `DOMAIN-SUFFIX,cloudflare-dns.com` 都是允许保留的节点选择入口，用于白名单模式下显式放行指定代理端点。
-  - 其中 GitHub SSH 后直接进入 GitHub Raw 下载入口与 `DOMAIN-KEYWORD,github` 观察兜底；阿里云香港 SSH、`aliyuncs.com` 与 `check.myclientip.com` 统一收敛到“指定直连”段显式放行，不再保留旧版广覆盖观察兜底。
+  - 其中 GitHub SSH 后直接进入 GitHub Raw 下载入口，并保留一条 `DOMAIN-KEYWORD,github,REJECT` 广覆盖观察兜底，用于发现 SSH / Raw 之外的漏网之鱼；AdsPower 细分规则后也保留一条 `DOMAIN-KEYWORD,adspower,REJECT` 广覆盖观察兜底。
+  - 阿里云香港 SSH、`aliyuncs.com` 与 `check.myclientip.com` 统一收敛到“指定直连”段显式放行；其后额外保留一条阿里云广覆盖 `REJECT` 观察兜底，用于发现上游阿里云规则的漏网之鱼。
   - 私有订阅更新直连统一在 `%USERPROFILE%\Desktop\rulemesh-local\current\private_subscription_direct.list` 维护，并通过脚本同步到本地三份私有配置，不回写公开模板。
   - 其中 `raw.githubusercontent.com` 额外绑定 `server:system`，同时 `dns-server` 保留 `system + 公共 DNS`，用于降低 GitHub Raw 外部资源偶发超时。
-  - 白名单 / 显式放行场景下，除 `REJECT` 外不要对 `DIRECT` 或 `PROXY` 规则使用 `extended-matching`；它会把可伪造的 Host / SNI 纳入放行判断，扩大绕过白名单的攻击面。
+  - 工作白名单模式下，广覆盖观察规则统一只允许使用 `REJECT`；不要对 `DIRECT` 或 `PROXY` 规则使用 `extended-matching`，否则会把可伪造的 Host / SNI 纳入放行判断，扩大绕过白名单的攻击面。
   - 原单独 `IP 规则` 段已删除，避免与设备分流重复。
   - 其中 AdsPower 在精细规则后允许额外保留一条广覆盖观察兜底，用于发现细分规则漏网之鱼。
   - 这份工作路由白名单与两个 `personal` 配置永久有意不一致，后续维护不要按“统一模板”思路把它改回去。
