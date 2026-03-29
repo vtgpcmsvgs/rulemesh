@@ -37,6 +37,7 @@
 - `LAN,DIRECT` 继续保留在白名单直连入口中
 - `direct/os_time_direct` 继续保留 `DIRECT`，用于 Windows / Apple 系统时间同步，不并入节点选择
 - 单个白名单专属直连域名（例如 `smtp.163.com`）优先直接维护在 2.10“指定直连”入口，不为单条规则额外新增公开 `rules/` 文件
+- 单个白名单专属拒绝域名，或只用于阻断浏览器扩展更新链路的拒绝规则，优先直接维护在 1)“拒绝规则”入口，不为单条规则额外新增公开 `rules/` 文件
 - `direct/microsoft_direct` 继续保留 `DIRECT`
 - `direct/macos_update_direct` 继续保留 `DIRECT`，用于需要时临时放开 macOS 系统升级；它只匹配 Apple 官方标注为 macOS only 的更新主机
 - `alicloud_hk_ipv4_ssh22_direct` 与阿里云广覆盖观察兜底继续保留

@@ -94,6 +94,7 @@
 - `proxy/gfw.list` 建议放在其他普通 `direct/*.list` 前，减少广谱直连误伤。
 - 浏览器明文 HTTP 拦截推荐直接接 `plain_http_reject.list`，不要再手写重复规则。
 - 私有 `rulemesh-substore-surge-work-whitelist.conf` 是白名单例外：它保留设备分流、区域精确、GitHub SSH、阿里云广覆盖观察兜底、GitHub Raw 下载入口、GitHub 观察兜底、私有订阅更新直连、1Password 核心连接、AdsPower、Polygon 主网 RPC、BSC 主网 RPC、Google Public DNS 主 IPv4 端点、Cloudflare DNS、`LAN,DIRECT`、`direct/os_time_direct`、`direct/microsoft_direct`、`direct/macos_update_direct`、阿里云指定直连与 ByteDance；其中只有设备分流继续保留 `SRC-IP` 约束，并按指定 AWS 区域 / 日本 SOCKS5 IP 段定向到对应工作机亚洲出口组，后续规则不再额外限制源 IP，原独立 `IP 规则` 段已移除；`github_ssh_direct` 后先额外保留一条阿里云广覆盖观察兜底，用于发现 `SSH 22` 端口之外的漏网之鱼，再保留 `DOMAIN,raw.githubusercontent.com` 与 `DOMAIN-KEYWORD,github`，统一走节点选择，并为 `raw.githubusercontent.com` 额外绑定 `server:system`、保留 `system + 公共 DNS` 组合作为解析兜底；私有订阅更新直连统一从本地单一源文件同步到白名单显式放行段；`proxy/onepassword_proxy.list` 也作为白名单显式放行入口放在 `proxy/gfw` 之前；AdsPower 细分规则后还故意保留一条广覆盖 `DOMAIN-KEYWORD,adspower` 观察兜底，用来发现漏网之鱼；Google Public DNS 主 IPv4 端点之后还额外保留一条 `DOMAIN-SUFFIX,cloudflare-dns.com` 节点选择入口，用于白名单模式下显式放行 Cloudflare DNS；未命中上述入口的流量最终统一 `REJECT`。不要把公开模板里的广谱放行段机械同步回去。
+- 若只新增某个白名单专属的单个拒绝域名，或只用于阻断浏览器扩展更新链路的拒绝规则，默认直接维护在这份私有白名单的拒绝段，不为单条规则额外新增公开 `rules/` 文件。
 
 ## 使用原则
 
