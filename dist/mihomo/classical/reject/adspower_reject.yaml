@@ -7,6 +7,8 @@ payload:
   - "DOMAIN,logger.adspower.net"
   - "DOMAIN-SUFFIX,clarity.ms"
   - "DOMAIN-SUFFIX,salesmartly.com"
+  - "DOMAIN-SUFFIX,img.adspower.com"
+  - "DOMAIN-SUFFIX,img.adspower.net"
   - "DOMAIN,download.adspower.com"
   - "DOMAIN,download.adspower.net"
   - "DOMAIN,version.adspower.com"

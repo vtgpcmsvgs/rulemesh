@@ -17,6 +17,10 @@ DOMAIN-SUFFIX,clarity.ms
 # 一键拦截 SaleSmartly 客服系统的所有子域名（聊天流、静态资源、长连接）
 DOMAIN-SUFFIX,salesmartly.com
 
+# 拦截图片静态资源域名树（覆盖 img 主机及其下级子域）
+DOMAIN-SUFFIX,img.adspower.com
+DOMAIN-SUFFIX,img.adspower.net
+
 # 版本控制与内核/插件下载
 DOMAIN,download.adspower.com
 DOMAIN,download.adspower.net

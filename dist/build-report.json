@@ -390,8 +390,8 @@
       "category": "reject",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 18,
-        "mihomo_classical": 18
+        "surge_rules": 20,
+        "mihomo_classical": 20
       },
       "dist": {
         "surge_rules": "dist/surge/rules/reject/adspower_reject.list",
