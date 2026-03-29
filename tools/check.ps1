@@ -100,6 +100,26 @@ function Invoke-UnitTests {
     }
 }
 
+function Invoke-SurgeTestUrlValidation {
+    $python = Resolve-PythonCommand
+    $validatorScript = Join-Path $PSScriptRoot "validate_surge_test_urls.py"
+    $env:PYTHONUTF8 = "1"
+    $env:PYTHONDONTWRITEBYTECODE = "1"
+
+    Write-Host ("[check] validate Surge test URLs with {0}: {1}" -f $python.Label, $python.Value)
+
+    if ($python.Kind -eq "Launcher") {
+        & $python.Value -3 -B -X utf8 $validatorScript
+    }
+    else {
+        & $python.Value -B -X utf8 $validatorScript
+    }
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "Surge test URL validation failed."
+    }
+}
+
 function Assert-OnlyExpectedDirectories {
     param(
         [Parameter(Mandatory = $true)]
@@ -165,6 +185,9 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Invoke-UnitTests
+
+Write-Host "[check] validate Surge test URLs"
+Invoke-SurgeTestUrlValidation
 
 Write-Host "[check] verify dist layout"
 Assert-DistTree

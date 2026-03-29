@@ -13,6 +13,7 @@ if str(TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(TOOLS_DIR))
 
 import build_rules  # noqa: E402
+import validate_surge_test_urls  # noqa: E402
 
 
 UTF8_BOM = b"\xef\xbb\xbf"
@@ -149,6 +150,12 @@ class RepoInvariantTests(unittest.TestCase):
 
     def test_merge_yaml_covers_all_rule_sources(self) -> None:
         self.assertEqual(collect_merge_yaml_targets(), collect_source_rule_paths())
+
+    def test_public_surge_template_keeps_http_testing_urls(self) -> None:
+        findings = validate_surge_test_urls.validate_surge_profile(
+            ROOT / "docs" / "examples" / "surge-public.conf"
+        )
+        self.assertEqual(findings, [])
 
     def test_all_scheduled_workflows_keep_webhook_guardrails(self) -> None:
         workflow_root = ROOT / ".github" / "workflows"

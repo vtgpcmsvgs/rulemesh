@@ -53,6 +53,14 @@
 1. 把模板里所有 `https://example.com/subs/surge/all?target=Surge` 替换成你自己的 Surge 聚合订阅入口。
 2. 如果你不希望最终兜底走总开关，可以把 `FINAL,🚀 节点选择` 改成你想固定兜底的区域组。
 
+## 测速 URL 约定
+
+- Surge 的 `internet-test-url`、`proxy-test-url`、代理 `test-url=`、`url-test / fallback / load-balance` 的 `url=` 统一保持 `http://`，不要改成 `https://`；本仓库已经踩过一次真实载入失败。
+- 当前公开模板与本地私有 Surge 配置统一采用 `http://www.baidu.com`、`http://www.google.com/generate_204` 与 `http://www.gstatic.com/generate_204` 这组三段式测速基线。
+- 这组值不是全网唯一标准答案，但当前更偏“轻量、稳定、便于区分直连检查和代理测速”的默认组合，因此继续保留。
+- 只有测速 URL 需要强制保持 `http://`；`policy-path`、`geoip-maxmind-url`、`RULE-SET` 等普通资源 URL 仍然可以继续使用 `https://`。
+- 如果后续要替换，请优先继续选择轻量、稳定、支持 HTTP HEAD 的 `http://` 目标。
+
 ## 私有订阅更新直连约定
 
 - 真实订阅更新域名只在 `%USERPROFILE%\Desktop\rulemesh-local\current\private_subscription_direct.list` 维护，不写回公开模板
