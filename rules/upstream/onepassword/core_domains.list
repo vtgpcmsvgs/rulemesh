@@ -1,6 +1,6 @@
 # 来源: https://support.1password.com/ports-domains/
 # 标题: 1Password 核心连接域名
-# 同步时间: 2026-03-29T04:20:24+00:00
+# 同步时间: 2026-03-30T04:27:16+00:00
 # 维护边界: 仅自动保留 1Password 官方自有核心域名与更新/基础设施端点。
 # 排除项: 不自动并入 Watchtower、Fastmail、Brex、Privacy Cards 等第三方依赖域名。
 # 规则数量: 10
