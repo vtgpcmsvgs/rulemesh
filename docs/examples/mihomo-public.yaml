@@ -219,9 +219,8 @@ proxy-groups:
       - provider_a
       - provider_b
       - provider_c
-    # FlyintPro 防回滚警告：如果某个 provider 会给真实节点名追加类似 "flyintpro | " 的统一前缀，FlyintPro 就绝不能写成宽匹配。
-    # FlyintPro 只能按“整行等于占位词”精确匹配过滤；像 `flyintpro | 日本 01` 这种真实节点必须保留。
-    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接|FlyintPro)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
+    # 独立占位项需要按“整行精确匹配”过滤，避免误伤真实节点。
+    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
 
   - name: "♻️ 自动选择"
     type: url-test
@@ -235,7 +234,7 @@ proxy-groups:
       - provider_b
       - provider_c
     filter: "(?i)🇭🇰|香港|hong kong|\\bhk\\b|🇨🇳|台湾|taiwan|\\btw\\b|🇯🇵|日本|japan|\\bjp\\b|🇸🇬|新加坡|singapore|\\bsg\\b|🇺🇸|美国|united states|\\bus\\b|🇰🇷|韩|korea|\\bkr\\b"
-    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接|FlyintPro)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
+    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
 
   - name: "🇭🇰 香港-自动选择"
     type: url-test
@@ -249,7 +248,7 @@ proxy-groups:
       - provider_b
       - provider_c
     filter: "(?i)🇭🇰|香港|hong kong|\\bhk\\b"
-    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接|FlyintPro)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
+    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
 
   - name: "🇨🇳 台湾-自动选择"
     type: url-test
@@ -263,7 +262,7 @@ proxy-groups:
       - provider_b
       - provider_c
     filter: "(?i)🇨🇳|台湾|taiwan|\\btw\\b"
-    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接|FlyintPro)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
+    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
 
   - name: "🇯🇵 日本-自动选择"
     type: url-test
@@ -277,7 +276,7 @@ proxy-groups:
       - provider_b
       - provider_c
     filter: "(?i)🇯🇵|日本|japan|\\bjp\\b"
-    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接|FlyintPro)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
+    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
 
   - name: "🇰🇷 韩国-自动选择"
     type: url-test
@@ -291,7 +290,7 @@ proxy-groups:
       - provider_b
       - provider_c
     filter: "(?i)🇰🇷|韩|korea|\\bkr\\b"
-    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接|FlyintPro)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
+    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
 
   - name: "🇸🇬 新加坡-自动选择"
     type: url-test
@@ -305,7 +304,7 @@ proxy-groups:
       - provider_b
       - provider_c
     filter: "(?i)🇸🇬|新加坡|singapore|\\bsg\\b"
-    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接|FlyintPro)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
+    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
 
   - name: "🇺🇸 美国-自动选择"
     type: url-test
@@ -319,7 +318,7 @@ proxy-groups:
       - provider_b
       - provider_c
     filter: "(?i)🇺🇸|美国|united states|\\bus\\b"
-    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接|FlyintPro)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
+    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
 
 rule-providers:
   reject_adblock:

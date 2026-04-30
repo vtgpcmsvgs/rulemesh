@@ -73,7 +73,7 @@
   - 关闭应用侧 `DNS 覆写`
   - 在 `rulemesh-substore-mihomo-clash-verge.yaml` 中保持 `respect-rules: false`
   - 让 `proxy-server-nameserver` 走阿里云 / 腾讯云 DoH
-  - 保留 `+.bestvmr.com` 这类节点专用解析策略
+  - 保留确有必要的节点专用解析策略
 - 这套修法的目标是把“桌面端 Mihomo 私有文件重新变回单一真相”，而不是长期依赖 Clash Verge Rev 的界面覆写兜底。
 
 ## 国内 DNS 适用范围

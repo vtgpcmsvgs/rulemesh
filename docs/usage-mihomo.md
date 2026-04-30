@@ -75,9 +75,9 @@
 
 ## 代理组过滤约定
 
-- 本地私有 Mihomo 配置里，所有基于 provider 的代理组默认共用同一套排除条件：`剩余流量`、`套餐到期`、`距离下次重置`、`过滤掉`、`Expire Date`、`Traffic Reset` 这类状态/提示项按前缀匹配，`直接连接` 与 `FlyintPro` 这类独立占位项按整行精确匹配，`联系我们` 与 `1.2 GB | 50 GB` 这类提示继续专项匹配，让手动切换、自动组和地区组尽量只展示真实节点。
-- 这套过滤条件需要在所有相关代理组里保持完全一致；Mihomo 侧所有相关 `exclude-filter` 都必须与 Surge 语义对齐。特别是 `flyintpro` provider 已知会给真实节点加 `flyintpro | ` 前缀，因此 `FlyintPro` 绝不能回滚成宽匹配。
-- 如果某个 provider 会给真实节点额外注入统一前缀，默认先检查是否存在“供应商名宽匹配误杀真实节点”的风险；详见 [docs/proxy-group-filter-methodology.md](proxy-group-filter-methodology.md)。
+- 本地私有 Mihomo 配置里，所有基于 provider 的代理组默认共用同一套排除条件：`剩余流量`、`套餐到期`、`距离下次重置`、`过滤掉`、`Expire Date`、`Traffic Reset` 这类状态/提示项按前缀匹配，`直接连接` 这类独立占位项按整行精确匹配，`联系我们` 与 `1.2 GB | 50 GB` 这类提示继续专项匹配，让手动切换、自动组和地区组尽量只展示真实节点。
+- 这套过滤条件需要在所有相关代理组里保持完全一致；Mihomo 侧所有相关 `exclude-filter` 都必须与 Surge 语义对齐。
+- 如果某个 provider 会给真实节点额外注入统一前缀，默认先检查是否存在“供应商名宽匹配误伤真实节点”的风险；详见 [docs/proxy-group-filter-methodology.md](proxy-group-filter-methodology.md)。
 
 ## Tun / DNS / 嗅探方法论
 

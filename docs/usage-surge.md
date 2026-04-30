@@ -74,9 +74,9 @@
 
 ## 代理组过滤约定
 
-- 本地私有 Surge 配置里，所有基于 `policy-path` 的代理组默认共用同一套排除条件：`剩余流量`、`套餐到期`、`距离下次重置`、`过滤掉`、`Expire Date`、`Traffic Reset` 这类状态/提示项按前缀匹配，`直接连接` 与 `FlyintPro` 这类独立占位项按整行精确匹配，`联系我们` 与 `1.2 GB | 50 GB` 这类提示继续专项匹配，让手动切换、自动组和地区组尽量只展示真实节点。
-- 这套过滤条件需要在所有相关代理组里保持完全一致；当前 Surge 侧的手动组、`smart` 自动组和地区 `smart` 组都必须同步共用同一套 `policy-regex-filter`。特别是 `FlyintPro` 绝不能回滚成宽匹配，因为真实节点里可能带 `flyintpro | ` 前缀。
-- 如果某个 `policy-path` / provider 会给真实节点额外注入统一前缀，默认先检查是否存在“供应商名宽匹配误杀真实节点”的风险；详见 [docs/proxy-group-filter-methodology.md](proxy-group-filter-methodology.md)。
+- 本地私有 Surge 配置里，所有基于 `policy-path` 的代理组默认共用同一套排除条件：`剩余流量`、`套餐到期`、`距离下次重置`、`过滤掉`、`Expire Date`、`Traffic Reset` 这类状态/提示项按前缀匹配，`直接连接` 这类独立占位项按整行精确匹配，`联系我们` 与 `1.2 GB | 50 GB` 这类提示继续专项匹配，让手动切换、自动组和地区组尽量只展示真实节点。
+- 这套过滤条件需要在所有相关代理组里保持完全一致；当前 Surge 侧的手动组、`smart` 自动组和地区 `smart` 组都必须同步共用同一套 `policy-regex-filter`。
+- 如果某个 `policy-path` / provider 会给真实节点额外注入统一前缀，默认先检查是否存在“供应商名宽匹配误伤真实节点”的风险；详见 [docs/proxy-group-filter-methodology.md](proxy-group-filter-methodology.md)。
 
 ## 私有订阅域名同步约定
 
