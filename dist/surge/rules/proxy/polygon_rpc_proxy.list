@@ -62,6 +62,8 @@ DOMAIN,rpc.owlracle.info
 DOMAIN-WILDCARD,*.rpc.owlracle.info
 DOMAIN,rpc.poolz.finance
 DOMAIN-WILDCARD,*.rpc.poolz.finance
+DOMAIN,rpc.private.mev-x.com
+DOMAIN-WILDCARD,*.rpc.private.mev-x.com
 DOMAIN,rpc.sentio.xyz
 DOMAIN-WILDCARD,*.rpc.sentio.xyz
 DOMAIN,rpc.swiftnodes.io

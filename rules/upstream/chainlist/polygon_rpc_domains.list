@@ -4,9 +4,9 @@
 # chainId: 137
 # 维护策略: 只增不减；保留历史已收录主机名，避免上游日常波动导致覆盖面回撤。
 # 规则展开: 每个主机名同时生成 DOMAIN 与 DOMAIN-WILDCARD，统一收敛为节点选择入口。
-# 本次抓取主机数: 30
-# 累计主机数: 32
-# 同步时间: 2026-04-29T04:53:58+00:00
+# 本次抓取主机数: 31
+# 累计主机数: 33
+# 同步时间: 2026-05-01T05:08:29+00:00
 
 DOMAIN,1rpc.io
 DOMAIN-WILDCARD,*.1rpc.io
@@ -68,6 +68,8 @@ DOMAIN,rpc.owlracle.info
 DOMAIN-WILDCARD,*.rpc.owlracle.info
 DOMAIN,rpc.poolz.finance
 DOMAIN-WILDCARD,*.rpc.poolz.finance
+DOMAIN,rpc.private.mev-x.com
+DOMAIN-WILDCARD,*.rpc.private.mev-x.com
 DOMAIN,rpc.sentio.xyz
 DOMAIN-WILDCARD,*.rpc.sentio.xyz
 DOMAIN,rpc.swiftnodes.io
