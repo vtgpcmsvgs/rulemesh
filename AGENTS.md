@@ -74,6 +74,7 @@
 - `.rulemesh.local.json`、`%USERPROFILE%\Desktop\rulemesh-local\current`、私有 `policy-path`、真实机场订阅地址、Webhook、AccessKey、STS、`[MITM]` 证书参数、局域网设备分流规则都视为私有内容
 - 默认不要把私有文件内容或敏感值写回公开仓库，也不要在回复中完整回显真实密钥、签名、订阅 URL 或其他敏感参数
 - 即使需要在公开仓库里记录工作路由白名单维护约定，也只允许写“固定工作电脑”“白名单模式”“与 personal 永久不一致”这类抽象说明；不要把真实 `SRC-IP` 范围、私有设备标识、订阅地址或本地策略分组细节写回公开仓库
+- 若 `rulemesh-substore-mihomo-clash-verge.yaml` 出现“某个 provider 全部测速失败，但同一订阅直导 Clash Verge Rev 正常”的现象，默认先对比运行时 `dns:`，并通过 Mihomo API / 命名管道与日志确认实际生效配置；不要先把问题归因到节点失效，也不要只停留在更换测速 URL 这一层
 - 若本地私有配置结构发生变化，必须同步更新 `.rulemesh.local.example.json` 与相关文档，但只允许写入脱敏占位值
 - 若任务需要参考私有配置，默认只说明字段名、用途与是否生效，不直接暴露真实值
 

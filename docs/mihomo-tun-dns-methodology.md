@@ -76,6 +76,53 @@
   - 保留确有必要的节点专用解析策略
 - 这套修法的目标是把“桌面端 Mihomo 私有文件重新变回单一真相”，而不是长期依赖 Clash Verge Rev 的界面覆写兜底。
 
+## provider 全部测速失败但直导正常时的排障方法论
+
+- 现象特征通常是：同一机场订阅在 `rulemesh-substore-mihomo-clash-verge.yaml` 这类 provider 路径下整批 `delay=0` 或全部超时，但把同一订阅直接导入 Clash Verge Rev 后测速正常。
+- 遇到这种组合时，默认先怀疑“Verge 运行时 DNS 链与直导配置不一致”，不要第一时间把问题归因到节点本身、机场质量或界面缓存。
+- 这类问题里，`health-check.url` 从 HTTP 改成 HTTPS 只能算第一层排查；如果改完仍整批失败，不要停在这里。
+
+### 建议排查顺序
+
+- 先确认内核是否真的吃到了新配置，而不是只看客户端界面是否点过“重载”或“重启”。
+- 再对比“直导正常的那份配置”和“provider 全灭的那份配置”在运行时的 `dns:`，重点看实际生效值，而不是只看源 YAML。
+- 再把问题拆成三层分别验证：
+  - provider 本身是否成功拉取
+  - 节点域名是否能被当前运行时 DNS 正确解析
+  - 测速目标域名是否走上了错误的解析链或错误的分流链
+
+### 建议使用的验证手段
+
+- 优先看 Mihomo 运行日志，确认是否出现 `EOF`、`context deadline exceeded`、批量 `delay=0` 或 DNS 相关异常。
+- 优先通过 Mihomo API 或 Clash Verge Rev 命名管道回读运行时 `/configs`，确认当前 `dns`、`ipv6`、`use-hosts`、`use-system-hosts`、`listen`、`fake-ip-range` 是否符合预期。
+- 对代表性节点直接做 `/proxies/<node>/delay` 测试，避免只盯着策略组或 UI 汇总结果。
+- 如有需要，再分别检查 provider 列表、DNS 查询结果与节点明细，确认是“节点解析失败”还是“测速目标解析链异常”。
+
+### 在 Clash Verge Rev 里优先关注什么
+
+- 是否开启了 `DNS 覆写`，以及 AppData 下的 `dns_config.yaml` 是否覆盖了源文件里的 `dns:`。
+- `use-hosts`、`use-system-hosts`、`ipv6` 是否与直导正常配置一致。
+- `listen`、`fake-ip-range`、`default-nameserver`、`nameserver` 是否形成了单一且自洽的解析链。
+- 是否额外挂了 `nameserver-policy`、`direct-nameserver`、`proxy-server-nameserver`、`fallback` 等多层策略，导致节点域名解析和业务域名解析缠在一起。
+
+### 修复原则
+
+- 先把失败配置的运行时 DNS 收敛到“与直导正常配置同一套逻辑”，优先恢复单一真相，再决定是否需要逐层加回额外策略。
+- 如果直导正常而 provider 路径整批失败，优先回到更简单、更接近直导行为的 DNS 链，不要一开始就在复杂分层上继续叠补丁。
+- 只有在验证恢复后，才评估哪些差异是 Clash Verge Rev 私有文件长期需要保留的特化行为。
+
+### 公开仓库与私有配置的边界
+
+- 若最终可用方案依赖私有订阅、私有 DoH、AppData 运行态文件或本地长期维护脚本，公开仓库只沉淀方法，不记录真实值。
+- 仓库内只保留“看什么、比什么、怎么验证、先后顺序是什么”，真实解析上游、真实订阅地址与本地路径细节继续留在私有目录。
+
+### 收尾检查清单
+
+- 运行时 `/configs` 已确认吃到预期 DNS 配置。
+- 代表性节点的单点测速已恢复，不再是整批 `delay=0`。
+- provider 汇总结果与单点测速结果一致，而不是只靠 UI 旧缓存显示正常或异常。
+- 如本次修复只应影响 Clash Verge Rev 私有链路，则确认 `rulemesh-substore-mihomo-clash-meta.yaml` 等其他客户端配置未被误改。
+
 ## 国内 DNS 适用范围
 
 - `direct_cn`

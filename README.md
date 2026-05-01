@@ -299,6 +299,7 @@ python tools/build_rules.py
 - 如果把 `rulemesh-substore-mihomo-clash-verge.yaml` 当成 Clash Verge Rev 的唯一权威配置，默认应关闭 Clash Verge Rev 的 `DNS 覆写`；否则运行时 `dns` 会被 AppData 下的 `dns_config.yaml` 覆盖
 - 如果明确保留 Clash Verge Rev 的 `DNS 覆写`，则应把 `dns_config.yaml` 视为实际生效的 `dns` 单一真相，而不是继续假设源文件里的 `dns:` 会原样生效
 - 如果关闭 Clash Verge Rev 的 `DNS 覆写` 后出现“国内可访问、国外代理不通”，默认先检查桌面端私有文件的 `respect-rules` 与 `proxy-server-nameserver`，优先修复节点域名解析启动链，而不是先回滚规则顺序
+- 如果某个 provider 在 Clash Verge Rev 私有链路里整批测速失败，但把同一订阅直接导入客户端又正常，默认先按 [docs/mihomo-tun-dns-methodology.md](docs/mihomo-tun-dns-methodology.md) 对比运行时 `dns:`，优先排查 DNS 链差异，不要先把问题归因到节点本身
 - 对 Clash Meta for Android 的兼容性调整，默认优先收敛到节点域名解析这一层；只有在移动网络下直连国外 DoH 不稳定时，才在 Android 专用文件里把 `proxy-server-nameserver` 定向到国内可直连加密 DNS
 - 这组私有订阅域名同步规则只记录在本地目录与私有文档约定中，不回写公开 `rules/`、`dist/` 或公开模板
 - 详细维护方式见 [docs/private-subscription-direct-sync.md](docs/private-subscription-direct-sync.md)
