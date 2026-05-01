@@ -120,6 +120,26 @@ function Invoke-SurgeTestUrlValidation {
     }
 }
 
+function Invoke-ChangeGuardrailValidation {
+    $python = Resolve-PythonCommand
+    $guardrailScript = Join-Path $PSScriptRoot "check_change_guardrails.py"
+    $env:PYTHONUTF8 = "1"
+    $env:PYTHONDONTWRITEBYTECODE = "1"
+
+    Write-Host ("[check] validate change guardrails with {0}: {1}" -f $python.Label, $python.Value)
+
+    if ($python.Kind -eq "Launcher") {
+        & $python.Value -3 -B -X utf8 $guardrailScript
+    }
+    else {
+        & $python.Value -B -X utf8 $guardrailScript
+    }
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "Change guardrail validation failed."
+    }
+}
+
 function Assert-OnlyExpectedDirectories {
     param(
         [Parameter(Mandatory = $true)]
@@ -183,6 +203,9 @@ Write-Host "[check] run build"
 if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
+
+Write-Host "[check] validate change guardrails"
+Invoke-ChangeGuardrailValidation
 
 Invoke-UnitTests
 

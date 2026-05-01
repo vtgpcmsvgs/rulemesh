@@ -35,10 +35,12 @@
 
 ## 仓库默认流程
 
+- 动手前先按“源规则、上游登记、公开文档/模板、构建与检查脚本、私有同步项”给本次任务分类；高风险联动没分清前，不要直接编辑
 - 对本仓库的任何实际修改，默认同时同步更新 `%USERPROFILE%\Desktop\rulemesh-local\current` 中对应文件；除非用户明确说明不要同步
 - 修改前后都要判断 `%USERPROFILE%\Desktop\rulemesh-local\current` 是否存在对应文件；只有存在对应关系时才同步；若本次没有对应同步项，最终回复中必须明确写出“本次无对应同步项”
 - 修改完成后，必须检查整个仓库中同类问题是否仍然存在，并检查是否有耦合项、重复项、残留项；发现后应一并处理或明确报告
 - 提交前默认运行 `powershell -ExecutionPolicy Bypass -File tools/check.ps1`；若因为环境或权限限制无法执行，必须在最终回复中明确说明
+- `tools/check.ps1` 默认包含 `tools/check_change_guardrails.py` 变更联动闸门：当前对“源规则 `.list` 新增 / 删除 / 重命名未同步 `rules/upstream/sources.yaml` 与 `rules/upstream/merge.yaml`”以及“`docs/rule-authoring-style.md` 变更未同步 `AGENTS.md` 与 `README.md`”直接失败；其余高风险联动至少会显式提醒
 - 新增、删除或重命名 `rules/{reject,direct,proxy,region}/` 下的 `.list` 源规则文件时，必须同步更新 `rules/upstream/sources.yaml` 与 `rules/upstream/merge.yaml`
 - 新增或调整默认对外使用的规则入口、规则顺序、策略含义或公开模板行为时，必须同步更新 `README.md`、`docs/usage-surge.md`、`docs/usage-mihomo.md`、`docs/examples/surge-public.conf`、`docs/examples/mihomo-public.yaml`
 - 若本次修改影响使用方式、规则组织、构建方式、产物结构或维护约定，必须同步更新相关文档
@@ -52,6 +54,7 @@
 - 只要工作路由白名单逻辑、适用范围、维护边界发生变化，必须同步更新 `docs/surge-work-cluster-whitelist.md`、`README.md` 与相关使用说明，避免后续失忆式回滚
 - 若本次任务产生了实际文件变更，且用户没有明确禁止提交，则默认在验证完成后提交 git commit
 - 如果上述任一步无法执行，不得静默跳过；必须在最终回复中明确说明未完成项、原因以及阻塞点
+- 只有实际执行过构建、检查、`git status`、全仓搜索等动作，最终回复里才可写“已验证”“已检查”或等价表述；不能把推断写成已完成
 - 最终回复默认应包含：同步状态、全仓检查结果、文档更新情况、验证结果、提交状态
 
 ## 源规则编排约定

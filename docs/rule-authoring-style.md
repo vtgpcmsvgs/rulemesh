@@ -22,6 +22,31 @@
 - 文件头先写清“它负责什么、不负责什么、顺序上放在哪里”
 - 自写注释统一用中文，不混入英文占位说明
 
+## 先分类，再编辑
+
+对中大型规则或维护约定的修改，默认先把本次任务分到这些类别里，再开始改文件：
+
+- 源规则
+- 上游登记
+- 公开说明或公开模板
+- 构建与检查脚本
+- 私有同步项
+
+这么做的目的不是增加仪式感，而是提前暴露“这次会不会顺手漏改别处”。
+
+配套的硬闸门已经接入 `powershell -ExecutionPolicy Bypass -File tools/check.ps1`：
+
+- `tools/check_change_guardrails.py` 会先根据当前工作区变更给出分类
+- 对已经能机械判断的强关联项直接失败
+- 对还不适合硬编码的高风险联动给出显式提醒
+
+当前明确做成硬失败的主要有两类：
+
+- `rules/{reject,direct,proxy,region}/` 下 `.list` 源规则文件新增、删除或重命名，但没有同步修改 `rules/upstream/sources.yaml` 与 `rules/upstream/merge.yaml`
+- `docs/rule-authoring-style.md` 已修改，但没有同步更新 `AGENTS.md` 与 `README.md`
+
+这意味着“我知道这次顺手不用改别的”不能只停留在口头判断，至少要先过一遍默认闸门。
+
 ## 推荐结构
 
 一个典型的源规则文件，默认按这四层组织：
@@ -185,6 +210,8 @@ DOMAIN-KEYWORD,...
 - `AGENTS.md`
 - `README.md`
 - 这份文档 `docs/rule-authoring-style.md`
+
+反过来说，只要你已经改了 `docs/rule-authoring-style.md`，就不要把它当成“只补一份说明文档”；默认还要同步把同一套约束写回 `AGENTS.md` 与 `README.md`。
 
 ## 当前已标准化的参考文件
 

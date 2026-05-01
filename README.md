@@ -29,6 +29,8 @@ dist/
 tools/
   build_rules.ps1
   build_rules.py
+  check.ps1
+  check_change_guardrails.py
 ```
 
 说明：
@@ -53,7 +55,13 @@ powershell -ExecutionPolicy Bypass -File tools/build_rules.ps1
 powershell -ExecutionPolicy Bypass -File tools/check.ps1
 ```
 
-这个脚本会串行执行构建、单元测试、`dist/` 目录结构校验、`dist/build-report.json` warning 校验，并在最后输出 `git status --short`。
+这个脚本会串行执行构建、变更联动闸门、单元测试、`dist/` 目录结构校验、`dist/build-report.json` warning 校验，并在最后输出 `git status --short`。
+其中 `tools/check_change_guardrails.py` 会先按“源规则 / 上游登记 / 公开说明模板 / 构建与检查脚本”等类别总结当前工作区变更；对于当前已明确的强关联项，会直接失败，例如：
+
+- `rules/{reject,direct,proxy,region}/` 下 `.list` 源规则文件新增、删除或重命名，但没有同步修改 `rules/upstream/sources.yaml` 与 `rules/upstream/merge.yaml`
+- `docs/rule-authoring-style.md` 已修改，但没有同步更新 `AGENTS.md` 与 `README.md`
+
+其余暂时还不适合机械化硬判定的联动项，会以显式提醒输出，逼着维护者在提交前再看一眼，而不是只靠记忆。
 这个脚本现在还会额外校验 Surge 配置里的测速 URL 约定，防止把必须保持 `http://` 的字段误改成 `https://`。
 
 CI 或其他非 Windows 环境如果已经确认本机 `python` 可用，也可以直接执行：
@@ -307,6 +315,7 @@ python tools/build_rules.py
 
 ## 维护建议
 
+- 动手前先把本次改动归类到“源规则 / 上游登记 / 公开说明模板 / 构建与检查脚本 / 私有同步项”；高风险联动没想清前，不要直接编辑
 - 优先改 `rules/`，不要直接手改 `dist/`
 - 新增规则前，先想清楚它是 `reject`、`direct`、`proxy` 还是 `region`
 - 遇到单一应用同时涉及多种动作时，优先维护 `rules/app/*.txt` 主清单，再由构建前同步派生到现有分类
@@ -317,7 +326,9 @@ python tools/build_rules.py
 - 如果本次修改改变了源规则的编排方式、分组风格、文件边界或维护习惯，同步更新 `AGENTS.md`、`README.md` 与 `docs/rule-authoring-style.md`
 - 如果一个源文件开始变得很大，优先补 `sources.yaml` 与 `merge.yaml`，再考虑引入更多上游素材
 - 提交前优先运行 `powershell -ExecutionPolicy Bypass -File tools/check.ps1`
+- `tools/check.ps1` 现在会先执行 `tools/check_change_guardrails.py`：少数确定性的强关联项直接失败，其余高风险联动会以提醒形式输出，默认不能忽略
 - 提交前看一眼 `dist/build-report.json` 的 warnings，特别是 Mihomo 不支持的规则类型
+- 只有实际执行过构建、检查、`git status` 等动作，最终结论里才算“已验证”；不要把推断写成已完成
 - 自写注释、生成说明、文档说明默认统一写中文，不要再放英文占位注释
 
 ## 规则方法论：上游优先 + 本地兜底
