@@ -5,6 +5,7 @@
 - 个人终端版公开参考模板：[`docs/examples/surge-public.conf`](examples/surge-public.conf)
 - 规则产物入口：`dist/surge/rules/`
 - 代理组过滤方法论：[`docs/proxy-group-filter-methodology.md`](proxy-group-filter-methodology.md)
+- DNS 防泄漏方法论：[`docs/network-security/dns-leak-prevention.md`](network-security/dns-leak-prevention.md)
 
 这个模板是基于本地长期使用的 Surge 配置整理出来的公开版，保留了总开关、区域自动切换、拒绝规则、直连规则与 IP 规则的完整结构，但移除了不适合公开仓库的个人化部分。
 
@@ -33,7 +34,7 @@
 - `geoip-maxmind-url` 显式固定到与 Mihomo 共用的本仓库 Release 镜像地址
 - `reject`、`direct`、`proxy`、`region` 四类 RuleMesh 产物接入
 - `reject/wps_reject.list` 当前按“WPS 全量封网”维护；如需保留 WPS 云文档、模板、账号、推送或升级能力，请不要接入这条规则
-- `github_ssh_direct` 后先保留 `DOMAIN,raw.githubusercontent.com,"🚀 节点选择"` 自举入口，再显式接入 `proxy/github_core_proxy.list`，承接 GitHub 网页、`api.github.com`、Gist、Raw、静态资源与附件；同时继续配合 `dns-server = system + 公共 DNS`、`encrypted-dns-server` 与 `raw.githubusercontent.com = server:system` 这组 GitHub Raw 解析兜底
+- `github_ssh_direct` 后先保留 `DOMAIN,raw.githubusercontent.com,"🚀 节点选择"` 自举入口，再显式接入 `proxy/github_core_proxy.list`，承接 GitHub 网页、`api.github.com`、Gist、Raw、静态资源与附件；同时继续保留 `raw.githubusercontent.com = server:system` 这一条规则产物下载自举例外，但全局 DNS 必须保持海外 DNS
 - `region/hk/global_media.list` 额外承接 X / Twitter 网页、短链与静态资源，以及 Polymarket 显式域名与激进关键词兜底，并默认绑定 `🇭🇰 香港-自动选择`
 - `region/tw/ai_tw.list` 统一承接 OpenAI / Claude / Gemini / Copilot / Cursor / Grok / Windsurf / Augment 等海外 AI 平台，并保留更激进的关键词兜底
 - `direct/ai_cn_direct.list` 显式承接 Kimi / DeepSeek / 豆包 / 即梦 / Trae 中国大陆 / 元宝 / 混元 / 通义 / 千问 / 智谱 / MiniMax / 文心等国内 AI 入口，并应放在 `direct/bytedance_direct.list` 与 `direct/cn_direct.list` 前
@@ -49,7 +50,7 @@
 - `allow-wifi-access = false`、`test-timeout = 3` 与 `use-local-host-item-for-proxy = true` 这组运行时默认值
 - 默认开启 `ipv6 = true`，并继续使用 `ipv6-vif = auto` 只在本地网络具备有效 IPv6 时启用 Surge IPv6 VIF，先把双栈能力打开，但不默认强推 `always`
 - 显式 `dns-mode = fake-ip`；维护约定是优先 `fake-ip`、次选 `mapping`，因为前者可通过 IP 逆向域名，流量接管更彻底，而后者只在更看重兼容性时作为退路
-- `skip-proxy`、`always-real-ip`、基础 DNS 与测速参数
+- `skip-proxy`、`always-real-ip`、海外全局 DNS 与测速参数
 
 ## 模板刻意移除了什么
 
@@ -58,10 +59,13 @@
 - 整个 `[MITM]` 段及证书参数
 - 1Password 重度用户专项入口；如需启用，请另行接入 `proxy/onepassword_proxy.list`
 
-## 使用前只需要替换两处
+## 使用前只需要替换三处
 
 1. 把模板里所有 `https://example.com/subs/surge/all?target=Surge` 替换成你自己的 Surge 聚合订阅入口。
-2. 如果你不希望最终兜底走总开关，可以把 `FINAL,🚀 节点选择` 改成你想固定兜底的区域组。
+2. 把 `[Host]` 里的 `https://example.com/api/file/proxy-node-domains` 替换成 Sub-Store 自动生成的节点 `server` 域名文件真实 URL。
+3. 如果你不希望最终兜底走总开关，可以把 `FINAL,🚀 节点选择` 改成你想固定兜底的区域组。
+
+`proxy-node-domains` 只能包含订阅节点的 `server` 域名，不得填订阅入口、机场面板域名或普通目标网站域名。
 
 ## 测速 URL 约定
 
@@ -114,7 +118,7 @@
 - `region/hk/global_media.list` 当前还承接 `x.com`、`t.co`、`twimg.com` 与 `twitter.com` 等 X / Twitter 网页域名，以及 `polymarket.com` 与 `DOMAIN-KEYWORD,polymarket` 这组 Polymarket 香港兜底；默认应继续绑定 `🇭🇰 香港-自动选择`，不要再让它们回落到 `proxy/gfw.list` 或误挂到日本区域。
 - 公开 `surge-public.conf` 当前不再默认接入空的 `region/jp/domains_to_jp.list`；`🇯🇵 日本-自动选择` 继续保留给东京 / 大阪 AWS IPv4 等仍有实际命中的日本入口使用。
 - `direct/github_ssh_direct.list` 必须放在 `proxy/github_core_proxy.list` 与 `proxy/gfw.list` 前，只给 `github.com:22` 与 `ssh.github.com:443` 直连，避免把 GitHub 网页误放直连。
-- GitHub Raw 自举入口建议在 `direct/github_ssh_direct.list` 后额外保留一条 `DOMAIN,raw.githubusercontent.com,"🚀 节点选择"`，避免外部规则首轮下载依赖尚未加载完成的后续远程规则集；同时继续保留 `raw.githubusercontent.com = server:system` 与 `dns-server = system + 公共 DNS` 这组解析兜底，降低外部资源偶发超时。
+- GitHub Raw 自举入口建议在 `direct/github_ssh_direct.list` 后额外保留一条 `DOMAIN,raw.githubusercontent.com,"🚀 节点选择"`，避免外部规则首轮下载依赖尚未加载完成的后续远程规则集；同时继续保留 `raw.githubusercontent.com = server:system` 这一条规则产物下载自举例外，降低外部资源偶发超时，但不得把全局 DNS 回退到 `system + 国内 DNS`。
 - `proxy/github_core_proxy.list` 应放在 `proxy/gfw.list` 前，显式承接 GitHub 网页、`api.github.com`、Gist、Raw、静态资源与附件；这也会覆盖 `https://api.github.com/gists`、`https://api.github.com/users` 与 `https://gist.githubusercontent.com/...` 这类连接。
 - `direct/alicloud_hk_ipv4_ssh22_direct.list`、`DOMAIN-SUFFIX,aliyuncs.com,DIRECT` 与 `DOMAIN,check.myclientip.com,DIRECT` 应统一放在直连段显式维护；其后可额外保留一条阿里云广覆盖 `REJECT` 观察兜底，用于发现上游阿里云规则的漏网之鱼。
 - `direct/adspower_direct.list` 与 `proxy/adspower_proxy.list` 都应放在 `proxy/gfw.list` 前，确保 AdsPower 的细分直连与节点选择优先命中。
@@ -143,3 +147,4 @@
 - 私有订阅域名同步约定见 [docs/private-subscription-direct-sync.md](private-subscription-direct-sync.md)；该约定同样只影响本地私有配置，不影响公开模板。
 - 1Password 重度用户专项规则约定见 [docs/onepassword-proxy-rules.md](onepassword-proxy-rules.md)；公开模板默认不内置，需要时再显式接入。
 - GeoIP 上游选择与维护边界见 [docs/geoip-upstream.md](geoip-upstream.md)。
+- DNS 防泄漏与解析边界见 [docs/network-security/dns-leak-prevention.md](network-security/dns-leak-prevention.md)；任何 DNS、DoH、fake-ip、Host 或 Sub-Store 节点域名清单调整后，都要做外部 DNS 泄漏验证。

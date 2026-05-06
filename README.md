@@ -31,6 +31,7 @@ tools/
   build_rules.py
   check.ps1
   check_change_guardrails.py
+  check_dns_safety.py
 ```
 
 说明：
@@ -62,7 +63,7 @@ powershell -ExecutionPolicy Bypass -File tools/check.ps1
 - `docs/rule-authoring-style.md` 已修改，但没有同步更新 `AGENTS.md` 与 `README.md`
 
 其余暂时还不适合机械化硬判定的联动项，会以显式提醒输出，逼着维护者在提交前再看一眼，而不是只靠记忆。
-这个脚本现在还会额外校验 Surge 配置里的测速 URL 约定，防止把必须保持 `http://` 的字段误改成 `https://`。
+这个脚本现在还会额外校验 Surge 配置里的测速 URL 约定，防止把必须保持 `http://` 的字段误改成 `https://`；同时执行 `tools/check_dns_safety.py`，检查 Surge / Mihomo 配置是否把普通目标网站域名泄漏到国内 DNS。
 
 CI 或其他非 Windows 环境如果已经确认本机 `python` 可用，也可以直接执行：
 
@@ -116,6 +117,7 @@ python tools/build_rules.py
 - [docs/usage-mihomo.md](docs/usage-mihomo.md)
 - [docs/examples/surge-public.conf](docs/examples/surge-public.conf)
 - [docs/examples/mihomo-public.yaml](docs/examples/mihomo-public.yaml)
+- [docs/network-security/dns-leak-prevention.md](docs/network-security/dns-leak-prevention.md)
 - [docs/mihomo-tun-dns-methodology.md](docs/mihomo-tun-dns-methodology.md)
 - [docs/geoip-upstream.md](docs/geoip-upstream.md)
 - [docs/surge-work-cluster-whitelist.md](docs/surge-work-cluster-whitelist.md)
@@ -173,7 +175,7 @@ python tools/build_rules.py
   - 其中 GitHub SSH 后先进入 GitHub Raw 自举入口，再显式放行 `proxy/github_core_proxy`，并保留一条 `DOMAIN-KEYWORD,github,REJECT` 广覆盖观察兜底，用于发现 SSH / GitHub Core 之外的漏网之鱼；AdsPower 细分规则后也保留一条 `DOMAIN-KEYWORD,adspower,REJECT` 广覆盖观察兜底。
   - 阿里云香港 SSH、`aliyuncs.com` 与 `check.myclientip.com` 统一收敛到“指定直连”段显式放行；其后额外保留一条阿里云广覆盖 `REJECT` 观察兜底，用于发现上游阿里云规则的漏网之鱼。
   - 私有订阅域名统一在 `%USERPROFILE%\Desktop\rulemesh-local\current\private_subscription_direct.list` 维护，并通过脚本同步到本地四份私有配置中的“Chrome 访问节点选择例外 + 订阅更新直连”规则块，不回写公开模板。
-  - 其中 `raw.githubusercontent.com` 额外绑定 `server:system`，同时 `dns-server` 保留 `system + 公共 DNS`，用于降低 GitHub Raw 外部资源偶发超时。
+  - 其中 `raw.githubusercontent.com` 额外绑定 `server:system` 作为规则产物下载自举例外；普通目标网站的全局 DNS 仍保持海外 DNS，不再回退到 `system + 国内 DNS`。
   - 工作白名单模式下，广覆盖观察规则统一只允许使用 `REJECT`；不要对 `DIRECT` 或 `PROXY` 规则使用 `extended-matching`，否则会把可伪造的 Host / SNI 纳入放行判断，扩大绕过白名单的攻击面。
   - 原单独 `IP 规则` 段已删除，避免与设备分流重复。
   - 其中 AdsPower 在精细规则后允许额外保留一条广覆盖观察兜底，用于发现细分规则漏网之鱼。
@@ -192,14 +194,14 @@ python tools/build_rules.py
   - 已移除设备分流、私有订阅地址与 `[MITM]`
 - 默认保持 `allow-wifi-access = false`，不把个人终端直接暴露给局域网其他设备
 - 默认显式采用 `dns-mode = fake-ip`；维护约定是优先 `fake-ip`、次选 `mapping`，因为前者可通过 IP 逆向域名，流量接管更彻底，而后者只在更看重兼容性时作为退路
-- 默认启用 `use-local-host-item-for-proxy = true`、`encrypted-dns-server` 与 `test-timeout = 3` 这组运行时参数
+- 默认启用 `use-local-host-item-for-proxy = true`、海外 `encrypted-dns-server` 与 `test-timeout = 3` 这组运行时参数
 - 默认开启 `ipv6 = true`，并继续使用 `ipv6-vif = auto` 只在本地网络具备有效 IPv6 时启用 Surge IPv6 VIF，先把双栈能力打开，但不默认强推 `always`
 - 默认同时接入 `direct/os_time_direct`，并配套接入 `reject/os_update_reject`、`direct/microsoft_direct` 与 `direct/macos_update_direct`；前者负责系统时间同步，后两者便于临时放开 Windows / macOS 系统升级直连
 - 默认接入 AdsPower 专项 `reject/direct/proxy` 规则集，并保持在 `proxy/gfw` 前完成细分控制
 - 默认接入 Polygon 主网 RPC 专项 `proxy/polygon_rpc_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
 - 默认接入 BSC 主网 RPC 专项 `proxy/bsc_rpc_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
 - 默认接入 Google Public DNS 主 IPv4 端点专项 `proxy/google_public_dns_ipv4_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
-- 默认在 `github_ssh_direct` 后先保留 `DOMAIN,raw.githubusercontent.com,"🚀 节点选择"` 自举入口，再接入 `proxy/github_core_proxy`；同时继续保留 `dns-server = system + 公共 DNS` 与 `raw.githubusercontent.com = server:system` 这组 GitHub Raw 解析兜底
+- 默认在 `github_ssh_direct` 后先保留 `DOMAIN,raw.githubusercontent.com,"🚀 节点选择"` 自举入口，再接入 `proxy/github_core_proxy`；同时继续保留 `raw.githubusercontent.com = server:system` 这一条规则产物下载自举例外，但全局 DNS 必须使用海外 DNS
 - 这类 Surge 运行时参数不要求 Mihomo 公开模板逐项镜像；Mihomo 继续按各自的 Tun / DNS 语义单独维护
 - 默认接入 `direct/alicloud_hk_ipv4_ssh22_direct`，并在直连段显式保留 `DOMAIN-SUFFIX,aliyuncs.com` 与 `DOMAIN,check.myclientip.com`
 - 默认让 X / Twitter 网页、短链与静态资源，以及 Polymarket 相关域名优先命中 `region/hk/global_media`，避免落回通用 `proxy/gfw`
@@ -217,7 +219,7 @@ python tools/build_rules.py
 - 默认让 X / Twitter 网页、短链与静态资源，以及 Polymarket 相关域名优先命中 `region/hk/global_media`，避免落回通用 `proxy/gfw`
 - 公开模板当前不再默认接入空的 `jp_domains` 规则提供器；保留 `🇯🇵 日本-自动选择` 仅用于 AWS 东京 / 大阪等仍然存在的日本区域入口
   - 默认开启全局 `ipv6: true` 与 `dns.ipv6: true`，并在 `proxy-providers.*.override` 里显式使用 `ip-version: dual`，真正放开订阅节点双栈连接，但不默认强推 `ipv6-prefer`
-  - 默认采用 Tun 全量接管、域名嗅探与分流 DNS；国际域名默认优先国外加密 DNS，明确的国内直连域名集单独走国内加密 DNS
+  - 默认采用 Tun 全量接管、域名嗅探与 DNS 隔离；普通目标网站域名默认走海外加密 DNS，国内 DNS 只作为 `proxy-server-nameserver` 的节点 server 域名解析例外
   - 同样不承载私有 Surge 工作路由白名单特化
 
 ## 当前设计原则
@@ -236,6 +238,7 @@ python tools/build_rules.py
 - X / Twitter 网页、短链与静态资源，以及 Polymarket 相关域名应先命中 `region/hk/global_media`，再落到 `proxy/gfw`
 - 1Password 核心连接专项规则如启用，应先命中 `proxy/onepassword_proxy`，再落到 `proxy/gfw`
 - 操作系统时间同步专项规则应先命中 `direct/os_time_direct`，再落到其他普通 `direct/*`
+- DNS 信任边界优先于连通性微调：普通目标网站域名默认不得交给国内 DNS，国内 DNS 只作为代理节点 `server` 域名解析的专用例外；详细约束见 [docs/network-security/dns-leak-prevention.md](docs/network-security/dns-leak-prevention.md)
 - 同一套路由骨架不等于同一个客户端运行时；`Surge`、`Clash Verge Rev`、`Clash Meta for Android` 在 DNS 启动链上允许存在实现差异
 - 本地同时维护 Clash Verge Rev 与 Clash Meta for Android 时，允许拆成两份 Mihomo 私有配置；规则骨架尽量共享，节点域名解析策略允许分别维护
 - Surge 私有工作路由白名单与本地其他私有配置永久允许结构不一致，维护时不要互相回抄
@@ -308,7 +311,7 @@ python tools/build_rules.py
 - 如果明确保留 Clash Verge Rev 的 `DNS 覆写`，则应把 `dns_config.yaml` 视为实际生效的 `dns` 单一真相，而不是继续假设源文件里的 `dns:` 会原样生效
 - 如果关闭 Clash Verge Rev 的 `DNS 覆写` 后出现“国内可访问、国外代理不通”，默认先检查桌面端私有文件的 `respect-rules` 与 `proxy-server-nameserver`，优先修复节点域名解析启动链，而不是先回滚规则顺序
 - 如果某个 provider 在 Clash Verge Rev 私有链路里整批测速失败，但把同一订阅直接导入客户端又正常，默认先按 [docs/mihomo-tun-dns-methodology.md](docs/mihomo-tun-dns-methodology.md) 对比运行时 `dns:`，优先排查 DNS 链差异，不要先把问题归因到节点本身
-- 对 Clash Meta for Android 的兼容性调整，默认优先收敛到节点域名解析这一层；只有在移动网络下直连国外 DoH 不稳定时，才在 Android 专用文件里把 `proxy-server-nameserver` 定向到国内可直连加密 DNS
+- 对 Clash Meta for Android 的兼容性调整，默认优先收敛到节点域名解析这一层；国内 DoH 只能出现在对应专用文件的 `proxy-server-nameserver` 中，不得扩散到业务 `nameserver`
 - 这组私有订阅域名同步规则只记录在本地目录与私有文档约定中，不回写公开 `rules/`、`dist/` 或公开模板
 - 详细维护方式见 [docs/private-subscription-direct-sync.md](docs/private-subscription-direct-sync.md)
 - 若私有配置结构发生变化，必须同步更新 `.rulemesh.local.example.json` 与相关文档，但只能提交脱敏占位值
@@ -322,11 +325,12 @@ python tools/build_rules.py
 - 新增、删除或重命名 `rules/{reject,direct,proxy,region}/` 下的 `.list` 源规则文件时，同步更新 `rules/upstream/sources.yaml` 与 `rules/upstream/merge.yaml`
 - 新增或调整默认对外使用的规则入口、顺序、策略含义时，同步更新 `README.md`、`docs/usage-surge.md`、`docs/usage-mihomo.md` 与两份公开模板
 - 新增或调整 Mihomo 默认的 Tun、嗅探、DNS 分流、安全边界或性能取舍时，同步更新 `docs/mihomo-tun-dns-methodology.md`
+- 新增或调整 Surge / Mihomo / Sub-Store / DoH / fake-ip / Tun / 透明代理相关配置时，同步检查 DNS 泄漏风险，并按需更新 [docs/network-security/dns-leak-prevention.md](docs/network-security/dns-leak-prevention.md)
 - 新增、删除或调整“某类规则在 Mihomo 侧是否保留 / 跳过”的兼容映射时，同步更新 `README.md`、`docs/usage-mihomo.md` 与 `docs/mihomo-tun-dns-methodology.md`
 - 如果本次修改改变了源规则的编排方式、分组风格、文件边界或维护习惯，同步更新 `AGENTS.md`、`README.md` 与 `docs/rule-authoring-style.md`
 - 如果一个源文件开始变得很大，优先补 `sources.yaml` 与 `merge.yaml`，再考虑引入更多上游素材
 - 提交前优先运行 `powershell -ExecutionPolicy Bypass -File tools/check.ps1`
-- `tools/check.ps1` 现在会先执行 `tools/check_change_guardrails.py`：少数确定性的强关联项直接失败，其余高风险联动会以提醒形式输出，默认不能忽略
+- `tools/check.ps1` 现在会先执行 `tools/check_change_guardrails.py` 与 `tools/check_dns_safety.py`：少数确定性的强关联项和 DNS 高风险配置会直接失败，其余高风险联动会以提醒形式输出，默认不能忽略
 - 提交前看一眼 `dist/build-report.json` 的 warnings，特别是 Mihomo 不支持的规则类型
 - 只有实际执行过构建、检查、`git status` 等动作，最终结论里才算“已验证”；不要把推断写成已完成
 - 自写注释、生成说明、文档说明默认统一写中文，不要再放英文占位注释

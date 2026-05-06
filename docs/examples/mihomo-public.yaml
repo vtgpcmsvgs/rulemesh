@@ -73,9 +73,9 @@ sniffer:
     - "+.local"
 
 # > DNS 分流
-# 1) 默认把国际域名交给国外加密 DNS，避免 Google 等站点回到国内解析。
-# 2) 仅把明确的国内直连域名集交给国内加密 DNS，不把所有 DIRECT 粗暴映射到国内 DNS。
-# 3) 代理节点域名解析单独走 proxy-server-nameserver，避免规则 DNS 与节点 DNS 互相缠绕。
+# 1) 普通目标网站域名默认只走海外加密 DNS，避免 DNS 指纹与代理出口错位。
+# 2) 国内 DNS 只作为代理节点 server 域名解析的专用例外，不进入业务 nameserver。
+# 3) Mihomo 使用 proxy-server-nameserver 处理节点域名；不要套用 Surge 的 [Host] 方案。
 dns:
   enable: true
   ipv6: true
@@ -87,40 +87,17 @@ dns:
   fake-ip-range: 198.18.0.1/16
   # > DNS 服务器引导解析
   default-nameserver:
-    - 223.5.5.5
-    - 119.29.29.29
     - 1.1.1.1
     - 8.8.8.8
-  # > 国内直连域名优先交给国内加密 DNS
-  nameserver-policy:
-    "rule-set:direct_ai_cn":
-      - https://dns.alidns.com/dns-query
-      - https://doh.pub/dns-query
-    "rule-set:direct_cn":
-      - https://dns.alidns.com/dns-query
-      - https://doh.pub/dns-query
-    "rule-set:direct_bilibili":
-      - https://dns.alidns.com/dns-query
-      - https://doh.pub/dns-query
-    "rule-set:direct_netease":
-      - https://dns.alidns.com/dns-query
-      - https://doh.pub/dns-query
-    "rule-set:direct_bytedance":
-      - https://dns.alidns.com/dns-query
-      - https://doh.pub/dns-query
+    - 9.9.9.9
   # > 默认国外加密 DNS
   nameserver:
-    - https://1.1.1.1/dns-query
+    - https://cloudflare-dns.com/dns-query
     - https://dns.google/dns-query
-  # > 直连出口解析
-  direct-nameserver:
+  # > 代理节点 server 域名解析；国内 DNS 只允许出现在这一层
+  proxy-server-nameserver:
     - https://dns.alidns.com/dns-query
     - https://doh.pub/dns-query
-  direct-nameserver-follow-policy: true
-  # > 代理节点域名解析
-  proxy-server-nameserver:
-    - https://1.1.1.1/dns-query
-    - https://dns.google/dns-query
   # > 国外备用解析
   fallback:
     - https://1.0.0.1/dns-query

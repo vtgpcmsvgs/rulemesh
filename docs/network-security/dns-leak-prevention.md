@@ -1,0 +1,136 @@
+# DNS 防泄漏与解析边界方法论
+
+这份文档用于记录 RuleMesh 的 DNS 信任边界。DNS 泄漏不是连通性小问题，而是会让目标域名、账号平台、金融服务、AI 服务与代理出口 IP 形成不一致指纹的安全风险。后续只要维护代理、旁路由、Surge、Mihomo、Sub-Store、DoH、fake-ip、mapping、Tun、透明代理或规则分流，都必须默认检查 DNS 解析路径。
+
+## DNS 三分法
+
+维护时必须先区分三类域名：
+
+- 订阅链接域名：用于拉取订阅配置，例如 Sub-Store 入口、机场订阅入口、机场面板域名。
+- 代理节点 server 域名：订阅拉下来后每个节点里的 `server` 字段，例如 `hk01.example.com`、`us01.example.net`。
+- 普通目标网站域名：用户真正访问的服务，例如 `google.com`、`whoer.net`、`openai.com`、`claude.ai`、`paypal.com`。
+
+这三类域名不能混在同一个 DNS 策略里处理。订阅链接域名不是节点 server 域名；节点 server 域名也不是普通目标网站域名。
+
+## 默认安全姿态
+
+- 普通目标网站域名默认不得交给国内 DNS。
+- 国内 DNS 只能作为代理节点 server 域名解析的专用例外。
+- 不要为了让节点更容易首连，就把 Surge 的 `dns-server`、`encrypted-dns-server` 或 Mihomo 的业务 `nameserver` 全局改成国内 DNS。
+- 任何把全局 DNS 改成 `system`、阿里云 DNS、腾讯云 DNS、`114.114.114.114` 或其他国内解析入口的操作，都必须按高风险变更处理。
+- 不能只用“网页能打开”“节点能测速”作为验收结论；DNS 出口也必须被验证。
+
+## Surge 实现规范
+
+Surge 没有 Mihomo 的 `proxy-server-nameserver` 字段，不能伪造同名配置。Surge 必须使用：
+
+- `dns-mode = fake-ip`
+- `use-local-host-item-for-proxy = true`
+- `[Host]` 里的 `DOMAIN-SET:<proxy-node-domains URL> = server:<节点专用 DNS>`
+
+推荐基线：
+
+```ini
+dns-mode = fake-ip
+use-local-host-item-for-proxy = true
+dns-server = 1.1.1.1, 8.8.8.8, 9.9.9.9
+encrypted-dns-server = https://cloudflare-dns.com/dns-query, https://dns.google/dns-query
+
+[Host]
+raw.githubusercontent.com = server:system
+DOMAIN-SET:https://example.com/api/file/proxy-node-domains = server:https://dns.alidns.com/dns-query
+```
+
+`raw.githubusercontent.com = server:system` 是规则产物下载自举例外，不得被扩展成普通目标网站解析方案。
+
+`DOMAIN-SET` 引用的 `proxy-node-domains` 必须只包含代理节点的 `server` 域名。一行一个域名，不写 `DOMAIN-SUFFIX,` 前缀，不写订阅 URL，不写机场面板域名，不写普通目标网站域名。
+
+## Mihomo 实现规范
+
+Mihomo 必须使用原生 DNS 机制，不套用 Surge 的 `[Host]`。
+
+推荐基线：
+
+```yaml
+dns:
+  nameserver:
+    - https://cloudflare-dns.com/dns-query
+    - https://dns.google/dns-query
+  proxy-server-nameserver:
+    - https://dns.alidns.com/dns-query
+    - https://doh.pub/dns-query
+```
+
+含义：
+
+- `nameserver` 负责普通目标网站域名，默认使用海外 DNS。
+- `proxy-server-nameserver` 负责代理节点 server 域名，可以使用国内可直连 DoH 提高节点首连稳定性。
+
+禁止把国内 DNS 写进业务 `nameserver`、`nameserver-policy` 或 `direct-nameserver` 来处理普通目标网站域名。即使某条规则最终是 `DIRECT`，它也仍然可能是账号平台、海外服务或敏感业务域名，不能因此默认回到国内解析链。
+
+## Sub-Store proxy-node-domains 要求
+
+`proxy-node-domains` 的职责是从 Sub-Store 聚合订阅 `global-egress` 中自动提取所有节点的 `server` 字段，过滤 IP，只保留域名，一行一个。
+
+必须满足：
+
+- 自动生成，不手工维护机场节点域名。
+- 节点变化后自动更新。
+- 输出格式适配 Surge `DOMAIN-SET`。
+- 只包含节点 `server` 域名。
+- 不包含订阅链接域名、机场面板域名、普通网站域名。
+- 默认去重、转小写、去掉空白。
+
+Sub-Store 侧脚本逻辑可按这个职责实现：
+
+```js
+function operator(proxies = []) {
+  const domains = new Set();
+  for (const proxy of proxies) {
+    const server = String(proxy.server || "").trim().toLowerCase();
+    if (!server) continue;
+    if (/^\d{1,3}(\.\d{1,3}){3}$/.test(server)) continue;
+    if (/^[0-9a-f:]+$/i.test(server) && server.includes(":")) continue;
+    domains.add(server);
+  }
+  return Array.from(domains).sort().join("\n") + "\n";
+}
+```
+
+实际发布 URL 应使用 Sub-Store 文件链接，例如 `https://sub.store/api/file/proxy-node-domains`。如果本地 Sub-Store 使用自定义域名，应替换为自己的实际文件 URL。
+
+## 验收标准
+
+每次改 DNS、代理、Sub-Store、规则集、Tun、透明代理或 fake-ip 相关配置后，都必须验证：
+
+- `whoer.net` DNS 检测不再显示阿里云、腾讯云或其他非预期国内 DNS。
+- `dnsleaktest.com` 不再泄漏到国内 DNS。
+- `browserleaks.com/dns` 不再泄漏到国内 DNS。
+- Surge DNS 日志 / 请求日志中，普通海外目标域名没有走国内 DNS。
+- Mihomo 运行时 `/configs` 或客户端日志中，业务 `nameserver` 与节点 `proxy-server-nameserver` 分工符合预期。
+- 普通浏览器访问海外网站时，DNS 出口与代理出口 IP 不再冲突。
+- 代理节点仍能正常连接。
+- 订阅与规则集仍能正常更新。
+
+外部检测必须在真实客户端生效后执行。仓库静态检查只能防止明显危险配置进入模板，不能替代真实网络出口验证。
+
+## 禁止项
+
+- 禁止把 Surge 全局 `dns-server` 设置为 `system + 国内 DNS`，除非是明确标注的临时排障，并且排障后立即回滚。
+- 禁止把 `https://dns.alidns.com/dns-query` 或 `https://doh.pub/dns-query` 设置为 Surge 全局 `encrypted-dns-server`。
+- 禁止把国内 DNS 写入 Mihomo 业务 `nameserver`。
+- 禁止把订阅链接域名误当成节点 server 域名。
+- 禁止把机场面板域名、订阅转换链接、Sub-Store 入口或普通网站域名写进 `proxy-node-domains`。
+- 禁止只验证“网页能打开”，不验证 DNS 出口。
+- 禁止在 Surge 和 Mihomo 之间混用 DNS 方案。
+
+## 复盘要求
+
+如果再次发现 DNS 泄漏或 DNS 出口与代理出口不一致，复盘时至少回答：
+
+- 普通目标网站域名实际走了哪条 DNS 链？
+- 代理节点 server 域名实际走了哪条 DNS 链？
+- 订阅链接域名是否被误塞进节点 server 域名清单？
+- 静态检查为什么没有拦住？
+- 外部验收为什么没有覆盖？
+- 是否需要更新 `tools/check_dns_safety.py`、公开模板、私有同步脚本或本方法论文档？

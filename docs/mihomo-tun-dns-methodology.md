@@ -39,11 +39,11 @@
 
 ## DNS 方法论
 
-- 国际域名默认优先走国外加密 DNS。
-- 明确的国内直连域名集单独走国内加密 DNS。
-- 不要把“所有 DIRECT 都交给国内 DNS”当成默认方案。
-- 原因很简单：`DIRECT` 里可能混有 GitHub SSH、Microsoft、macOS 更新之类的国外直连例外；如果粗暴映射到国内 DNS，会把这些访问暴露给国内解析链路。
-- 更稳妥的做法是按“域名属性”分，而不是按“出站动作”分。
+- 普通目标网站域名默认优先走海外加密 DNS。
+- 国内 DNS 只作为代理节点 `server` 域名解析的专用例外。
+- 不要把“国内直连域名集”或“所有 DIRECT”交给国内 DNS 当成默认方案。
+- 原因很简单：DNS 信任边界不等于出站动作。即使某条规则最终是 `DIRECT`，它仍然可能是账号平台、系统服务、AI 服务或其他敏感目标域名。
+- 更稳妥的做法是把业务 `nameserver` 与节点 `proxy-server-nameserver` 分开，而不是按 `DIRECT` / `PROXY` 把目标网站域名重新分给国内 DNS。
 
 ## 节点 DNS 启动链
 
@@ -53,9 +53,9 @@
 - 当前仓库的推荐收敛顺序是：
   - 先保持规则骨架一致。
   - 再把 Mihomo 私有配置拆成 `rulemesh-substore-mihomo-clash-verge.yaml` 与 `rulemesh-substore-mihomo-clash-meta.yaml`。
-  - 优先只让 Clash Meta 的 `proxy-server-nameserver` 改走国内可直连加密 DNS。
+  - 优先只让对应客户端文件的 `proxy-server-nameserver` 改走国内可直连加密 DNS。
   - 只有在这一步仍不稳定时，才继续评估更保守的 Android 专用启动链。
-- 对当前本地长期维护来说，Clash Meta 专用文件的节点域名解析默认优先使用阿里云 / 腾讯云 DoH；这一步只作用于节点域名，不应自动扩散到所有国际业务域名。
+- 对当前本地长期维护来说，节点域名解析默认允许优先使用阿里云 / 腾讯云 DoH；这一步只作用于代理节点 server 域名，不应自动扩散到任何普通目标网站域名。
 
 ## Clash Verge Rev DNS 覆写方法论
 
@@ -68,7 +68,7 @@
   - `respect-rules: false`，避免节点 DNS 再跟随规则链递归绕回代理组。
   - `proxy-server-nameserver` 优先使用当前网络可直连的加密 DNS，例如阿里云 / 腾讯云 DoH。
   - `proxy-server-nameserver-policy` 继续只承载少量明确需要专用解析链的节点域名，不把这层逻辑扩散到普通业务域名。
-  - 这一步只修复节点域名解析，不应顺手把业务 `nameserver`、`nameserver-policy` 与国际业务 DNS 统统改回国内。
+  - 这一步只修复代理节点 server 域名解析，不应顺手把业务 `nameserver`、`nameserver-policy`、`direct-nameserver` 或国际业务 DNS 改回国内。
 - 当前本地已验证可用的 Clash Verge Rev 修法是：
   - 关闭应用侧 `DNS 覆写`
   - 在 `rulemesh-substore-mihomo-clash-verge.yaml` 中保持 `respect-rules: false`
@@ -125,22 +125,27 @@
 
 ## 国内 DNS 适用范围
 
+- 仅限 `proxy-server-nameserver` 里的代理节点 `server` 域名解析。
+- 如果使用 `proxy-server-nameserver-policy`，也只能承载明确的节点 server 域名解析策略，不得混入普通目标网站域名。
+- 局域网、本地域名与私有地址段应通过本地直连、`fake-ip-filter` 或系统网络能力处理，不作为把普通目标网站域名送往国内 DNS 的理由。
+
+## 不应默认回到国内 DNS 的目标域名
+
 - `direct_cn`
-- 明确属于国内服务的专门直连规则集，例如 `direct_ai_cn`、`direct_bilibili`、`direct_netease`、`direct_bytedance`
-- 局域网、本地域名与私有地址段
-
-## 不应默认回到国内 DNS 的直连例外
-
+- `direct_ai_cn`
+- `direct_bilibili`
+- `direct_netease`
+- `direct_bytedance`
 - `direct_github_ssh`
 - `direct_microsoft`
 - `direct_macos_update`
-- 其他“允许直连，但服务本身属于国外网络”的规则集
+- 其他所有普通目标网站域名集合
 
 ## 维护规则
 
-- 新增一个 `direct/*.list` 或新的 Mihomo 直连入口时，先判断它属于“国内直连域名集”还是“国外直连例外”。
-- 只有“国内直连域名集”才应同步加入 `nameserver-policy` 的国内加密 DNS 名单。
-- 如果只是“国外直连例外”，保持默认国外解析，不要为了“DIRECT 看起来应该配国内 DNS”而硬塞进去。
+- 新增一个 `direct/*.list` 或新的 Mihomo 直连入口时，先判断它是否是普通目标网站域名。只要是目标网站域名，就默认由海外业务 `nameserver` 解析。
+- 不要为了“DIRECT 看起来应该配国内 DNS”而把目标网站域名加入国内 `nameserver-policy`。
+- 如果确实需要针对某个节点 server 域名调整解析，必须放在 `proxy-server-nameserver` 或节点专用策略里，并写清楚它不是普通目标网站域名。
 - 新增需要优先直连的局域网、本地网段或特殊主机名时，同时检查 `rules:` 里的本地直连段与 `dns.fake-ip-filter` 是否也要补。
 - `proxy-server-nameserver` 只负责节点域名解析，不要混入普通业务域名的取舍逻辑。
 - 如果本地同时维护 Clash Verge Rev 与 Clash Meta for Android，两份 Mihomo 私有文件允许长期并存；公共规则骨架尽量一致，但节点 DNS 启动链允许有意识地永久不一致。
@@ -157,19 +162,19 @@
 - `strict-route` 可能影响部分局域网入站访问、共享或发现类场景；如果用户明确依赖这类能力，再做定向例外，不要先全局关闭。
 - `fake-ip` 可能让少数依赖真实 IP 的服务变得敏感；处理方式优先是补 `fake-ip-filter`，而不是整体放弃 `fake-ip`。
 - 如果把最终兜底锁死到固定区域，未知流量的默认体验通常会变差；只有用户明确追求固定出口地区时，才考虑回退。
-- 如果把 Clash Meta 的 `proxy-server-nameserver` 调到国内 DNS，这通常意味着国内解析方可能看到“代理节点域名解析”这一步；但这不等于全部国际业务域名都回到国内 DNS。
+- 如果把 `proxy-server-nameserver` 调到国内 DNS，这通常意味着国内解析方可能看到“代理节点域名解析”这一步；但这不等于普通目标网站域名可以回到国内 DNS。
 - 如果威胁模型优先考虑“不要让运营商系统 DNS 看到查询”，阿里云 / 腾讯云这类国内 DoH 往往比 `system` DNS 更可接受；如果威胁模型要求“任何国内解析方都不应看到节点域名”，那就不能把国内 DNS 当作隐私方案，只能继续使用可达的国外解析入口、自建解析或 IP 型节点。
 
 ## 性能优化约定
 
-- DNS 默认保持分流友好与隐私优先，不再让国际域名默认回到国内 DNS。
+- DNS 默认保持隐私优先，不再让普通目标网站域名默认回到国内 DNS。
 - 代理节点测速、规则更新和业务 DNS 要尽量解耦，不要让单一 DNS 入口同时承担全部角色。
 - 本地与局域网相关域名、CIDR 和系统网络探测域名，应显式放入直连或真实 IP 范围，避免 Tun 模式下的额外抖动。
 
 ## 安全指引
 
 - 不要把真实机场地址、token、控制器密钥、私有设备分流信息写回公开仓库。
-- 方法论可以写“国内 DNS / 国外 DNS / 国外直连例外 / 白名单原则”这类抽象规则，但不要写入真实私有域名或订阅地址。
+- 方法论可以写“国内 DNS 仅限节点 server 域名 / 海外业务 DNS / 白名单原则”这类抽象规则，但不要写入真实私有域名或订阅地址。
 - 私有订阅域名同步块仍只在本地私有目录维护，不回写公开模板。
 
 ## 防回滚提醒
@@ -177,6 +182,7 @@
 - 不要因为“规则框架已经和 Surge 一致”就删除 Tun、嗅探或分流 DNS。
 - 不要把 Mihomo 简化回“只有 fake-ip + 两个 DNS”的轻配置。
 - 不要把所有 DIRECT 一刀切交给国内 DNS。
+- 不要把 `nameserver-policy` 或 `direct-nameserver` 重新改成国内 DNS 来处理普通目标网站域名。
 - 不要把 `MATCH` 默认改回固定香港，除非用户明确要固定区域出口。
 - 不要因为 Mihomo 当前不支持 `URL-REGEX`，就把这类规则从源规则层永久删掉；应保留 Surge 语义，并让 Mihomo 输出按当前能力选择性跳过。
 - 如果后续 Mihomo 已支持 `URL-REGEX`，不要忘记同步取消构建特判并恢复 Mihomo 产物；“现在先跳过”不应演变成长期失忆式阉割。
@@ -185,8 +191,8 @@
 
 - Tun 模式是否确实开启，且 `stack`、`dns-hijack`、`strict-route` 生效。
 - 规则命中前是否能通过嗅探把纯 IP 连接还原到域名。
-- 国内直连域名是否优先走国内加密 DNS。
-- Google 等国际域名是否不再回到国内 DNS。
+- 普通目标网站域名是否默认走海外加密 DNS。
+- whoer.net、dnsleaktest.com、browserleaks.com/dns 是否不再显示非预期国内 DNS。
 - 节点订阅更新、规则更新与节点域名解析是否仍然稳定。
 - 局域网、本地主机名、系统网络探测与系统时间同步是否正常。
 - 如果同时维护 Clash Verge Rev 与 Clash Meta for Android，是否已确认“桌面正常、安卓正常”分别由对应私有文件负责，而不是误把一端的启动链回滚到另一端。

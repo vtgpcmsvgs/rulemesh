@@ -32,6 +32,11 @@
 - 上述私有订阅同步脚本在生成 Surge 的 `AND,((PROCESS-NAME,...),(...)),策略名` 逻辑规则时，末尾策略名必须裸写，不要再套双引号；`RULE-SET,...,"🚀 节点选择"` 这类普通规则允许带引号，但 `AND` 规则若写成 `...,"🚀 节点选择"`，Surge 会把引号算进策略名并报 `unknown policy`
 - 维护 `%USERPROFILE%\Desktop\rulemesh-local\current` 里的私有机场 provider 时，如果某个机场同时存在“入口域名”和“真实落地主机”，默认两者都要加入私有订阅直连同步块；不要只保留入口域名，否则 Clash Verge / Mihomo 可能在刷新 provider 时走偏、报 EOF，或把本地缓存刷成不完整内容
 - 私有机场 provider 若发生重命名（例如机场别名变更），除同步更新 `current` 下的 Mihomo / Surge 配置外，还要检查 Clash Verge 运行目录中的旧 provider 缓存、辅助 profile、remote profile 注册项与历史当前项；避免新旧 provider id 并存，导致 UI 继续读取旧缓存或把问题误判成“节点被过滤”
+- DNS 泄漏按安全事故级别处理：普通目标网站域名默认不得交给国内 DNS；国内 DNS 只能作为“代理节点 server 域名解析”的专用例外
+- 维护 Surge DNS 时只能使用 `[Host] + DOMAIN-SET + use-local-host-item-for-proxy` 隔离节点 server 域名；不要在 Surge 里伪造 Mihomo 的 `proxy-server-nameserver`
+- 维护 Mihomo DNS 时只能使用 `proxy-server-nameserver` 隔离节点 server 域名；不要在 Mihomo 里套用 Surge 的 `[Host]`
+- `proxy-node-domains` 必须是从 Sub-Store 聚合订阅提取的节点 `server` 域名清单，不得包含订阅链接域名、机场面板域名或普通目标网站域名
+- 涉及代理、旁路由、Surge、Mihomo、Sub-Store、DNS、DoH、fake-ip、mapping、Tun、透明代理或规则分流时，默认同时检查 DNS 出口；不能只验证“网页能打开”
 
 ## 仓库默认流程
 
@@ -48,7 +53,7 @@
 - 维护 `rulemesh-substore-surge-work-whitelist.conf` 时，默认应维持“仅放行明确白名单入口，其余流量对工作电脑统一 REJECT”的原则；若要恢复广谱放行（如 `proxy/gfw`、广谱 `direct`、`FINAL` 兜底放行），必须得到用户明确确认
 - 当前该工作路由白名单默认允许入口包括：设备分流、区域精确规则、GitHub SSH、GitHub Raw 下载入口、GitHub 广覆盖观察兜底、私有订阅域名同步块、1Password、AdsPower、Polygon RPC、BSC RPC、Google Public DNS 主 IPv4 端点、Cloudflare DNS、`LAN,DIRECT`、`direct/os_time_direct`、`direct/microsoft_direct`、`direct/macos_update_direct`、阿里云指定直连与 `direct/bytedance_direct`；其中只有 2.1 设备分流保留 `SRC-IP + AWS 区域 / 多地区链式 SOCKS5 IP 段` 约束，2.2-2.10 不再额外限制 `SRC-IP`，原独立 IP 规则段已删除；未命中上述入口的流量最终 `FINAL,REJECT`
 - GitHub 在该工作路由文件中除 `github_ssh_direct` 外，还允许紧随其后保留 `DOMAIN,raw.githubusercontent.com` 下载入口与一条广覆盖 `DOMAIN-KEYWORD,github` 观察兜底；它们用于显式放行 GitHub Raw 规则产物下载，并发现 SSH / Raw 之外的漏网之鱼，不得被“去重”或“收敛”掉
-- GitHub Raw 下载链路默认还应保留 `raw.githubusercontent.com = server:system` 与 `dns-server = system, ...` 这组解析兜底，用于降低 Surge 外部资源偶发超时；除非用户明确要求，不要顺手删掉
+- GitHub Raw 下载链路默认还应保留 `raw.githubusercontent.com = server:system` 这一条规则产物下载自举例外；但 Surge 全局 `dns-server` / `encrypted-dns-server` 不得因此回退到 `system + 国内 DNS`
 - AdsPower 在该工作路由文件中除精细 `adspower_direct` / `adspower_proxy` 外，还允许紧随其后保留一条广覆盖 `DOMAIN-KEYWORD,adspower` 观察兜底；它是故意用于发现细分规则漏网之鱼的，不得被“去重”或“收敛”掉
 - 上述工作路由白名单特化只适用于工作路由文件本身，不自动扩散到两个 `personal` 配置，也不要把 `personal` 配置的通用结构反向覆盖到该工作路由文件
 - 只要工作路由白名单逻辑、适用范围、维护边界发生变化，必须同步更新 `docs/surge-work-cluster-whitelist.md`、`README.md` 与相关使用说明，避免后续失忆式回滚

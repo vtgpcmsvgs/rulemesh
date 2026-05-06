@@ -120,6 +120,26 @@ function Invoke-SurgeTestUrlValidation {
     }
 }
 
+function Invoke-DnsSafetyValidation {
+    $python = Resolve-PythonCommand
+    $dnsSafetyScript = Join-Path $PSScriptRoot "check_dns_safety.py"
+    $env:PYTHONUTF8 = "1"
+    $env:PYTHONDONTWRITEBYTECODE = "1"
+
+    Write-Host ("[check] validate DNS safety with {0}: {1}" -f $python.Label, $python.Value)
+
+    if ($python.Kind -eq "Launcher") {
+        & $python.Value -3 -B -X utf8 $dnsSafetyScript
+    }
+    else {
+        & $python.Value -B -X utf8 $dnsSafetyScript
+    }
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "DNS safety validation failed."
+    }
+}
+
 function Invoke-ChangeGuardrailValidation {
     $python = Resolve-PythonCommand
     $guardrailScript = Join-Path $PSScriptRoot "check_change_guardrails.py"
@@ -206,6 +226,9 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host "[check] validate change guardrails"
 Invoke-ChangeGuardrailValidation
+
+Write-Host "[check] validate DNS safety"
+Invoke-DnsSafetyValidation
 
 Invoke-UnitTests
 
