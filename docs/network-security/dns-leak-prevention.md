@@ -38,7 +38,7 @@ encrypted-dns-server = https://cloudflare-dns.com/dns-query, https://dns.google/
 
 [Host]
 raw.githubusercontent.com = server:system
-DOMAIN-SET:https://example.com/api/file/proxy-node-domains = server:https://dns.alidns.com/dns-query
+DOMAIN-SET:https://example.com/share/file/proxy-node-domains = server:https://dns.alidns.com/dns-query
 ```
 
 `raw.githubusercontent.com = server:system` 是规则产物下载自举例外，不得被扩展成普通目标网站解析方案。
@@ -97,7 +97,9 @@ function operator(proxies = []) {
 }
 ```
 
-实际发布 URL 应使用 Sub-Store 文件链接，例如 `https://sub.store/api/file/proxy-node-domains`。如果本地 Sub-Store 使用自定义域名，应替换为自己的实际文件 URL。
+实际发布 URL 应使用 Surge 所在设备能直接访问的 Sub-Store 分享文件链接，例如 `https://<你的 Sub-Store 后端或反代域名>/share/file/proxy-node-domains`。不要把这里固定写成公网 `https://sub.store/...`，除非它在生产 Surge 环境中确实能稳定访问到你的 Sub-Store 后端。
+
+提交或加载生产配置前，必须先在 Surge 所在设备或同网络环境中直接打开该 URL，确认返回值是一行一个节点 `server` 域名，而不是 HTML 页面、404、超时或订阅链接。
 
 ## 验收标准
 
@@ -121,6 +123,7 @@ function operator(proxies = []) {
 - 禁止把国内 DNS 写入 Mihomo 业务 `nameserver`。
 - 禁止把订阅链接域名误当成节点 server 域名。
 - 禁止把机场面板域名、订阅转换链接、Sub-Store 入口或普通网站域名写进 `proxy-node-domains`。
+- 禁止在生产 Surge 配置中直接使用未经同网络验证的 `https://sub.store/api/file/proxy-node-domains`；应使用可直达的 Sub-Store 后端/反代分享文件 URL。
 - 禁止只验证“网页能打开”，不验证 DNS 出口。
 - 禁止在 Surge 和 Mihomo 之间混用 DNS 方案。
 

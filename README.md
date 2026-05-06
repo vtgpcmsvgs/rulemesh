@@ -202,6 +202,7 @@ python tools/build_rules.py
 - 默认接入 BSC 主网 RPC 专项 `proxy/bsc_rpc_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
 - 默认接入 Google Public DNS 主 IPv4 端点专项 `proxy/google_public_dns_ipv4_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
 - 默认在 `github_ssh_direct` 后先保留 `DOMAIN,raw.githubusercontent.com,"🚀 节点选择"` 自举入口，再接入 `proxy/github_core_proxy`；同时继续保留 `raw.githubusercontent.com = server:system` 这一条规则产物下载自举例外，但全局 DNS 必须使用海外 DNS
+- Surge `[Host]` 中的 `proxy-node-domains` 必须使用生产设备可直接访问的 Sub-Store 分享文件 URL，形如 `https://<你的 Sub-Store 后端或反代域名>/share/file/proxy-node-domains`；不要把未经同网络验证的 `/api/file/` 链接直接写进生产配置
 - 这类 Surge 运行时参数不要求 Mihomo 公开模板逐项镜像；Mihomo 继续按各自的 Tun / DNS 语义单独维护
 - 默认接入 `direct/alicloud_hk_ipv4_ssh22_direct`，并在直连段显式保留 `DOMAIN-SUFFIX,aliyuncs.com` 与 `DOMAIN,check.myclientip.com`
 - 默认让 X / Twitter 网页、短链与静态资源，以及 Polymarket 相关域名优先命中 `region/hk/global_media`，避免落回通用 `proxy/gfw`

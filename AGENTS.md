@@ -36,6 +36,7 @@
 - 维护 Surge DNS 时只能使用 `[Host] + DOMAIN-SET + use-local-host-item-for-proxy` 隔离节点 server 域名；不要在 Surge 里伪造 Mihomo 的 `proxy-server-nameserver`
 - 维护 Mihomo DNS 时只能使用 `proxy-server-nameserver` 隔离节点 server 域名；不要在 Mihomo 里套用 Surge 的 `[Host]`
 - `proxy-node-domains` 必须是从 Sub-Store 聚合订阅提取的节点 `server` 域名清单，不得包含订阅链接域名、机场面板域名或普通目标网站域名
+- Surge `[Host]` 引用 `proxy-node-domains` 时，必须使用 Surge 生产设备可直接访问的 Sub-Store 分享文件 URL；不要把未经同网络验证的 `https://sub.store/api/file/proxy-node-domains` 写进生产配置
 - 涉及代理、旁路由、Surge、Mihomo、Sub-Store、DNS、DoH、fake-ip、mapping、Tun、透明代理或规则分流时，默认同时检查 DNS 出口；不能只验证“网页能打开”
 
 ## 仓库默认流程

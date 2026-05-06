@@ -150,6 +150,24 @@ def validate_surge(path: Path, lines: list[str]) -> list[DnsSafetyFinding]:
         )
 
     host_section = get_surge_host_section(lines)
+    for index, line in host_section:
+        lowered = line.lower()
+        if (
+            not is_comment_or_blank(line)
+            and "domain-set:" in lowered
+            and "proxy-node-domains" in lowered
+            and "/api/file/" in lowered
+        ):
+            findings.append(
+                DnsSafetyFinding(
+                    "error",
+                    path,
+                    index,
+                    "Surge [Host] 的 proxy-node-domains 使用 /api/file/ 链接，生产外部资源加载容易超时或返回非纯文本。",
+                    "改用 Surge 设备可直接访问的 Sub-Store 分享文件链接，例如 https://<你的 Sub-Store 后端>/share/file/proxy-node-domains。",
+                )
+            )
+
     has_proxy_node_domains = any(
         not is_comment_or_blank(line)
         and "domain-set:" in line.lower()
@@ -163,7 +181,7 @@ def validate_surge(path: Path, lines: list[str]) -> list[DnsSafetyFinding]:
                 path,
                 host_section[0][0] if host_section else 1,
                 "Surge [Host] 没有引用 proxy-node-domains，节点 server 域名无法与普通目标网站 DNS 隔离。",
-                "在 [Host] 中加入 DOMAIN-SET:<Sub-Store proxy-node-domains URL> = server:https://dns.alidns.com/dns-query。",
+                "在 [Host] 中加入 DOMAIN-SET:<Sub-Store share/file/proxy-node-domains URL> = server:https://dns.alidns.com/dns-query。",
             )
         )
 

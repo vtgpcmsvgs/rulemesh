@@ -62,10 +62,10 @@
 ## 使用前只需要替换三处
 
 1. 把模板里所有 `https://example.com/subs/surge/all?target=Surge` 替换成你自己的 Surge 聚合订阅入口。
-2. 把 `[Host]` 里的 `https://example.com/api/file/proxy-node-domains` 替换成 Sub-Store 自动生成的节点 `server` 域名文件真实 URL。
+2. 把 `[Host]` 里的 `https://example.com/share/file/proxy-node-domains` 替换成 Surge 所在设备能直接访问的 Sub-Store 分享文件真实 URL。
 3. 如果你不希望最终兜底走总开关，可以把 `FINAL,🚀 节点选择` 改成你想固定兜底的区域组。
 
-`proxy-node-domains` 只能包含订阅节点的 `server` 域名，不得填订阅入口、机场面板域名或普通目标网站域名。
+`proxy-node-domains` 只能包含订阅节点的 `server` 域名，不得填订阅入口、机场面板域名或普通目标网站域名。替换前先在同一网络环境里打开 URL，确认返回纯域名文本；如果返回 HTML、404 或超时，就不要加载到生产 Surge。
 
 ## 测速 URL 约定
 

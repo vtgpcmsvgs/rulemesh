@@ -49,11 +49,29 @@ encrypted-dns-server = https://cloudflare-dns.com/dns-query, https://dns.google/
 
 [Host]
 raw.githubusercontent.com = server:system
-DOMAIN-SET:https://example.com/api/file/proxy-node-domains = server:https://dns.alidns.com/dns-query
+DOMAIN-SET:https://example.com/share/file/proxy-node-domains = server:https://dns.alidns.com/dns-query
 """,
         )
 
         self.assertEqual(check_dns_safety.validate_path(path), [])
+
+    def test_surge_rejects_api_file_proxy_node_domains(self) -> None:
+        path = self.write_temp(
+            "surge-public.conf",
+            """[General]
+use-local-host-item-for-proxy = true
+dns-server = 1.1.1.1, 8.8.8.8, 9.9.9.9
+encrypted-dns-server = https://cloudflare-dns.com/dns-query, https://dns.google/dns-query
+
+[Host]
+raw.githubusercontent.com = server:system
+DOMAIN-SET:https://example.com/api/file/proxy-node-domains = server:https://dns.alidns.com/dns-query
+""",
+        )
+
+        findings = check_dns_safety.validate_path(path)
+
+        self.assertTrue(any("/api/file/" in finding.message for finding in findings))
 
     def test_mihomo_rejects_domestic_business_nameserver(self) -> None:
         path = self.write_temp(
@@ -100,7 +118,7 @@ proxy-providers: {}
   proxy-server-nameserver:
     - https://dns.alidns.com/dns-query
 [Host]
-DOMAIN-SET:https://example.com/api/file/proxy-node-domains = server:https://dns.alidns.com/dns-query
+DOMAIN-SET:https://example.com/share/file/proxy-node-domains = server:https://dns.alidns.com/dns-query
 proxy-providers: {}
 """,
         )
