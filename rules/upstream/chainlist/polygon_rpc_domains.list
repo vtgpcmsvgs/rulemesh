@@ -4,9 +4,9 @@
 # chainId: 137
 # 维护策略: 只增不减；保留历史已收录主机名，避免上游日常波动导致覆盖面回撤。
 # 规则展开: 每个主机名同时生成 DOMAIN 与 DOMAIN-WILDCARD，统一收敛为节点选择入口。
-# 本次抓取主机数: 31
-# 累计主机数: 33
-# 同步时间: 2026-05-05T04:42:46+00:00
+# 本次抓取主机数: 32
+# 累计主机数: 34
+# 同步时间: 2026-05-06T04:55:55+00:00
 
 DOMAIN,1rpc.io
 DOMAIN-WILDCARD,*.1rpc.io
@@ -22,6 +22,8 @@ DOMAIN,go.getblock.io
 DOMAIN-WILDCARD,*.go.getblock.io
 DOMAIN,lb.drpc.live
 DOMAIN-WILDCARD,*.lb.drpc.live
+DOMAIN,matic.rpc.sentio.xyz
+DOMAIN-WILDCARD,*.matic.rpc.sentio.xyz
 DOMAIN,poly.api.pocket.network
 DOMAIN-WILDCARD,*.poly.api.pocket.network
 DOMAIN,polygon-bor-rpc.publicnode.com

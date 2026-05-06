@@ -5,8 +5,8 @@
 # 维护策略: 只增不减；保留历史已收录主机名，避免上游日常波动导致覆盖面回撤。
 # 规则展开: 每个主机名同时生成 DOMAIN 与 DOMAIN-WILDCARD，统一收敛为节点选择入口。
 # 本次抓取主机数: 53
-# 累计主机数: 53
-# 同步时间: 2026-05-05T04:42:46+00:00
+# 累计主机数: 54
+# 同步时间: 2026-05-06T04:55:55+00:00
 
 DOMAIN,0.48.club
 DOMAIN-WILDCARD,*.0.48.club
@@ -82,6 +82,8 @@ DOMAIN,bsc.meowrpc.com
 DOMAIN-WILDCARD,*.bsc.meowrpc.com
 DOMAIN,bsc.rpc.blxrbdn.com
 DOMAIN-WILDCARD,*.bsc.rpc.blxrbdn.com
+DOMAIN,bsc.rpc.sentio.xyz
+DOMAIN-WILDCARD,*.bsc.rpc.sentio.xyz
 DOMAIN,bsc.rpcgator.com
 DOMAIN-WILDCARD,*.bsc.rpcgator.com
 DOMAIN,bsc.therpc.io

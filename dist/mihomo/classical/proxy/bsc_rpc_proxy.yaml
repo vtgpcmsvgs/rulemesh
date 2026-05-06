@@ -75,6 +75,8 @@ payload:
   - "DOMAIN-WILDCARD,*.bsc.meowrpc.com"
   - "DOMAIN,bsc.rpc.blxrbdn.com"
   - "DOMAIN-WILDCARD,*.bsc.rpc.blxrbdn.com"
+  - "DOMAIN,bsc.rpc.sentio.xyz"
+  - "DOMAIN-WILDCARD,*.bsc.rpc.sentio.xyz"
   - "DOMAIN,bsc.rpcgator.com"
   - "DOMAIN-WILDCARD,*.bsc.rpcgator.com"
   - "DOMAIN,bsc.therpc.io"
