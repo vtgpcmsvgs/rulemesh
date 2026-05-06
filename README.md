@@ -143,8 +143,8 @@ python tools/build_rules.py
 - BSC 主网 RPC 专项规则统一维护在 `rules/proxy/bsc_rpc_proxy.list`
 - 两者上游快照由 `tools/sync_upstream_rules.py` 每日从 Chainlist 的 `rpcs.json` 抓取并累计更新，避免日常波动导致既有覆盖面回撤
 - 客户端应显式接入 `proxy/polygon_rpc_proxy` 与 `proxy/bsc_rpc_proxy`，并放在 `proxy/gfw` 前，让 `🚀 节点选择` 先命中这些 RPC 域名
-- Google Public DNS 主 IPv4 端点专项规则统一维护在 `rules/proxy/google_public_dns_ipv4_proxy.list`
-- 客户端应显式接入 `proxy/google_public_dns_ipv4_proxy`，并放在 `proxy/gfw` 前；Surge 侧继续按 `RULE-SET,...,"🚀 节点选择",no-resolve` 接入，让 `🚀 节点选择` 先命中 `8.8.8.8/32`
+- 海外 DNS 主 IPv4 端点专项规则统一维护在 `rules/proxy/overseas_dns_ipv4_proxy.list`
+- 客户端应显式接入 `proxy/overseas_dns_ipv4_proxy`，并放在 `proxy/gfw` 前；Surge 侧继续按 `RULE-SET,...,"🇺🇸 美国-自动选择",no-resolve` 接入，让美国地区策略先命中 `1.1.1.1/32`、`8.8.8.8/32` 与 `9.9.9.9/32`
 - AWS 香港区域规则入口已统一命名为 `region/hk/hk_aws_ipv4`，与东京、大阪、首尔、台北保持同类命名
 - 自维护多地区链式 SOCKS5 端点入口已统一命名为 `region/multi/chain_socks5_ipcidr`，不再继续挂在 `region/jp/` 或默认绑定日本策略组
 - 阿里云香港 SSH 直连入口已统一命名为 `direct/alicloud_hk_ipv4_ssh22_direct`；`rules/upstream/alicloud/hk_ipv4.txt` 继续保留纯 IPv4 快照，而公开入口文件直接保留 `SSH TCP/22` 最终语义，不要求客户端额外拼接端口条件
@@ -167,11 +167,11 @@ python tools/build_rules.py
   - 允许包含按局域网源 IP 的设备分流、私有 `policy-path`、`[MITM]` 与证书参数。
 - 其中私有 `rulemesh-substore-surge-work-whitelist.conf` 当前采用工作电脑白名单模式：只保留明确列出的放行入口，未列入白名单的流量统一 `REJECT`。
 - 这份工作白名单默认不额外开放局域网代理入口；旁路由已接管流量，工作文件不承担 LAN 代理服务。
-- 其中只有设备分流继续按局域网源 IP 约束，并按指定 AWS 区域 / 多地区链式 SOCKS5 IP 段定向到对应工作机亚洲出口组；区域精确、GitHub SSH、GitHub Raw 自举入口、GitHub Core 代理入口、GitHub 观察兜底、私有订阅域名同步块、1Password 核心连接、AdsPower、Polygon 主网 RPC、BSC 主网 RPC、Google Public DNS 主 IPv4 端点、Cloudflare DNS 与指定直连不再额外限制源 IP。
+- 其中只有设备分流继续按局域网源 IP 约束，并按指定 AWS 区域 / 多地区链式 SOCKS5 IP 段定向到对应工作机亚洲出口组；区域精确、GitHub SSH、GitHub Raw 自举入口、GitHub Core 代理入口、GitHub 观察兜底、私有订阅域名同步块、1Password 核心连接、AdsPower、Polygon 主网 RPC、BSC 主网 RPC、海外 DNS 主 IPv4 端点、Cloudflare DNS 与指定直连不再额外限制源 IP。
 - 在该白名单里，`direct/os_time_direct`、`direct/microsoft_direct` 与 `direct/macos_update_direct` 都属于允许保留的系统类直连入口。
 - 白名单专属的单个直连域名例外（例如 `smtp.163.com`）默认直接维护在“指定直连”入口，不为单条规则额外拆分公开 `rules/` 文件。
 - 白名单专属的单个拒绝域名，或只用于阻断浏览器扩展更新链路的拒绝规则，也默认直接维护在白名单的“拒绝规则”入口，不为单条规则额外拆分公开 `rules/` 文件。
-- 其中 `proxy/onepassword_proxy`、`proxy/polygon_rpc_proxy`、`proxy/bsc_rpc_proxy`、`proxy/google_public_dns_ipv4_proxy` 与 `DOMAIN-SUFFIX,cloudflare-dns.com` 都是允许保留的节点选择入口，用于白名单模式下显式放行指定代理端点。
+- 其中 `proxy/onepassword_proxy`、`proxy/polygon_rpc_proxy`、`proxy/bsc_rpc_proxy`、`proxy/overseas_dns_ipv4_proxy` 与 `DOMAIN-SUFFIX,cloudflare-dns.com` 都是允许保留的节点选择入口，用于白名单模式下显式放行指定代理端点。
   - 其中 GitHub SSH 后先进入 GitHub Raw 自举入口，再显式放行 `proxy/github_core_proxy`，并保留一条 `DOMAIN-KEYWORD,github,REJECT` 广覆盖观察兜底，用于发现 SSH / GitHub Core 之外的漏网之鱼；AdsPower 细分规则后也保留一条 `DOMAIN-KEYWORD,adspower,REJECT` 广覆盖观察兜底。
   - 阿里云香港 SSH、`aliyuncs.com` 与 `check.myclientip.com` 统一收敛到“指定直连”段显式放行；其后额外保留一条阿里云广覆盖 `REJECT` 观察兜底，用于发现上游阿里云规则的漏网之鱼。
   - 私有订阅域名统一在 `%USERPROFILE%\Desktop\rulemesh-local\current\private_subscription_direct.list` 维护，并通过脚本同步到本地四份私有配置中的“Chrome 访问节点选择例外 + 订阅更新直连”规则块，不回写公开模板。
@@ -200,13 +200,13 @@ python tools/build_rules.py
 - 默认接入 AdsPower 专项 `reject/direct/proxy` 规则集，并保持在 `proxy/gfw` 前完成细分控制
 - 默认接入 Polygon 主网 RPC 专项 `proxy/polygon_rpc_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
 - 默认接入 BSC 主网 RPC 专项 `proxy/bsc_rpc_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
-- 默认接入 Google Public DNS 主 IPv4 端点专项 `proxy/google_public_dns_ipv4_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
+- 默认接入海外 DNS 主 IPv4 端点专项 `proxy/overseas_dns_ipv4_proxy` 规则，并保持在 `proxy/gfw` 前优先命中；命中后统一走 `🇺🇸 美国-自动选择`
 - 默认在 `github_ssh_direct` 后先保留 `DOMAIN,raw.githubusercontent.com,"🚀 节点选择"` 自举入口，再接入 `proxy/github_core_proxy`；同时继续保留 `raw.githubusercontent.com = server:system` 这一条规则产物下载自举例外，但全局 DNS 必须使用海外 DNS
 - Surge `[Host]` 中的 `proxy-node-domains` 必须使用生产设备可直接访问的 Sub-Store 分享文件 URL，形如 `https://<你的 Sub-Store 后端或反代域名>/share/file/proxy-node-domains`；不要把未经同网络验证的 `/api/file/` 链接直接写进生产配置
 - 这类 Surge 运行时参数不要求 Mihomo 公开模板逐项镜像；Mihomo 继续按各自的 Tun / DNS 语义单独维护
 - 默认接入 `direct/alicloud_hk_ipv4_ssh22_direct`，并在直连段显式保留 `DOMAIN-SUFFIX,aliyuncs.com` 与 `DOMAIN,check.myclientip.com`
 - 默认让 X / Twitter 网页、短链与静态资源，以及 Polymarket 相关域名优先命中 `region/hk/global_media`，避免落回通用 `proxy/gfw`
-- 公开模板当前不再默认接入空的 `region/jp/domains_to_jp` 入口；该文件仅作为保留占位继续存在，只有后续重新出现稳定日本域名落点时再恢复公开模板接线
+- 默认接入 `region/jp/domains_to_jp` 入口；当前用于让 `opinion.trade` 走 `🇯🇵 日本-自动选择`
   - 刻意不承载私有工作路由白名单结构，避免把本地工作特化误当成公开模板默认值
 - `docs/examples/mihomo-public.yaml`
   - 保留完整 `tun + sniffer + dns + proxy-providers + proxy-groups + rule-providers + rules` 结构
@@ -215,10 +215,10 @@ python tools/build_rules.py
 - 默认接入 AdsPower 专项 `reject/direct/proxy` 规则集，并保持在 `proxy/gfw` 前完成细分控制
 - 默认接入 Polygon 主网 RPC 专项 `proxy/polygon_rpc_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
 - 默认接入 BSC 主网 RPC 专项 `proxy/bsc_rpc_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
-- 默认接入 Google Public DNS 主 IPv4 端点专项 `proxy/google_public_dns_ipv4_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
+- 默认接入海外 DNS 主 IPv4 端点专项 `proxy/overseas_dns_ipv4_proxy` 规则，并保持在 `proxy/gfw` 前优先命中；命中后统一走 `🇺🇸 美国-自动选择`
 - 默认接入 `direct_alicloud_hk_ipv4_ssh22`，并在直连段显式保留 `DOMAIN-SUFFIX,aliyuncs.com` 与 `DOMAIN,check.myclientip.com`
 - 默认让 X / Twitter 网页、短链与静态资源，以及 Polymarket 相关域名优先命中 `region/hk/global_media`，避免落回通用 `proxy/gfw`
-- 公开模板当前不再默认接入空的 `jp_domains` 规则提供器；保留 `🇯🇵 日本-自动选择` 仅用于 AWS 东京 / 大阪等仍然存在的日本区域入口
+- 默认接入 `jp_domains` 规则提供器；当前用于让 `opinion.trade` 走 `🇯🇵 日本-自动选择`
   - 默认开启全局 `ipv6: true` 与 `dns.ipv6: true`，并在 `proxy-providers.*.override` 里显式使用 `ip-version: dual`，真正放开订阅节点双栈连接，但不默认强推 `ipv6-prefer`
   - 默认采用 Tun 全量接管、域名嗅探与 DNS 隔离；普通目标网站域名默认走海外加密 DNS，国内 DNS 只作为 `proxy-server-nameserver` 的节点 server 域名解析例外
   - 同样不承载私有 Surge 工作路由白名单特化
@@ -234,7 +234,7 @@ python tools/build_rules.py
 - AdsPower 专项规则应先命中 `reject/adspower_reject`、`direct/adspower_direct`、`proxy/adspower_proxy`，再落到 `proxy/gfw`
 - Polygon 主网 RPC 专项规则应先命中 `proxy/polygon_rpc_proxy`，再落到 `proxy/gfw`
 - BSC 主网 RPC 专项规则应先命中 `proxy/bsc_rpc_proxy`，再落到 `proxy/gfw`
-- Google Public DNS 主 IPv4 端点专项规则应先命中 `proxy/google_public_dns_ipv4_proxy`，再落到 `proxy/gfw`
+- 海外 DNS 主 IPv4 端点专项规则应先命中 `proxy/overseas_dns_ipv4_proxy` 并走美国地区策略，再落到 `proxy/gfw`
 - GitHub 相关访问应先命中 `direct/github_ssh_direct` 与 `proxy/github_core_proxy`，再落到 `proxy/gfw`
 - X / Twitter 网页、短链与静态资源，以及 Polymarket 相关域名应先命中 `region/hk/global_media`，再落到 `proxy/gfw`
 - 1Password 核心连接专项规则如启用，应先命中 `proxy/onepassword_proxy`，再落到 `proxy/gfw`
@@ -260,15 +260,15 @@ python tools/build_rules.py
 - `Gemini` / `AI Studio` / `NotebookLM` 允许在 `rules/region/tw/ai_tw.list` 保留 AI 视角交叉兜底，但客户端顺序仍必须让 `google_tw` 排在 `ai_tw` 前
 - 客户端应接入 `dist/surge/rules/region/tw/google_tw.list` 或 `dist/mihomo/classical/region/tw/google_tw.yaml`
 - Google 规则必须绑定 `TW-AUTO`（或等价台湾策略组），不再提供 `proxy/google` 双入口
-- 规则顺序必须先放 Google TW 规则，再放 `region/tw/ai_tw` 与 `region/hk/global_media` 等广谱区域规则，确保优先命中台湾策略
+- 规则顺序必须先放 Google TW 规则，再放 `region/tw/ai_tw` 与 `region/hk/global_media` 等广谱区域规则；Google 通用服务继续优先命中台湾策略，海外 AI 入口则统一命中美国策略
 - 新增或调整 Google 规则时，先改该源文件，再执行构建同步 `dist/`
 
 ## AI 路由约定
 
-- `rules/region/tw/ai_tw.list` 当前按“第三方上游聚合 + 本地激进兜底”维护，但定位已收敛为“海外 AI 平台入口”，统一承接 `OpenAI`、`Claude`、`Gemini`、`Copilot`、`Cursor`、`Grok`、`Windsurf`、`Augment` 等海外 AI 平台
+- `rules/region/tw/ai_tw.list` 当前按“第三方上游聚合 + 本地激进兜底”维护，但定位已收敛为“海外 AI 平台入口”，统一承接 `OpenAI`、`Claude`、`Gemini`、`Copilot`、`Cursor`、`Grok`、`Windsurf`、`Augment` 等海外 AI 平台，并统一绑定美国地区策略
 - `rules/direct/ai_cn_direct.list` 新增为“国内 AI 显式直连入口”，优先承接 `Kimi / Moonshot`、`DeepSeek`、`豆包`、`即梦`、`Trae 中国大陆入口`、`元宝`、`混元`、`通义 / 千问`、`智谱 / ChatGLM`、`MiniMax / 海螺`、`文心` 等国内 AI 平台
 - `Trae` 只在 `ai_tw` 中保留明确海外入口；`DeepSeek`、`Trae` 中国大陆入口与其他国内 AI 不应并入 `ai_tw`，而应优先落到 `direct/ai_cn_direct`，共享基础设施再继续落到 `direct/bytedance_direct`、`direct/cn_direct`
-- 上游主体优先引用 `blackmatrix7/ios_rule_script`、`SkywalkerJi/Clash-Rules` 与 `Accademia/Additional_Rule_For_Clash` 的快照；其中 `Trae` 只参考第三方上游，不再直接整包并入，避免把国内入口误送到台湾节点
+- 上游主体优先引用 `blackmatrix7/ios_rule_script`、`SkywalkerJi/Clash-Rules` 与 `Accademia/Additional_Rule_For_Clash` 的快照；其中 `Trae` 只参考第三方上游，不再直接整包并入，避免把国内入口误送到海外 AI 代理策略
 - 客户端顺序继续保持 `google_tw` 在前、`ai_tw` 在后；国内 AI 侧则让 `direct/ai_cn_direct` 排在 `direct/bytedance_direct`、`direct/cn_direct` 前，确保显式国内入口优先命中
 - 私有 `rulemesh-substore-surge-work-whitelist.conf` 不会自动并入这组新的国内 AI 放行入口；工作白名单仍需继续按“只放行明确白名单入口，其余统一 REJECT”的原则单独评估
 

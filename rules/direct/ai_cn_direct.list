@@ -2,7 +2,7 @@
 # 维护约束：
 # 1) 本文件承接中国大陆 AI 平台与中国大陆入口，客户端顺序应放在 direct/bytedance_direct.list 与 direct/cn_direct.list 前。
 # 2) 每个平台尽量把“显式域名、共享品牌词、补充兜底”放在同一小节，便于快速定位与继续补规则。
-# 3) 海外 AI 平台继续走 region/tw/ai_tw.list；不要把 OpenAI / Claude / Gemini / Cursor / Grok 等海外入口并回本文件。
+# 3) 海外 AI 平台继续走 region/tw/ai_tw.list，并由客户端绑定美国策略；不要把 OpenAI / Claude / Gemini / Cursor / Grok 等海外入口并回本文件。
 # 4) 字节系共享基础设施与中国大陆通用兜底仍交给 direct/bytedance_direct.list 与 direct/cn_direct.list。
 
 # Kimi / 月之暗面：保留官网、开放平台与品牌关键词兜底。

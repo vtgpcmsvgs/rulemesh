@@ -1,4 +1,7 @@
-# 日本区域域名策略入口：保留稳定公开入口占位，当前默认不再承接 Polymarket。
+# 日本区域域名策略入口：承接需要日本节点访问的稳定公开入口。
 # 维护约束：
-# 1) Polymarket 已改由 region/hk/global_media.list 承接，避免继续绑定日本地区。
-# 2) 当前文件保持空入口，只有确认存在稳定日本落点时再补充。
+# 1) opinion.trade 当前确认需要日本节点访问，先在本文件保留显式域名入口。
+# 2) Polymarket 已改由 region/hk/global_media.list 承接，避免继续绑定日本地区。
+# 3) 只有确认存在稳定日本落点时再补充，避免把香港更稳定的解锁站点误挂到日本区域。
+
+DOMAIN-SUFFIX,opinion.trade

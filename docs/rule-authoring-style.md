@@ -165,7 +165,7 @@ DOMAIN-KEYWORD,...
 
 例如：
 
-- `ai_tw.list` 要明确“只负责海外 AI，不负责国内 AI”
+- `ai_tw.list` 要明确“只负责海外 AI，不负责国内 AI，并默认绑定美国策略”
 - `ai_cn_direct.list` 要明确“显式国内 AI 在前，字节共享基础设施仍交给 bytedance_direct”
 - `google_tw.list` 要明确“Gemini 允许在 ai_tw 交叉兜底，但 google_tw 必须排在 ai_tw 前”
 - `cn_direct.list` 要明确“它是最宽泛的大陆通用兜底，应放在更细分规则之后”

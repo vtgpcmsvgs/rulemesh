@@ -1,9 +1,9 @@
 {
   "summary": {
-    "domain-only": 6,
+    "domain-only": 7,
     "ipcidr-only": 7,
     "classical/mixed": 21,
-    "empty": 1,
+    "empty": 0,
     "total_sources": 35,
     "total_warnings": 0
   },
@@ -204,19 +204,6 @@
       }
     },
     {
-      "source": "rules/proxy/google_public_dns_ipv4_proxy.list",
-      "category": "proxy",
-      "classification": "ipcidr-only",
-      "counts": {
-        "surge_rules": 1,
-        "mihomo_classical": 1
-      },
-      "dist": {
-        "surge_rules": "dist/surge/rules/proxy/google_public_dns_ipv4_proxy.list",
-        "mihomo_classical": "dist/mihomo/classical/proxy/google_public_dns_ipv4_proxy.yaml"
-      }
-    },
-    {
       "source": "rules/proxy/onepassword_proxy.list",
       "category": "proxy",
       "classification": "domain-only",
@@ -227,6 +214,19 @@
       "dist": {
         "surge_rules": "dist/surge/rules/proxy/onepassword_proxy.list",
         "mihomo_classical": "dist/mihomo/classical/proxy/onepassword_proxy.yaml"
+      }
+    },
+    {
+      "source": "rules/proxy/overseas_dns_ipv4_proxy.list",
+      "category": "proxy",
+      "classification": "ipcidr-only",
+      "counts": {
+        "surge_rules": 3,
+        "mihomo_classical": 3
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/proxy/overseas_dns_ipv4_proxy.list",
+        "mihomo_classical": "dist/mihomo/classical/proxy/overseas_dns_ipv4_proxy.yaml"
       }
     },
     {
@@ -284,10 +284,10 @@
     {
       "source": "rules/region/jp/domains_to_jp.list",
       "category": "region",
-      "classification": "empty",
+      "classification": "domain-only",
       "counts": {
-        "surge_rules": 0,
-        "mihomo_classical": 0
+        "surge_rules": 1,
+        "mihomo_classical": 1
       },
       "dist": {
         "surge_rules": "dist/surge/rules/region/jp/domains_to_jp.list",

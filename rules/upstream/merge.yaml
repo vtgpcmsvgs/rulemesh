@@ -200,16 +200,16 @@ merge_plan:
       - 仅覆盖 BNB Smart Chain Mainnet，不扩展到 opBNB 等其他 BNB 系链
       - 客户端顺序应放在 proxy/gfw 前，避免被广谱代理入口提前命中
 
-  - id: google-public-dns-ipv4-proxy
-    target: rules/proxy/google_public_dns_ipv4_proxy.list
-    purpose: Google Public DNS 主 IPv4 端点专项节点选择
+  - id: overseas-dns-ipv4-proxy
+    target: rules/proxy/overseas_dns_ipv4_proxy.list
+    purpose: 海外 DNS 主 IPv4 端点专项美国分流
     strategy:
       - manual_only
       - keep_scope_small_and_stable
       - match_exact_ipv4_endpoint_without_port_binding
     notes:
-      - 当前只精确匹配 8.8.8.8/32，不再绑定 53 端口，方便后续复用到其他端口探活
-      - 不并入 rules/region/tw/google_tw.list，避免与 Google 台湾区域策略混用
+      - 当前精确匹配 1.1.1.1/32、8.8.8.8/32 与 9.9.9.9/32，不再绑定 53 端口，方便后续复用到其他端口探活
+      - 不并入 rules/region/tw/google_tw.list，避免与 Google 台湾区域策略混用；客户端默认统一绑定美国地区策略
       - 客户端顺序应放在 proxy/gfw 前，避免被广谱代理入口提前命中
 
   - id: hk-global-media
@@ -225,7 +225,7 @@ merge_plan:
 
   - id: tw-ai
     target: rules/region/tw/ai_tw.list
-    purpose: 海外 AI 平台走台湾策略
+    purpose: 海外 AI 平台走美国策略
     strategy:
       - include_upstream_first_then_local_keyword_fallback
       - include_blackmatrix7_openai_family
@@ -233,6 +233,7 @@ merge_plan:
       - include_accademia_grok
     notes:
       - 统一承接 OpenAI / Claude / Gemini / Copilot / Cursor / Grok / Windsurf / Augment 等海外 AI 平台
+      - 客户端默认绑定美国地区策略，不再绑定台湾地区策略
       - Trae 只保留明确海外入口；DeepSeek、Trae 中国大陆入口与其他国内 AI 不并入该文件，而是优先交给 rules/direct/ai_cn_direct.list，再由直连兜底规则承接共享基础设施
       - 本地额外保留更激进的 DOMAIN-KEYWORD 兜底，用于覆盖新前端、新二级域名与第三方聚合入口
 
@@ -288,7 +289,7 @@ merge_plan:
       - manual_only
       - keep_scope_small_and_stable
     notes:
-      - 当前保留稳定公开入口占位，默认不再承接 Polymarket
+      - 当前保留 opinion.trade 显式入口，统一绑定日本地区策略
       - 只有确认存在稳定日本落点时再补充，避免把香港更稳定的解锁站点误挂到日本区域
 
   - id: multi-chain-socks5-ipcidr

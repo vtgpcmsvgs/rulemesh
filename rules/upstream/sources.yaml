@@ -129,10 +129,10 @@ sources:
           note: BSC 主网 RPC 域名专项节点选择入口，源文件只保留单一 INCLUDE，由 Chainlist 每日自动累计更新 host 集合
         - repo: DefiLlama/chainlist
           note: 每日抓取 chainlist.org/rpcs.json 中 chainId=56 的最终 RPC 列表，按 host 规范化后生成 DOMAIN 与 DOMAIN-WILDCARD，不包含 opBNB
-    google_public_dns_ipv4_proxy.list:
+    overseas_dns_ipv4_proxy.list:
       preferred:
         - repo: self
-          note: Google Public DNS 主 IPv4 端点专项节点选择入口，当前只精确匹配 8.8.8.8/32，不再绑定单一端口
+          note: 海外 DNS 主 IPv4 端点专项美国分流入口，当前精确匹配 1.1.1.1/32、8.8.8.8/32 与 9.9.9.9/32，不再绑定单一端口
     gfw.list:
       preferred:
         - repo: self
@@ -156,7 +156,7 @@ sources:
     tw/ai_tw.list:
       preferred:
         - repo: self
-          note: 承接海外 AI 平台的更激进关键词与热门站点补充兜底；国内 AI 优先走 ai_cn_direct，再由 bytedance_direct 与 cn_direct 兜底
+          note: 承接海外 AI 平台的更激进关键词与热门站点补充兜底，客户端默认绑定美国地区策略；国内 AI 优先走 ai_cn_direct，再由 bytedance_direct 与 cn_direct 兜底
         - repo: blackmatrix7/ios_rule_script
           note: 负责 OpenAI / Claude / Gemini / Copilot 主体
         - repo: SkywalkerJi/Clash-Rules
@@ -178,7 +178,7 @@ sources:
     jp/domains_to_jp.list:
       preferred:
         - repo: self
-          note: 保留稳定公开入口，当前默认不再承接 Polymarket，只有确认存在稳定日本落点时再补充
+          note: 保留稳定日本域名入口，当前承接 opinion.trade；Polymarket 继续留在香港区域规则
     multi/chain_socks5_ipcidr.list:
       preferred:
         - repo: self

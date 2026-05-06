@@ -1,3 +1,4 @@
 # 生成来源：rules/region/jp/domains_to_jp.list
 # 行为：classical
-payload: []
+payload:
+  - "DOMAIN-SUFFIX,opinion.trade"

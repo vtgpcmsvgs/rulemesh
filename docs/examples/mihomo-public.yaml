@@ -371,6 +371,15 @@ rule-providers:
     interval: 86400
     proxy: "🚀 节点选择"
 
+  jp_domains:
+    type: http
+    behavior: classical
+    format: yaml
+    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/jp/domains_to_jp.yaml"
+    path: ./ruleset/region/jp/domains_to_jp.yaml
+    interval: 86400
+    proxy: "🚀 节点选择"
+
   hk_telegram:
     type: http
     behavior: classical
@@ -416,12 +425,12 @@ rule-providers:
     interval: 86400
     proxy: "🚀 节点选择"
 
-  proxy_google_public_dns_ipv4:
+  proxy_overseas_dns_ipv4:
     type: http
     behavior: classical
     format: yaml
-    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/proxy/google_public_dns_ipv4_proxy.yaml"
-    path: ./ruleset/proxy/google_public_dns_ipv4_proxy.yaml
+    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/proxy/overseas_dns_ipv4_proxy.yaml"
+    path: ./ruleset/proxy/overseas_dns_ipv4_proxy.yaml
     interval: 86400
     proxy: "🚀 节点选择"
 
@@ -605,12 +614,13 @@ rules:
   - RULE-SET,reject_wps,REJECT
   - RULE-SET,reject_adspower,REJECT
 
-  # `tw_ai` 当前聚合海外 AI 平台；DeepSeek、Trae 中国大陆入口等国内 AI 不应并入这里，应优先交给 `direct_ai_cn`。
+  # `tw_ai` 当前聚合海外 AI 平台并统一走美国节点；DeepSeek、Trae 中国大陆入口等国内 AI 不应并入这里，应优先交给 `direct_ai_cn`。
   - RULE-SET,tw_google,🇨🇳 台湾-自动选择
-  - RULE-SET,tw_ai,🇨🇳 台湾-自动选择
+  - RULE-SET,tw_ai,🇺🇸 美国-自动选择
   - RULE-SET,tw_crypto,🇨🇳 台湾-自动选择
+  - RULE-SET,jp_domains,🇯🇵 日本-自动选择
   - RULE-SET,hk_telegram,🇭🇰 香港-自动选择
-  # X / Twitter 网页、短链与静态资源，以及 Polymarket 相关域名并入这组；空的日本域名入口不再默认接入公开模板。
+  # X / Twitter 网页、短链与静态资源，以及 Polymarket 相关域名并入这组。
   - RULE-SET,hk_global_media,🇭🇰 香港-自动选择
 
   # GitHub 仓库 SSH 定向直连必须放在 gfw 前，避免把整个 GitHub 放直连。
@@ -633,8 +643,8 @@ rules:
   # 7) BSC 主网 RPC 节点选择（必须放在 gfw 前）
   - RULE-SET,proxy_bsc_rpc,🚀 节点选择
 
-  # 8) Google Public DNS 主 IPv4 端点节点选择（必须放在 gfw 前）
-  - RULE-SET,proxy_google_public_dns_ipv4,🚀 节点选择
+  # 8) 海外 DNS 主 IPv4 端点美国分流（必须放在 gfw 前）
+  - RULE-SET,proxy_overseas_dns_ipv4,🇺🇸 美国-自动选择,no-resolve
 
   # 9) 代理优先
   - RULE-SET,proxy_gfw,🚀 节点选择

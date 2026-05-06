@@ -43,6 +43,8 @@ DOMAIN-SET:https://example.com/share/file/proxy-node-domains = server:https://dn
 
 `raw.githubusercontent.com = server:system` 是规则产物下载自举例外，不得被扩展成普通目标网站解析方案。
 
+上述海外 `dns-server` 的明文 IPv4 端点应先命中 `proxy/overseas_dns_ipv4_proxy` 并统一走美国地区策略，避免 1.1.1.1 / 8.8.8.8 / 9.9.9.9 的出口与普通代理出口错位。
+
 `DOMAIN-SET` 引用的 `proxy-node-domains` 必须只包含代理节点的 `server` 域名。一行一个域名，不写 `DOMAIN-SUFFIX,` 前缀，不写订阅 URL，不写机场面板域名，不写普通目标网站域名。
 
 ## Mihomo 实现规范

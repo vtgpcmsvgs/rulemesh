@@ -22,8 +22,8 @@
 - 设备分流继续按“源 IP + AWS 区域 / 多地区链式 SOCKS5 IP 段”定向到对应设备组
 - 只有 2.1 设备分流继续保留“源 IP + AWS 区域 / 多地区链式 SOCKS5 IP 段”约束；2.2-2.10 不再额外限制源 IP
 - 多地区链式 SOCKS5 端点属于自维护链式代理入口，不再视为日本区域规则，也不应再挂到单一国家目录或固定日本组
-- 区域精确规则继续保留，且 `Google TW` 与 `AI TW` 都必须先于广谱区域规则
-- `AI TW` 入口继续作为白名单显式放行项，但当前只承接海外 AI 平台；国内 AI 不应借这条入口放行
+- 区域精确规则继续保留，且 `Google TW` 与 `AI US` 都必须先于广谱区域规则
+- `AI US` 入口继续作为白名单显式放行项，但当前只承接海外 AI 平台并统一走美国节点；国内 AI 不应借这条入口放行
 - GitHub 仓库 SSH 定向直连继续保留独立 carve-out
 - GitHub 相关访问继续拆成三段：先保留 `DOMAIN,raw.githubusercontent.com` 自举入口，再显式放行 `proxy/github_core_proxy.list`，其后的 `DOMAIN-KEYWORD,github` 广覆盖观察兜底在工作白名单模式下统一使用 `REJECT`，专门用于发现 SSH / GitHub Core 之外的漏网之鱼
 - `raw.githubusercontent.com` 继续额外绑定 `server:system` 解析，作为规则产物下载自举例外；全局 `dns-server` 不再保留 `system + 国内 DNS` 组合，普通目标网站域名默认走海外 DNS
@@ -36,7 +36,7 @@
 - 在 `adspower_direct` 与 `adspower_proxy` 之后，额外保留一条广覆盖 `DOMAIN-KEYWORD,adspower,REJECT` 观察兜底，专门用于发现细分规则漏网之鱼
 - `proxy/polygon_rpc_proxy.list` 继续保留 `🚀 节点选择`，用于白名单模式下显式放行 Polygon 主网 RPC 域名
 - `proxy/bsc_rpc_proxy.list` 继续保留 `🚀 节点选择`，用于白名单模式下显式放行 BSC 主网 RPC 域名
-- `proxy/google_public_dns_ipv4_proxy.list` 继续保留 `🚀 节点选择`，并在 Surge 配置里以 `RULE-SET,...,"🚀 节点选择",no-resolve` 接入，用于白名单模式下显式放行 `8.8.8.8/32`
+- `proxy/overseas_dns_ipv4_proxy.list` 继续保留，并在 Surge 配置里以 `RULE-SET,...,"🇺🇸 美国-自动选择",no-resolve` 接入，用于白名单模式下显式放行 `1.1.1.1/32`、`8.8.8.8/32` 与 `9.9.9.9/32`
 - `DOMAIN-SUFFIX,cloudflare-dns.com` 继续保留 `🚀 节点选择`，用于白名单模式下显式放行 Cloudflare DNS 域名
 - `LAN,DIRECT` 继续保留在白名单直连入口中
 - `direct/os_time_direct` 继续保留 `DIRECT`，用于 Windows / Apple 系统时间同步，不并入节点选择
@@ -71,7 +71,7 @@
 11. AdsPower 广覆盖 REJECT 观察兜底
 12. Polygon 主网 RPC 节点选择入口
 13. BSC 主网 RPC 节点选择入口
-14. Google Public DNS 主 IPv4 端点节点选择入口
+14. 海外 DNS 主 IPv4 端点美国分流入口
 15. Cloudflare DNS 节点选择入口
 16. 指定直连入口（含阿里云广覆盖 REJECT 观察兜底）
 17. 全局 `FINAL,REJECT` 兜底
