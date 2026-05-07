@@ -304,15 +304,6 @@ merge_plan:
     notes:
       - 当前以你自己维护的端点清单为准，不引入额外上游聚合
 
-  - id: reject-plain-http
-    target: rules/reject/plain_http_reject.list
-    purpose: 禁止明文 HTTP 出站
-    strategy:
-      - manual_only
-      - keep_scope_small_and_stable
-    notes:
-      - 仅对常见浏览器进程命中 DST-PORT,80，避免误伤微信等原生客户端
-
   - id: reject-os-update
     target: rules/reject/os_update_reject.list
     purpose: 操作系统更新禁用（Windows + Apple）
@@ -321,16 +312,6 @@ merge_plan:
       - keep_scope_small_and_stable
     notes:
       - 不引入上游订阅，避免第三方规则膨胀或误伤非更新流量
-
-  - id: reject-wps
-    target: rules/reject/wps_reject.list
-    purpose: WPS 全量封网与后台组件广覆盖阻断
-    strategy:
-      - runtime_log_driven_and_upstream_curated
-      - prefer_process_name_and_domain_suffix
-    notes:
-      - 默认接受 WPS 云文档、模板、账号、推送、升级与统计全部失效，不再追求低误伤
-      - 候选来源以 anti-AD、blackmatrix7 与 GitHub 公开规则片段为主，并结合本机运行日志向域名树放大
 
   - id: reject-adspower
     target: rules/reject/adspower_reject.list

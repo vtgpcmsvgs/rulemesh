@@ -39,7 +39,7 @@ class DetectNonChineseCommentTests(unittest.TestCase):
 
     def test_ignores_commented_rule(self) -> None:
         self.assertIsNone(
-            build_rules.detect_non_chinese_comment("# DOMAIN,api.mini.wps.cn")
+            build_rules.detect_non_chinese_comment("# DOMAIN,commented.example.com")
         )
 
 

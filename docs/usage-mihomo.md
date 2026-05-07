@@ -23,7 +23,6 @@
 - 多订阅聚合后的统一总开关与区域自动组
 - `proxy-providers.*.proxy: DIRECT` 的订阅更新基线：它只控制 Mihomo 后台拉取机场订阅 URL，浏览器访问机场官网 / 面板仍由后面的 `rules` 判断
 - `reject`、`direct`、`proxy`、`region` 四类 RuleMesh `classical` 产物接入
-- `reject/wps_reject.yaml` 当前按“WPS 全量封网”维护；如需保留 WPS 云文档、模板、账号、推送或升级能力，请不要接入这条规则
 - GitHub 继续采用“SSH 定向直连 + Core HTTPS 显式代理”拆分：`direct/github_ssh_direct.yaml` 只承接 `github.com:22` 与 `ssh.github.com:443`，`proxy/github_core_proxy.yaml` 则显式承接 GitHub 网页、`api.github.com`、Gist、Raw、静态资源与附件
 - 默认采用“普通目标网站域名走海外加密 DNS、DNS 服务器域名由 `default-nameserver` bootstrap、代理节点 server 域名单独走 `proxy-server-nameserver`”的 DNS 隔离思路
 - 默认启用 Tun 全量接管与域名嗅探，优先把 Mihomo 的实际体验拉到接近 Surge 的水位
@@ -41,8 +40,6 @@
 - BSC 主网 RPC 专项 `proxy/bsc_rpc_proxy.yaml` 与 `proxy/gfw.yaml` 的顺序关系
 - 海外 DNS 主 IPv4 端点专项 `proxy/overseas_dns_ipv4_proxy.yaml` 与 `proxy/gfw.yaml` 的顺序关系
 - `direct/os_time_direct.yaml` 与其他普通直连规则的顺序关系
-- 用 `plain_http_reject.yaml` 接管浏览器明文 HTTP 拦截
-
 ## 模板刻意移除了什么
 
 - 真实机场订阅链接、供应商命名与 token
@@ -139,11 +136,9 @@
 - 如果你是 1Password 重度用户，可额外接入 `proxy/onepassword_proxy.yaml`，并同样放在 `proxy/gfw.yaml` 前；这条规则由仓库每日自动抓取 1Password 官方支持页生成，默认只覆盖官方自有核心域名与更新/基础设施端点，详情见 [docs/onepassword-proxy-rules.md](onepassword-proxy-rules.md)。
 - `reject/adspower_reject.yaml` 应和其他拒绝规则一起放在最前，先拦截隐私追踪与可安全阻断端点。
 - `reject/adspower_reject.yaml` 当前只承载 Mihomo classical 已确认支持的 AdsPower 拒绝规则；源规则里为 Surge 保留的 `URL-REGEX` 条目不会进入这份 Mihomo 产物。
-- `reject/wps_reject.yaml` 如果接入，应继续放在拒绝段并位于 `direct_cn` 前；它当前是“WPS 全量封网”规则，不再追求低误伤。
 - `direct/os_time_direct.yaml` 建议放在其他普通 `direct/*.yaml` 前，优先保障 `time.windows.com`、`time.apple.com` 与 `time-macos.apple.com` 直连。
 - 如果你希望默认禁用系统更新、升级时再临时放行，建议同时接入 `direct/os_time_direct.yaml`、`reject/os_update_reject.yaml`、`region/us/microsoft_us.yaml` 与 `region/us/macos_update_us.yaml`；平时由 `reject` 先拦截升级流量，系统时间同步仍由 `os_time_direct` 保持直连，放开拒绝入口后 Microsoft / macOS 更新流量统一走美国节点。
 - `proxy/gfw.yaml` 建议放在其他普通 `direct/*.yaml` 前，减少广谱直连误伤。
-- `reject_plain_http` 已有构建产物，公开模板不再建议手写重复的浏览器进程规则。
 - Surge 私有工作路由白名单并不迁移到 Mihomo 模板；Mihomo 仍维持这里描述的公开/个人通用结构。
 
 ## 使用原则

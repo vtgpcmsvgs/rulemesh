@@ -2,9 +2,9 @@
   "summary": {
     "domain-only": 7,
     "ipcidr-only": 7,
-    "classical/mixed": 21,
+    "classical/mixed": 19,
     "empty": 0,
-    "total_sources": 35,
+    "total_sources": 33,
     "total_warnings": 0
   },
   "sources": [
@@ -435,32 +435,6 @@
       "dist": {
         "surge_rules": "dist/surge/rules/reject/os_update_reject.list",
         "mihomo_classical": "dist/mihomo/classical/reject/os_update_reject.yaml"
-      }
-    },
-    {
-      "source": "rules/reject/plain_http_reject.list",
-      "category": "reject",
-      "classification": "classical/mixed",
-      "counts": {
-        "surge_rules": 9,
-        "mihomo_classical": 9
-      },
-      "dist": {
-        "surge_rules": "dist/surge/rules/reject/plain_http_reject.list",
-        "mihomo_classical": "dist/mihomo/classical/reject/plain_http_reject.yaml"
-      }
-    },
-    {
-      "source": "rules/reject/wps_reject.list",
-      "category": "reject",
-      "classification": "classical/mixed",
-      "counts": {
-        "surge_rules": 36,
-        "mihomo_classical": 36
-      },
-      "dist": {
-        "surge_rules": "dist/surge/rules/reject/wps_reject.list",
-        "mihomo_classical": "dist/mihomo/classical/reject/wps_reject.yaml"
       }
     }
   ],

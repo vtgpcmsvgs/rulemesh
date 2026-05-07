@@ -10,22 +10,10 @@ sources:
       preferred:
         - repo: self
           note: AdsPower 专项拒绝规则由 rules/app/adspower.txt 单一主清单派生，统一维护隐私追踪与可安全阻断端点
-    plain_http_reject.list:
-      preferred:
-        - repo: self
-          note: 保留仅浏览器进程禁止明文 HTTP 出站规则，继续本地维护
     os_update_reject.list:
       preferred:
         - repo: self
           note: Windows + Apple 更新禁用规则，保持小而稳定，不引入上游
-    wps_reject.list:
-      preferred:
-        - repo: self
-          note: 按“WPS 程序全量封网”维护，接受云文档、模板、账号、插件、推送与升级全部失效
-        - repo: privacy-protection-tools/anti-AD
-          note: 提供 WPS / Kingsoft 相关广告、统计与服务域名候选，作为全量封网候选底盘
-        - repo: blackmatrix7/ios_rule_script
-          note: 使用 AdGuard 相关规则作交叉验证，并补齐 WPS 客户端联网域名
     adblock_reject.list:
       preferred:
         - repo: self
