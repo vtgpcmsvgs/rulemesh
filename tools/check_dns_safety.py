@@ -185,7 +185,18 @@ def validate_surge(path: Path, lines: list[str]) -> list[DnsSafetyFinding]:
             )
         )
 
+    dns_mode_pattern = re.compile(r"^\s*dns-mode\s*=", re.IGNORECASE)
     for index, line in enumerate(lines, start=1):
+        if not is_comment_or_blank(line) and dns_mode_pattern.search(line):
+            findings.append(
+                DnsSafetyFinding(
+                    "error",
+                    path,
+                    index,
+                    "Surge profile 中出现 dns-mode 字段；这是 Mihomo / Stash 语义，不是 Surge profile 字段。",
+                    "移除 dns-mode；Surge 的 Fake IP 由客户端 Enhanced Mode / VIF 运行时提供，profile 只保留 [Host] 节点域名解析隔离。",
+                )
+            )
         if not is_comment_or_blank(line) and "proxy-server-nameserver" in line:
             findings.append(
                 DnsSafetyFinding(

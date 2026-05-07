@@ -22,7 +22,7 @@
 
 ## Surge 实现规范
 
-Surge 没有 Mihomo 的 `proxy-server-nameserver` 或 `dns-mode` 字段，不能伪造同名配置。Fake IP 由 Surge Enhanced Mode / VIF 运行时提供，profile 中不要写 `dns-mode = fake-ip`。Surge 必须使用：
+Surge 没有 Mihomo 的 `proxy-server-nameserver` 或 `dns-mode` 字段，不能伪造同名配置。Fake IP 由 Surge Enhanced Mode / VIF 运行时提供，profile 中不要写 `dns-mode = fake-ip`。新增 DNS、fake-ip、Tun 或透明代理字段时，必须按目标客户端自己的 profile 语义确认，不要用“另一个客户端有近似字段”来推断可用性。Surge 必须使用：
 
 - Surge Mac/iOS 运行时的 Enhanced Mode / VIF
 - `use-local-host-item-for-proxy = true`
@@ -82,20 +82,34 @@ dns:
 - 不包含订阅链接域名、机场面板域名、普通网站域名。
 - 默认去重、转小写、去掉空白。
 
-Sub-Store 侧脚本逻辑可按这个职责实现：
+Sub-Store 的 file 脚本应直接输出文本内容，不要把数组赋给 `$content`；数组会被序列化成逗号分隔文本，不符合 Surge `DOMAIN-SET` 预期。脚本逻辑可按这个职责实现：
 
 ```js
-function operator(proxies = []) {
-  const domains = new Set();
-  for (const proxy of proxies) {
-    const server = String(proxy.server || "").trim().toLowerCase();
-    if (!server) continue;
-    if (/^\d{1,3}(\.\d{1,3}){3}$/.test(server)) continue;
-    if (/^[0-9a-f:]+$/i.test(server) && server.includes(":")) continue;
-    domains.add(server);
-  }
-  return Array.from(domains).sort().join("\n") + "\n";
+var domains = new Set();
+var excludeList = new Set(["localhost", "null"]);
+var ipv4Pattern = /^(?:\d{1,3}\.){3}\d{1,3}$/;
+var ipv6Pattern = /:/;
+var domainPattern = /^(?:[A-Za-z0-9_-]+\.)+[A-Za-z0-9-]+$/;
+
+let clashMetaProxies = await produceArtifact({
+    type: "collection",
+    name: "global-egress",
+    platform: "ClashMeta",
+    produceType: "internal"
+});
+
+for (var i = 0; i < clashMetaProxies.length; i++) {
+  var p = clashMetaProxies[i];
+  var server = (p.server || "").trim().toLowerCase();
+  if (!server) continue;
+  server = server.replace(/^\[(.*)\]$/, "$1");
+  if (excludeList.has(server)) continue;
+  if (ipv4Pattern.test(server) || ipv6Pattern.test(server)) continue;
+  if (!domainPattern.test(server)) continue;
+  domains.add(server);
 }
+
+$content = Array.from(domains).sort().join("\n") + "\n";
 ```
 
 实际发布 URL 应使用 Surge 所在设备能直接访问的 Sub-Store 分享文件链接，例如 `https://<你的 Sub-Store 后端或反代域名>/share/file/proxy-node-domains`。不要把这里固定写成公网 `https://sub.store/...`，除非它在生产 Surge 环境中确实能稳定访问到你的 Sub-Store 后端。
