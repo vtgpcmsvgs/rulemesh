@@ -74,8 +74,8 @@ sniffer:
 
 # > DNS 分流
 # 1) 普通目标网站域名默认只走海外加密 DNS，避免 DNS 指纹与代理出口错位。
-# 2) 国内 DNS 只作为代理节点 server 域名解析的专用例外，不进入业务 nameserver。
-# 3) Mihomo 使用 proxy-server-nameserver 处理节点域名；不要套用 Surge 的 [Host] 方案。
+# 2) 国内 DNS 只允许用于 DNS 服务器域名 bootstrap 与代理节点 server 域名 bootstrap，不进入业务 nameserver。
+# 3) Mihomo 使用 default-nameserver 引导 DNS 服务器域名，使用 proxy-server-nameserver 处理节点域名；不要套用 Surge 的 [Host] 方案。
 dns:
   enable: true
   ipv6: true
@@ -85,11 +85,10 @@ dns:
   cache-algorithm: arc
   enhanced-mode: fake-ip
   fake-ip-range: 198.18.0.1/16
-  # > DNS 服务器引导解析
+  # > DNS 服务器域名 bootstrap；只解析 nameserver / fallback / proxy-server-nameserver 这些 DNS 服务器自身的域名
   default-nameserver:
-    - 1.1.1.1
-    - 8.8.8.8
-    - 9.9.9.9
+    - 223.5.5.5
+    - 119.29.29.29
   # > 默认国外加密 DNS
   nameserver:
     - https://cloudflare-dns.com/dns-query

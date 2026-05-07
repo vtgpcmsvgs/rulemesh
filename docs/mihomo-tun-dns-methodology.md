@@ -40,14 +40,14 @@
 ## DNS 方法论
 
 - 普通目标网站域名默认优先走海外加密 DNS。
-- 国内 DNS 只作为代理节点 `server` 域名解析的专用例外。
+- 国内 DNS 只作为 DNS 服务器域名 bootstrap 与代理节点 `server` 域名 bootstrap 的专用例外。
 - 不要把“国内直连域名集”或“所有 DIRECT”交给国内 DNS 当成默认方案。
 - 原因很简单：DNS 信任边界不等于出站动作。即使某条规则最终是 `DIRECT`，它仍然可能是账号平台、系统服务、AI 服务或其他敏感目标域名。
-- 更稳妥的做法是把业务 `nameserver` 与节点 `proxy-server-nameserver` 分开，而不是按 `DIRECT` / `PROXY` 把目标网站域名重新分给国内 DNS。
+- 更稳妥的做法是把业务 `nameserver`、DNS 服务器 bootstrap `default-nameserver` 与节点 `proxy-server-nameserver` 分开，而不是按 `DIRECT` / `PROXY` 把目标网站域名重新分给国内 DNS。
 
 ## 节点 DNS 启动链
 
-- `proxy-server-nameserver` 只负责代理节点域名解析，它和业务 `nameserver`、`fallback` 不应混在一起调。
+- `default-nameserver` 只负责解析 DNS 服务器自身域名，`proxy-server-nameserver` 只负责代理节点域名解析；它们和业务 `nameserver`、`fallback` 不应混在一起调。
 - 如果只有 Clash Meta for Android 在移动网络或特定网络环境下失败，而 Clash Verge Rev 正常，优先检查是否是“节点域名解析无法直连国外 DoH”。
 - 这种情况下，第一优先级是单独调整 Android 私有文件的 `proxy-server-nameserver`，而不是立刻把全部业务 DNS 都切回国内。
 - 当前仓库的推荐收敛顺序是：
@@ -65,13 +65,15 @@
 - 如果用户明确要保留 `DNS 覆写`，那就要把 `%APPDATA%/io.github.clash-verge-rev.clash-verge-rev/dns_config.yaml` 视为 `dns` 的单一真相，而不要再假设源文件里的 `dns:` 会原样生效。
 - 遇到“关闭 DNS 覆写后，国内可访问、国外代理不通”的情况，默认先怀疑桌面端私有文件的节点域名解析启动链，而不是先怀疑规则顺序或 `rule-providers`。
 - 对当前本地长期维护来说，Clash Verge Rev 私有文件在关闭 `DNS 覆写` 后，默认采用这组收敛原则：
-  - `respect-rules: false`，避免节点 DNS 再跟随规则链递归绕回代理组。
+  - `respect-rules: true`，让 Mihomo 自己访问海外 DoH 端点时也遵守 `rules` 分流。
+  - `default-nameserver` 使用国内可直连 DNS，只做 DNS 服务器域名 bootstrap，不作为普通网站业务 DNS 池。
   - `proxy-server-nameserver` 优先使用当前网络可直连的加密 DNS，例如阿里云 / 腾讯云 DoH。
   - `proxy-server-nameserver-policy` 继续只承载少量明确需要专用解析链的节点域名，不把这层逻辑扩散到普通业务域名。
   - 这一步只修复代理节点 server 域名解析，不应顺手把业务 `nameserver`、`nameserver-policy`、`direct-nameserver` 或国际业务 DNS 改回国内。
 - 当前本地已验证可用的 Clash Verge Rev 修法是：
   - 关闭应用侧 `DNS 覆写`
-  - 在 `rulemesh-substore-mihomo-clash-verge.yaml` 中保持 `respect-rules: false`
+  - 在 `rulemesh-substore-mihomo-clash-verge.yaml` 中保持 `respect-rules: true`
+  - 让 `default-nameserver` 只使用国内可直连 DNS 做 DNS 服务器域名 bootstrap
   - 让 `proxy-server-nameserver` 走阿里云 / 腾讯云 DoH
   - 保留确有必要的节点专用解析策略
 - 这套修法的目标是把“桌面端 Mihomo 私有文件重新变回单一真相”，而不是长期依赖 Clash Verge Rev 的界面覆写兜底。
@@ -125,7 +127,7 @@
 
 ## 国内 DNS 适用范围
 
-- 仅限 `proxy-server-nameserver` 里的代理节点 `server` 域名解析。
+- 仅限 `default-nameserver` 里的 DNS 服务器域名 bootstrap，以及 `proxy-server-nameserver` 里的代理节点 `server` 域名解析。
 - 如果使用 `proxy-server-nameserver-policy`，也只能承载明确的节点 server 域名解析策略，不得混入普通目标网站域名。
 - 局域网、本地域名与私有地址段应通过本地直连、`fake-ip-filter` 或系统网络能力处理，不作为把普通目标网站域名送往国内 DNS 的理由。
 
@@ -145,9 +147,9 @@
 
 - 新增一个 `direct/*.list` 或新的 Mihomo 直连入口时，先判断它是否是普通目标网站域名。只要是目标网站域名，就默认由海外业务 `nameserver` 解析。
 - 不要为了“DIRECT 看起来应该配国内 DNS”而把目标网站域名加入国内 `nameserver-policy`。
-- 如果确实需要针对某个节点 server 域名调整解析，必须放在 `proxy-server-nameserver` 或节点专用策略里，并写清楚它不是普通目标网站域名。
+- 如果确实需要针对某个 DNS 服务器域名或节点 server 域名调整解析，必须放在 `default-nameserver`、`proxy-server-nameserver` 或节点专用策略里，并写清楚它不是普通目标网站域名。
 - 新增需要优先直连的局域网、本地网段或特殊主机名时，同时检查 `rules:` 里的本地直连段与 `dns.fake-ip-filter` 是否也要补。
-- `proxy-server-nameserver` 只负责节点域名解析，不要混入普通业务域名的取舍逻辑。
+- `default-nameserver` 只负责 DNS 服务器域名 bootstrap，`proxy-server-nameserver` 只负责节点域名解析，不要混入普通业务域名的取舍逻辑。
 - 如果本地同时维护 Clash Verge Rev 与 Clash Meta for Android，两份 Mihomo 私有文件允许长期并存；公共规则骨架尽量一致，但节点 DNS 启动链允许有意识地永久不一致。
 
 ## Tun 与嗅探约定

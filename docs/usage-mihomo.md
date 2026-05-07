@@ -24,7 +24,7 @@
 - `reject`、`direct`、`proxy`、`region` 四类 RuleMesh `classical` 产物接入
 - `reject/wps_reject.yaml` 当前按“WPS 全量封网”维护；如需保留 WPS 云文档、模板、账号、推送或升级能力，请不要接入这条规则
 - GitHub 继续采用“SSH 定向直连 + Core HTTPS 显式代理”拆分：`direct/github_ssh_direct.yaml` 只承接 `github.com:22` 与 `ssh.github.com:443`，`proxy/github_core_proxy.yaml` 则显式承接 GitHub 网页、`api.github.com`、Gist、Raw、静态资源与附件
-- 默认采用“普通目标网站域名走海外加密 DNS、代理节点 server 域名单独走 `proxy-server-nameserver`”的 DNS 隔离思路
+- 默认采用“普通目标网站域名走海外加密 DNS、DNS 服务器域名由 `default-nameserver` bootstrap、代理节点 server 域名单独走 `proxy-server-nameserver`”的 DNS 隔离思路
 - 默认启用 Tun 全量接管与域名嗅探，优先把 Mihomo 的实际体验拉到接近 Surge 的水位
 - 默认开启全局 `ipv6: true` 与 `dns.ipv6: true`，不再让 Mihomo 在双栈环境里主动把 AAAA 结果清空
 - 默认在 `proxy-providers.*.override` 里显式写 `ip-version: dual`，真正放开订阅节点双栈连接，但先不默认强推 `ipv6-prefer`
@@ -58,7 +58,7 @@
 
 另请注意：
 
-- Surge 公开模板里的 `use-local-host-item-for-proxy = true` 与 `allow-wifi-access = false` 只属于 Surge 运行时参数，不要求 Mihomo 模板逐项镜像；Surge 不写 Mihomo / Stash 的 `dns-mode`，Mihomo 继续按 Tun / DNS 方法论独立维护。
+- Surge 公开模板里的 `use-local-host-item-for-proxy = false`、`hijack-dns = *:53` 与 `allow-wifi-access = false` 只属于 Surge 运行时参数，不要求 Mihomo 模板逐项镜像；Surge 不写 Mihomo / Stash 的 `dns-mode`，Mihomo 继续按 Tun / DNS 方法论独立维护。
 - Clash Verge Rev 等支持 Tun 的客户端，建议同时开启 Tun 模式；这份模板默认按 Tun + 嗅探 + 分流 DNS 设计，关闭 Tun 会明显削弱体验。
 - 如果你同时维护 Clash Verge Rev 与 Clash Meta for Android，本地私有目录建议拆成 `rulemesh-substore-mihomo-clash-verge.yaml` 与 `rulemesh-substore-mihomo-clash-meta.yaml` 两份；规则骨架可以保持一致，但节点域名解析策略应允许分别维护。
 - 如果你把 `rulemesh-substore-mihomo-clash-verge.yaml` 当成 Clash Verge Rev 的日常主配置，建议在“订阅”页对这份本地配置右键“编辑信息”，把 `更新时间隔` 设为 `720` 分钟。
@@ -68,11 +68,11 @@
 - 如果你把 `rulemesh-substore-mihomo-clash-verge.yaml` 当成 Clash Verge Rev 的单一真相，默认应关闭 Clash Verge Rev 的 `DNS 覆写`；否则运行时 `dns` 会被 AppData 下的 `dns_config.yaml` 覆盖。
 - 如果你明确保留 Clash Verge Rev 的 `DNS 覆写`，就应把 `dns_config.yaml` 当成实际生效的 `dns` 配置入口，不要再假设源文件里的 `dns:` 会原样生效。
 - 如果关闭 Clash Verge Rev 的 `DNS 覆写` 后出现“国内可访问、国外代理不通”，默认先检查桌面端私有文件的 `proxy-server-nameserver` 与 `respect-rules`，而不是先回滚规则顺序。
-- 对当前本地私有维护来说，Clash Verge Rev 在关闭 `DNS 覆写` 后，节点域名解析默认收敛为 `respect-rules: false`，并让 `proxy-server-nameserver` 优先走当前网络可直连的阿里云 / 腾讯云 DoH；这一步只针对代理节点 server 域名解析。
+- 对当前本地私有维护来说，Clash Verge Rev 在关闭 `DNS 覆写` 后，DNS 连接默认收敛为 `respect-rules: true`，让 Mihomo 自己访问海外 DoH 端点时也遵守 `rules` 分流；节点域名解析仍由 `proxy-server-nameserver` 优先走当前网络可直连的阿里云 / 腾讯云 DoH。
 - 如果出现“Clash Verge Rev 正常、Clash Meta for Android 不通”的情况，默认先排查 Clash Meta 的节点域名解析启动链，而不是先改规则顺序。
 - Android 侧如果只是节点域名解析不稳定，优先只调整 `proxy-server-nameserver`；不要一上来就把全部国际业务 DNS 改回国内。
 - 当前本地私有维护默认允许 Clash Meta 专用文件把 `proxy-server-nameserver` 收敛到阿里云 / 腾讯云 DoH，以提高移动网络下的首连稳定性；这一步只针对代理节点 server 域名解析。
-- 这份模板不会把 `DIRECT` 或国内直连域名集交给国内 DNS；普通目标网站域名统一由海外 `nameserver` 解析，国内 DNS 只允许出现在 `proxy-server-nameserver`。
+- 这份模板不会把 `DIRECT` 或国内直连域名集交给国内 DNS；普通目标网站域名统一由海外 `nameserver` 解析，国内 DNS 只允许出现在 `default-nameserver` 与 `proxy-server-nameserver`。
 
 ## 代理组过滤约定
 
@@ -85,7 +85,7 @@
 - Mihomo 的体验优化优先级，不是继续堆规则，而是先把 `tun`、`sniffer`、`dns` 这层运行时补齐。
 - DNS 分流不按 `DIRECT` / `PROXY` 两分，也不再把国内直连域名集单独送回国内 DNS；普通目标网站域名默认走海外 `nameserver`。
 - 新增直连规则时，要先判断它是否仍属于普通目标网站域名；只要是目标网站域名，就不得为了连通性把它加入国内 `nameserver-policy`。
-- `proxy-server-nameserver` 要与业务 DNS 分开维护；前者只负责节点域名解析，避免规则 DNS 与节点 DNS 互相依赖。
+- `default-nameserver`、`proxy-server-nameserver` 要与业务 DNS 分开维护；前者只负责 DNS 服务器域名 bootstrap，后者只负责节点域名解析，避免业务 DNS 与节点 DNS 互相依赖。
 - 如果要给 Clash Meta for Android 做定向兼容，优先只动它自己的 `proxy-server-nameserver`，并把变更局限在私有 Android 文件，不要反向污染 Clash Verge Rev 文件。
 - 当前 `dist/mihomo/classical/` 默认只发布 Mihomo 已确认支持的规则类型；像 `URL-REGEX` 这类 Surge 仍可使用、但 Mihomo classical 当前不支持的规则，会保留在源规则层和 Surge 产物中，但不会写入 Mihomo 产物。
 - 这不是放弃该类规则；如果后续 Mihomo 官方版本已支持并经仓库验证通过，Mihomo 产物会同步恢复输出，不需要反向删改源规则。

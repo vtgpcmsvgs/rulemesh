@@ -108,13 +108,14 @@ proxy-providers: {}
         self.assertTrue(any("dns.nameserver" in finding.message for finding in findings))
         self.assertTrue(any("缺少 proxy-server-nameserver" in finding.message for finding in findings))
 
-    def test_mihomo_accepts_proxy_server_nameserver_domestic_exception(self) -> None:
+    def test_mihomo_accepts_domestic_bootstrap_exceptions(self) -> None:
         path = self.write_temp(
             "mihomo-public.yaml",
             """dns:
   enable: true
   default-nameserver:
-    - 1.1.1.1
+    - 223.5.5.5
+    - 119.29.29.29
   nameserver:
     - https://cloudflare-dns.com/dns-query
     - https://dns.google/dns-query

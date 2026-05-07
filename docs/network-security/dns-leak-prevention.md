@@ -15,9 +15,9 @@
 ## 默认安全姿态
 
 - 普通目标网站域名默认不得交给国内 DNS。
-- 国内 DNS 只能作为代理节点 server 域名解析的专用例外。
+- 国内 DNS 只能作为 DNS 服务器域名 bootstrap 与代理节点 server 域名 bootstrap 的专用例外。
 - 不要为了让节点更容易首连，就把 Surge 的 `dns-server`、`encrypted-dns-server` 或 Mihomo 的业务 `nameserver` 全局改成国内 DNS。
-- 任何把全局 DNS 改成 `system`、阿里云 DNS、腾讯云 DNS、`114.114.114.114` 或其他国内解析入口的操作，都必须按高风险变更处理。
+- 任何把业务 DNS 改成 `system`、阿里云 DNS、腾讯云 DNS、`114.114.114.114` 或其他国内解析入口的操作，都必须按高风险变更处理；`default-nameserver` / `proxy-server-nameserver` 例外只能服务 bootstrap。
 - 不能只用“网页能打开”“节点能测速”作为验收结论；DNS 出口也必须被验证。
 
 ## Surge 实现规范
@@ -25,22 +25,23 @@
 Surge 没有 Mihomo 的 `proxy-server-nameserver` 或 `dns-mode` 字段，不能伪造同名配置。Fake IP 由 Surge Enhanced Mode / VIF 运行时提供，profile 中不要写 `dns-mode = fake-ip`。新增 DNS、fake-ip、Tun 或透明代理字段时，必须按目标客户端自己的 profile 语义确认，不要用“另一个客户端有近似字段”来推断可用性。Surge 必须使用：
 
 - Surge Mac/iOS 运行时的 Enhanced Mode / VIF
-- `use-local-host-item-for-proxy = true`
+- `use-local-host-item-for-proxy = false`
 - `[Host]` 里的 `DOMAIN-SET:<proxy-node-domains URL> = server:<节点专用 DNS>`
 
 推荐基线：
 
 ```ini
-use-local-host-item-for-proxy = true
+use-local-host-item-for-proxy = false
 dns-server = 1.1.1.1, 8.8.8.8, 9.9.9.9
 encrypted-dns-server = https://cloudflare-dns.com/dns-query, https://dns.google/dns-query
+encrypted-dns-follow-outbound-mode = true
 
 [Host]
-raw.githubusercontent.com = server:system
+raw.githubusercontent.com = server:https://cloudflare-dns.com/dns-query
 DOMAIN-SET:https://example.com/share/file/proxy-node-domains = server:https://dns.alidns.com/dns-query
 ```
 
-`raw.githubusercontent.com = server:system` 是规则产物下载自举例外，不得被扩展成普通目标网站解析方案。
+`raw.githubusercontent.com = server:https://cloudflare-dns.com/dns-query` 是规则产物下载解析例外，不得被扩展成普通目标网站解析方案，也不是代理节点 bootstrap。
 
 上述海外 `dns-server` 的明文 IPv4 端点应先命中 `proxy/overseas_dns_ipv4_proxy` 并统一走美国地区策略，避免 1.1.1.1 / 8.8.8.8 / 9.9.9.9 的出口与普通代理出口错位。
 
@@ -54,6 +55,9 @@ Mihomo 必须使用原生 DNS 机制，不套用 Surge 的 `[Host]`。
 
 ```yaml
 dns:
+  default-nameserver:
+    - 223.5.5.5
+    - 119.29.29.29
   nameserver:
     - https://cloudflare-dns.com/dns-query
     - https://dns.google/dns-query
@@ -64,6 +68,7 @@ dns:
 
 含义：
 
+- `default-nameserver` 只负责 DNS 服务器域名 bootstrap，可以使用国内可直连 DNS。
 - `nameserver` 负责普通目标网站域名，默认使用海外 DNS。
 - `proxy-server-nameserver` 负责代理节点 server 域名，可以使用国内可直连 DoH 提高节点首连稳定性。
 
@@ -124,7 +129,7 @@ $content = Array.from(domains).sort().join("\n") + "\n";
 - `dnsleaktest.com` 不再泄漏到国内 DNS。
 - `browserleaks.com/dns` 不再泄漏到国内 DNS。
 - Surge DNS 日志 / 请求日志中，普通海外目标域名没有走国内 DNS。
-- Mihomo 运行时 `/configs` 或客户端日志中，业务 `nameserver` 与节点 `proxy-server-nameserver` 分工符合预期。
+- Mihomo 运行时 `/configs` 或客户端日志中，业务 `nameserver`、DNS 服务器 bootstrap `default-nameserver` 与节点 `proxy-server-nameserver` 分工符合预期。
 - 普通浏览器访问海外网站时，DNS 出口与代理出口 IP 不再冲突。
 - 代理节点仍能正常连接。
 - 订阅与规则集仍能正常更新。

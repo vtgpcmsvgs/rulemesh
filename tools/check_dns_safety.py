@@ -289,7 +289,11 @@ def validate_mihomo(path: Path, lines: list[str]) -> list[DnsSafetyFinding]:
         needles = domestic_needles_in(line)
         if not needles:
             continue
-        if current_key in {"proxy-server-nameserver", "proxy-server-nameserver-policy"}:
+        if current_key in {
+            "default-nameserver",
+            "proxy-server-nameserver",
+            "proxy-server-nameserver-policy",
+        }:
             continue
 
         if current_key == "nameserver":
@@ -300,7 +304,7 @@ def validate_mihomo(path: Path, lines: list[str]) -> list[DnsSafetyFinding]:
                 path,
                 index,
                 f"Mihomo dns.{current_key or '未知段'} 包含国内 DNS ({', '.join(needles)})，普通目标网站域名可能泄漏给国内解析方。",
-                "国内 DNS 只允许用于 proxy-server-nameserver；业务 nameserver、nameserver-policy 与 direct-nameserver 使用海外 DNS 或移除。",
+                "国内 DNS 只允许用于 default-nameserver 的 DNS 服务器域名 bootstrap，以及 proxy-server-nameserver 的节点 server 域名 bootstrap；业务 nameserver、nameserver-policy 与 direct-nameserver 使用海外 DNS 或移除。",
             )
         )
 

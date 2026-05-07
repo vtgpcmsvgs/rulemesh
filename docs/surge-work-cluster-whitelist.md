@@ -39,6 +39,7 @@
 - `proxy/polygon_rpc_proxy.list` 继续保留 `🚀 节点选择`，用于白名单模式下显式放行 Polygon 主网 RPC 域名
 - `proxy/bsc_rpc_proxy.list` 继续保留 `🚀 节点选择`，用于白名单模式下显式放行 BSC 主网 RPC 域名
 - `proxy/overseas_dns_ipv4_proxy.list` 继续保留，并在 Surge 配置里以 `RULE-SET,...,"🇺🇸 美国-自动选择",no-resolve` 接入，用于白名单模式下显式放行 `1.1.1.1/32`、`8.8.8.8/32` 与 `9.9.9.9/32`
+- `DOMAIN,dns.alidns.com,DIRECT` 与 `DOMAIN,doh.pub,DIRECT` 继续作为代理节点 bootstrap DNS 直连例外，必须放在 DoH / DoH3 / DoQ 通用规则前，避免代理尚未建立时产生 DNS 走代理的循环依赖
 - DoH / DoH3 / DoQ 以及 `cloudflare-dns.com`、`dns.google`、`dns.quad9.net` 继续作为海外加密 DNS 显式白名单入口，并统一走 `🇺🇸 美国-自动选择`
 - `LAN,DIRECT` 继续保留在白名单直连入口中
 - `direct/os_time_direct` 继续保留 `DIRECT`，用于 Windows / Apple 系统时间同步，不并入节点选择
@@ -74,9 +75,10 @@
 12. Polygon 主网 RPC 节点选择入口
 13. BSC 主网 RPC 节点选择入口
 14. 海外 DNS 主 IPv4 端点美国分流入口
-15. 海外加密 DNS 显式白名单入口
-16. 指定直连入口（含阿里云广覆盖 REJECT 观察兜底）
-17. 全局 `FINAL,REJECT` 兜底
+15. 代理节点 bootstrap DNS 直连例外
+16. 海外加密 DNS 显式白名单入口
+17. 指定直连入口（含阿里云广覆盖 REJECT 观察兜底）
+18. 全局 `FINAL,REJECT` 兜底
 
 ## 不要误恢复的广谱放行项
 
