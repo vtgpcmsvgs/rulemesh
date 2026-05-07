@@ -322,6 +322,12 @@ def normalize_source_ip(value: str) -> str:
     return network
 
 
+def ensure_no_resolve_option(option_fields: list[str]) -> list[str]:
+    if any(option.lower() == "no-resolve" for option in option_fields):
+        return option_fields
+    return [*option_fields, "no-resolve"]
+
+
 def parse_plain_value(text: str) -> ParsedLine:
     parsed = ParsedLine()
     try:
@@ -346,8 +352,8 @@ def parse_plain_value(text: str) -> ParsedLine:
         return parsed
 
     parsed.source_type = "ipcidr"
-    parsed.surge_rule = f"{token},{network}"
-    parsed.mihomo_classical = f"{token},{network}"
+    parsed.surge_rule = f"{token},{network},no-resolve"
+    parsed.mihomo_classical = f"{token},{network},no-resolve"
     return parsed
 
 
@@ -418,9 +424,23 @@ def parse_simple_rule(token: str, rest: str) -> ParsedLine:
                 parsed.warnings.append(
                     f"{token} has an unsupported extra field kept only in Surge output: {extra}"
                 )
+        option_fields = ensure_no_resolve_option(option_fields)
         parsed.source_type = "ipcidr"
         parsed.surge_rule = ",".join([network_token, network, *option_fields])
         parsed.mihomo_classical = ",".join([network_token, network, *option_fields])
+        return parsed
+
+    if token in {"GEOIP", "IP-ASN", "ASN"}:
+        option_fields = []
+        for extra in extras:
+            if extra.lower() == "no-resolve":
+                option_fields.append("no-resolve")
+            else:
+                parsed.warnings.append(f"{token} has an unsupported extra field: {extra}")
+        option_fields = ensure_no_resolve_option(option_fields)
+        parsed.source_type = "ipcidr"
+        parsed.surge_rule = ",".join([token, value, *option_fields])
+        parsed.mihomo_classical = ",".join([token, value, *option_fields])
         return parsed
 
     if token == "SRC-IP":

@@ -89,6 +89,31 @@ class TempRepoBuildRulesTests(unittest.TestCase):
         self.assertEqual(result.outputs["mihomo_classical"], ["DOMAIN,example.com"])
         self.assertEqual(result.warnings, [])
 
+    def test_build_source_adds_no_resolve_to_ip_like_rules(self) -> None:
+        path = self.rules_root / "direct" / "ip_rules.list"
+        path.write_text(
+            "203.0.113.1\n"
+            "IP-CIDR,198.51.100.0/24\n"
+            "IP-CIDR6,2001:db8::/32,no-resolve\n"
+            "GEOIP,CN\n"
+            "IP-ASN,13335\n",
+            encoding="utf-8",
+        )
+
+        with self.patch_repo_paths():
+            result = build_rules.build_source(path)
+
+        expected = [
+            "IP-CIDR,203.0.113.1/32,no-resolve",
+            "IP-CIDR,198.51.100.0/24,no-resolve",
+            "IP-CIDR6,2001:db8::/32,no-resolve",
+            "GEOIP,CN,no-resolve",
+            "IP-ASN,13335,no-resolve",
+        ]
+        self.assertEqual(result.outputs["surge_rules"], expected)
+        self.assertEqual(result.outputs["mihomo_classical"], expected)
+        self.assertEqual(result.warnings, [])
+
     def test_build_source_normalizes_target_specific_aliases(self) -> None:
         path = self.rules_root / "direct" / "ports.list"
         path.write_text(

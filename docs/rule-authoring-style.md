@@ -110,6 +110,12 @@ DOMAIN-KEYWORD,...
 - `DOMAIN-SUFFIX`
 - `DOMAIN-WILDCARD`
 - `IP-CIDR`
+- `IP-CIDR6`
+- `GEOIP`
+- `IP-ASN`
+- `ASN`
+
+IP 类源规则可以只写主体字段；构建产物会自动补 `no-resolve`。这样即使混合规则集里同时存在域名和 IP 规则，也不会为了判断 IP 类规则额外触发本地 DNS。纯 IP 规则集在客户端 `RULE-SET` 调用层仍建议保留 `no-resolve`，让意图更明显。
 
 “兜底入口”通常包括：
 

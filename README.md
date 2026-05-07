@@ -77,6 +77,7 @@ python tools/build_rules.py
 - 从 `rules/` 读取源规则
 - 自动生成 `dist/surge/rules/` 与 `dist/mihomo/classical/`
 - 将纯域名规则规范化成显式规则行，例如 `.example.com` 会输出成 `DOMAIN-SUFFIX,example.com`
+- 对 `IP-CIDR`、`IP-CIDR6`、`GEOIP`、`IP-ASN`、`ASN` 这类 IP 判断规则自动补 `no-resolve`，避免客户端为了判断 IP 类规则提前触发本地 DNS
 - 尝试识别 `domain-only`、`ipcidr-only`、`classical/mixed`
 - 强制校验 `rules/{reject,direct,proxy,region}/` 中的自写注释为中文；若出现纯英文注释会直接失败
 - 对不能安全转换到目标客户端格式的行输出 warning，而不是静默吞掉
@@ -167,15 +168,15 @@ python tools/build_rules.py
   - 允许包含按局域网源 IP 的设备分流、私有 `policy-path`、`[MITM]` 与证书参数。
 - 其中私有 `rulemesh-substore-surge-work-whitelist.conf` 当前采用工作电脑白名单模式：只保留明确列出的放行入口，未列入白名单的流量统一 `REJECT`。
 - 这份工作白名单默认不额外开放局域网代理入口；旁路由已接管流量，工作文件不承担 LAN 代理服务。
-- 其中只有设备分流继续按局域网源 IP 约束，并按指定 AWS 区域 / 多地区链式 SOCKS5 IP 段定向到对应工作机亚洲出口组；区域精确、GitHub SSH、GitHub Raw 自举入口、GitHub Core 代理入口、GitHub 观察兜底、私有订阅域名同步块、1Password 核心连接、AdsPower、Polygon 主网 RPC、BSC 主网 RPC、海外 DNS 主 IPv4 端点、Cloudflare DNS 与指定直连不再额外限制源 IP。
+- 其中只有设备分流继续按局域网源 IP 约束，并按指定 AWS 区域 / 多地区链式 SOCKS5 IP 段定向到对应工作机亚洲出口组；区域精确、GitHub SSH、GitHub Raw 自举入口、GitHub Core 代理入口、GitHub 观察兜底、私有订阅域名同步块、1Password 核心连接、AdsPower、Polygon 主网 RPC、BSC 主网 RPC、海外 DNS 主 IPv4 端点、海外加密 DNS 显式入口与指定直连不再额外限制源 IP。
 - 在该白名单里，`direct/os_time_direct`、`direct/microsoft_direct` 与 `direct/macos_update_direct` 都属于允许保留的系统类直连入口。
 - 白名单专属的单个直连域名例外（例如 `smtp.163.com`）默认直接维护在“指定直连”入口，不为单条规则额外拆分公开 `rules/` 文件。
 - 白名单专属的单个拒绝域名，或只用于阻断浏览器扩展更新链路的拒绝规则，也默认直接维护在白名单的“拒绝规则”入口，不为单条规则额外拆分公开 `rules/` 文件。
-- 其中 `proxy/onepassword_proxy`、`proxy/polygon_rpc_proxy`、`proxy/bsc_rpc_proxy`、`proxy/overseas_dns_ipv4_proxy` 与 `DOMAIN-SUFFIX,cloudflare-dns.com` 都是允许保留的节点选择入口，用于白名单模式下显式放行指定代理端点。
+- 其中 `proxy/onepassword_proxy`、`proxy/polygon_rpc_proxy`、`proxy/bsc_rpc_proxy`、`proxy/overseas_dns_ipv4_proxy`，以及 DoH / DoH3 / DoQ、`cloudflare-dns.com`、`dns.google`、`dns.quad9.net` 都是允许保留的节点选择入口，用于白名单模式下显式放行指定代理端点。
   - 其中 GitHub SSH 后先进入 GitHub Raw 自举入口，再显式放行 `proxy/github_core_proxy`，并保留一条 `DOMAIN-KEYWORD,github,REJECT` 广覆盖观察兜底，用于发现 SSH / GitHub Core 之外的漏网之鱼；AdsPower 细分规则后也保留一条 `DOMAIN-KEYWORD,adspower,REJECT` 广覆盖观察兜底。
   - 阿里云香港 SSH、`aliyuncs.com` 与 `check.myclientip.com` 统一收敛到“指定直连”段显式放行；其后额外保留一条阿里云广覆盖 `REJECT` 观察兜底，用于发现上游阿里云规则的漏网之鱼。
   - 私有订阅域名统一在 `%USERPROFILE%\Desktop\rulemesh-local\current\private_subscription_direct.list` 维护，并通过脚本同步到本地四份私有配置中的“Chrome 访问节点选择例外 + 订阅更新直连”规则块，不回写公开模板。
-  - 其中 `raw.githubusercontent.com` 额外绑定 `server:system` 作为规则产物下载自举例外；普通目标网站的全局 DNS 仍保持海外 DNS，不再回退到 `system + 国内 DNS`。
+  - 其中 `raw.githubusercontent.com` 作为规则产物下载自举入口，但不再使用 `server:system`；普通目标网站的全局 DNS 仍保持海外 DNS，不再回退到 `system + 国内 DNS`。
   - 工作白名单模式下，广覆盖观察规则统一只允许使用 `REJECT`；不要对 `DIRECT` 或 `PROXY` 规则使用 `extended-matching`，否则会把可伪造的 Host / SNI 纳入放行判断，扩大绕过白名单的攻击面。
   - 原单独 `IP 规则` 段已删除，避免与设备分流重复。
   - 其中 AdsPower 在精细规则后允许额外保留一条广覆盖观察兜底，用于发现细分规则漏网之鱼。
@@ -194,14 +195,14 @@ python tools/build_rules.py
   - 已移除设备分流、私有订阅地址与 `[MITM]`
 - 默认保持 `allow-wifi-access = false`，不把个人终端直接暴露给局域网其他设备
 - Surge profile 不写 `dns-mode = fake-ip`；Fake IP 由 Surge Enhanced Mode / VIF 运行时提供，Mac 端加载 profile 后需要在 Surge 里启用 Enhanced Mode
-- 默认启用 `use-local-host-item-for-proxy = true`、海外 `encrypted-dns-server` 与 `test-timeout = 3` 这组运行时参数
-- 默认开启 `ipv6 = true`，并继续使用 `ipv6-vif = auto` 只在本地网络具备有效 IPv6 时启用 Surge IPv6 VIF，先把双栈能力打开，但不默认强推 `always`
+- 默认启用 `use-local-host-item-for-proxy = false`、`hijack-dns = *:53`、海外 `encrypted-dns-server`、`encrypted-dns-follow-outbound-mode = true` 与 `test-timeout = 3` 这组运行时参数
+- 默认关闭 `ipv6 = false`，并注释 `ipv6-vif = auto`；如需 IPv6，应先完成 DNS 泄漏、WebRTC 与出口一致性测试
 - 默认同时接入 `direct/os_time_direct`，并配套接入 `reject/os_update_reject`、`direct/microsoft_direct` 与 `direct/macos_update_direct`；前者负责系统时间同步，后两者便于临时放开 Windows / macOS 系统升级直连
 - 默认接入 AdsPower 专项 `reject/direct/proxy` 规则集，并保持在 `proxy/gfw` 前完成细分控制
 - 默认接入 Polygon 主网 RPC 专项 `proxy/polygon_rpc_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
 - 默认接入 BSC 主网 RPC 专项 `proxy/bsc_rpc_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
 - 默认接入海外 DNS 主 IPv4 端点专项 `proxy/overseas_dns_ipv4_proxy` 规则，并保持在 `proxy/gfw` 前优先命中；命中后统一走 `🇺🇸 美国-自动选择`
-- 默认在 `github_ssh_direct` 后先保留 `DOMAIN,raw.githubusercontent.com,"🚀 节点选择"` 自举入口，再接入 `proxy/github_core_proxy`；同时继续保留 `raw.githubusercontent.com = server:system` 这一条规则产物下载自举例外，但全局 DNS 必须使用海外 DNS
+- 默认在 `github_ssh_direct` 后先保留 `DOMAIN,raw.githubusercontent.com,"🚀 节点选择"` 自举入口，再接入 `proxy/github_core_proxy`；同时继续保留 `raw.githubusercontent.com = server:https://cloudflare-dns.com/dns-query` 这一条规则产物下载解析例外，但它不是代理节点 bootstrap，不能替代 `proxy-node-domains` 的 AliDNS 解析
 - Surge `[Host]` 中的 `proxy-node-domains` 必须使用生产设备可直接访问的 Sub-Store 分享文件 URL，形如 `https://<你的 Sub-Store 后端或反代域名>/share/file/proxy-node-domains`；不要把未经同网络验证的 `/api/file/` 链接直接写进生产配置
 - `proxy-node-domains` 返回内容必须过滤 IP，并按一行一个域名输出；逗号分隔的一整行不符合 Surge `DOMAIN-SET` 预期
 - 这类 Surge 运行时参数不要求 Mihomo 公开模板逐项镜像；Mihomo 继续按各自的 Tun / DNS 语义单独维护
@@ -250,6 +251,7 @@ python tools/build_rules.py
 - 中大型源规则文件默认按“同平台 / 同服务聚合展示 + 上游优先 + 本地兜底”维护，不再把显式域名和关键词兜底简单堆成两大坨
 - 文件头必须先写清楚：这份规则负责什么、不负责什么、与相邻规则文件的边界是什么、客户端顺序上应放在哪里
 - 同一小节内部默认顺序是：小节注释、`INCLUDE,upstream/...`、显式域名 / 网段、`DOMAIN-KEYWORD` 兜底
+- IP 类源规则可以只写 `IP-CIDR`、`IP-CIDR6`、`GEOIP`、`IP-ASN`、`ASN` 主体；构建产物会自动补 `no-resolve`，客户端调用纯 IP 规则集时仍建议在 `RULE-SET` 层保留 `no-resolve`
 - 像 `ai_tw`、`ai_cn_direct`、`bytedance_direct`、`google_tw`、`crypto_tw` 这类多平台或多服务混合文件，优先按平台或服务分组
 - 像 `cn_direct`、`telegram` 这类入口型或通用基础兜底文件，可以保持“上游主体 + 本地最高优先级兜底”的简单结构，但仍要把边界写清楚
 - 如果本次修改只影响注释、分组与顺序，且构建后确认 `dist/` 内容不变，允许最终只提交源文件；但仍然必须完整执行构建和检查

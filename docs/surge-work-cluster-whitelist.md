@@ -26,10 +26,12 @@
 - `AI US` 入口继续作为白名单显式放行项，但当前只承接海外 AI 平台并统一走美国节点；国内 AI 不应借这条入口放行
 - GitHub 仓库 SSH 定向直连继续保留独立 carve-out
 - GitHub 相关访问继续拆成三段：先保留 `DOMAIN,raw.githubusercontent.com` 自举入口，再显式放行 `proxy/github_core_proxy.list`，其后的 `DOMAIN-KEYWORD,github` 广覆盖观察兜底在工作白名单模式下统一使用 `REJECT`，专门用于发现 SSH / GitHub Core 之外的漏网之鱼
-- `raw.githubusercontent.com` 继续额外绑定 `server:system` 解析，作为规则产物下载自举例外；全局 `dns-server` 不再保留 `system + 国内 DNS` 组合，普通目标网站域名默认走海外 DNS
+- `raw.githubusercontent.com` 继续作为规则产物下载自举入口，但不再绑定 `server:system`；当前改用海外 DoH 解析，避免规则产物下载回落到本地/国内系统 DNS
 - 工作白名单默认不额外开放局域网代理入口；旁路由已接管流量，`allow-wifi-access` 继续保持 `false`
 - Surge profile 不写 `dns-mode = fake-ip`；Fake IP 由 Surge Enhanced Mode / VIF 运行时提供，工作路由设备加载 profile 后需要在 Surge 里启用 Enhanced Mode
-- 海外 `encrypted-dns-server` 与 `use-local-host-item-for-proxy = true` 继续保留，配合 `[Host]` 中的 GitHub Raw 自举例外与 `proxy-node-domains` 节点 server 域名专用解析
+- IPv6 默认关闭，等完成 IPv6 DNS 泄露、WebRTC 与出口测试后再重新评估
+- `hijack-dns = *:53` 负责接管传统 UDP/TCP 53 DNS；加密 DNS 流量只能作为显式白名单入口放行，不能靠 `FINAL` 兜底
+- 海外 `encrypted-dns-server`、`encrypted-dns-follow-outbound-mode = true` 与 `use-local-host-item-for-proxy = false` 继续保留，配合 `[Host]` 中的 GitHub Raw 规则产物解析与 `proxy-node-domains` 节点 server 域名专用 bootstrap 解析
 - 私有订阅域名同步块继续保留独立显式放行入口，顺序位于 GitHub 观察兜底之后、1Password 之前；域名清单统一在 `%USERPROFILE%\Desktop\rulemesh-local\current\private_subscription_direct.list` 维护，再通过同步脚本先插入 Chrome 访问这些域名时改走 `🚀 节点选择` 的例外，再保留订阅更新直连
 - `proxy/onepassword_proxy.list` 继续保留 `🚀 节点选择`，用于白名单模式下显式放行 1Password 核心连接；其上游快照由仓库每天自动抓取官方支持页生成，但默认只覆盖官方自有核心域名与更新/基础设施端点
 - AdsPower 继续维持 `adspower_reject`、`adspower_direct`、`adspower_proxy` 三段细分
@@ -37,7 +39,7 @@
 - `proxy/polygon_rpc_proxy.list` 继续保留 `🚀 节点选择`，用于白名单模式下显式放行 Polygon 主网 RPC 域名
 - `proxy/bsc_rpc_proxy.list` 继续保留 `🚀 节点选择`，用于白名单模式下显式放行 BSC 主网 RPC 域名
 - `proxy/overseas_dns_ipv4_proxy.list` 继续保留，并在 Surge 配置里以 `RULE-SET,...,"🇺🇸 美国-自动选择",no-resolve` 接入，用于白名单模式下显式放行 `1.1.1.1/32`、`8.8.8.8/32` 与 `9.9.9.9/32`
-- `DOMAIN-SUFFIX,cloudflare-dns.com` 继续保留 `🚀 节点选择`，用于白名单模式下显式放行 Cloudflare DNS 域名
+- DoH / DoH3 / DoQ 以及 `cloudflare-dns.com`、`dns.google`、`dns.quad9.net` 继续作为海外加密 DNS 显式白名单入口，并统一走 `🇺🇸 美国-自动选择`
 - `LAN,DIRECT` 继续保留在白名单直连入口中
 - `direct/os_time_direct` 继续保留 `DIRECT`，用于 Windows / Apple 系统时间同步，不并入节点选择
 - 单个白名单专属直连域名（例如 `smtp.163.com`）优先直接维护在 2.10“指定直连”入口，不为单条规则额外新增公开 `rules/` 文件
@@ -72,7 +74,7 @@
 12. Polygon 主网 RPC 节点选择入口
 13. BSC 主网 RPC 节点选择入口
 14. 海外 DNS 主 IPv4 端点美国分流入口
-15. Cloudflare DNS 节点选择入口
+15. 海外加密 DNS 显式白名单入口
 16. 指定直连入口（含阿里云广覆盖 REJECT 观察兜底）
 17. 全局 `FINAL,REJECT` 兜底
 

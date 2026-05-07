@@ -138,14 +138,14 @@ def validate_surge(path: Path, lines: list[str]) -> list[DnsSafetyFinding]:
                 )
             )
 
-    if not use_local_host or use_local_host[1].strip().lower() != "true":
+    if not use_local_host or use_local_host[1].strip().lower() != "false":
         findings.append(
             DnsSafetyFinding(
                 "error",
                 path,
                 use_local_host[0] if use_local_host else 1,
-                "Surge 缺少 use-local-host-item-for-proxy = true，代理连接不会稳定复用 [Host] 节点域名解析例外。",
-                "在 [General] 中保留 use-local-host-item-for-proxy = true。",
+                "Surge 缺少 use-local-host-item-for-proxy = false，命中代理策略的目标域名可能复用 [Host] 本地解析结果。",
+                "在 [General] 中保留 use-local-host-item-for-proxy = false；代理节点 server 域名仍由 [Host] 的 proxy-node-domains 单独 bootstrap。",
             )
         )
 
@@ -204,7 +204,7 @@ def validate_surge(path: Path, lines: list[str]) -> list[DnsSafetyFinding]:
                     path,
                     index,
                     "Surge 配置中出现 Mihomo 的 proxy-server-nameserver 字段，说明 DNS 方案被混用。",
-                    "Surge 只能使用 [Host] + DOMAIN-SET + use-local-host-item-for-proxy。",
+                    "Surge 只能使用 [Host] + DOMAIN-SET 隔离节点 server 域名；不要引入 Mihomo 字段。",
                 )
             )
 

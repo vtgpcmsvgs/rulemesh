@@ -24,7 +24,7 @@ class DnsSafetyTests(unittest.TestCase):
         path = self.write_temp(
             "surge-public.conf",
             """[General]
-use-local-host-item-for-proxy = true
+use-local-host-item-for-proxy = false
 dns-server = system, 223.5.5.5, 119.29.29.29
 encrypted-dns-server = https://dns.alidns.com/dns-query, https://doh.pub/dns-query
 
@@ -43,7 +43,7 @@ raw.githubusercontent.com = server:system
         path = self.write_temp(
             "surge-public.conf",
             """[General]
-use-local-host-item-for-proxy = true
+use-local-host-item-for-proxy = false
 dns-server = 1.1.1.1, 8.8.8.8, 9.9.9.9
 encrypted-dns-server = https://cloudflare-dns.com/dns-query, https://dns.google/dns-query
 
@@ -59,7 +59,7 @@ DOMAIN-SET:https://example.com/share/file/proxy-node-domains = server:https://dn
         path = self.write_temp(
             "surge-public.conf",
             """[General]
-use-local-host-item-for-proxy = true
+use-local-host-item-for-proxy = false
 dns-server = 1.1.1.1, 8.8.8.8, 9.9.9.9
 encrypted-dns-server = https://cloudflare-dns.com/dns-query, https://dns.google/dns-query
 
@@ -77,7 +77,7 @@ DOMAIN-SET:https://example.com/api/file/proxy-node-domains = server:https://dns.
         path = self.write_temp(
             "surge-public.conf",
             """[General]
-use-local-host-item-for-proxy = true
+use-local-host-item-for-proxy = false
 dns-mode = fake-ip
 dns-server = 1.1.1.1, 8.8.8.8, 9.9.9.9
 encrypted-dns-server = https://cloudflare-dns.com/dns-query, https://dns.google/dns-query
