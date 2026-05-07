@@ -31,6 +31,7 @@
 - 维护 `%USERPROFILE%\Desktop\rulemesh-local\current\sync_private_subscription_direct.ps1` 这类 Windows PowerShell 私有同步脚本时，不要直接硬编码中文或 emoji 策略组名；UTF-8 无 BOM 的 `.ps1` 在 Windows PowerShell 5.1 下可能被按本地代码页误读，导致 Mihomo / Surge 配置里写出乱码策略组名并触发 `proxy not found`。优先保持脚本源码 ASCII-only，或从目标配置提取现有策略组名后再写回
 - 上述私有订阅同步脚本在生成 Surge 的 `AND,((PROCESS-NAME,...),(...)),策略名` 逻辑规则时，末尾策略名必须裸写，不要再套双引号；`RULE-SET,...,"🚀 节点选择"` 这类普通规则允许带引号，但 `AND` 规则若写成 `...,"🚀 节点选择"`，Surge 会把引号算进策略名并报 `unknown policy`
 - 维护 `%USERPROFILE%\Desktop\rulemesh-local\current` 里的私有机场 provider 时，如果某个机场同时存在“入口域名”和“真实落地主机”，默认两者都要加入私有订阅直连同步块；不要只保留入口域名，否则 Clash Verge / Mihomo 可能在刷新 provider 时走偏、报 EOF，或把本地缓存刷成不完整内容
+- 维护两份 Mihomo 私有配置里的机场 `proxy-providers` 时，默认每个机场 provider 都要显式保留 `proxy: DIRECT`，表示 Mihomo 后台下载 / 更新订阅 URL 直连；浏览器打开机场官网 / 面板走代理由后面的 `PROCESS-NAME + 域名` 规则负责，不要把 `rule-providers` 拉 GitHub 规则集用的代理出站逻辑套到机场订阅 provider 上
 - 私有机场 provider 若发生重命名（例如机场别名变更），除同步更新 `current` 下的 Mihomo / Surge 配置外，还要检查 Clash Verge 运行目录中的旧 provider 缓存、辅助 profile、remote profile 注册项与历史当前项；避免新旧 provider id 并存，导致 UI 继续读取旧缓存或把问题误判成“节点被过滤”
 - DNS 泄漏按安全事故级别处理：普通目标网站域名默认不得交给国内 DNS；国内 DNS 只能作为“DNS 服务器域名 bootstrap”和“代理节点 server 域名 bootstrap”的专用例外
 - 维护 Surge DNS 时只能使用 `[Host] + DOMAIN-SET` 隔离节点 server 域名；`use-local-host-item-for-proxy` 默认保持 `false`，不要在 Surge 里伪造 Mihomo 的 `proxy-server-nameserver`

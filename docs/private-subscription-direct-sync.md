@@ -18,6 +18,7 @@
 - 同一组规则同时服务 Surge 与 Mihomo，因此源文件只写双方都支持的规则语法
 - Chrome 浏览器访问这些域名时仍可先走 `🚀 节点选择`，不再被订阅更新直连误伤
 - 整个同步块必须位于 `proxy/gfw` 前；其中 Chrome 例外在前，订阅更新直连在后；在工作白名单里则属于显式放行入口
+- Mihomo 的机场订阅后台更新还必须由 `proxy-providers.*.proxy: DIRECT` 显式控制；同步块只负责规则命中，不能替代 provider 自己的下载出站设置
 
 ## 源文件写法
 
@@ -33,6 +34,15 @@
 2. 运行 `powershell -ExecutionPolicy Bypass -File "%USERPROFILE%\Desktop\rulemesh-local\current\sync_private_subscription_direct.ps1"`
 3. 脚本会自动刷新四份本地私有配置中的“Chrome 访问节点选择例外 + 订阅更新直连”规则块，并保留源文件中的分组注释与顺序
 4. 如需人工确认，可检查四份目标文件中的 `PRIVATE_SUBSCRIPTION_DIRECT_START` 与 `PRIVATE_SUBSCRIPTION_DIRECT_END` 标记段
+
+## Mihomo provider 更新边界
+
+- Mihomo 里有两类 provider：`proxy-providers` 拉机场订阅节点清单，`rule-providers` 拉 GitHub 规则集产物。
+- `proxy-providers.*.proxy: DIRECT` 只表示“后台下载 / 更新这个机场订阅 URL 时直连”；它不会把浏览器访问机场官网 / 面板也强制直连。
+- 浏览器打开机场网站时，连接会进入 `rules`，先命中同步脚本生成的 `PROCESS-NAME + 域名` 规则，再走 `🚀 节点选择`。
+- 后台订阅更新不是 Chrome 进程，也不应依赖浏览器例外规则；因此必须在每个私有机场 `proxy-provider` 上保留 `proxy: DIRECT`。
+- `rule-providers.*.proxy: "🚀 节点选择"` 是另一条链路，用于让 GitHub 规则产物更新走代理；不要把它反向套到机场订阅 provider 上。
+- 维护时请记住目标拆成两句话：浏览器访问机场网站走代理；Mihomo 后台刷新机场订阅直连。
 
 ## Surge 语法防回滚
 

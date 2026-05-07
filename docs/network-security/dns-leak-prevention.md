@@ -74,6 +74,12 @@ dns:
 
 禁止把国内 DNS 写进业务 `nameserver`、`nameserver-policy` 或 `direct-nameserver` 来处理普通目标网站域名。即使某条规则最终是 `DIRECT`，它也仍然可能是账号平台、海外服务或敏感业务域名，不能因此默认回到国内解析链。
 
+Mihomo 的 provider 更新也要分清两条链路：
+
+- `proxy-providers` 拉机场订阅节点清单，默认应在每个机场 provider 上显式写 `proxy: DIRECT`，让后台订阅 URL 更新直连。
+- `rule-providers` 拉本仓库 GitHub 规则集产物，可以按当前网络环境使用 `proxy: "🚀 节点选择"`，避免规则更新被 GitHub 访问质量影响。
+- 浏览器打开机场官网 / 面板不走 provider 下载逻辑，应由 `rules` 里的 `PROCESS-NAME + 域名` 规则控制；不要用 `proxy-providers.*.proxy` 去推断浏览器访问路径。
+
 ## Sub-Store proxy-node-domains 要求
 
 `proxy-node-domains` 的职责是从 Sub-Store 聚合订阅 `global-egress` 中自动提取所有节点的 `server` 字段，过滤 IP，只保留域名，一行一个。

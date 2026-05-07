@@ -21,6 +21,7 @@
 - `tun + sniffer + dns + proxy-providers + proxy-groups + rule-providers + rules` 的完整结构
 - `geodata-mode: false` + `geox-url.mmdb` 显式固定到与 Surge 共用的本仓库 Release 镜像地址
 - 多订阅聚合后的统一总开关与区域自动组
+- `proxy-providers.*.proxy: DIRECT` 的订阅更新基线：它只控制 Mihomo 后台拉取机场订阅 URL，浏览器访问机场官网 / 面板仍由后面的 `rules` 判断
 - `reject`、`direct`、`proxy`、`region` 四类 RuleMesh `classical` 产物接入
 - `reject/wps_reject.yaml` 当前按“WPS 全量封网”维护；如需保留 WPS 云文档、模板、账号、推送或升级能力，请不要接入这条规则
 - GitHub 继续采用“SSH 定向直连 + Core HTTPS 显式代理”拆分：`direct/github_ssh_direct.yaml` 只承接 `github.com:22` 与 `ssh.github.com:443`，`proxy/github_core_proxy.yaml` 则显式承接 GitHub 网页、`api.github.com`、Gist、Raw、静态资源与附件
@@ -64,6 +65,7 @@
 - 如果你把 `rulemesh-substore-mihomo-clash-verge.yaml` 当成 Clash Verge Rev 的日常主配置，建议在“订阅”页对这份本地配置右键“编辑信息”，把 `更新时间隔` 设为 `720` 分钟。
 - 这项 `720` 分钟设置不会写回 YAML，而是保存在每台设备自己的 Clash Verge Rev profile 元数据里；因此同一份文件换到另一台设备后，也要重新手动设置一次。
 - 这项 `720` 分钟设置不替代下方 `proxy-providers` / `rule-providers` 的 `interval`；YAML 里的 `interval` 仍是 Mihomo 内核层的下载间隔，Clash Verge Rev 的 `720` 只是额外的外层定时重载。
+- `proxy-providers` 和 `rule-providers` 都有自己的 `proxy` 字段，但含义只限于“下载 / 更新这个 provider 时走哪个出站”。机场订阅属于 `proxy-providers`，默认写 `proxy: DIRECT`；GitHub 规则集属于 `rule-providers`，可以按需要继续写 `proxy: "🚀 节点选择"`。
 - 对长期后台运行、电脑睡眠唤醒、偶发网络抖动这些场景，`720` 分钟外层定时重载可作为 provider 自动更新的保底保险；当前本地经验默认建议保留。
 - 如果你把 `rulemesh-substore-mihomo-clash-verge.yaml` 当成 Clash Verge Rev 的单一真相，默认应关闭 Clash Verge Rev 的 `DNS 覆写`；否则运行时 `dns` 会被 AppData 下的 `dns_config.yaml` 覆盖。
 - 如果你明确保留 Clash Verge Rev 的 `DNS 覆写`，就应把 `dns_config.yaml` 当成实际生效的 `dns` 配置入口，不要再假设源文件里的 `dns:` 会原样生效。
@@ -95,7 +97,9 @@
 
 - 真实订阅更新域名只在 `%USERPROFILE%\Desktop\rulemesh-local\current\private_subscription_direct.list` 维护，不写回公开模板
 - 修改后运行 `powershell -ExecutionPolicy Bypass -File "%USERPROFILE%\Desktop\rulemesh-local\current\sync_private_subscription_direct.ps1"`，统一同步到两份 Mihomo 私有配置与两份 Surge 私有配置
-- 同步脚本会先写入 Chrome 访问这些域名时的 `🚀 节点选择` 例外，再写入订阅更新继续 `DIRECT` 的规则
+- 同步脚本会先写入 Chrome 访问这些域名时的 `🚀 节点选择` 例外，再写入订阅更新继续 `DIRECT` 的规则；这负责“浏览器打开机场网站走代理”的那条访问路径
+- Mihomo 后台自动刷新机场订阅时，不依赖浏览器进程规则，而是由对应 `proxy-providers.*.proxy: DIRECT` 显式控制；这负责“后台订阅更新直连”的那条更新路径
+- 不要把 `proxy-providers.*.proxy` 与 `rule-providers.*.proxy` 混为一谈：前者是机场订阅节点清单更新，后者是 GitHub 规则集更新
 - 这份共享源文件应只保留 Surge / Mihomo 都能直接复用的规则语法；当前优先使用 `DOMAIN`、`DOMAIN-SUFFIX`、`DOMAIN-WILDCARD`
 - 在两份 Mihomo 私有配置中，这组同步块都应继续放在 `proxy_gfw` 前
 - 详细维护方式见 [docs/private-subscription-direct-sync.md](private-subscription-direct-sync.md)

@@ -123,6 +123,11 @@ dns:
 proxy-providers:
   # 说明：下面这 3 个是公开模板里的占位订阅源。
   # interval: 21600 = 每 6 小时自动重新拉一次订阅。
+  # proxy: DIRECT = Mihomo 后台下载 / 更新机场订阅 URL 时直连。
+  # 这里控制的是 proxy-providers 自己的订阅更新连接，不控制浏览器访问机场官网 / 面板。
+  # 浏览器访问机场网站应交给 rules 里的 PROCESS-NAME + 域名规则判断；私有配置会先让 Chrome 命中节点选择，再让后台订阅更新直连。
+  # 不要把机场订阅 provider 的 proxy 改成“🚀 节点选择”，否则订阅链接可能经由代理节点暴露，也可能让订阅更新依赖代理本身造成循环。
+  # GitHub 规则集更新是另一条链路；rule-providers 可以继续按需要使用 proxy: "🚀 节点选择"。
   # health-check.interval: 300 = 每 5 分钟做一次测速，只影响延迟显示和自动组选路。
   # 如果在 Clash Verge Rev 里把这份文件作为本地配置长期使用，建议再配合客户端侧的 720 分钟“更新时间隔”做外层定时重载。
   # 维护约定：YAML 里的 interval 仍负责 Mihomo 内核层更新；Clash Verge Rev 的 720 分钟只作为保底保险，不替代这里的 interval。
@@ -131,6 +136,7 @@ proxy-providers:
     url: "https://example.com/subscriptions/provider-a.yaml"
     path: ./proxy_provider/provider_a.yaml
     interval: 21600
+    proxy: DIRECT
     health-check:
       enable: true
       url: "http://www.google.com/generate_204"
@@ -147,6 +153,7 @@ proxy-providers:
     url: "https://example.com/subscriptions/provider-b.yaml"
     path: ./proxy_provider/provider_b.yaml
     interval: 21600
+    proxy: DIRECT
     health-check:
       enable: true
       url: "http://www.google.com/generate_204"
@@ -163,6 +170,7 @@ proxy-providers:
     url: "https://example.com/subscriptions/provider-c.yaml"
     path: ./proxy_provider/provider_c.yaml
     interval: 21600
+    proxy: DIRECT
     health-check:
       enable: true
       url: "http://www.google.com/generate_204"

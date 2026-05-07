@@ -213,6 +213,7 @@ python tools/build_rules.py
 - `docs/examples/mihomo-public.yaml`
   - 保留完整 `tun + sniffer + dns + proxy-providers + proxy-groups + rule-providers + rules` 结构
   - 已移除真实机场订阅链接、供应商命名与控制面参数
+  - `proxy-providers.*.proxy` 默认显式写 `DIRECT`，只控制 Mihomo 后台更新机场订阅 URL；浏览器访问机场官网 / 面板仍由 `rules` 里的进程与域名规则控制
 - 默认同时接入 `direct/os_time_direct`，并配套接入 `reject/os_update_reject`、`direct/microsoft_direct` 与 `direct/macos_update_direct`；前者负责系统时间同步，后两者便于临时放开 Windows / macOS 系统升级直连
 - 默认接入 AdsPower 专项 `reject/direct/proxy` 规则集，并保持在 `proxy/gfw` 前完成细分控制
 - 默认接入 Polygon 主网 RPC 专项 `proxy/polygon_rpc_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
@@ -304,6 +305,7 @@ python tools/build_rules.py
 - 缺少本地配置时，不影响本地构建与手工同步主流程，只会跳过本地 Feishu 告警发送；但 GitHub Actions 的每日 upstream 工作流会要求 webhook secrets 可用
 - 真实 Webhook、密钥、私有订阅地址、MITM 参数与本地长期使用配置应继续保留在公开仓库外部，例如 `%USERPROFILE%\Desktop\rulemesh-local\current`
 - 私有订阅域名同步块当前也统一保留在 `%USERPROFILE%\Desktop\rulemesh-local\current` 中：使用 `private_subscription_direct.list` 作为单一源文件，再通过 `sync_private_subscription_direct.ps1` 同步到四份本地私有配置中的“Chrome 访问节点选择例外 + 订阅更新直连”规则块
+- 两份 Mihomo 私有配置里的机场 `proxy-providers` 默认必须保留 `proxy: DIRECT`，用于让后台订阅 URL 更新直连；这和 `rule-providers` 拉 GitHub 规则集时可使用 `proxy: "🚀 节点选择"` 是两条不同链路
 - 四份本地私有配置里，所有基于 `policy-path` / provider 的代理组默认共用同一套排除条件：`剩余流量`、`套餐到期`、`距离下次重置`、`过滤掉`、`Expire Date`、`Traffic Reset` 这类状态/提示项按前缀匹配，`直接连接` 这类独立占位项按整行精确匹配，`联系我们` 与 `1.2 GB | 50 GB` 这类提示继续专项匹配
 - 如果某个 provider 会给真实节点名追加统一前缀，不要把供应商名或独立占位项写成宽匹配，否则可能误伤真实节点
 - 详细背景、禁止事项与改动前检查清单见 [docs/proxy-group-filter-methodology.md](docs/proxy-group-filter-methodology.md)
