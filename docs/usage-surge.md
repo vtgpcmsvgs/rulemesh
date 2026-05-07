@@ -49,7 +49,7 @@
 - `direct/os_time_direct.list` 与其他普通直连规则的顺序关系
 - `allow-wifi-access = false`、`test-timeout = 3` 与 `use-local-host-item-for-proxy = true` 这组运行时默认值
 - 默认开启 `ipv6 = true`，并继续使用 `ipv6-vif = auto` 只在本地网络具备有效 IPv6 时启用 Surge IPv6 VIF，先把双栈能力打开，但不默认强推 `always`
-- 显式 `dns-mode = fake-ip`；维护约定是优先 `fake-ip`、次选 `mapping`，因为前者可通过 IP 逆向域名，流量接管更彻底，而后者只在更看重兼容性时作为退路
+- Surge profile 不写 `dns-mode = fake-ip`；Fake IP 由 Surge Enhanced Mode / VIF 运行时提供，Mac 端加载 profile 后需要在 Surge 里启用 Enhanced Mode
 - `skip-proxy`、`always-real-ip`、海外全局 DNS 与测速参数
 
 ## 模板刻意移除了什么
@@ -65,7 +65,7 @@
 2. 把 `[Host]` 里的 `https://example.com/share/file/proxy-node-domains` 替换成 Surge 所在设备能直接访问的 Sub-Store 分享文件真实 URL。
 3. 如果你不希望最终兜底走总开关，可以把 `FINAL,🚀 节点选择` 改成你想固定兜底的区域组。
 
-`proxy-node-domains` 只能包含订阅节点的 `server` 域名，不得填订阅入口、机场面板域名或普通目标网站域名。替换前先在同一网络环境里打开 URL，确认返回纯域名文本；如果返回 HTML、404 或超时，就不要加载到生产 Surge。
+`proxy-node-domains` 只能包含订阅节点的 `server` 域名，不得填订阅入口、机场面板域名、IP 或普通目标网站域名。替换前先在同一网络环境里打开 URL，确认返回一行一个域名；如果返回 HTML、404、超时或逗号分隔的一整行，就不要加载到生产 Surge。
 
 ## 测速 URL 约定
 

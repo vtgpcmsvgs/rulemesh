@@ -58,7 +58,7 @@
 
 另请注意：
 
-- Surge 公开模板里显式写入的 `dns-mode = fake-ip`、`use-local-host-item-for-proxy = true` 与 `allow-wifi-access = false` 只属于 Surge 运行时参数，不要求 Mihomo 模板逐项镜像；Mihomo 继续按 Tun / DNS 方法论独立维护。
+- Surge 公开模板里的 `use-local-host-item-for-proxy = true` 与 `allow-wifi-access = false` 只属于 Surge 运行时参数，不要求 Mihomo 模板逐项镜像；Surge 不写 Mihomo / Stash 的 `dns-mode`，Mihomo 继续按 Tun / DNS 方法论独立维护。
 - Clash Verge Rev 等支持 Tun 的客户端，建议同时开启 Tun 模式；这份模板默认按 Tun + 嗅探 + 分流 DNS 设计，关闭 Tun 会明显削弱体验。
 - 如果你同时维护 Clash Verge Rev 与 Clash Meta for Android，本地私有目录建议拆成 `rulemesh-substore-mihomo-clash-verge.yaml` 与 `rulemesh-substore-mihomo-clash-meta.yaml` 两份；规则骨架可以保持一致，但节点域名解析策略应允许分别维护。
 - 如果你把 `rulemesh-substore-mihomo-clash-verge.yaml` 当成 Clash Verge Rev 的日常主配置，建议在“订阅”页对这份本地配置右键“编辑信息”，把 `更新时间隔` 设为 `720` 分钟。

@@ -22,16 +22,15 @@
 
 ## Surge 实现规范
 
-Surge 没有 Mihomo 的 `proxy-server-nameserver` 字段，不能伪造同名配置。Surge 必须使用：
+Surge 没有 Mihomo 的 `proxy-server-nameserver` 或 `dns-mode` 字段，不能伪造同名配置。Fake IP 由 Surge Enhanced Mode / VIF 运行时提供，profile 中不要写 `dns-mode = fake-ip`。Surge 必须使用：
 
-- `dns-mode = fake-ip`
+- Surge Mac/iOS 运行时的 Enhanced Mode / VIF
 - `use-local-host-item-for-proxy = true`
 - `[Host]` 里的 `DOMAIN-SET:<proxy-node-domains URL> = server:<节点专用 DNS>`
 
 推荐基线：
 
 ```ini
-dns-mode = fake-ip
 use-local-host-item-for-proxy = true
 dns-server = 1.1.1.1, 8.8.8.8, 9.9.9.9
 encrypted-dns-server = https://cloudflare-dns.com/dns-query, https://dns.google/dns-query
@@ -45,7 +44,7 @@ DOMAIN-SET:https://example.com/share/file/proxy-node-domains = server:https://dn
 
 上述海外 `dns-server` 的明文 IPv4 端点应先命中 `proxy/overseas_dns_ipv4_proxy` 并统一走美国地区策略，避免 1.1.1.1 / 8.8.8.8 / 9.9.9.9 的出口与普通代理出口错位。
 
-`DOMAIN-SET` 引用的 `proxy-node-domains` 必须只包含代理节点的 `server` 域名。一行一个域名，不写 `DOMAIN-SUFFIX,` 前缀，不写订阅 URL，不写机场面板域名，不写普通目标网站域名。
+`DOMAIN-SET` 引用的 `proxy-node-domains` 必须只包含代理节点的 `server` 域名。一行一个域名，不写 `DOMAIN-SUFFIX,` 前缀，不写 IP，不写订阅 URL，不写机场面板域名，不写普通目标网站域名，也不要输出逗号分隔的一整行。
 
 ## Mihomo 实现规范
 
@@ -101,7 +100,7 @@ function operator(proxies = []) {
 
 实际发布 URL 应使用 Surge 所在设备能直接访问的 Sub-Store 分享文件链接，例如 `https://<你的 Sub-Store 后端或反代域名>/share/file/proxy-node-domains`。不要把这里固定写成公网 `https://sub.store/...`，除非它在生产 Surge 环境中确实能稳定访问到你的 Sub-Store 后端。
 
-提交或加载生产配置前，必须先在 Surge 所在设备或同网络环境中直接打开该 URL，确认返回值是一行一个节点 `server` 域名，而不是 HTML 页面、404、超时或订阅链接。
+提交或加载生产配置前，必须先在 Surge 所在设备或同网络环境中直接打开该 URL，确认返回值是一行一个节点 `server` 域名，而不是 HTML 页面、404、超时、订阅链接、IP 清单或逗号分隔文本。
 
 ## 验收标准
 
