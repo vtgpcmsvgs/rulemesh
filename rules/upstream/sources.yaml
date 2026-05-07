@@ -54,12 +54,6 @@ sources:
           note: 保持阿里云香港 IPv4 派生 SSH TCP/22 直连入口稳定，源规则只保留单一 INCLUDE
         - repo: Alibaba Cloud DescribePublicIpAddress
           note: 每日同步 cn-hongkong 的全部公网 IPv4 前缀到 rules/upstream/alicloud/hk_ipv4.txt，并派生 SSH 22 直连规则到 rules/upstream/alicloud/hk_ssh22.txt
-    microsoft_direct.list:
-      preferred:
-        - repo: self
-          note: 保留 OneDrive 进程规则放在最前面
-        - repo: blackmatrix7/ios_rule_script
-          note: 负责 Microsoft.list 与 OneDrive.list 主体
     os_time_direct.list:
       preferred:
         - repo: self
@@ -68,12 +62,6 @@ sources:
           note: 参考 Windows Time 文档，保留独立 Windows 设备默认的 time.windows.com
         - repo: Apple Support
           note: 参考 Apple 官方网络说明与 systemsetup 示例，保留 time.apple.com 与 time-macos.apple.com
-    macos_update_direct.list:
-      preferred:
-        - repo: self
-          note: 仅保留 Apple 官方标注为 macOS only 的系统更新主机，便于与 os_update_reject 配套切换
-        - repo: Apple Support
-          note: 参考《Use Apple products on enterprise networks》的 Software updates 清单，只挑选 macOS only 项
     bytedance_direct.list:
       preferred:
         - repo: self
@@ -153,7 +141,7 @@ sources:
           note: 统一走香港区域策略，适合 Telegram 大流量场景
         - repo: Loyalsoldier/surge-rules
           note: 负责 telegramcidr.txt 补充
-    tw/ai_tw.list:
+    us/ai_us.list:
       preferred:
         - repo: self
           note: 承接海外 AI 平台的更激进关键词与热门站点补充兜底，客户端默认绑定美国地区策略；国内 AI 优先走 ai_cn_direct，再由 bytedance_direct 与 cn_direct 兜底
@@ -169,12 +157,24 @@ sources:
           note: 保持单文件入口稳定，承接本地补充，如 g42.ai、预测市场与新增 DeFi/分析站点
         - repo: blackmatrix7/ios_rule_script
           note: 负责 Cryptocurrency.list 主体，通过 INCLUDE 并入该文件
-    tw/google_tw.list:
+    us/google_us.list:
       preferred:
         - repo: self
-          note: Google 通用服务主入口，含 Play、YouTube 与 FCM；Gemini 允许在 ai_tw 做 AI 视角交叉兜底
+          note: Google 通用服务美国出口主入口，含 Play、YouTube 与 FCM；Gemini 允许在 ai_us 做 AI 视角交叉兜底
         - repo: blackmatrix7/ios_rule_script
           note: 负责 GoogleFCM.list 与 YouTube.list 补充，通过 INCLUDE 并入该文件
+    us/microsoft_us.list:
+      preferred:
+        - repo: self
+          note: Microsoft / OneDrive 统一绑定美国策略，Windows 更新禁用仍由 reject/os_update_reject 先拦截
+        - repo: blackmatrix7/ios_rule_script
+          note: 负责 Microsoft.list 与 OneDrive.list 主体
+    us/macos_update_us.list:
+      preferred:
+        - repo: self
+          note: 仅保留 Apple 官方标注为 macOS only 的系统更新主机，便于与 os_update_reject 配套切换并统一走美国策略
+        - repo: Apple Support
+          note: 参考《Use Apple products on enterprise networks》的 Software updates 清单，只挑选 macOS only 项
     jp/domains_to_jp.list:
       preferred:
         - repo: self

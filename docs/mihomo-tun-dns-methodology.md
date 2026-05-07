@@ -139,8 +139,8 @@
 - `direct_netease`
 - `direct_bytedance`
 - `direct_github_ssh`
-- `direct_microsoft`
-- `direct_macos_update`
+- `us_microsoft`
+- `us_macos_update`
 - 其他所有普通目标网站域名集合
 
 ## 维护规则

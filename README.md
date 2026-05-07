@@ -38,7 +38,7 @@ tools/
 
 - `rules/` 下参与构建的源规则文件统一使用 `.list` 命名
 - `rules/app/` 用于维护单一应用的主清单；例如 `rules/app/adspower.txt` 会在构建前自动派生到 `rules/reject/`、`rules/direct/` 与 `rules/proxy/`
-- 例如 `rules/region/tw/google_tw.list` 会生成 `dist/surge/rules/region/tw/google_tw.list` 与 `dist/mihomo/classical/region/tw/google_tw.yaml`
+- 例如 `rules/region/us/google_us.list` 会生成 `dist/surge/rules/region/us/google_us.list` 与 `dist/mihomo/classical/region/us/google_us.yaml`
 - `dist/build-report.json` 会记录每个源文件被识别为 `domain-only`、`ipcidr-only` 或 `classical/mixed`，以及构建警告
 - 这些分类结果只用于维护诊断，不再对应额外的 `domainset` / `domain` / `ipcidr` 产物目录
 
@@ -159,7 +159,7 @@ python tools/build_rules.py
 - 如需启用，请显式接入 `proxy/onepassword_proxy` 并放在 `proxy/gfw` 前；公开模板默认不内置这条重度用户特化入口
 - 操作系统时间同步专项规则统一维护在 `rules/direct/os_time_direct.list`
 - 客户端应显式接入 `direct/os_time_direct`，并放在其他普通 `direct/*` 前，默认保持 `DIRECT`
-- 如果你采用“默认禁更，升级时手动临时放行”的习惯，建议同时接入 `direct/os_time_direct`、`reject/os_update_reject`、`direct/microsoft_direct` 与 `direct/macos_update_direct`；其中 `os_time_direct` 负责系统时间同步直连，其余入口用于升级窗口
+- 如果你采用“默认禁更，升级时手动临时放行”的习惯，建议同时接入 `direct/os_time_direct`、`reject/os_update_reject`、`region/us/microsoft_us` 与 `region/us/macos_update_us`；其中 `os_time_direct` 负责系统时间同步直连，其余入口必须放在 `reject` 之后并绑定美国策略
 
 其中 Surge 当前建议明确区分两种使用版本：
 
@@ -169,7 +169,7 @@ python tools/build_rules.py
 - 其中私有 `rulemesh-substore-surge-work-whitelist.conf` 当前采用工作电脑白名单模式：只保留明确列出的放行入口，未列入白名单的流量统一 `REJECT`。
 - 这份工作白名单默认不额外开放局域网代理入口；旁路由已接管流量，工作文件不承担 LAN 代理服务。
 - 其中只有设备分流继续按局域网源 IP 约束，并按指定 AWS 区域 / 多地区链式 SOCKS5 IP 段定向到对应工作机亚洲出口组；区域精确、GitHub SSH、GitHub Raw 自举入口、GitHub Core 代理入口、GitHub 观察兜底、私有订阅域名同步块、1Password 核心连接、AdsPower、Polygon 主网 RPC、BSC 主网 RPC、海外 DNS 主 IPv4 端点、代理节点 bootstrap DNS 直连例外、海外加密 DNS 显式入口与指定直连不再额外限制源 IP。
-- 在该白名单里，`direct/os_time_direct`、`direct/microsoft_direct` 与 `direct/macos_update_direct` 都属于允许保留的系统类直连入口。
+- 在该白名单里，`direct/os_time_direct` 属于系统时间同步直连入口，`region/us/microsoft_us` 与 `region/us/macos_update_us` 属于允许保留的系统类美国分流入口。
 - 白名单专属的单个直连域名例外（例如 `smtp.163.com`）默认直接维护在“指定直连”入口，不为单条规则额外拆分公开 `rules/` 文件。
 - 白名单专属的单个拒绝域名，或只用于阻断浏览器扩展更新链路的拒绝规则，也默认直接维护在白名单的“拒绝规则”入口，不为单条规则额外拆分公开 `rules/` 文件。
 - 其中 `proxy/onepassword_proxy`、`proxy/polygon_rpc_proxy`、`proxy/bsc_rpc_proxy`、`proxy/overseas_dns_ipv4_proxy`，代理节点 bootstrap DNS 直连例外 `dns.alidns.com` / `doh.pub`，以及 DoH / DoH3 / DoQ、`cloudflare-dns.com`、`dns.google`、`dns.quad9.net` 都是允许保留的白名单入口；bootstrap DNS 走 `DIRECT`，海外加密 DNS 端点走美国出口。
@@ -195,9 +195,10 @@ python tools/build_rules.py
   - 已移除设备分流、私有订阅地址与 `[MITM]`
 - 默认保持 `allow-wifi-access = false`，不把个人终端直接暴露给局域网其他设备
 - Surge profile 不写 `dns-mode = fake-ip`；Fake IP 由 Surge Enhanced Mode / VIF 运行时提供，Mac 端加载 profile 后需要在 Surge 里启用 Enhanced Mode
+- Surge `skip-proxy` 不再包含 Apple `17.0.0.0/8`，避免 macOS 更新流量绕过 `reject/os_update_reject` 与 `region/us/macos_update_us`
 - 默认启用 `use-local-host-item-for-proxy = false`、`hijack-dns = *:53`、海外 `encrypted-dns-server`、`encrypted-dns-follow-outbound-mode = true` 与 `test-timeout = 3` 这组运行时参数
 - 默认关闭 `ipv6 = false`，并注释 `ipv6-vif = auto`；如需 IPv6，应先完成 DNS 泄漏、WebRTC 与出口一致性测试
-- 默认同时接入 `direct/os_time_direct`，并配套接入 `reject/os_update_reject`、`direct/microsoft_direct` 与 `direct/macos_update_direct`；前者负责系统时间同步，后两者便于临时放开 Windows / macOS 系统升级直连
+- 默认同时接入 `direct/os_time_direct`，并配套接入 `reject/os_update_reject`、`region/us/microsoft_us` 与 `region/us/macos_update_us`；前者负责系统时间同步，后两者在放开拒绝规则后统一走美国节点
 - 默认接入 AdsPower 专项 `reject/direct/proxy` 规则集，并保持在 `proxy/gfw` 前完成细分控制
 - 默认接入 Polygon 主网 RPC 专项 `proxy/polygon_rpc_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
 - 默认接入 BSC 主网 RPC 专项 `proxy/bsc_rpc_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
@@ -214,7 +215,7 @@ python tools/build_rules.py
   - 保留完整 `tun + sniffer + dns + proxy-providers + proxy-groups + rule-providers + rules` 结构
   - 已移除真实机场订阅链接、供应商命名与控制面参数
   - `proxy-providers.*.proxy` 默认显式写 `DIRECT`，只控制 Mihomo 后台更新机场订阅 URL；浏览器访问机场官网 / 面板仍由 `rules` 里的进程与域名规则控制
-- 默认同时接入 `direct/os_time_direct`，并配套接入 `reject/os_update_reject`、`direct/microsoft_direct` 与 `direct/macos_update_direct`；前者负责系统时间同步，后两者便于临时放开 Windows / macOS 系统升级直连
+- 默认同时接入 `direct/os_time_direct`，并配套接入 `reject/os_update_reject`、`region/us/microsoft_us` 与 `region/us/macos_update_us`；前者负责系统时间同步，后两者在放开拒绝规则后统一走美国节点
 - 默认接入 AdsPower 专项 `reject/direct/proxy` 规则集，并保持在 `proxy/gfw` 前完成细分控制
 - 默认接入 Polygon 主网 RPC 专项 `proxy/polygon_rpc_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
 - 默认接入 BSC 主网 RPC 专项 `proxy/bsc_rpc_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
@@ -242,6 +243,7 @@ python tools/build_rules.py
 - X / Twitter 网页、短链与静态资源，以及 Polymarket 相关域名应先命中 `region/hk/global_media`，再落到 `proxy/gfw`
 - 1Password 核心连接专项规则如启用，应先命中 `proxy/onepassword_proxy`，再落到 `proxy/gfw`
 - 操作系统时间同步专项规则应先命中 `direct/os_time_direct`，再落到其他普通 `direct/*`
+- Google 通用服务、海外 AI、Microsoft 与 macOS 更新专项入口应先命中 `region/us/*`，其中 Microsoft / macOS 更新仍必须排在 `reject/os_update_reject` 之后，避免默认禁更逻辑失效
 - DNS 信任边界优先于连通性微调：普通目标网站域名默认不得交给国内 DNS，国内 DNS 只作为 DNS 服务器域名 bootstrap 与代理节点 `server` 域名 bootstrap 的专用例外；详细约束见 [docs/network-security/dns-leak-prevention.md](docs/network-security/dns-leak-prevention.md)
 - 同一套路由骨架不等于同一个客户端运行时；`Surge`、`Clash Verge Rev`、`Clash Meta for Android` 在 DNS 启动链上允许存在实现差异
 - 本地同时维护 Clash Verge Rev 与 Clash Meta for Android 时，允许拆成两份 Mihomo 私有配置；规则骨架尽量共享，节点域名解析策略允许分别维护
@@ -253,27 +255,27 @@ python tools/build_rules.py
 - 文件头必须先写清楚：这份规则负责什么、不负责什么、与相邻规则文件的边界是什么、客户端顺序上应放在哪里
 - 同一小节内部默认顺序是：小节注释、`INCLUDE,upstream/...`、显式域名 / 网段、`DOMAIN-KEYWORD` 兜底
 - IP 类源规则可以只写 `IP-CIDR`、`IP-CIDR6`、`GEOIP`、`IP-ASN`、`ASN` 主体；构建产物会自动补 `no-resolve`，客户端调用纯 IP 规则集时仍建议在 `RULE-SET` 层保留 `no-resolve`
-- 像 `ai_tw`、`ai_cn_direct`、`bytedance_direct`、`google_tw`、`crypto_tw` 这类多平台或多服务混合文件，优先按平台或服务分组
+- 像 `ai_us`、`ai_cn_direct`、`bytedance_direct`、`google_us`、`crypto_tw` 这类多平台或多服务混合文件，优先按平台或服务分组
 - 像 `cn_direct`、`telegram` 这类入口型或通用基础兜底文件，可以保持“上游主体 + 本地最高优先级兜底”的简单结构，但仍要把边界写清楚
 - 如果本次修改只影响注释、分组与顺序，且构建后确认 `dist/` 内容不变，允许最终只提交源文件；但仍然必须完整执行构建和检查
 - 详细规则见 [docs/rule-authoring-style.md](docs/rule-authoring-style.md)
 
 ## Google 路由强约束
 
-- Google 通用服务（含 Google Play / YouTube / FCM）主维护在 `rules/region/tw/google_tw.list`
-- `Gemini` / `AI Studio` / `NotebookLM` 允许在 `rules/region/tw/ai_tw.list` 保留 AI 视角交叉兜底，但客户端顺序仍必须让 `google_tw` 排在 `ai_tw` 前
-- 客户端应接入 `dist/surge/rules/region/tw/google_tw.list` 或 `dist/mihomo/classical/region/tw/google_tw.yaml`
-- Google 规则必须绑定 `TW-AUTO`（或等价台湾策略组），不再提供 `proxy/google` 双入口
-- 规则顺序必须先放 Google TW 规则，再放 `region/tw/ai_tw` 与 `region/hk/global_media` 等广谱区域规则；Google 通用服务继续优先命中台湾策略，海外 AI 入口则统一命中美国策略
+- Google 通用服务（含 Google Play / YouTube / FCM）主维护在 `rules/region/us/google_us.list`
+- `Gemini` / `AI Studio` / `NotebookLM` 允许在 `rules/region/us/ai_us.list` 保留 AI 视角交叉兜底，但客户端顺序仍必须让 `google_us` 排在 `ai_us` 前
+- 客户端应接入 `dist/surge/rules/region/us/google_us.list` 或 `dist/mihomo/classical/region/us/google_us.yaml`
+- Google 规则必须绑定 `US-AUTO`（或等价美国策略组），不再提供 `proxy/google` 双入口
+- 规则顺序必须先放 Google US 规则，再放 `region/us/ai_us` 与 `region/hk/global_media` 等广谱区域规则；Google 通用服务与海外 AI 入口都统一命中美国策略
 - 新增或调整 Google 规则时，先改该源文件，再执行构建同步 `dist/`
 
 ## AI 路由约定
 
-- `rules/region/tw/ai_tw.list` 当前按“第三方上游聚合 + 本地激进兜底”维护，但定位已收敛为“海外 AI 平台入口”，统一承接 `OpenAI`、`Claude`、`Gemini`、`Copilot`、`Cursor`、`Grok`、`Windsurf`、`Augment` 等海外 AI 平台，并统一绑定美国地区策略
+- `rules/region/us/ai_us.list` 当前按“第三方上游聚合 + 本地激进兜底”维护，但定位已收敛为“海外 AI 平台入口”，统一承接 `OpenAI`、`Claude`、`Gemini`、`Copilot`、`Cursor`、`Grok`、`Windsurf`、`Augment` 等海外 AI 平台，并统一绑定美国地区策略
 - `rules/direct/ai_cn_direct.list` 新增为“国内 AI 显式直连入口”，优先承接 `Kimi / Moonshot`、`DeepSeek`、`豆包`、`即梦`、`Trae 中国大陆入口`、`元宝`、`混元`、`通义 / 千问`、`智谱 / ChatGLM`、`MiniMax / 海螺`、`文心` 等国内 AI 平台
-- `Trae` 只在 `ai_tw` 中保留明确海外入口；`DeepSeek`、`Trae` 中国大陆入口与其他国内 AI 不应并入 `ai_tw`，而应优先落到 `direct/ai_cn_direct`，共享基础设施再继续落到 `direct/bytedance_direct`、`direct/cn_direct`
+- `Trae` 只在 `ai_us` 中保留明确海外入口；`DeepSeek`、`Trae` 中国大陆入口与其他国内 AI 不应并入 `ai_us`，而应优先落到 `direct/ai_cn_direct`，共享基础设施再继续落到 `direct/bytedance_direct`、`direct/cn_direct`
 - 上游主体优先引用 `blackmatrix7/ios_rule_script`、`SkywalkerJi/Clash-Rules` 与 `Accademia/Additional_Rule_For_Clash` 的快照；其中 `Trae` 只参考第三方上游，不再直接整包并入，避免把国内入口误送到海外 AI 代理策略
-- 客户端顺序继续保持 `google_tw` 在前、`ai_tw` 在后；国内 AI 侧则让 `direct/ai_cn_direct` 排在 `direct/bytedance_direct`、`direct/cn_direct` 前，确保显式国内入口优先命中
+- 客户端顺序继续保持 `google_us` 在前、`ai_us` 在后；国内 AI 侧则让 `direct/ai_cn_direct` 排在 `direct/bytedance_direct`、`direct/cn_direct` 前，确保显式国内入口优先命中
 - 私有 `rulemesh-substore-surge-work-whitelist.conf` 不会自动并入这组新的国内 AI 放行入口；工作白名单仍需继续按“只放行明确白名单入口，其余统一 REJECT”的原则单独评估
 
 ## 上游维护方式

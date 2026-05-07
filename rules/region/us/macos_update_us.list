@@ -1,0 +1,11 @@
+# macOS 系统更新美国分流规则。
+# 维护原则：
+# 1) 仅保留 Apple 官方标注为 macOS only 的系统更新主机，避免误伤 App Store / Apple TV 等其他 Apple 服务。
+# 2) 这条规则默认放在 reject/os_update_reject.list 之后；平时由拒绝规则先拦截，临时升级时注释对应 reject 入口后再命中这里。
+# 3) 命中本文件后必须绑定 US-AUTO（或等价美国策略组），不再使用 DIRECT，也不要通过 Surge skip-proxy 放行 Apple 17.0.0.0/8。
+DOMAIN,ig.apple.com
+DOMAIN,skl.apple.com
+DOMAIN,swscan.apple.com
+DOMAIN,swcdn.apple.com
+DOMAIN,swdownload.apple.com
+DOMAIN,swdist.apple.com

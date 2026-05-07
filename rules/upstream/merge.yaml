@@ -35,7 +35,7 @@ merge_plan:
       - keep_scope_curated_and_aggressive
     notes:
       - 客户端顺序应放在 direct/bytedance_direct.list 与 direct/cn_direct.list 前
-      - 海外 AI 继续交给 rules/region/tw/ai_tw.list；字节共享基础设施与中国大陆通用兜底继续交给 direct/bytedance_direct.list 与 direct/cn_direct.list
+      - 海外 AI 继续交给 rules/region/us/ai_us.list；字节共享基础设施与中国大陆通用兜底继续交给 direct/bytedance_direct.list 与 direct/cn_direct.list
 
   - id: cn-direct
     target: rules/direct/cn_direct.list
@@ -43,13 +43,6 @@ merge_plan:
     strategy:
       - include_loyalsoldier_first_then_local_cn_fallback
       - include_loyalsoldier_direct_and_cncidr
-
-  - id: microsoft-direct
-    target: rules/direct/microsoft_direct.list
-    purpose: Microsoft / OneDrive 直连
-    strategy:
-      - include_blackmatrix7_first_then_local_process_fallback
-      - include_blackmatrix7_onedrive_and_microsoft
 
   - id: os-time-direct
     target: rules/direct/os_time_direct.list
@@ -62,16 +55,6 @@ merge_plan:
       - Windows 独立设备默认时间源使用 time.windows.com；域成员通常跟随域时间层级，这里不扩展到域控体系
       - Apple 官方示例与企业网络文档包含 time.apple.com 与 time-macos.apple.com；两者统一保留
       - 时间同步更依赖原生链路对称性，默认保持 DIRECT，不并入节点选择
-
-  - id: macos-update-direct
-    target: rules/direct/macos_update_direct.list
-    purpose: macOS 系统更新直连
-    strategy:
-      - manual_only
-      - keep_scope_small_and_stable
-    notes:
-      - 仅保留 Apple 官方标注为 macOS only 的系统更新主机，避免把 App Store / Apple TV 等其他 Apple 服务误放直连
-      - 设计为与 reject/os_update_reject 配套使用；需要升级 macOS 时，可临时注释对应 reject 入口后命中这里
 
   - id: bilibili-direct
     target: rules/direct/bilibili_direct.list
@@ -116,15 +99,35 @@ merge_plan:
     notes:
       - 仅覆盖 github.com:22 与 ssh.github.com:443
       - 客户端顺序必须放在 proxy/gfw 前
-  - id: google-tw
-    target: rules/region/tw/google_tw.list
-    purpose: Google / YouTube / Gemini 统一走台湾策略
+  - id: us-google
+    target: rules/region/us/google_us.list
+    purpose: Google / YouTube / Gemini 通用入口统一走美国策略
     strategy:
       - include_upstream_first_then_local_keyword_fallback
       - include_blackmatrix7_google_and_youtube
     notes:
-      - Google 通用规则主维护在 rules/region/tw/google_tw.list，避免 proxy 与 region 双入口分叉
-      - Gemini / AI Studio / NotebookLM 允许在 rules/region/tw/ai_tw.list 保留 AI 视角交叉兜底，但 google_tw 仍应排在 ai_tw 前
+      - Google 通用规则主维护在 rules/region/us/google_us.list，避免 proxy 与旧台湾入口分叉
+      - Gemini / AI Studio / NotebookLM 允许在 rules/region/us/ai_us.list 保留 AI 视角交叉兜底，但 google_us 仍应排在 ai_us 前
+
+  - id: us-microsoft
+    target: rules/region/us/microsoft_us.list
+    purpose: Microsoft / OneDrive 统一走美国策略
+    strategy:
+      - include_blackmatrix7_first_then_local_process_fallback
+      - include_blackmatrix7_onedrive_and_microsoft
+    notes:
+      - Windows 更新禁用仍由 reject/os_update_reject 先拦截；放开拒绝入口后再由本文件接到美国策略
+      - 不再放在 direct/ 下，避免 Microsoft 流量回落直连或被 cn_direct 宽泛兜底吞掉
+
+  - id: us-macos-update
+    target: rules/region/us/macos_update_us.list
+    purpose: macOS 系统更新统一走美国策略
+    strategy:
+      - manual_only
+      - keep_scope_small_and_stable
+    notes:
+      - 仅保留 Apple 官方标注为 macOS only 的系统更新主机，避免把 App Store / Apple TV 等其他 Apple 服务误并入
+      - 设计为与 reject/os_update_reject 配套使用；需要升级 macOS 时，可临时注释对应 reject 入口后命中这里并走美国策略
 
   - id: hk-telegram
     target: rules/region/hk/telegram.list
@@ -209,7 +212,7 @@ merge_plan:
       - match_exact_ipv4_endpoint_without_port_binding
     notes:
       - 当前精确匹配 1.1.1.1/32、8.8.8.8/32 与 9.9.9.9/32，不再绑定 53 端口，方便后续复用到其他端口探活
-      - 不并入 rules/region/tw/google_tw.list，避免与 Google 台湾区域策略混用；客户端默认统一绑定美国地区策略
+      - 不并入 rules/region/us/google_us.list，避免把 DNS IP 入口混入 Google 通用服务；客户端默认统一绑定美国地区策略
       - 客户端顺序应放在 proxy/gfw 前，避免被广谱代理入口提前命中
 
   - id: hk-global-media
@@ -223,8 +226,8 @@ merge_plan:
       - 香港地区内容更贴近华语用户，且支付方式更友好
       - Polymarket 当前在已接入上游里只有 gfw 通用后缀，本地在这里保留 DOMAIN-SUFFIX 与 DOMAIN-KEYWORD,polymarket 的香港兜底
 
-  - id: tw-ai
-    target: rules/region/tw/ai_tw.list
+  - id: us-ai
+    target: rules/region/us/ai_us.list
     purpose: 海外 AI 平台走美国策略
     strategy:
       - include_upstream_first_then_local_keyword_fallback

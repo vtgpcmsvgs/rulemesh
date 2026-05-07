@@ -1,4 +1,4 @@
-# 生成来源：rules/region/tw/ai_tw.list
+# 生成来源：rules/region/us/ai_us.list
 # 行为：classical
 payload:
   - "DOMAIN,browser-intake-datadoghq.com"

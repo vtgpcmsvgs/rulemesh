@@ -1,4 +1,4 @@
-# 生成来源：rules/direct/microsoft_direct.list
+# 生成来源：rules/region/us/microsoft_us.list
 # 行为：classical
 payload:
   - "DOMAIN-SUFFIX,1drv.com"

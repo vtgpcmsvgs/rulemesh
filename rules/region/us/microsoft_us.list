@@ -1,0 +1,9 @@
+# Microsoft / OneDrive 美国分流规则：以上游来源为主，固定绑定美国节点。
+# 维护约束：
+# 1) 本文件承接 Microsoft、OneDrive、Windows 生态与应用商店相关流量，客户端请绑定 US-AUTO（或等价美国策略组）。
+# 2) Windows 更新禁用仍由 reject/os_update_reject.list 先拦截；只有临时放开拒绝入口后，系统更新流量才会继续命中本文件并走美国节点。
+# 3) 不再把 Microsoft 入口放在 direct/ 下，也不要让它回落到 direct/cn_direct.list 的宽泛上游兜底。
+
+# OneDrive 与 Microsoft：以上游主体为主，保留平台精细规则。
+INCLUDE,upstream/blackmatrix7/onedrive.list
+INCLUDE,upstream/blackmatrix7/microsoft.list

@@ -100,32 +100,6 @@
       }
     },
     {
-      "source": "rules/direct/macos_update_direct.list",
-      "category": "direct",
-      "classification": "domain-only",
-      "counts": {
-        "surge_rules": 6,
-        "mihomo_classical": 6
-      },
-      "dist": {
-        "surge_rules": "dist/surge/rules/direct/macos_update_direct.list",
-        "mihomo_classical": "dist/mihomo/classical/direct/macos_update_direct.yaml"
-      }
-    },
-    {
-      "source": "rules/direct/microsoft_direct.list",
-      "category": "direct",
-      "classification": "classical/mixed",
-      "counts": {
-        "surge_rules": 676,
-        "mihomo_classical": 676
-      },
-      "dist": {
-        "surge_rules": "dist/surge/rules/direct/microsoft_direct.list",
-        "mihomo_classical": "dist/mihomo/classical/direct/microsoft_direct.yaml"
-      }
-    },
-    {
       "source": "rules/direct/netease_direct.list",
       "category": "direct",
       "classification": "classical/mixed",
@@ -347,19 +321,6 @@
       }
     },
     {
-      "source": "rules/region/tw/ai_tw.list",
-      "category": "region",
-      "classification": "classical/mixed",
-      "counts": {
-        "surge_rules": 153,
-        "mihomo_classical": 153
-      },
-      "dist": {
-        "surge_rules": "dist/surge/rules/region/tw/ai_tw.list",
-        "mihomo_classical": "dist/mihomo/classical/region/tw/ai_tw.yaml"
-      }
-    },
-    {
       "source": "rules/region/tw/crypto_tw.list",
       "category": "region",
       "classification": "classical/mixed",
@@ -373,19 +334,6 @@
       }
     },
     {
-      "source": "rules/region/tw/google_tw.list",
-      "category": "region",
-      "classification": "classical/mixed",
-      "counts": {
-        "surge_rules": 230,
-        "mihomo_classical": 230
-      },
-      "dist": {
-        "surge_rules": "dist/surge/rules/region/tw/google_tw.list",
-        "mihomo_classical": "dist/mihomo/classical/region/tw/google_tw.yaml"
-      }
-    },
-    {
       "source": "rules/region/tw/taipei_aws_ipv4.list",
       "category": "region",
       "classification": "ipcidr-only",
@@ -396,6 +344,58 @@
       "dist": {
         "surge_rules": "dist/surge/rules/region/tw/taipei_aws_ipv4.list",
         "mihomo_classical": "dist/mihomo/classical/region/tw/taipei_aws_ipv4.yaml"
+      }
+    },
+    {
+      "source": "rules/region/us/ai_us.list",
+      "category": "region",
+      "classification": "classical/mixed",
+      "counts": {
+        "surge_rules": 153,
+        "mihomo_classical": 153
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/region/us/ai_us.list",
+        "mihomo_classical": "dist/mihomo/classical/region/us/ai_us.yaml"
+      }
+    },
+    {
+      "source": "rules/region/us/google_us.list",
+      "category": "region",
+      "classification": "classical/mixed",
+      "counts": {
+        "surge_rules": 230,
+        "mihomo_classical": 230
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/region/us/google_us.list",
+        "mihomo_classical": "dist/mihomo/classical/region/us/google_us.yaml"
+      }
+    },
+    {
+      "source": "rules/region/us/macos_update_us.list",
+      "category": "region",
+      "classification": "domain-only",
+      "counts": {
+        "surge_rules": 6,
+        "mihomo_classical": 6
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/region/us/macos_update_us.list",
+        "mihomo_classical": "dist/mihomo/classical/region/us/macos_update_us.yaml"
+      }
+    },
+    {
+      "source": "rules/region/us/microsoft_us.list",
+      "category": "region",
+      "classification": "classical/mixed",
+      "counts": {
+        "surge_rules": 676,
+        "mihomo_classical": 676
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/region/us/microsoft_us.list",
+        "mihomo_classical": "dist/mihomo/classical/region/us/microsoft_us.yaml"
       }
     },
     {

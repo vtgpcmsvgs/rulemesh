@@ -1,3 +1,0 @@
-# Microsoft / OneDrive 直连规则：以上游来源为主。
-INCLUDE,upstream/blackmatrix7/onedrive.list
-INCLUDE,upstream/blackmatrix7/microsoft.list

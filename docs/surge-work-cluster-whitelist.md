@@ -22,13 +22,14 @@
 - 设备分流继续按“源 IP + AWS 区域 / 多地区链式 SOCKS5 IP 段”定向到对应设备组
 - 只有 2.1 设备分流继续保留“源 IP + AWS 区域 / 多地区链式 SOCKS5 IP 段”约束；2.2-2.10 不再额外限制源 IP
 - 多地区链式 SOCKS5 端点属于自维护链式代理入口，不再视为日本区域规则，也不应再挂到单一国家目录或固定日本组
-- 区域精确规则继续保留，且 `Google TW` 与 `AI US` 都必须先于广谱区域规则
+- 区域精确规则继续保留，且 `Google US` 与 `AI US` 都必须先于广谱区域规则
 - `AI US` 入口继续作为白名单显式放行项，但当前只承接海外 AI 平台并统一走美国节点；国内 AI 不应借这条入口放行
 - GitHub 仓库 SSH 定向直连继续保留独立 carve-out
 - GitHub 相关访问继续拆成三段：先保留 `DOMAIN,raw.githubusercontent.com` 自举入口，再显式放行 `proxy/github_core_proxy.list`，其后的 `DOMAIN-KEYWORD,github` 广覆盖观察兜底在工作白名单模式下统一使用 `REJECT`，专门用于发现 SSH / GitHub Core 之外的漏网之鱼
 - `raw.githubusercontent.com` 继续作为规则产物下载自举入口，但不再绑定 `server:system`；当前改用海外 DoH 解析，避免规则产物下载回落到本地/国内系统 DNS
 - 工作白名单默认不额外开放局域网代理入口；旁路由已接管流量，`allow-wifi-access` 继续保持 `false`
 - Surge profile 不写 `dns-mode = fake-ip`；Fake IP 由 Surge Enhanced Mode / VIF 运行时提供，工作路由设备加载 profile 后需要在 Surge 里启用 Enhanced Mode
+- `skip-proxy` 不再包含 Apple `17.0.0.0/8`，避免 macOS 更新流量绕过白名单里的拒绝规则和美国分流入口
 - IPv6 默认关闭，等完成 IPv6 DNS 泄露、WebRTC 与出口测试后再重新评估
 - `hijack-dns = *:53` 负责接管传统 UDP/TCP 53 DNS；加密 DNS 流量只能作为显式白名单入口放行，不能靠 `FINAL` 兜底
 - 海外 `encrypted-dns-server`、`encrypted-dns-follow-outbound-mode = true` 与 `use-local-host-item-for-proxy = false` 继续保留，配合 `[Host]` 中的 GitHub Raw 规则产物解析与 `proxy-node-domains` 节点 server 域名专用 bootstrap 解析
@@ -45,8 +46,8 @@
 - `direct/os_time_direct` 继续保留 `DIRECT`，用于 Windows / Apple 系统时间同步，不并入节点选择
 - 单个白名单专属直连域名（例如 `smtp.163.com`）优先直接维护在 2.10“指定直连”入口，不为单条规则额外新增公开 `rules/` 文件
 - 单个白名单专属拒绝域名，或只用于阻断浏览器扩展更新链路的拒绝规则，优先直接维护在 1)“拒绝规则”入口，不为单条规则额外新增公开 `rules/` 文件
-- `direct/microsoft_direct` 继续保留 `DIRECT`
-- `direct/macos_update_direct` 继续保留 `DIRECT`，用于需要时临时放开 macOS 系统升级；它只匹配 Apple 官方标注为 macOS only 的更新主机
+- `region/us/microsoft_us` 继续作为美国分流入口，Windows 更新禁用仍由前置 `reject/os_update_reject` 先拦截
+- `region/us/macos_update_us` 继续作为美国分流入口，用于需要时临时放开 macOS 系统升级；它只匹配 Apple 官方标注为 macOS only 的更新主机，且必须位于前置拒绝规则之后
 - `alicloud_hk_ipv4_ssh22_direct`、`DOMAIN-SUFFIX,aliyuncs.com` 与 `DOMAIN,check.myclientip.com` 继续保留；其后额外保留一条阿里云广覆盖 `REJECT` 观察兜底，用于发现上游阿里云规则的漏网之鱼
 - 工作白名单模式下，广覆盖观察规则统一只允许使用 `REJECT`；不要对 `DIRECT` 或 `PROXY` 规则使用 `extended-matching`，否则会把可伪造的 Host / SNI 纳入放行判断，放大绕过白名单的风险
 - `bytedance_direct.list` 继续保留 `DIRECT`

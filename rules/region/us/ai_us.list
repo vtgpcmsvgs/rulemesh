@@ -1,10 +1,10 @@
 # 海外 AI 平台美国分流规则：按“同平台聚合展示 + 上游优先 + 本地激进兜底”维护。
 # 维护约束：
-# 1) OpenAI / Claude / Gemini / Copilot / Cursor / Grok / Windsurf / Augment 等海外 AI 平台统一先走本文件。
+# 1) OpenAI / Claude / Gemini / Copilot / Cursor / Grok / Windsurf / Augment 等海外 AI 平台统一先走本文件，并固定绑定美国节点。
 # 2) 每个平台尽量把“上游 INCLUDE、显式域名、关键词兜底”放在同一小节，便于快速定位与补规则。
 # 3) Trae 只保留明确海外入口；中国大陆 AI（例如 DeepSeek、Trae 中国大陆入口）不并入本文件，应优先回到 direct/ai_cn_direct.list，再由其他直连规则兜底。
-# 4) Google 通用服务仍以 tw/google_tw.list 为主；Gemini / AI Studio / NotebookLM 允许在本文件保留 AI 视角交叉兜底。
-# 5) 本规则集设计目标固定为美国节点，客户端请绑定 US-AUTO（或等价美国策略组）。
+# 4) Google 通用服务仍以 region/us/google_us.list 为主；Gemini / AI Studio / NotebookLM 允许在本文件保留 AI 视角交叉兜底。
+# 5) 本规则集设计目标固定为美国节点，客户端请绑定 US-AUTO（或等价美国策略组），不要再沿用历史台湾入口命名。
 
 # ChatGPT / OpenAI：以上游主体为主，辅以品牌关键词兜底。
 INCLUDE,upstream/blackmatrix7/openai.list

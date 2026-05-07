@@ -1,4 +1,4 @@
-# 生成来源：rules/region/tw/google_tw.list
+# 生成来源：rules/region/us/google_us.list
 # 行为：classical
 payload:
   - "DOMAIN,alt1-mtalk.google.com"
