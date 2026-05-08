@@ -31,6 +31,21 @@ MIHOMO_CONFIG_NAMES = (
     "rulemesh-substore-mihomo-clash-verge.yaml",
     "rulemesh-substore-mihomo-clash-meta.yaml",
 )
+MIHOMO_SINGLE_DNS_TRUTH_CONFIG_NAMES = (
+    "rulemesh-substore-mihomo-clash-verge.yaml",
+    "rulemesh-substore-mihomo-clash-meta.yaml",
+)
+MIHOMO_SINGLE_DNS_TRUTH_FORBIDDEN_KEYS = {
+    "nameserver-policy",
+    "proxy-server-nameserver",
+    "proxy-server-nameserver-policy",
+    "direct-nameserver",
+    "fallback",
+}
+MIHOMO_SINGLE_DNS_TRUTH_HTTP_TEST_URLS = (
+    "http://www.google.com/generate_204",
+    "http://www.gstatic.com/generate_204",
+)
 
 
 @dataclass(frozen=True)
@@ -54,6 +69,10 @@ def is_comment_or_blank(line: str) -> bool:
 def domestic_needles_in(value: str) -> list[str]:
     lowered = value.lower()
     return [needle for needle in DOMESTIC_DNS_NEEDLES if needle in lowered]
+
+
+def is_mihomo_single_dns_truth_config(path: Path) -> bool:
+    return path.name in MIHOMO_SINGLE_DNS_TRUTH_CONFIG_NAMES
 
 
 def classify_config(path: Path, lines: list[str]) -> str | None:
@@ -234,18 +253,21 @@ def find_dns_block(lines: list[str]) -> list[tuple[int, str]]:
 
 def validate_mihomo(path: Path, lines: list[str]) -> list[DnsSafetyFinding]:
     findings: list[DnsSafetyFinding] = []
+    single_dns_truth = is_mihomo_single_dns_truth_config(path)
 
     for index, line in enumerate(lines, start=1):
         if is_comment_or_blank(line):
             continue
-        if line.strip() == "[Host]":
+        stripped = line.strip()
+        lowered = stripped.lower()
+        if stripped == "[Host]":
             findings.append(
                 DnsSafetyFinding(
                     "error",
                     path,
                     index,
-                    "Mihomo 配置中出现 Surge 的 [Host] 段，说明 DNS 方案被混用。",
-                    "Mihomo 使用 dns.proxy-server-nameserver，不使用 Surge [Host]。",
+                    "Mihomo 配置中出现了 Surge 的 [Host] 段，说明 DNS 方案被混用。",
+                    "Mihomo 只能使用自身的 dns: 机制，不要把 Surge 的 [Host] 语法抄进来。",
                 )
             )
         if "use-local-host-item-for-proxy" in line:
@@ -254,8 +276,28 @@ def validate_mihomo(path: Path, lines: list[str]) -> list[DnsSafetyFinding]:
                     "error",
                     path,
                     index,
-                    "Mihomo 配置中出现 Surge 的 use-local-host-item-for-proxy，说明 DNS 方案被混用。",
-                    "Mihomo 使用 dns.proxy-server-nameserver，不使用 Surge 运行时字段。",
+                    "Mihomo 配置中出现了 Surge 的 use-local-host-item-for-proxy，说明 DNS 方案被混用。",
+                    "删除该字段；它只属于 Surge，不属于 Mihomo。",
+                )
+            )
+        if single_dns_truth and re.fullmatch(r"ipv6:\s*true(?:\s+#.*)?", stripped, re.IGNORECASE):
+            findings.append(
+                DnsSafetyFinding(
+                    "error",
+                    path,
+                    index,
+                    "两份 Mihomo 私有 provider 配置的顶层 ipv6 不得恢复为 true，否则会重新引入已知的运行时分流与测速不一致风险。",
+                    "把顶层 ipv6 保持为 false；如需重新启用，必须先获得用户明确确认并完成真实运行时复测。",
+                )
+            )
+        if single_dns_truth and any(url in lowered for url in MIHOMO_SINGLE_DNS_TRUTH_HTTP_TEST_URLS):
+            findings.append(
+                DnsSafetyFinding(
+                    "error",
+                    path,
+                    index,
+                    "两份 Mihomo 私有 provider 配置的 provider health-check.url / url-test.url 必须保持 HTTPS generate_204，不能改回 HTTP。",
+                    "把测速 URL 统一改回 https://www.google.com/generate_204，并在客户端重载后复测 provider 路径。",
                 )
             )
 
@@ -266,14 +308,15 @@ def validate_mihomo(path: Path, lines: list[str]) -> list[DnsSafetyFinding]:
                 "error",
                 path,
                 1,
-                "Mihomo 配置缺少 dns: 段，无法确认普通目标网站 DNS 与节点 server DNS 是否隔离。",
-                "显式配置 dns.nameserver 与 dns.proxy-server-nameserver。",
+                "Mihomo 配置缺少 dns: 段，无法确认普通目标网站 DNS 的解析边界。",
+                "显式配置 dns.default-nameserver 与 dns.nameserver；私有 provider 配置还要保持单一 DNS 真相基线。",
             )
         )
         return findings
 
     current_key = None
     current_nameserver_policy_key = None
+    seen_default_nameserver = False
     seen_proxy_server_nameserver = False
     seen_business_nameserver = False
     business_nameserver_has_domestic = False
@@ -281,14 +324,61 @@ def validate_mihomo(path: Path, lines: list[str]) -> list[DnsSafetyFinding]:
     for index, line in dns_block:
         if is_comment_or_blank(line):
             continue
-        key_match = re.match(r"^  ([A-Za-z0-9_-]+):\s*(?:#.*)?$", line)
+
+        key_match = re.match(r"^  ([A-Za-z0-9_-]+):\s*(.*)$", line)
         if key_match:
             current_key = key_match.group(1)
+            current_value = key_match.group(2).split("#", 1)[0].strip().lower()
             current_nameserver_policy_key = None
+
+            if current_key == "default-nameserver":
+                seen_default_nameserver = True
             if current_key == "proxy-server-nameserver":
                 seen_proxy_server_nameserver = True
             if current_key == "nameserver":
                 seen_business_nameserver = True
+
+            if single_dns_truth:
+                if current_key in MIHOMO_SINGLE_DNS_TRUTH_FORBIDDEN_KEYS:
+                    findings.append(
+                        DnsSafetyFinding(
+                            "error",
+                            path,
+                            index,
+                            f"两份 Mihomo 私有 provider 配置必须保持“单一 DNS 真相”，不得恢复 dns.{current_key} 这类多层 DNS 字段。",
+                            "删除该字段，收敛回 default-nameserver + nameserver + fake-ip-filter 的稳定基线；如确需恢复，必须先获得用户明确确认并完成运行时复测。",
+                        )
+                    )
+                if current_key == "respect-rules" and current_value and current_value != "false":
+                    findings.append(
+                        DnsSafetyFinding(
+                            "error",
+                            path,
+                            index,
+                            "两份 Mihomo 私有 provider 配置的 dns.respect-rules 不得改回 true，否则 DoH / provider 路径会重新分叉。",
+                            "把 dns.respect-rules 保持为 false，并在 Mihomo API / 日志里确认运行时配置已经生效。",
+                        )
+                    )
+                if current_key == "ipv6" and current_value == "true":
+                    findings.append(
+                        DnsSafetyFinding(
+                            "error",
+                            path,
+                            index,
+                            "两份 Mihomo 私有 provider 配置的 dns.ipv6 不得恢复为 true，否则会重新引入已知的运行时不一致风险。",
+                            "把 dns.ipv6 保持为 false；如需重新启用，必须先获得用户明确确认并完成真实运行时复测。",
+                        )
+                    )
+                if current_key in {"use-hosts", "use-system-hosts"} and current_value == "true":
+                    findings.append(
+                        DnsSafetyFinding(
+                            "error",
+                            path,
+                            index,
+                            f"两份 Mihomo 私有 provider 配置的 dns.{current_key} 不得恢复为 true，避免本地 hosts 再次混入 provider 测速链路。",
+                            f"把 dns.{current_key} 保持为 false，优先使用 default-nameserver + nameserver 的单一路径。",
+                        )
+                    )
             continue
 
         if current_key == "nameserver-policy":
@@ -319,8 +409,8 @@ def validate_mihomo(path: Path, lines: list[str]) -> list[DnsSafetyFinding]:
                 "error",
                 path,
                 index,
-                f"Mihomo dns.{current_key or '未知段'} 包含国内 DNS ({', '.join(needles)})，普通目标网站域名可能泄漏给国内解析方。",
-                "国内 DNS 只允许用于 default-nameserver 的 DNS 服务器域名 bootstrap、proxy-server-nameserver 的节点 server 域名 bootstrap，以及专用 rule-set:cn-dns-domains 国内业务域名白名单；其他业务 nameserver、nameserver-policy 与 direct-nameserver 使用海外 DNS 或移除。",
+                f"Mihomo dns.{current_key or '未知字段'} 包含国内 DNS ({', '.join(needles)})，普通目标网站域名可能被泄漏给国内解析方。",
+                "国内 DNS 只能用于 default-nameserver bootstrap、proxy-server-nameserver 节点 bootstrap，或 rule-set:cn-dns-domains 白名单；其他业务 nameserver / nameserver-policy / direct-nameserver 应使用海外 DNS 或移除。",
             )
         )
 
@@ -331,11 +421,22 @@ def validate_mihomo(path: Path, lines: list[str]) -> list[DnsSafetyFinding]:
                 path,
                 dns_block[0][0],
                 "Mihomo dns: 缺少业务 nameserver，无法保证普通目标网站默认走海外 DNS。",
-                "配置 dns.nameserver 为 Cloudflare / Google 等海外 DoH。",
+                "配置 dns.nameserver，例如 Cloudflare / Google 等海外 DoH。",
             )
         )
 
-    if not seen_proxy_server_nameserver:
+    if single_dns_truth and not seen_default_nameserver:
+        findings.append(
+            DnsSafetyFinding(
+                "error",
+                path,
+                dns_block[0][0],
+                "两份 Mihomo 私有 provider 配置缺少 default-nameserver，无法为 nameserver 自身域名提供稳定 bootstrap。",
+                "补回 dns.default-nameserver，并仅在这里保留国内可直连 DNS 作为 bootstrap 例外。",
+            )
+        )
+
+    if not single_dns_truth and not seen_proxy_server_nameserver:
         findings.append(
             DnsSafetyFinding(
                 "error",
@@ -346,20 +447,18 @@ def validate_mihomo(path: Path, lines: list[str]) -> list[DnsSafetyFinding]:
             )
         )
 
-    if business_nameserver_has_domestic and not seen_proxy_server_nameserver:
+    if not single_dns_truth and business_nameserver_has_domestic and not seen_proxy_server_nameserver:
         findings.append(
             DnsSafetyFinding(
                 "error",
                 path,
                 dns_block[0][0],
-                "Mihomo 全局 nameserver 使用国内 DNS 且缺少 proxy-server-nameserver，节点连通性和普通目标解析被混在一起。",
+                "Mihomo 全局 nameserver 使用国内 DNS 且缺少 proxy-server-nameserver，节点连通性和普通目标解析被混在了一起。",
                 "把业务 nameserver 改为海外 DNS，并新增 proxy-server-nameserver 处理节点 server 域名。",
             )
         )
 
     return findings
-
-
 def validate_path(path: Path) -> list[DnsSafetyFinding]:
     lines = read_lines(path)
     config_type = classify_config(path, lines)

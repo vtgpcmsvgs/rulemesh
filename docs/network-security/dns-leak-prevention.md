@@ -52,7 +52,16 @@ DOMAIN-SET:https://example.com/share/file/proxy-node-domains = server:https://dn
 
 ## Mihomo 实现规范
 
+RuleMesh 里的 Mihomo DNS 维护边界分两层：
+
+- 公开参考模板 `docs/examples/mihomo-public.yaml` 仍可表达通用的分层 DNS 思路。
+- `%USERPROFILE%\Desktop\rulemesh-local\current\rulemesh-substore-mihomo-clash-verge.yaml` 与 `rulemesh-substore-mihomo-clash-meta.yaml` 这两份私有 provider 配置，默认必须保持“单一 DNS 真相”：`ipv6: false`、`dns.ipv6: false`、`use-hosts: false`、`use-system-hosts: false`，并把 `dns:` 收敛为 `default-nameserver + nameserver + fake-ip-filter + 最少必要字段`。
+- 未经用户明确确认与运行时复测，不得把 `nameserver-policy`、`proxy-server-nameserver`、`proxy-server-nameserver-policy`、`direct-nameserver`、`fallback` 或 `respect-rules: true` 重新带回这两份私有 Mihomo 配置。
+- 这不是“所有 Mihomo 都应该更简单”的泛化结论，而是已经在当前私有 provider 链路中实测验证过的稳定基线。
+
 Mihomo 必须使用原生 DNS 机制，不套用 Surge 的 `[Host]`。
+
+如果你维护的是上面两份私有 provider 配置，请优先遵守 [docs/mihomo-tun-dns-methodology.md](../mihomo-tun-dns-methodology.md)；下面这段分层示例不能直接原样抄回私有配置。
 
 推荐基线：
 
@@ -143,7 +152,7 @@ $content = Array.from(domains).sort().join("\n") + "\n";
 - `dnsleaktest.com` 不再泄漏到国内 DNS。
 - `browserleaks.com/dns` 不再泄漏到国内 DNS。
 - Surge DNS 日志 / 请求日志中，普通海外目标域名没有走国内 DNS。
-- Mihomo 运行时 `/configs` 或客户端日志中，业务 `nameserver`、DNS 服务器 bootstrap `default-nameserver` 与节点 `proxy-server-nameserver` 分工符合预期。
+- Mihomo 运行时 `/configs` 或客户端日志中，当前生效的 DNS 结构与目标客户端边界一致：公开模板按其设计分层；两份私有 provider 配置则应收敛为 `default-nameserver + nameserver` 的单一 DNS 真相。
 - 普通浏览器访问海外网站时，DNS 出口与代理出口 IP 不再冲突。
 - 代理节点仍能正常连接。
 - 订阅与规则集仍能正常更新。
@@ -158,6 +167,7 @@ $content = Array.from(domains).sort().join("\n") + "\n";
 - 禁止把所有 `DIRECT`、所有国内直连规则或代理节点 server 域名混进 `cn_dns_domains`。
 - 禁止把订阅链接域名误当成节点 server 域名。
 - 禁止把机场面板域名、订阅转换链接、Sub-Store 入口或普通网站域名写进 `proxy-node-domains`。
+- 禁止把公开 `mihomo-public.yaml` 的分层 DNS 结构直接抄回两份私有 Mihomo provider 配置；它们必须单独遵守“单一 DNS 真相”基线。
 - 禁止在生产 Surge 配置中直接使用未经同网络验证的 `https://sub.store/api/file/proxy-node-domains`；应使用可直达的 Sub-Store 后端/反代分享文件 URL。
 - 禁止只验证“网页能打开”，不验证 DNS 出口。
 - 禁止在 Surge 和 Mihomo 之间混用 DNS 方案。

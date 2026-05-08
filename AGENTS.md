@@ -39,7 +39,10 @@
 - Surge profile 不要写 `dns-mode = fake-ip`；Fake IP 由 Surge Enhanced Mode / VIF 运行时提供，Mac 端在 Surge 里启用 Enhanced Mode，不要把 Mihomo / Stash 的 `dns-mode` 搬进 Surge
 - Surge 的 `skip-proxy` 不要再放行 Apple `17.0.0.0/8`；macOS 更新入口已收敛到 `region/us/macos_update_us`，必须让前置拒绝规则和后续美国分流规则有机会命中
 - 给 Surge / Mihomo 新增 DNS、fake-ip、Tun 或透明代理字段前，必须先按目标客户端自己的 profile 语义确认；不要用“另一个客户端有同名或近似字段”来推断可用性
-- 维护 Mihomo DNS 时只能使用 `default-nameserver` 做 DNS 服务器域名 bootstrap、使用 `proxy-server-nameserver` 隔离节点 server 域名、使用 `nameserver-policy` 的 `rule-set:cn-dns-domains` 处理国内业务域名白名单；不要在 Mihomo 里套用 Surge 的 `[Host]`
+- Surge 私有配置允许继续维护自己的复杂 DNS 版本；不要因为 Surge 正常，就反推 Mihomo 私有文件也应保持同样结构
+- 维护 `rulemesh-substore-mihomo-clash-verge.yaml` 与 `rulemesh-substore-mihomo-clash-meta.yaml` 时，默认只允许“单一 DNS 真相”版本：`ipv6: false`、`dns.ipv6: false`（若字段存在）、`use-hosts: false`、`use-system-hosts: false`，且 `dns:` 里只保留 `default-nameserver`、`nameserver`、`fake-ip-filter` 等最小必需字段
+- 未经用户明确确认并完成运行时复测，不得在两份 Mihomo 私有文件里恢复 `respect-rules: true`、`nameserver-policy`、`proxy-server-nameserver`、`proxy-server-nameserver-policy`、`direct-nameserver`、`fallback`，也不得把 Surge 的复杂 DNS 结构照搬到 Mihomo
+- Mihomo 私有文件里的机场 provider `health-check.url` 与 `url-test` 组测速 URL 统一使用 HTTPS `https://www.google.com/generate_204`；不要改回 HTTP
 - `proxy-node-domains` 必须是从 Sub-Store 聚合订阅提取的节点 `server` 域名清单，且必须过滤 IP 并按一行一个域名输出；不得包含订阅链接域名、机场面板域名或普通目标网站域名，也不得输出逗号分隔清单
 - Surge `[Host]` 引用 `proxy-node-domains` 时，必须使用 Surge 生产设备可直接访问的 Sub-Store 分享文件 URL；不要把未经同网络验证的 `https://sub.store/api/file/proxy-node-domains` 写进生产配置
 - 涉及代理、旁路由、Surge、Mihomo、Sub-Store、DNS、DoH、fake-ip、mapping、Tun、透明代理或规则分流时，默认同时检查 DNS 出口；不能只验证“网页能打开”
@@ -93,6 +96,7 @@
 - 默认不要把私有文件内容或敏感值写回公开仓库，也不要在回复中完整回显真实密钥、签名、订阅 URL 或其他敏感参数
 - 即使需要在公开仓库里记录工作路由白名单维护约定，也只允许写“固定工作电脑”“白名单模式”“与 personal 永久不一致”这类抽象说明；不要把真实 `SRC-IP` 范围、私有设备标识、订阅地址或本地策略分组细节写回公开仓库
 - 若 `rulemesh-substore-mihomo-clash-verge.yaml` 出现“某个 provider 全部测速失败，但同一订阅直导 Clash Verge Rev 正常”的现象，默认先对比运行时 `dns:`，并通过 Mihomo API / 命名管道与日志确认实际生效配置；不要先把问题归因到节点失效，也不要只停留在更换测速 URL 这一层
+- 若两份 Mihomo 私有文件中任意一份再次出现 `respect-rules: true`、`nameserver-policy`、`proxy-server-nameserver` 或 `fallback` 回流，默认按配置回滚事故处理；先恢复到“单一 DNS 真相”版本，再讨论是否存在必须保留的客户端特化例外
 - 若本地私有配置结构发生变化，必须同步更新 `.rulemesh.local.example.json` 与相关文档，但只允许写入脱敏占位值
 - 若任务需要参考私有配置，默认只说明字段名、用途与是否生效，不直接暴露真实值
 

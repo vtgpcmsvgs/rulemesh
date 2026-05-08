@@ -10,6 +10,8 @@
 
 这个模板是基于本地长期使用的 Surge 配置整理出来的公开版，保留了总开关、区域自动切换、拒绝规则、直连规则与 IP 规则的完整结构，但移除了不适合公开仓库的个人化部分。
 
+> 重要边界：Surge 可以继续保留当前 `[Host] + 海外全局 DNS + 国内 bootstrap 例外` 的复杂 DNS 方案；[docs/mihomo-tun-dns-methodology.md](mihomo-tun-dns-methodology.md) 里针对两份 Mihomo 私有 provider 配置的“单一 DNS 真相”红线，不适用于 Surge，也不要反向把 Surge 这套复杂 DNS 抄回 Mihomo 私有配置。
+
 ## 版本划分
 
 - 软路由集群版

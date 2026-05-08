@@ -35,8 +35,8 @@ raw.githubusercontent.com = server:system
 
         findings = check_dns_safety.validate_path(path)
 
-        self.assertTrue(any("高风险组合" in finding.message for finding in findings))
-        self.assertTrue(any("全局 dns-server" in finding.message for finding in findings))
+        self.assertTrue(any("223.5.5.5" in finding.message for finding in findings))
+        self.assertTrue(any("dns-server" in finding.message for finding in findings))
         self.assertTrue(any("proxy-node-domains" in finding.message for finding in findings))
 
     def test_surge_accepts_overseas_global_dns_and_node_host_set(self) -> None:
@@ -106,7 +106,7 @@ proxy-providers: {}
         findings = check_dns_safety.validate_path(path)
 
         self.assertTrue(any("dns.nameserver" in finding.message for finding in findings))
-        self.assertTrue(any("缺少 proxy-server-nameserver" in finding.message for finding in findings))
+        self.assertTrue(any("proxy-server-nameserver" in finding.message for finding in findings))
 
     def test_mihomo_accepts_domestic_bootstrap_exceptions(self) -> None:
         path = self.write_temp(
@@ -167,7 +167,84 @@ proxy-providers: {}
 
         findings = check_dns_safety.validate_path(path)
 
-        self.assertTrue(any("Surge 的 [Host]" in finding.message for finding in findings))
+        self.assertTrue(any("[Host]" in finding.message for finding in findings))
+
+    def test_private_mihomo_accepts_single_dns_truth_baseline(self) -> None:
+        path = self.write_temp(
+            "rulemesh-substore-mihomo-clash-verge.yaml",
+            """ipv6: false
+dns:
+  enable: true
+  ipv6: false
+  use-hosts: false
+  use-system-hosts: false
+  respect-rules: false
+  default-nameserver:
+    - 223.5.5.5
+    - 119.29.29.29
+  nameserver:
+    - https://cloudflare-dns.com/dns-query
+    - https://dns.google/dns-query
+proxy-providers: {}
+proxy-groups:
+  - name: auto
+    type: url-test
+    url: "https://www.google.com/generate_204"
+""",
+        )
+
+        self.assertEqual(check_dns_safety.validate_path(path), [])
+
+    def test_private_mihomo_rejects_layered_dns_fields(self) -> None:
+        path = self.write_temp(
+            "rulemesh-substore-mihomo-clash-meta.yaml",
+            """ipv6: false
+dns:
+  enable: true
+  ipv6: false
+  use-hosts: false
+  use-system-hosts: false
+  respect-rules: true
+  default-nameserver:
+    - 223.5.5.5
+  nameserver:
+    - https://cloudflare-dns.com/dns-query
+  proxy-server-nameserver:
+    - https://dns.alidns.com/dns-query
+proxy-providers: {}
+""",
+        )
+
+        findings = check_dns_safety.validate_path(path)
+
+        self.assertTrue(any("respect-rules" in finding.message for finding in findings))
+        self.assertTrue(any("proxy-server-nameserver" in finding.message for finding in findings))
+
+    def test_private_mihomo_rejects_http_generate_204(self) -> None:
+        path = self.write_temp(
+            "rulemesh-substore-mihomo-clash-verge.yaml",
+            """ipv6: false
+dns:
+  enable: true
+  ipv6: false
+  use-hosts: false
+  use-system-hosts: false
+  respect-rules: false
+  default-nameserver:
+    - 223.5.5.5
+  nameserver:
+    - https://cloudflare-dns.com/dns-query
+proxy-providers:
+  sample:
+    health-check:
+      enable: true
+      url: "http://www.google.com/generate_204"
+""",
+        )
+
+        findings = check_dns_safety.validate_path(path)
+
+        self.assertTrue(any("generate_204" in finding.message for finding in findings))
 
 
 if __name__ == "__main__":

@@ -16,6 +16,9 @@
 - DNS 防泄漏方法论：[`docs/network-security/dns-leak-prevention.md`](network-security/dns-leak-prevention.md)
 
 这个模板是基于本地长期使用的 Mihomo 配置整理出来的公开版，保留了多订阅聚合、区域自动切换、`rule-providers` 与完整规则顺序，但移除了真实机场地址和其他不适合公开仓库的私有信息。
+重要边界：
+对 `%USERPROFILE%\Desktop\rulemesh-local\current` 下的 `rulemesh-substore-mihomo-clash-verge.yaml` 与 `rulemesh-substore-mihomo-clash-meta.yaml` 两份私有 provider 配置，如果与本文或公开示例冲突，以 [docs/mihomo-tun-dns-methodology.md](mihomo-tun-dns-methodology.md) 里的“单一 DNS 真相”约束为准，不要把本文历史上的复杂 DNS 结构回灌到私有文件。
+
 
 ## 模板保留了什么
 
@@ -25,10 +28,10 @@
 - `proxy-providers.*.proxy: DIRECT` 的订阅更新基线：它只控制 Mihomo 后台拉取机场订阅 URL，浏览器访问机场官网 / 面板仍由后面的 `rules` 判断
 - `reject`、`direct`、`proxy`、`region` 四类 RuleMesh `classical` 产物接入
 - GitHub 继续采用“SSH 定向直连 + Core HTTPS 显式代理”拆分：`direct/github_ssh_direct.yaml` 只承接 `github.com:22` 与 `ssh.github.com:443`，`proxy/github_core_proxy.yaml` 则显式承接 GitHub 网页、`api.github.com`、Gist、Raw、静态资源与附件
-- 默认采用“普通目标网站域名走海外加密 DNS、DNS 服务器域名由 `default-nameserver` bootstrap、代理节点 server 域名单独走 `proxy-server-nameserver`、明确国内业务域名通过 `cn-dns-domains` 专用清单走国内 DoH”的 DNS 隔离思路
-- 默认启用 Tun 全量接管与域名嗅探，优先把 Mihomo 的实际体验拉到接近 Surge 的水位
-- 默认开启全局 `ipv6: true` 与 `dns.ipv6: true`，不再让 Mihomo 在双栈环境里主动把 AAAA 结果清空
-- 默认在 `proxy-providers.*.override` 里显式写 `ip-version: dual`，真正放开订阅节点双栈连接，但先不默认强推 `ipv6-prefer`
+- 公开参考模板保留 Mihomo 的 Tun、嗅探与 DNS 隔离思路，但两份私有 provider 配置不要直接照搬这里的历史复杂 DNS 分层。
+- 两份 Mihomo 私有 provider 配置当前默认保持“单一 DNS 真相”版本：`ipv6: false`、`dns.ipv6: false`、`default-nameserver + nameserver + fake-ip-filter`。
+- `proxy-providers.*.override.ip-version: dual` 只表示节点栈能力，不等于两份私有文件必须重新打开全局 IPv6 或恢复复杂 DNS 叠层。
+- 默认启用 Tun 全量接管与域名嗅探，优先把 Mihomo 的实际体验拉到接近 Surge 的水位。
 - `region/hk/global_media.yaml` 额外承接 X / Twitter 网页、短链与静态资源，以及 Polymarket 显式域名与激进关键词兜底，并默认绑定 `🇭🇰 香港-自动选择`
 - `region/us/ai_us.yaml` 统一承接 OpenAI / Claude / Gemini / Copilot / Cursor / Grok / Windsurf / Augment 等海外 AI 平台，并保留更激进的关键词兜底；客户端默认绑定 `🇺🇸 美国-自动选择`
 - `direct/ai_cn_direct.yaml` 显式承接 Kimi / DeepSeek / 豆包 / 即梦 / Trae 中国大陆 / 元宝 / 混元 / 通义 / 千问 / 智谱 / MiniMax / 文心等国内 AI 入口；它应放在 `direct_bytedance`、`direct_cn` 前，但只有进入 `cn-dns-domains` 专用白名单的域名才走国内 `nameserver-policy`
@@ -67,12 +70,11 @@
 - 对长期后台运行、电脑睡眠唤醒、偶发网络抖动这些场景，`720` 分钟外层定时重载可作为 provider 自动更新的保底保险；当前本地经验默认建议保留。
 - 如果你把 `rulemesh-substore-mihomo-clash-verge.yaml` 当成 Clash Verge Rev 的单一真相，默认应关闭 Clash Verge Rev 的 `DNS 覆写`；否则运行时 `dns` 会被 AppData 下的 `dns_config.yaml` 覆盖。
 - 如果你明确保留 Clash Verge Rev 的 `DNS 覆写`，就应把 `dns_config.yaml` 当成实际生效的 `dns` 配置入口，不要再假设源文件里的 `dns:` 会原样生效。
-- 如果关闭 Clash Verge Rev 的 `DNS 覆写` 后出现“国内可访问、国外代理不通”，默认先检查桌面端私有文件的 `proxy-server-nameserver` 与 `respect-rules`，而不是先回滚规则顺序。
-- 对当前本地私有维护来说，Clash Verge Rev 在关闭 `DNS 覆写` 后，DNS 连接默认收敛为 `respect-rules: true`，让 Mihomo 自己访问海外 DoH 端点时也遵守 `rules` 分流；节点域名解析仍由 `proxy-server-nameserver` 优先走当前网络可直连的阿里云 / 腾讯云 DoH。
-- 如果出现“Clash Verge Rev 正常、Clash Meta for Android 不通”的情况，默认先排查 Clash Meta 的节点域名解析启动链，而不是先改规则顺序。
-- Android 侧如果只是节点域名解析不稳定，优先只调整 `proxy-server-nameserver`；不要一上来就把全部国际业务 DNS 改回国内。
-- 当前本地私有维护默认允许 Clash Meta 专用文件把 `proxy-server-nameserver` 收敛到阿里云 / 腾讯云 DoH，以提高移动网络下的首连稳定性；这一步只针对代理节点 server 域名解析。
-- 这份模板不会把所有 `DIRECT` 交给国内 DNS；普通目标网站域名统一由海外 `nameserver` 解析，国内 DNS 只允许出现在 `default-nameserver`、`proxy-server-nameserver` 与 `rule-set:cn-dns-domains` 专用国内业务域名白名单。
+- 如果关闭 Clash Verge Rev 的 `DNS 覆写` 后出现“国内可访问、国外代理不通”，默认先确认桌面端私有文件是否被改离了“单一 DNS 真相”版本，而不是先回滚规则顺序。
+- 对当前本地私有维护来说，Clash Verge Rev 在关闭 `DNS 覆写` 后，默认仍应保持 `respect-rules: false`，并只保留 `default-nameserver + nameserver + fake-ip-filter`。
+- 如果出现“Clash Verge Rev 正常、Clash Meta for Android 不通”，默认先确认 Android 私有文件是否也被改离了这套简单基线，而不是先怀疑规则顺序。
+- 对 Clash Meta for Android 的兼容性调整，默认也先保持“单一 DNS 真相”版本；只有用户明确确认且 Android 运行时复测证明必须特化时，才允许单独加例外。
+- 这份模板不会把所有 `DIRECT` 交给国内 DNS；普通目标网站域名统一由 `nameserver` 解析，国内 DNS 只承担 `default-nameserver` 的 DNS 服务器 bootstrap。
 
 ## 代理组过滤约定
 
@@ -85,8 +87,8 @@
 - Mihomo 的体验优化优先级，不是继续堆规则，而是先把 `tun`、`sniffer`、`dns` 这层运行时补齐。
 - DNS 分流不按 `DIRECT` / `PROXY` 两分；普通目标网站域名默认走海外 `nameserver`，只有 `cn-dns-domains` 专用清单里的明确国内业务域名才进入国内 `nameserver-policy`。
 - 新增直连规则时，要先判断它是否仍属于普通目标网站域名；只有明确国内业务域名 / 国内域名后缀，才允许评估是否加入 `rules/dns/cn_dns_domains.list`。
-- `default-nameserver`、`proxy-server-nameserver` 要与业务 DNS 分开维护；前者只负责 DNS 服务器域名 bootstrap，后者只负责节点域名解析，避免业务 DNS 与节点 DNS 互相依赖。
-- 如果要给 Clash Meta for Android 做定向兼容，优先只动它自己的 `proxy-server-nameserver`，并把变更局限在私有 Android 文件，不要反向污染 Clash Verge Rev 文件。
+- 对两份 Mihomo 私有 provider 配置来说，`default-nameserver` 只负责 `nameserver` 自身的 bootstrap；不要再默认引入 `proxy-server-nameserver`、`fallback` 或其他多层 DNS 字段。
+- 如果未来确有 Clash Meta for Android 的定向兼容需求，也必须先保住“单一 DNS 真相”基线；只有用户明确确认且 Android 运行时复测证明必须例外时，才允许单独讨论特化。
 - 当前 `dist/mihomo/classical/` 默认只发布 Mihomo 已确认支持的规则类型；像 `URL-REGEX` 这类 Surge 仍可使用、但 Mihomo classical 当前不支持的规则，会保留在源规则层和 Surge 产物中，但不会写入 Mihomo 产物。
 - 这不是放弃该类规则；如果后续 Mihomo 官方版本已支持并经仓库验证通过，Mihomo 产物会同步恢复输出，不需要反向删改源规则。
 - 详细维护边界、风险提示与检查清单见 [docs/mihomo-tun-dns-methodology.md](mihomo-tun-dns-methodology.md)。
