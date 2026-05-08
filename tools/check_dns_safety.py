@@ -17,6 +17,9 @@ DOMESTIC_DNS_NEEDLES = (
     "dns.alidns.com",
     "doh.pub",
 )
+ALLOWED_DOMESTIC_NAMESERVER_POLICY_KEYS = {
+    "rule-set:cn-dns-domains",
+}
 
 SURGE_CONFIG_NAMES = (
     "surge-public.conf",
@@ -270,6 +273,7 @@ def validate_mihomo(path: Path, lines: list[str]) -> list[DnsSafetyFinding]:
         return findings
 
     current_key = None
+    current_nameserver_policy_key = None
     seen_proxy_server_nameserver = False
     seen_business_nameserver = False
     business_nameserver_has_domestic = False
@@ -280,14 +284,26 @@ def validate_mihomo(path: Path, lines: list[str]) -> list[DnsSafetyFinding]:
         key_match = re.match(r"^  ([A-Za-z0-9_-]+):\s*(?:#.*)?$", line)
         if key_match:
             current_key = key_match.group(1)
+            current_nameserver_policy_key = None
             if current_key == "proxy-server-nameserver":
                 seen_proxy_server_nameserver = True
             if current_key == "nameserver":
                 seen_business_nameserver = True
             continue
 
+        if current_key == "nameserver-policy":
+            policy_key_match = re.match(r"^    [\"']?([^\"']+?)[\"']?:\s*(?:#.*)?$", line)
+            if policy_key_match:
+                current_nameserver_policy_key = policy_key_match.group(1).strip()
+                continue
+
         needles = domestic_needles_in(line)
         if not needles:
+            continue
+        if (
+            current_key == "nameserver-policy"
+            and current_nameserver_policy_key in ALLOWED_DOMESTIC_NAMESERVER_POLICY_KEYS
+        ):
             continue
         if current_key in {
             "default-nameserver",
@@ -304,7 +320,7 @@ def validate_mihomo(path: Path, lines: list[str]) -> list[DnsSafetyFinding]:
                 path,
                 index,
                 f"Mihomo dns.{current_key or '未知段'} 包含国内 DNS ({', '.join(needles)})，普通目标网站域名可能泄漏给国内解析方。",
-                "国内 DNS 只允许用于 default-nameserver 的 DNS 服务器域名 bootstrap，以及 proxy-server-nameserver 的节点 server 域名 bootstrap；业务 nameserver、nameserver-policy 与 direct-nameserver 使用海外 DNS 或移除。",
+                "国内 DNS 只允许用于 default-nameserver 的 DNS 服务器域名 bootstrap、proxy-server-nameserver 的节点 server 域名 bootstrap，以及专用 rule-set:cn-dns-domains 国内业务域名白名单；其他业务 nameserver、nameserver-policy 与 direct-nameserver 使用海外 DNS 或移除。",
             )
         )
 

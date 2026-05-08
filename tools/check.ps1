@@ -202,7 +202,7 @@ function Assert-DistTree {
         }
     }
 
-    Assert-OnlyExpectedDirectories -RootPath (Join-Path $repoRoot "dist\surge") -ExpectedNames @("rules")
+    Assert-OnlyExpectedDirectories -RootPath (Join-Path $repoRoot "dist\surge") -ExpectedNames @("dns", "rules")
     Assert-OnlyExpectedDirectories -RootPath (Join-Path $repoRoot "dist\mihomo") -ExpectedNames @("classical")
 }
 

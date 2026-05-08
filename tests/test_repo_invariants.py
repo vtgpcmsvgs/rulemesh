@@ -130,7 +130,7 @@ class RepoInvariantTests(unittest.TestCase):
 
         self.assertEqual(
             sorted(path.name for path in surge_root.iterdir() if path.is_dir()),
-            ["rules"],
+            ["dns", "rules"],
         )
         self.assertEqual(
             sorted(path.name for path in mihomo_root.iterdir() if path.is_dir()),

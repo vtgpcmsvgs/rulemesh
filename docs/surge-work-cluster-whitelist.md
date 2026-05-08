@@ -32,7 +32,7 @@
 - `skip-proxy` 不再包含 Apple `17.0.0.0/8`，避免 macOS 更新流量绕过白名单里的拒绝规则和美国分流入口
 - IPv6 默认关闭，等完成 IPv6 DNS 泄露、WebRTC 与出口测试后再重新评估
 - `hijack-dns = *:53` 负责接管传统 UDP/TCP 53 DNS；加密 DNS 流量只能作为显式白名单入口放行，不能靠 `FINAL` 兜底
-- 海外 `encrypted-dns-server`、`encrypted-dns-follow-outbound-mode = true` 与 `use-local-host-item-for-proxy = false` 继续保留，配合 `[Host]` 中的 GitHub Raw 规则产物解析与 `proxy-node-domains` 节点 server 域名专用 bootstrap 解析
+- 海外 `encrypted-dns-server`、`encrypted-dns-follow-outbound-mode = true` 与 `use-local-host-item-for-proxy = false` 继续保留，配合 `[Host]` 中的 GitHub Raw 规则产物解析、`cn_dns_domains` 国内业务域名 DNS 清单与 `proxy-node-domains` 节点 server 域名专用 bootstrap 解析；`cn_dns_domains` 只影响 DNS 解析，不新增白名单流量放行
 - 私有订阅域名同步块继续保留独立显式放行入口，顺序位于 GitHub 观察兜底之后、1Password 之前；域名清单统一在 `%USERPROFILE%\Desktop\rulemesh-local\current\private_subscription_direct.list` 维护，再通过同步脚本先插入 Chrome 访问这些域名时改走 `🚀 节点选择` 的例外，再保留订阅更新直连
 - `proxy/onepassword_proxy.list` 继续保留 `🚀 节点选择`，用于白名单模式下显式放行 1Password 核心连接；其上游快照由仓库每天自动抓取官方支持页生成，但默认只覆盖官方自有核心域名与更新/基础设施端点
 - AdsPower 继续维持 `adspower_reject`、`adspower_direct`、`adspower_proxy` 三段细分

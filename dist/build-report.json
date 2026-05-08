@@ -3,8 +3,9 @@
     "domain-only": 7,
     "ipcidr-only": 7,
     "classical/mixed": 19,
+    "dns-domain-set": 1,
     "empty": 0,
-    "total_sources": 33,
+    "total_sources": 34,
     "total_warnings": 0
   },
   "sources": [
@@ -435,6 +436,17 @@
       "dist": {
         "surge_rules": "dist/surge/rules/reject/os_update_reject.list",
         "mihomo_classical": "dist/mihomo/classical/reject/os_update_reject.yaml"
+      }
+    },
+    {
+      "source": "rules/dns/cn_dns_domains.list",
+      "category": "dns",
+      "classification": "dns-domain-set",
+      "counts": {
+        "surge_dns_domains": 173
+      },
+      "dist": {
+        "surge_dns_domains": "dist/surge/dns/cn_dns_domains.list"
       }
     }
   ],

@@ -23,6 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 RULES_ROOT = ROOT / "rules"
 DIST_ROOT = ROOT / "dist"
 SOURCE_GROUPS = ("reject", "direct", "proxy", "region")
+DNS_DOMAIN_SET_GROUP = "dns"
 AWS_UPSTREAM_BOOTSTRAP_PATH = RULES_ROOT / "upstream" / "aws" / "ip-ranges.json"
 ALICLOUD_UPSTREAM_BOOTSTRAP_PATH = RULES_ROOT / "upstream" / "alicloud" / "hk_ipv4.json"
 DOMAIN_CHARS = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._")
@@ -114,6 +115,16 @@ def iter_source_files() -> list[Path]:
     return sorted(files, key=lambda item: item.relative_to(RULES_ROOT).as_posix())
 
 
+def iter_dns_domain_source_files() -> list[Path]:
+    root = RULES_ROOT / DNS_DOMAIN_SET_GROUP
+    if not root.exists():
+        return []
+    return sorted(
+        [path for path in root.rglob("*") if path.is_file()],
+        key=lambda item: item.relative_to(RULES_ROOT).as_posix(),
+    )
+
+
 def validate_source_files(files: Iterable[Path]) -> None:
     invalid = [
         path.relative_to(RULES_ROOT).as_posix()
@@ -126,6 +137,17 @@ def validate_source_files(files: Iterable[Path]) -> None:
             "rules/{reject,direct,proxy,region} 下的源文件"
             f"都必须使用 .list 扩展名：{joined}"
         )
+
+
+def validate_dns_domain_source_files(files: Iterable[Path]) -> None:
+    invalid = [
+        path.relative_to(RULES_ROOT).as_posix()
+        for path in files
+        if path.suffix.lower() != ".list"
+    ]
+    if invalid:
+        joined = ", ".join(f"rules/{item}" for item in invalid)
+        raise BuildError(f"rules/dns 下的 DNS 域名源文件都必须使用 .list 扩展名：{joined}")
 
 
 def ordered_unique(items: Iterable[str]) -> list[str]:
@@ -598,6 +620,19 @@ def write_mihomo_file(path: Path, source_path: Path, payload: list[str], kind: s
     path.write_text("\n".join(content), encoding="utf-8")
 
 
+def write_surge_dns_domain_set_file(path: Path, source_path: Path, payload: list[str]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    header = [
+        f"# 生成来源：{source_path.as_posix()}",
+        "# 类型：dns-domain-set",
+        "# 国内直连域名 DNS 清单，仅用于国内 CDN 解析调度。",
+        "# 不包含 IP、复杂规则、订阅入口域名或代理节点 server 域名。",
+        "",
+    ]
+    content = header + payload + [""]
+    path.write_text("\n".join(content), encoding="utf-8")
+
+
 def classify_file(source_types: list[str]) -> str:
     unique = set(source_types)
     if not unique:
@@ -665,12 +700,66 @@ def write_outputs(result: SourceBuildResult) -> dict[str, str]:
     return labels
 
 
+def normalize_dns_domain_set_entry(raw: str) -> str:
+    text = strip_inline_comment(raw).strip().lower()
+    if not text:
+        raise ValueError("空域名")
+    if "," in text:
+        raise ValueError("DNS 域名清单只允许一行一个域名，不支持逗号分隔规则")
+    if "/" in text:
+        raise ValueError("DNS 域名清单不能包含 IP-CIDR 或路径")
+    try:
+        ipaddress.ip_address(text.lstrip("."))
+    except ValueError:
+        pass
+    else:
+        raise ValueError("DNS 域名清单不能包含 IP 地址")
+    if not is_domain_literal(text):
+        raise ValueError("DNS 域名清单只允许域名或以点开头的域名后缀")
+    if text.startswith(("+.", ".")):
+        return normalize_domain_suffix(text)
+    return normalize_domain_exact(text)
+
+
+def build_dns_domain_set_source(path: Path) -> SourceBuildResult:
+    relative = path.relative_to(RULES_ROOT)
+    entries: list[str] = []
+
+    for line_no, raw in enumerate(read_text(path).splitlines(), start=1):
+        if is_comment_or_blank(raw):
+            continue
+        try:
+            entries.append(normalize_dns_domain_set_entry(raw))
+        except ValueError as exc:
+            raise BuildError(f"{repo_relative_path(path)}:{line_no} {exc}") from exc
+
+    return SourceBuildResult(
+        relative_path=relative,
+        category=DNS_DOMAIN_SET_GROUP,
+        classification="dns-domain-set",
+        outputs={"surge_dns_domains": ordered_unique(entries)},
+        warnings=[],
+    )
+
+
+def write_dns_domain_set_output(result: SourceBuildResult) -> dict[str, str]:
+    source_label = Path("rules") / result.relative_path
+    output_path = DIST_ROOT / "surge" / result.relative_path
+    write_surge_dns_domain_set_file(
+        output_path,
+        source_label,
+        result.outputs["surge_dns_domains"],
+    )
+    return {"surge_dns_domains": repo_relative_path(output_path)}
+
+
 def build_report(results: list[SourceBuildResult], path_map: dict[str, dict[str, str]]) -> dict[str, object]:
     all_warnings = [warning for result in results for warning in result.warnings]
     summary = {
         "domain-only": sum(result.classification == "domain-only" for result in results),
         "ipcidr-only": sum(result.classification == "ipcidr-only" for result in results),
         "classical/mixed": sum(result.classification == "classical/mixed" for result in results),
+        "dns-domain-set": sum(result.classification == "dns-domain-set" for result in results),
         "empty": sum(result.classification == "empty" for result in results),
         "total_sources": len(results),
         "total_warnings": len(all_warnings),
@@ -707,8 +796,10 @@ def run_build() -> int:
         )
 
     source_files = iter_source_files()
+    dns_domain_source_files = iter_dns_domain_source_files()
     validate_source_files(source_files)
-    validate_source_comment_language(source_files)
+    validate_dns_domain_source_files(dns_domain_source_files)
+    validate_source_comment_language([*source_files, *dns_domain_source_files])
 
     reset_output_roots()
     results: list[SourceBuildResult] = []
@@ -728,6 +819,18 @@ def run_build() -> int:
         )
         for message in result.warnings:
             print(f"[WARN] {message}")
+
+    for source_file in dns_domain_source_files:
+        result = build_dns_domain_set_source(source_file)
+        relative_key = result.relative_path.as_posix()
+        path_map[relative_key] = write_dns_domain_set_output(result)
+        results.append(result)
+        counts = result.outputs
+        print(
+            "[BUILD] "
+            f"rules/{relative_key} -> {result.classification} "
+            f"(surge dns domains={len(counts['surge_dns_domains'])})"
+        )
 
     report = build_report(results, path_map)
     (DIST_ROOT / "build-report.json").write_text(

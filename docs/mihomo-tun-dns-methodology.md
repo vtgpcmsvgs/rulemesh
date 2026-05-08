@@ -40,8 +40,8 @@
 ## DNS 方法论
 
 - 普通目标网站域名默认优先走海外加密 DNS。
-- 国内 DNS 只作为 DNS 服务器域名 bootstrap 与代理节点 `server` 域名 bootstrap 的专用例外。
-- 不要把“国内直连域名集”或“所有 DIRECT”交给国内 DNS 当成默认方案。
+- 国内 DNS 只作为 DNS 服务器域名 bootstrap、代理节点 `server` 域名 bootstrap，以及 `cn-dns-domains` 专用国内业务域名白名单的受限例外。
+- 不要把“所有 DIRECT”交给国内 DNS 当成默认方案；只有明确国内业务域名 / 国内域名后缀才允许进入 `rules/dns/cn_dns_domains.list`。
 - 原因很简单：DNS 信任边界不等于出站动作。即使某条规则最终是 `DIRECT`，它仍然可能是账号平台、系统服务、AI 服务或其他敏感目标域名。
 - 更稳妥的做法是把业务 `nameserver`、DNS 服务器 bootstrap `default-nameserver` 与节点 `proxy-server-nameserver` 分开，而不是按 `DIRECT` / `PROXY` 把目标网站域名重新分给国内 DNS。
 
@@ -128,16 +128,17 @@
 ## 国内 DNS 适用范围
 
 - 仅限 `default-nameserver` 里的 DNS 服务器域名 bootstrap，以及 `proxy-server-nameserver` 里的代理节点 `server` 域名解析。
+- 可额外使用 `nameserver-policy` 的 `rule-set:cn-dns-domains` 处理明确国内业务域名 / 国内域名后缀，减少海外 DNS 导致的国内 CDN 调度偏差。
 - 如果使用 `proxy-server-nameserver-policy`，也只能承载明确的节点 server 域名解析策略，不得混入普通目标网站域名。
 - 局域网、本地域名与私有地址段应通过本地直连、`fake-ip-filter` 或系统网络能力处理，不作为把普通目标网站域名送往国内 DNS 的理由。
 
 ## 不应默认回到国内 DNS 的目标域名
 
-- `direct_cn`
-- `direct_ai_cn`
-- `direct_bilibili`
-- `direct_netease`
-- `direct_bytedance`
+- `direct_cn` 中未进入 `cn-dns-domains` 专用清单的条目
+- `direct_ai_cn` 中未进入 `cn-dns-domains` 专用清单的条目
+- `direct_bilibili` 中未进入 `cn-dns-domains` 专用清单的条目
+- `direct_netease` 中未进入 `cn-dns-domains` 专用清单的条目
+- `direct_bytedance` 中未进入 `cn-dns-domains` 专用清单的条目
 - `direct_github_ssh`
 - `us_microsoft`
 - `us_macos_update`
@@ -145,8 +146,8 @@
 
 ## 维护规则
 
-- 新增一个 `direct/*.list` 或新的 Mihomo 直连入口时，先判断它是否是普通目标网站域名。只要是目标网站域名，就默认由海外业务 `nameserver` 解析。
-- 不要为了“DIRECT 看起来应该配国内 DNS”而把目标网站域名加入国内 `nameserver-policy`。
+- 新增一个 `direct/*.list` 或新的 Mihomo 直连入口时，先判断它是否是明确国内业务域名 / 国内域名后缀。不是这类域名时，默认由海外业务 `nameserver` 解析。
+- 不要为了“DIRECT 看起来应该配国内 DNS”而把目标网站域名加入国内 `nameserver-policy`；必须先进入 `rules/dns/cn_dns_domains.list` 并通过构建生成。
 - 如果确实需要针对某个 DNS 服务器域名或节点 server 域名调整解析，必须放在 `default-nameserver`、`proxy-server-nameserver` 或节点专用策略里，并写清楚它不是普通目标网站域名。
 - 新增需要优先直连的局域网、本地网段或特殊主机名时，同时检查 `rules:` 里的本地直连段与 `dns.fake-ip-filter` 是否也要补。
 - `default-nameserver` 只负责 DNS 服务器域名 bootstrap，`proxy-server-nameserver` 只负责节点域名解析，不要混入普通业务域名的取舍逻辑。

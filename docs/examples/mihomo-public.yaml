@@ -93,6 +93,11 @@ dns:
   nameserver:
     - https://cloudflare-dns.com/dns-query
     - https://dns.google/dns-query
+  # > 国内直连业务域名 DNS；只用于 cn-dns-domains 专用清单，不扩散到所有 DIRECT
+  nameserver-policy:
+    "rule-set:cn-dns-domains":
+      - https://dns.alidns.com/dns-query
+      - https://doh.pub/dns-query
   # > 代理节点 server 域名解析；国内 DNS 只允许出现在这一层
   proxy-server-nameserver:
     - https://dns.alidns.com/dns-query
@@ -305,6 +310,15 @@ proxy-groups:
     exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
 
 rule-providers:
+  cn-dns-domains:
+    type: http
+    behavior: domain
+    format: text
+    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/dns/cn_dns_domains.list"
+    path: ./ruleset/cn_dns_domains.list
+    interval: 86400
+    proxy: DIRECT
+
   reject_adblock:
     type: http
     behavior: classical
@@ -634,10 +648,7 @@ rules:
   # 8) 海外 DNS 主 IPv4 端点美国分流（必须放在 gfw 前）
   - RULE-SET,proxy_overseas_dns_ipv4,🇺🇸 美国-自动选择,no-resolve
 
-  # 9) 代理优先
-  - RULE-SET,proxy_gfw,🚀 节点选择
-
-  # 10) 直连规则（先放系统时间同步，再接其他直连入口）
+  # 9) 直连规则（先放系统时间同步，再接其他直连入口）
   - DOMAIN,localhost,DIRECT
   - DOMAIN-SUFFIX,local,DIRECT
   - DOMAIN-SUFFIX,lan,DIRECT
@@ -658,6 +669,9 @@ rules:
   - RULE-SET,direct_netease,DIRECT
   - RULE-SET,direct_bilibili,DIRECT
   - RULE-SET,direct_cn,DIRECT
+
+  # 10) 代理优先（放在国内直连规则之后，避免国内域名被 gfw 广谱规则提前抢走）
+  - RULE-SET,proxy_gfw,🚀 节点选择
 
   # 11) IP 规则
   - RULE-SET,hk_aws_ipv4,🇭🇰 香港-自动选择,no-resolve

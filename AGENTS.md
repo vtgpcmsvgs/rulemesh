@@ -3,8 +3,9 @@
 ## 仓库重点
 
 - 源规则只维护在 `rules/`
-- 构建产物只发布两条线：
+- 构建产物只发布三条线：
   - `dist/surge/rules/`
+  - `dist/surge/dns/`
   - `dist/mihomo/classical/`
 - 不要重新引入这些已废弃目录：
   - `dist/surge/domainset/`
@@ -33,12 +34,12 @@
 - 维护 `%USERPROFILE%\Desktop\rulemesh-local\current` 里的私有机场 provider 时，如果某个机场同时存在“入口域名”和“真实落地主机”，默认两者都要加入私有订阅直连同步块；不要只保留入口域名，否则 Clash Verge / Mihomo 可能在刷新 provider 时走偏、报 EOF，或把本地缓存刷成不完整内容
 - 维护两份 Mihomo 私有配置里的机场 `proxy-providers` 时，默认每个机场 provider 都要显式保留 `proxy: DIRECT`，表示 Mihomo 后台下载 / 更新订阅 URL 直连；浏览器打开机场官网 / 面板走代理由后面的 `PROCESS-NAME + 域名` 规则负责，不要把 `rule-providers` 拉 GitHub 规则集用的代理出站逻辑套到机场订阅 provider 上
 - 私有机场 provider 若发生重命名（例如机场别名变更），除同步更新 `current` 下的 Mihomo / Surge 配置外，还要检查 Clash Verge 运行目录中的旧 provider 缓存、辅助 profile、remote profile 注册项与历史当前项；避免新旧 provider id 并存，导致 UI 继续读取旧缓存或把问题误判成“节点被过滤”
-- DNS 泄漏按安全事故级别处理：普通目标网站域名默认不得交给国内 DNS；国内 DNS 只能作为“DNS 服务器域名 bootstrap”和“代理节点 server 域名 bootstrap”的专用例外
+- DNS 泄漏按安全事故级别处理：普通目标网站域名默认不得交给国内 DNS；国内 DNS 只能作为“DNS 服务器域名 bootstrap”、“代理节点 server 域名 bootstrap”以及 `cn_dns_domains` 国内业务域名白名单的专用例外
 - 维护 Surge DNS 时只能使用 `[Host] + DOMAIN-SET` 隔离节点 server 域名；`use-local-host-item-for-proxy` 默认保持 `false`，不要在 Surge 里伪造 Mihomo 的 `proxy-server-nameserver`
 - Surge profile 不要写 `dns-mode = fake-ip`；Fake IP 由 Surge Enhanced Mode / VIF 运行时提供，Mac 端在 Surge 里启用 Enhanced Mode，不要把 Mihomo / Stash 的 `dns-mode` 搬进 Surge
 - Surge 的 `skip-proxy` 不要再放行 Apple `17.0.0.0/8`；macOS 更新入口已收敛到 `region/us/macos_update_us`，必须让前置拒绝规则和后续美国分流规则有机会命中
 - 给 Surge / Mihomo 新增 DNS、fake-ip、Tun 或透明代理字段前，必须先按目标客户端自己的 profile 语义确认；不要用“另一个客户端有同名或近似字段”来推断可用性
-- 维护 Mihomo DNS 时只能使用 `default-nameserver` 做 DNS 服务器域名 bootstrap、使用 `proxy-server-nameserver` 隔离节点 server 域名；不要在 Mihomo 里套用 Surge 的 `[Host]`
+- 维护 Mihomo DNS 时只能使用 `default-nameserver` 做 DNS 服务器域名 bootstrap、使用 `proxy-server-nameserver` 隔离节点 server 域名、使用 `nameserver-policy` 的 `rule-set:cn-dns-domains` 处理国内业务域名白名单；不要在 Mihomo 里套用 Surge 的 `[Host]`
 - `proxy-node-domains` 必须是从 Sub-Store 聚合订阅提取的节点 `server` 域名清单，且必须过滤 IP 并按一行一个域名输出；不得包含订阅链接域名、机场面板域名或普通目标网站域名，也不得输出逗号分隔清单
 - Surge `[Host]` 引用 `proxy-node-domains` 时，必须使用 Surge 生产设备可直接访问的 Sub-Store 分享文件 URL；不要把未经同网络验证的 `https://sub.store/api/file/proxy-node-domains` 写进生产配置
 - 涉及代理、旁路由、Surge、Mihomo、Sub-Store、DNS、DoH、fake-ip、mapping、Tun、透明代理或规则分流时，默认同时检查 DNS 出口；不能只验证“网页能打开”
@@ -57,7 +58,7 @@
 - 2026-05-07 下线的两类激进 `reject` 入口不再恢复到源规则、公开模板或私有配置，除非用户明确要求重新启用
 - 私有 `rulemesh-substore-surge-work-whitelist.conf` 属于长期特化的工作路由白名单配置；它与 `rulemesh-substore-surge-personal.conf`、`rulemesh-substore-mihomo-clash-verge.yaml`、`rulemesh-substore-mihomo-clash-meta.yaml` 从现在起允许永久不一致，不得因为“统一模板”或“对齐 personal 配置”而回滚
 - 维护 `rulemesh-substore-surge-work-whitelist.conf` 时，默认应维持“仅放行明确白名单入口，其余流量对工作电脑统一 REJECT”的原则；若要恢复广谱放行（如 `proxy/gfw`、广谱 `direct`、`FINAL` 兜底放行），必须得到用户明确确认
-- 当前该工作路由白名单默认允许入口包括：设备分流、区域精确规则、GitHub SSH、GitHub Raw 下载入口、GitHub 广覆盖观察兜底、私有订阅域名同步块、1Password、AdsPower、Polygon RPC、BSC RPC、海外 DNS 主 IPv4 端点、代理节点 bootstrap DNS 直连例外（dns.alidns.com / doh.pub）、海外加密 DNS 显式入口（DoH / DoH3 / DoQ 与 cloudflare-dns.com / dns.google / dns.quad9.net）、`LAN,DIRECT`、`direct/os_time_direct`、`region/us/microsoft_us`、`region/us/macos_update_us`、阿里云指定直连与 `direct/bytedance_direct`；其中只有 2.1 设备分流保留 `SRC-IP + AWS 区域 / 多地区链式 SOCKS5 IP 段` 约束，2.2-2.10 不再额外限制 `SRC-IP`，原独立 IP 规则段已删除；未命中上述入口的流量最终 `FINAL,REJECT`
+- 当前该工作路由白名单默认允许入口包括：设备分流、区域精确规则、GitHub SSH、GitHub Raw 下载入口、GitHub 广覆盖观察兜底、私有订阅域名同步块、1Password、AdsPower、Polygon RPC、BSC RPC、海外 DNS 主 IPv4 端点、代理节点 bootstrap DNS 直连例外（dns.alidns.com / doh.pub）、海外加密 DNS 显式入口（DoH / DoH3 / DoQ 与 cloudflare-dns.com / dns.google / dns.quad9.net）、`LAN,DIRECT`、`direct/os_time_direct`、`region/us/microsoft_us`、`region/us/macos_update_us`、阿里云指定直连与 `direct/bytedance_direct`；`[Host]` 中的 `cn_dns_domains` 只用于国内业务域名解析调度，不新增流量放行；其中只有 2.1 设备分流保留 `SRC-IP + AWS 区域 / 多地区链式 SOCKS5 IP 段` 约束，2.2-2.10 不再额外限制 `SRC-IP`，原独立 IP 规则段已删除；未命中上述入口的流量最终 `FINAL,REJECT`
 - GitHub 在该工作路由文件中除 `github_ssh_direct` 外，还允许紧随其后保留 `DOMAIN,raw.githubusercontent.com` 下载入口与一条广覆盖 `DOMAIN-KEYWORD,github` 观察兜底；它们用于显式放行 GitHub Raw 规则产物下载，并发现 SSH / Raw 之外的漏网之鱼，不得被“去重”或“收敛”掉
 - GitHub Raw 下载链路默认还应保留独立 `[Host]` 解析例外；当前私有配置使用 `raw.githubusercontent.com = server:https://cloudflare-dns.com/dns-query`，避免规则产物下载回落到本地/国内系统 DNS；但这不是代理节点 bootstrap，不能影响 `proxy-node-domains` 继续使用 AliDNS DoH
 - AdsPower 在该工作路由文件中除精细 `adspower_direct` / `adspower_proxy` 外，还允许紧随其后保留一条广覆盖 `DOMAIN-KEYWORD,adspower` 观察兜底；它是故意用于发现细分规则漏网之鱼的，不得被“去重”或“收敛”掉
@@ -100,7 +101,7 @@
 - 修改 `rules/`、`tools/build_rules.py`、文档或产物结构后，运行：
   - `powershell -ExecutionPolicy Bypass -File tools/build_rules.ps1`
 - 提交前检查：
-  - `dist/` 目录树是否仍然只有 `surge/rules` 与 `mihomo/classical`
+  - `dist/` 目录树是否仍然只有 `surge/rules`、`surge/dns` 与 `mihomo/classical`
   - `dist/build-report.json`
   - `git status`
 

@@ -5,6 +5,7 @@
 - `rules/` 是源规则层，只放你自己审阅后的规则素材与维护元数据
 - `dist/` 是构建产物层，客户端只引用这里
 - `Surge` 使用 `dist/surge/rules/`
+- `Surge` 与 Mihomo 的国内业务域名 DNS 白名单共用 `dist/surge/dns/`
 - `Clash Verge Rev` 与 `Clash Meta for Android` 使用 `dist/mihomo/classical/`
 
 这样做的目标是把“怎么维护规则”与“客户端怎么接入规则”分开，避免客户端继续直接引用第三方规则上游仓库，也避免源规则和客户端格式绑死。GeoIP 数据库属于客户端运行时依赖，是当前保留的显式外部上游例外。
@@ -14,6 +15,7 @@
 ```text
 rules/
   app/         # 应用级主清单（构建前自动派生）
+  dns/         # DNS 专用域名清单源文件
   reject/      # 拒绝类源规则
   direct/      # 直连类源规则
   proxy/       # 代理类源规则
@@ -22,6 +24,7 @@ rules/
 
 dist/
   surge/
+    dns/       # Surge [Host] 与 Mihomo nameserver-policy 共用的 DNS 域名清单
     rules/     # Surge RULE-SET 使用的显式规则产物
   mihomo/
     classical/ # Mihomo 的 behavior: classical 使用的显式规则产物
@@ -37,6 +40,7 @@ tools/
 说明：
 
 - `rules/` 下参与构建的源规则文件统一使用 `.list` 命名
+- `rules/dns/` 用于维护 DNS 专用域名清单；当前 `cn_dns_domains.list` 生成 `dist/surge/dns/cn_dns_domains.list`
 - `rules/app/` 用于维护单一应用的主清单；例如 `rules/app/adspower.txt` 会在构建前自动派生到 `rules/reject/`、`rules/direct/` 与 `rules/proxy/`
 - 例如 `rules/region/us/google_us.list` 会生成 `dist/surge/rules/region/us/google_us.list` 与 `dist/mihomo/classical/region/us/google_us.yaml`
 - `dist/build-report.json` 会记录每个源文件被识别为 `domain-only`、`ipcidr-only` 或 `classical/mixed`，以及构建警告
@@ -75,7 +79,7 @@ python tools/build_rules.py
 
 - 先把 `rules/app/adspower.txt` 自动派生到 `rules/reject/adspower_reject.list`、`rules/direct/adspower_direct.list` 与 `rules/proxy/adspower_proxy.list`
 - 从 `rules/` 读取源规则
-- 自动生成 `dist/surge/rules/` 与 `dist/mihomo/classical/`
+- 自动生成 `dist/surge/rules/`、`dist/surge/dns/` 与 `dist/mihomo/classical/`
 - 将纯域名规则规范化成显式规则行，例如 `.example.com` 会输出成 `DOMAIN-SUFFIX,example.com`
 - 对 `IP-CIDR`、`IP-CIDR6`、`GEOIP`、`IP-ASN`、`ASN` 这类 IP 判断规则自动补 `no-resolve`，避免客户端为了判断 IP 类规则提前触发本地 DNS
 - 尝试识别 `domain-only`、`ipcidr-only`、`classical/mixed`
@@ -157,6 +161,7 @@ python tools/build_rules.py
 - 操作系统时间同步专项规则统一维护在 `rules/direct/os_time_direct.list`
 - 客户端应显式接入 `direct/os_time_direct`，并放在其他普通 `direct/*` 前，默认保持 `DIRECT`
 - 如果你采用“默认禁更，升级时手动临时放行”的习惯，建议同时接入 `direct/os_time_direct`、`reject/os_update_reject`、`region/us/microsoft_us` 与 `region/us/macos_update_us`；其中 `os_time_direct` 负责系统时间同步直连，其余入口必须放在 `reject` 之后并绑定美国策略
+- 国内业务域名 DNS 白名单统一维护在 `rules/dns/cn_dns_domains.list`，并生成 `dist/surge/dns/cn_dns_domains.list`；该清单只放明确国内业务域名 / 国内域名后缀，不放代理节点 server 域名、订阅入口域名、IP 或复杂规则
 
 其中 Surge 当前建议明确区分两种使用版本：
 
@@ -221,7 +226,7 @@ python tools/build_rules.py
 - 默认让 X / Twitter 网页、短链与静态资源，以及 Polymarket 相关域名优先命中 `region/hk/global_media`，避免落回通用 `proxy/gfw`
 - 默认接入 `jp_domains` 规则提供器；当前用于让 `opinion.trade` 走 `🇯🇵 日本-自动选择`
   - 默认开启全局 `ipv6: true` 与 `dns.ipv6: true`，并在 `proxy-providers.*.override` 里显式使用 `ip-version: dual`，真正放开订阅节点双栈连接，但不默认强推 `ipv6-prefer`
-  - 默认采用 Tun 全量接管、域名嗅探与 DNS 隔离；普通目标网站域名默认走海外加密 DNS，国内 DNS 只用于 `default-nameserver` 的 DNS 服务器域名 bootstrap 与 `proxy-server-nameserver` 的节点 server 域名 bootstrap
+  - 默认采用 Tun 全量接管、域名嗅探与 DNS 隔离；普通目标网站域名默认走海外加密 DNS，国内 DNS 只用于 `default-nameserver` 的 DNS 服务器域名 bootstrap、`proxy-server-nameserver` 的节点 server 域名 bootstrap，以及 `cn-dns-domains` 专用国内业务域名白名单
   - 同样不承载私有 Surge 工作路由白名单特化
 
 ## 当前设计原则
@@ -241,7 +246,7 @@ python tools/build_rules.py
 - 1Password 核心连接专项规则如启用，应先命中 `proxy/onepassword_proxy`，再落到 `proxy/gfw`
 - 操作系统时间同步专项规则应先命中 `direct/os_time_direct`，再落到其他普通 `direct/*`
 - Google 通用服务、海外 AI、Microsoft 与 macOS 更新专项入口应先命中 `region/us/*`，其中 Microsoft / macOS 更新仍必须排在 `reject/os_update_reject` 之后，避免默认禁更逻辑失效
-- DNS 信任边界优先于连通性微调：普通目标网站域名默认不得交给国内 DNS，国内 DNS 只作为 DNS 服务器域名 bootstrap 与代理节点 `server` 域名 bootstrap 的专用例外；详细约束见 [docs/network-security/dns-leak-prevention.md](docs/network-security/dns-leak-prevention.md)
+- DNS 信任边界优先于连通性微调：普通目标网站域名默认不得交给国内 DNS；国内 DNS 只作为 DNS 服务器域名 bootstrap、代理节点 `server` 域名 bootstrap，以及 `cn_dns_domains` 专用国内业务域名白名单的受限例外；详细约束见 [docs/network-security/dns-leak-prevention.md](docs/network-security/dns-leak-prevention.md)
 - 同一套路由骨架不等于同一个客户端运行时；`Surge`、`Clash Verge Rev`、`Clash Meta for Android` 在 DNS 启动链上允许存在实现差异
 - 本地同时维护 Clash Verge Rev 与 Clash Meta for Android 时，允许拆成两份 Mihomo 私有配置；规则骨架尽量共享，节点域名解析策略允许分别维护
 - Surge 私有工作路由白名单与本地其他私有配置永久允许结构不一致，维护时不要互相回抄

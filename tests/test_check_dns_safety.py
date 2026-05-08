@@ -128,6 +128,28 @@ proxy-providers: {}
 
         self.assertEqual(check_dns_safety.validate_path(path), [])
 
+    def test_mihomo_accepts_cn_dns_domain_policy(self) -> None:
+        path = self.write_temp(
+            "mihomo-public.yaml",
+            """dns:
+  enable: true
+  default-nameserver:
+    - 223.5.5.5
+  nameserver:
+    - https://cloudflare-dns.com/dns-query
+    - https://dns.google/dns-query
+  nameserver-policy:
+    "rule-set:cn-dns-domains":
+      - https://dns.alidns.com/dns-query
+      - https://doh.pub/dns-query
+  proxy-server-nameserver:
+    - https://dns.alidns.com/dns-query
+proxy-providers: {}
+""",
+        )
+
+        self.assertEqual(check_dns_safety.validate_path(path), [])
+
     def test_mihomo_rejects_surge_host_mixing(self) -> None:
         path = self.write_temp(
             "mihomo-public.yaml",

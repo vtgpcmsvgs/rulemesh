@@ -4,6 +4,7 @@
 
 - 个人终端版公开参考模板：[`docs/examples/surge-public.conf`](examples/surge-public.conf)
 - 规则产物入口：`dist/surge/rules/`
+- 国内业务域名 DNS 清单入口：`dist/surge/dns/cn_dns_domains.list`
 - 代理组过滤方法论：[`docs/proxy-group-filter-methodology.md`](proxy-group-filter-methodology.md)
 - DNS 防泄漏方法论：[`docs/network-security/dns-leak-prevention.md`](network-security/dns-leak-prevention.md)
 
@@ -46,6 +47,7 @@
 - BSC 主网 RPC 专项 `proxy/bsc_rpc_proxy.list` 与 `proxy/gfw.list` 的顺序关系
 - 海外 DNS 主 IPv4 端点专项 `proxy/overseas_dns_ipv4_proxy.list` 与 `proxy/gfw.list` 的顺序关系
 - `direct/os_time_direct.list` 与其他普通直连规则的顺序关系
+- `dist/surge/dns/cn_dns_domains.list` 作为国内业务域名 DNS 白名单，可在 `[Host]` 中映射到 AliDNS / DNSPod；它与 `proxy-node-domains` 分离维护，不能混入代理节点 server 域名
 - `allow-wifi-access = false`、`test-timeout = 3`、`use-local-host-item-for-proxy = false`、`hijack-dns = *:53` 与 `encrypted-dns-follow-outbound-mode = true` 这组运行时默认值
 - 默认关闭 `ipv6 = false`，并注释 `ipv6-vif = auto`；如需 IPv6，应先完成 DNS 泄漏、WebRTC 与出口一致性测试
 - Surge profile 不写 `dns-mode = fake-ip`；Fake IP 由 Surge Enhanced Mode / VIF 运行时提供，Mac 端加载 profile 后需要在 Surge 里启用 Enhanced Mode
@@ -104,8 +106,8 @@
 9. BSC 主网 RPC 节点选择规则
 10. 海外 DNS 主 IPv4 端点美国分流规则
 11. 可选：1Password 核心连接节点选择规则
-12. 代理优先规则
-13. 直连规则
+12. 直连规则
+13. 代理优先规则
 14. IP 规则
 15. `FINAL`
 
@@ -130,14 +132,14 @@
 - `reject/adspower_reject.list` 应和其他拒绝规则一起放在最前，先拦截隐私追踪与可安全阻断端点。
 - `direct/os_time_direct.list` 建议放在其他普通 `direct/*.list` 前，优先保障 `time.windows.com`、`time.apple.com` 与 `time-macos.apple.com` 直连。
 - 如果你希望默认禁用系统更新、升级时再临时放行，建议同时接入 `direct/os_time_direct.list`、`reject/os_update_reject.list`、`region/us/microsoft_us.list` 与 `region/us/macos_update_us.list`；平时由 `reject` 先拦截升级流量，系统时间同步仍由 `os_time_direct` 保持直连，放开拒绝入口后 Microsoft / macOS 更新流量统一走美国节点。
-- `proxy/gfw.list` 建议放在其他普通 `direct/*.list` 前，减少广谱直连误伤。
+- `proxy/gfw.list` 建议放在国内直连规则之后，至少晚于 `LAN`、`direct/os_time_direct`、`direct/ai_cn_direct`、`direct/bytedance_direct`、`direct/netease_direct`、`direct/bilibili_direct` 与 `direct/cn_direct`，避免国内域名被广谱代理规则提前抢走；GitHub、AdsPower、RPC、海外 DNS 端点等精确代理入口仍应放在 `proxy/gfw.list` 前。
 - 私有 `rulemesh-substore-surge-work-whitelist.conf` 是白名单例外：它保留设备分流、区域精确、GitHub SSH、GitHub Raw 自举入口、GitHub Core 代理入口、GitHub 广覆盖 `REJECT` 观察兜底、私有订阅域名同步块、1Password 核心连接、AdsPower、Polygon 主网 RPC、BSC 主网 RPC、海外 DNS 主 IPv4 端点、代理节点 bootstrap DNS 直连例外、海外加密 DNS 显式入口、`LAN,DIRECT`、`direct/os_time_direct`、`region/us/microsoft_us`、`region/us/macos_update_us`、阿里云指定直连与 ByteDance；其中只有设备分流继续保留 `SRC-IP` 约束，并按指定 AWS 区域 / 多地区链式 SOCKS5 IP 段定向到对应工作机亚洲出口组，后续规则不再额外限制源 IP，原独立 `IP 规则` 段已移除；`github_ssh_direct` 后先保留 `DOMAIN,raw.githubusercontent.com` 自举入口，再显式放行 `proxy/github_core_proxy.list`，并额外用 `DOMAIN-KEYWORD,github,REJECT` 观察 GitHub 漏网之鱼；阿里云香港 SSH、`aliyuncs.com` 与 `check.myclientip.com` 统一收敛到“指定直连”段显式放行，其后额外保留一条阿里云广覆盖 `REJECT` 观察兜底；私有订阅域名统一从本地单一源文件同步到白名单显式放行段，并在订阅更新直连前额外插入 Chrome 访问这些域名时改走 `🚀 节点选择` 的例外；`proxy/onepassword_proxy.list` 也作为白名单显式放行入口放在 `proxy/gfw` 之前；AdsPower 细分规则后额外保留一条 `DOMAIN-KEYWORD,adspower,REJECT` 广覆盖观察兜底，用来发现细分规则漏网之鱼；海外 DNS 主 IPv4 端点统一走美国地区策略，`dns.alidns.com` / `doh.pub` 作为节点 bootstrap DNS 直连例外，DoH / DoH3 / DoQ 与 `cloudflare-dns.com`、`dns.google`、`dns.quad9.net` 也统一作为美国出口白名单入口；未命中上述入口的流量最终统一 `REJECT`。不要把公开模板里的广谱放行段机械同步回去。
 - 工作白名单模式下，广覆盖观察规则统一只允许使用 `REJECT`；personal 配置即使当前风险可接受，也不应把 `DIRECT` / `PROXY + extended-matching` 这类写法继续扩散回白名单模板。
 - 若只新增某个白名单专属的单个拒绝域名，或只用于阻断浏览器扩展更新链路的拒绝规则，默认直接维护在这份私有白名单的拒绝段，不为单条规则额外新增公开 `rules/` 文件。
 
 ## 使用原则
 
-- 客户端只引用 `dist/surge/rules/`
+- 客户端规则只引用 `dist/surge/rules/`；DNS 专用域名清单只引用 `dist/surge/dns/cn_dns_domains.list`
 - `rules/` 是源规则层，不建议在 Surge 配置中直接引用
 - 不要在客户端继续引用第三方原始规则 URL
 - GeoIP 数据库是当前例外：公开模板默认显式固定到本仓库的 Release 镜像地址

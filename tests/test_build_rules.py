@@ -202,6 +202,26 @@ class TempRepoBuildRulesTests(unittest.TestCase):
             ["mihomo does not support PROTOCOL,ICMP; kept only in Surge rules"],
         )
 
+    def test_build_dns_domain_set_source_normalizes_entries(self) -> None:
+        dns_root = self.rules_root / "dns"
+        dns_root.mkdir(parents=True, exist_ok=True)
+        path = dns_root / "cn_dns_domains.list"
+        path.write_text(
+            "# 国内域名\n"
+            ".QQ.com\n"
+            "+.Baidu.com\n"
+            "jd.com\n",
+            encoding="utf-8",
+        )
+
+        with self.patch_repo_paths():
+            result = build_rules.build_dns_domain_set_source(path)
+
+        self.assertEqual(
+            result.outputs["surge_dns_domains"],
+            [".qq.com", ".baidu.com", "jd.com"],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

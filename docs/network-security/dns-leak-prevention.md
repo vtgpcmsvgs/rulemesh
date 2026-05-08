@@ -15,7 +15,7 @@
 ## 默认安全姿态
 
 - 普通目标网站域名默认不得交给国内 DNS。
-- 国内 DNS 只能作为 DNS 服务器域名 bootstrap 与代理节点 server 域名 bootstrap 的专用例外。
+- 国内 DNS 只能作为 DNS 服务器域名 bootstrap、代理节点 server 域名 bootstrap，以及 `cn_dns_domains` 专用国内业务域名白名单的受限例外。
 - 不要为了让节点更容易首连，就把 Surge 的 `dns-server`、`encrypted-dns-server` 或 Mihomo 的业务 `nameserver` 全局改成国内 DNS。
 - 任何把业务 DNS 改成 `system`、阿里云 DNS、腾讯云 DNS、`114.114.114.114` 或其他国内解析入口的操作，都必须按高风险变更处理；`default-nameserver` / `proxy-server-nameserver` 例外只能服务 bootstrap。
 - 不能只用“网页能打开”“节点能测速”作为验收结论；DNS 出口也必须被验证。
@@ -38,10 +38,13 @@ encrypted-dns-follow-outbound-mode = true
 
 [Host]
 raw.githubusercontent.com = server:https://cloudflare-dns.com/dns-query
+DOMAIN-SET:https://example.com/rulemesh/dist/surge/dns/cn_dns_domains.list = server:https://dns.alidns.com/dns-query
 DOMAIN-SET:https://example.com/share/file/proxy-node-domains = server:https://dns.alidns.com/dns-query
 ```
 
 `raw.githubusercontent.com = server:https://cloudflare-dns.com/dns-query` 是规则产物下载解析例外，不得被扩展成普通目标网站解析方案，也不是代理节点 bootstrap。
+
+`cn_dns_domains` 是国内业务域名 DNS 例外，只能包含明确国内业务域名 / 国内域名后缀，不包含代理节点 server 域名、订阅入口域名、IP 或复杂规则。它的职责是减少海外 DNS 导致的国内 CDN 调度偏差，不是把所有 `DIRECT` 流量交给国内 DNS。
 
 上述海外 `dns-server` 的明文 IPv4 端点应先命中 `proxy/overseas_dns_ipv4_proxy` 并统一走美国地区策略，避免 1.1.1.1 / 8.8.8.8 / 9.9.9.9 的出口与普通代理出口错位。
 
@@ -61,6 +64,10 @@ dns:
   nameserver:
     - https://cloudflare-dns.com/dns-query
     - https://dns.google/dns-query
+  nameserver-policy:
+    "rule-set:cn-dns-domains":
+      - https://dns.alidns.com/dns-query
+      - https://doh.pub/dns-query
   proxy-server-nameserver:
     - https://dns.alidns.com/dns-query
     - https://doh.pub/dns-query
@@ -70,9 +77,10 @@ dns:
 
 - `default-nameserver` 只负责 DNS 服务器域名 bootstrap，可以使用国内可直连 DNS。
 - `nameserver` 负责普通目标网站域名，默认使用海外 DNS。
+- `nameserver-policy` 只允许把 `rule-set:cn-dns-domains` 这类专用国内业务域名白名单交给国内 DNS；不要按 `DIRECT` / `PROXY` 动作泛化。
 - `proxy-server-nameserver` 负责代理节点 server 域名，可以使用国内可直连 DoH 提高节点首连稳定性。
 
-禁止把国内 DNS 写进业务 `nameserver`、`nameserver-policy` 或 `direct-nameserver` 来处理普通目标网站域名。即使某条规则最终是 `DIRECT`，它也仍然可能是账号平台、海外服务或敏感业务域名，不能因此默认回到国内解析链。
+禁止把国内 DNS 写进业务 `nameserver`、非 `cn-dns-domains` 的 `nameserver-policy` 或 `direct-nameserver` 来处理普通目标网站域名。即使某条规则最终是 `DIRECT`，它也仍然可能是账号平台、海外服务或敏感业务域名，不能因此默认回到国内解析链。
 
 Mihomo 的 provider 更新也要分清两条链路：
 
@@ -147,6 +155,7 @@ $content = Array.from(domains).sort().join("\n") + "\n";
 - 禁止把 Surge 全局 `dns-server` 设置为 `system + 国内 DNS`，除非是明确标注的临时排障，并且排障后立即回滚。
 - 禁止把 `https://dns.alidns.com/dns-query` 或 `https://doh.pub/dns-query` 设置为 Surge 全局 `encrypted-dns-server`。
 - 禁止把国内 DNS 写入 Mihomo 业务 `nameserver`。
+- 禁止把所有 `DIRECT`、所有国内直连规则或代理节点 server 域名混进 `cn_dns_domains`。
 - 禁止把订阅链接域名误当成节点 server 域名。
 - 禁止把机场面板域名、订阅转换链接、Sub-Store 入口或普通网站域名写进 `proxy-node-domains`。
 - 禁止在生产 Surge 配置中直接使用未经同网络验证的 `https://sub.store/api/file/proxy-node-domains`；应使用可直达的 Sub-Store 后端/反代分享文件 URL。

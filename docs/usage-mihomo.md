@@ -10,6 +10,7 @@
 
 - 完整公开参考模板：[`docs/examples/mihomo-public.yaml`](examples/mihomo-public.yaml)
 - 规则产物入口：`dist/mihomo/classical/`
+- 国内业务域名 DNS 清单入口：`dist/surge/dns/cn_dns_domains.list`
 - 代理组过滤方法论：[`docs/proxy-group-filter-methodology.md`](proxy-group-filter-methodology.md)
 - Tun / DNS / 嗅探维护方法论：[`docs/mihomo-tun-dns-methodology.md`](mihomo-tun-dns-methodology.md)
 - DNS 防泄漏方法论：[`docs/network-security/dns-leak-prevention.md`](network-security/dns-leak-prevention.md)
@@ -24,13 +25,13 @@
 - `proxy-providers.*.proxy: DIRECT` 的订阅更新基线：它只控制 Mihomo 后台拉取机场订阅 URL，浏览器访问机场官网 / 面板仍由后面的 `rules` 判断
 - `reject`、`direct`、`proxy`、`region` 四类 RuleMesh `classical` 产物接入
 - GitHub 继续采用“SSH 定向直连 + Core HTTPS 显式代理”拆分：`direct/github_ssh_direct.yaml` 只承接 `github.com:22` 与 `ssh.github.com:443`，`proxy/github_core_proxy.yaml` 则显式承接 GitHub 网页、`api.github.com`、Gist、Raw、静态资源与附件
-- 默认采用“普通目标网站域名走海外加密 DNS、DNS 服务器域名由 `default-nameserver` bootstrap、代理节点 server 域名单独走 `proxy-server-nameserver`”的 DNS 隔离思路
+- 默认采用“普通目标网站域名走海外加密 DNS、DNS 服务器域名由 `default-nameserver` bootstrap、代理节点 server 域名单独走 `proxy-server-nameserver`、明确国内业务域名通过 `cn-dns-domains` 专用清单走国内 DoH”的 DNS 隔离思路
 - 默认启用 Tun 全量接管与域名嗅探，优先把 Mihomo 的实际体验拉到接近 Surge 的水位
 - 默认开启全局 `ipv6: true` 与 `dns.ipv6: true`，不再让 Mihomo 在双栈环境里主动把 AAAA 结果清空
 - 默认在 `proxy-providers.*.override` 里显式写 `ip-version: dual`，真正放开订阅节点双栈连接，但先不默认强推 `ipv6-prefer`
 - `region/hk/global_media.yaml` 额外承接 X / Twitter 网页、短链与静态资源，以及 Polymarket 显式域名与激进关键词兜底，并默认绑定 `🇭🇰 香港-自动选择`
 - `region/us/ai_us.yaml` 统一承接 OpenAI / Claude / Gemini / Copilot / Cursor / Grok / Windsurf / Augment 等海外 AI 平台，并保留更激进的关键词兜底；客户端默认绑定 `🇺🇸 美国-自动选择`
-- `direct/ai_cn_direct.yaml` 显式承接 Kimi / DeepSeek / 豆包 / 即梦 / Trae 中国大陆 / 元宝 / 混元 / 通义 / 千问 / 智谱 / MiniMax / 文心等国内 AI 入口；它应放在 `direct_bytedance`、`direct_cn` 前，但普通目标网站 DNS 仍默认走海外 `nameserver`
+- `direct/ai_cn_direct.yaml` 显式承接 Kimi / DeepSeek / 豆包 / 即梦 / Trae 中国大陆 / 元宝 / 混元 / 通义 / 千问 / 智谱 / MiniMax / 文心等国内 AI 入口；它应放在 `direct_bytedance`、`direct_cn` 前，但只有进入 `cn-dns-domains` 专用白名单的域名才走国内 `nameserver-policy`
 - 阿里云香港 SSH 继续走 `direct/alicloud_hk_ipv4_ssh22_direct.yaml`；阿里云控制面 `aliyuncs.com` 与出口探测 `check.myclientip.com` 通过单条 `DIRECT` 规则显式放行
 - AWS 香港区域入口已统一为 `region/hk/hk_aws_ipv4.yaml`
 - 多地区链式 SOCKS5 端点入口已统一为 `region/multi/chain_socks5_ipcidr.yaml`，默认应绑定统一的自动选择 / 负载均衡组，而不是固定地区组
@@ -71,7 +72,7 @@
 - 如果出现“Clash Verge Rev 正常、Clash Meta for Android 不通”的情况，默认先排查 Clash Meta 的节点域名解析启动链，而不是先改规则顺序。
 - Android 侧如果只是节点域名解析不稳定，优先只调整 `proxy-server-nameserver`；不要一上来就把全部国际业务 DNS 改回国内。
 - 当前本地私有维护默认允许 Clash Meta 专用文件把 `proxy-server-nameserver` 收敛到阿里云 / 腾讯云 DoH，以提高移动网络下的首连稳定性；这一步只针对代理节点 server 域名解析。
-- 这份模板不会把 `DIRECT` 或国内直连域名集交给国内 DNS；普通目标网站域名统一由海外 `nameserver` 解析，国内 DNS 只允许出现在 `default-nameserver` 与 `proxy-server-nameserver`。
+- 这份模板不会把所有 `DIRECT` 交给国内 DNS；普通目标网站域名统一由海外 `nameserver` 解析，国内 DNS 只允许出现在 `default-nameserver`、`proxy-server-nameserver` 与 `rule-set:cn-dns-domains` 专用国内业务域名白名单。
 
 ## 代理组过滤约定
 
@@ -82,8 +83,8 @@
 ## Tun / DNS / 嗅探方法论
 
 - Mihomo 的体验优化优先级，不是继续堆规则，而是先把 `tun`、`sniffer`、`dns` 这层运行时补齐。
-- DNS 分流不按 `DIRECT` / `PROXY` 两分，也不再把国内直连域名集单独送回国内 DNS；普通目标网站域名默认走海外 `nameserver`。
-- 新增直连规则时，要先判断它是否仍属于普通目标网站域名；只要是目标网站域名，就不得为了连通性把它加入国内 `nameserver-policy`。
+- DNS 分流不按 `DIRECT` / `PROXY` 两分；普通目标网站域名默认走海外 `nameserver`，只有 `cn-dns-domains` 专用清单里的明确国内业务域名才进入国内 `nameserver-policy`。
+- 新增直连规则时，要先判断它是否仍属于普通目标网站域名；只有明确国内业务域名 / 国内域名后缀，才允许评估是否加入 `rules/dns/cn_dns_domains.list`。
 - `default-nameserver`、`proxy-server-nameserver` 要与业务 DNS 分开维护；前者只负责 DNS 服务器域名 bootstrap，后者只负责节点域名解析，避免业务 DNS 与节点 DNS 互相依赖。
 - 如果要给 Clash Meta for Android 做定向兼容，优先只动它自己的 `proxy-server-nameserver`，并把变更局限在私有 Android 文件，不要反向污染 Clash Verge Rev 文件。
 - 当前 `dist/mihomo/classical/` 默认只发布 Mihomo 已确认支持的规则类型；像 `URL-REGEX` 这类 Surge 仍可使用、但 Mihomo classical 当前不支持的规则，会保留在源规则层和 Surge 产物中，但不会写入 Mihomo 产物。
@@ -113,8 +114,8 @@
 8. BSC 主网 RPC 节点选择规则
 9. 海外 DNS 主 IPv4 端点美国分流规则
 10. 可选：1Password 核心连接节点选择规则
-11. 代理优先规则
-12. 直连规则
+11. 直连规则
+12. 代理优先规则
 13. IP 规则
 14. `MATCH`
 
@@ -123,7 +124,7 @@
 - `region/us/google_us.yaml` 对应规则应放在 `region/us/ai_us.yaml` 与 `region/hk/global_media.yaml` 前。
 - `region/us/ai_us.yaml` 当前聚合海外 AI 平台，且对 Gemini / AI Studio / NotebookLM 保留 AI 视角交叉兜底；它也应继续放在广谱区域规则前，并统一绑定 `🇺🇸 美国-自动选择`。
 - `DeepSeek`、`Trae` 中国大陆入口与其他国内 AI 不应并入 `region/us/ai_us.yaml`；它们应优先由 `direct_ai_cn` 承接，字节共享基础设施与中国大陆通用兜底再继续落到 `direct_bytedance`、`direct_cn`。
-- `direct_ai_cn` 属于显式国内 AI 直连入口，顺序上应放在 `direct_bytedance`、`direct_cn` 前；但它仍是普通目标网站域名集合，不应同步加入国内 `nameserver-policy`。
+- `direct_ai_cn` 属于显式国内 AI 直连入口，顺序上应放在 `direct_bytedance`、`direct_cn` 前；是否进入国内 DNS 只由 `cn-dns-domains` 专用清单决定，不直接按 `DIRECT` 动作推导。
 - `region/hk/global_media.yaml` 当前还承接 `x.com`、`t.co`、`twimg.com` 与 `twitter.com` 等 X / Twitter 网页域名，以及 `polymarket.com` 与 `DOMAIN-KEYWORD,polymarket` 这组 Polymarket 香港兜底；默认应继续绑定 `🇭🇰 香港-自动选择`，不要再让它们回落到 `proxy/gfw.yaml` 或误挂到日本区域。
 - 公开 `mihomo-public.yaml` 默认接入 `jp_domains` 规则提供器；当前用于让 `opinion.trade` 走 `🇯🇵 日本-自动选择`。
 - `direct/github_ssh_direct.yaml` 必须放在 `proxy/github_core_proxy.yaml` 与 `proxy/gfw.yaml` 前，只给 `github.com:22` 与 `ssh.github.com:443` 直连，避免把 GitHub 网页误放直连。
@@ -138,12 +139,12 @@
 - `reject/adspower_reject.yaml` 当前只承载 Mihomo classical 已确认支持的 AdsPower 拒绝规则；源规则里为 Surge 保留的 `URL-REGEX` 条目不会进入这份 Mihomo 产物。
 - `direct/os_time_direct.yaml` 建议放在其他普通 `direct/*.yaml` 前，优先保障 `time.windows.com`、`time.apple.com` 与 `time-macos.apple.com` 直连。
 - 如果你希望默认禁用系统更新、升级时再临时放行，建议同时接入 `direct/os_time_direct.yaml`、`reject/os_update_reject.yaml`、`region/us/microsoft_us.yaml` 与 `region/us/macos_update_us.yaml`；平时由 `reject` 先拦截升级流量，系统时间同步仍由 `os_time_direct` 保持直连，放开拒绝入口后 Microsoft / macOS 更新流量统一走美国节点。
-- `proxy/gfw.yaml` 建议放在其他普通 `direct/*.yaml` 前，减少广谱直连误伤。
+- `proxy/gfw.yaml` 建议放在国内直连规则之后，至少晚于 `LAN`、`direct_os_time`、`direct_ai_cn`、`direct_bytedance`、`direct_netease`、`direct_bilibili` 与 `direct_cn`，避免国内域名被广谱代理规则提前抢走；GitHub、AdsPower、RPC、海外 DNS 端点等精确代理入口仍应放在 `proxy/gfw.yaml` 前。
 - Surge 私有工作路由白名单并不迁移到 Mihomo 模板；Mihomo 仍维持这里描述的公开/个人通用结构。
 
 ## 使用原则
 
-- 客户端只引用 `dist/mihomo/classical/`
+- 客户端规则只引用 `dist/mihomo/classical/`；DNS 专用域名清单复用 `dist/surge/dns/cn_dns_domains.list`
 - `rules/` 是源规则层，不建议客户端直接引用
 - 不要把 `classical` 产物误配成别的 `behavior`
 - 不要再找旧的纯域名或纯 CIDR 产物目录；仓库已经统一走 `classical`
