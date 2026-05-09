@@ -79,8 +79,8 @@
       "category": "direct",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 123453,
-        "mihomo_classical": 123453
+        "surge_rules": 123195,
+        "mihomo_classical": 123195
       },
       "dist": {
         "surge_rules": "dist/surge/rules/direct/cn_direct.list",
@@ -274,8 +274,8 @@
       "category": "region",
       "classification": "ipcidr-only",
       "counts": {
-        "surge_rules": 114,
-        "mihomo_classical": 114
+        "surge_rules": 115,
+        "mihomo_classical": 115
       },
       "dist": {
         "surge_rules": "dist/surge/rules/region/jp/osaka_aws_ipv4.list",
