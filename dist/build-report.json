@@ -40,8 +40,8 @@
       "category": "direct",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 891,
-        "mihomo_classical": 891
+        "surge_rules": 892,
+        "mihomo_classical": 892
       },
       "dist": {
         "surge_rules": "dist/surge/rules/direct/alicloud_hk_ipv4_ssh22_direct.list",
@@ -79,8 +79,8 @@
       "category": "direct",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 122506,
-        "mihomo_classical": 122506
+        "surge_rules": 122456,
+        "mihomo_classical": 122456
       },
       "dist": {
         "surge_rules": "dist/surge/rules/direct/cn_direct.list",
