@@ -313,8 +313,8 @@
       "category": "region",
       "classification": "ipcidr-only",
       "counts": {
-        "surge_rules": 1701,
-        "mihomo_classical": 1701
+        "surge_rules": 1731,
+        "mihomo_classical": 1731
       },
       "dist": {
         "surge_rules": "dist/surge/rules/region/multi/chain_socks5_ipcidr.list",
