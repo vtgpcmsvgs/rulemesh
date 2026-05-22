@@ -1,7 +1,7 @@
 # 来源: https://ip-ranges.amazonaws.com/ip-ranges.json
 # 标题: AWS 大阪 IPv4（ap-northeast-3）
-# 同步令牌: 1779320226
-# 上游创建时间: 2026-05-20-23-37-06
+# 同步令牌: 1779416224
+# 上游创建时间: 2026-05-22-02-17-04
 # 区域: ap-northeast-3
 # 范围: 所选 AWS 区域公开发布的全部 IPv4 前缀。
 # IPv4 前缀数量: 115
