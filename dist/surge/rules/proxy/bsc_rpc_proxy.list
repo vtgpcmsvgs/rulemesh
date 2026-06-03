@@ -88,6 +88,8 @@ DOMAIN,endpoints.omniatech.io
 DOMAIN-WILDCARD,*.endpoints.omniatech.io
 DOMAIN,go.getblock.io
 DOMAIN-WILDCARD,*.go.getblock.io
+DOMAIN,gw-aql.tomo.services
+DOMAIN-WILDCARD,*.gw-aql.tomo.services
 DOMAIN,nodes.vefinetwork.org
 DOMAIN-WILDCARD,*.nodes.vefinetwork.org
 DOMAIN,public-bsc-mainnet.fastnode.io
@@ -98,6 +100,8 @@ DOMAIN,public.stackup.sh
 DOMAIN-WILDCARD,*.public.stackup.sh
 DOMAIN,rpc-bsc.48.club
 DOMAIN-WILDCARD,*.rpc-bsc.48.club
+DOMAIN,rpc.nodeflare.app
+DOMAIN-WILDCARD,*.rpc.nodeflare.app
 DOMAIN,rpc.owlracle.info
 DOMAIN-WILDCARD,*.rpc.owlracle.info
 DOMAIN,rpc.polysplit.cloud
