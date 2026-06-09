@@ -443,7 +443,7 @@
       "category": "dns",
       "classification": "dns-domain-set",
       "counts": {
-        "surge_dns_domains": 173
+        "surge_dns_domains": 217
       },
       "dist": {
         "surge_dns_domains": "dist/surge/dns/cn_dns_domains.list"
