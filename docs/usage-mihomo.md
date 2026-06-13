@@ -124,6 +124,7 @@
 注意：
 
 - `region/us/google_us.yaml` 对应规则应放在 `region/us/ai_us.yaml` 与 `region/hk/global_media.yaml` 前。
+- Google Play 下载 CDN 与重定向域应继续由 `region/us/google_us.yaml` 显式承接，不要依赖后面的 `direct_cn` 或 `proxy_gfw` 兜底。
 - `region/us/ai_us.yaml` 当前聚合海外 AI 平台，且对 Gemini / AI Studio / NotebookLM 保留 AI 视角交叉兜底；它也应继续放在广谱区域规则前，并统一绑定 `🇺🇸 美国-自动选择`。
 - `DeepSeek`、`Trae` 中国大陆入口与其他国内 AI 不应并入 `region/us/ai_us.yaml`；它们应优先由 `direct_ai_cn` 承接，字节共享基础设施与中国大陆通用兜底再继续落到 `direct_bytedance`、`direct_cn`。
 - `direct_ai_cn` 属于显式国内 AI 直连入口，顺序上应放在 `direct_bytedance`、`direct_cn` 前；是否进入国内 DNS 只由 `cn-dns-domains` 专用清单决定，不直接按 `DIRECT` 动作推导。

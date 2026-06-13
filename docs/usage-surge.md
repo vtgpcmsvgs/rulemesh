@@ -116,6 +116,7 @@
 注意：
 
 - `region/us/google_us.list` 必须放在 `region/us/ai_us.list` 与 `region/hk/global_media.list` 等广谱区域规则前。
+- Google Play 下载 CDN 与重定向域应继续由 `region/us/google_us.list` 显式承接，不要依赖后面的 `direct/cn_direct.list` 或 `proxy/gfw.list` 兜底。
 - `region/us/ai_us.list` 当前聚合海外 AI 平台，且对 Gemini / AI Studio / NotebookLM 保留 AI 视角交叉兜底；它也应继续放在广谱区域规则前，并统一绑定 `🇺🇸 美国-自动选择`。
 - `DeepSeek`、`Trae` 中国大陆入口与其他国内 AI 不应并入 `region/us/ai_us.list`；它们应优先由 `direct/ai_cn_direct.list` 承接，字节共享基础设施与中国大陆通用兜底再继续落到 `direct/bytedance_direct.list`、`direct/cn_direct.list`。
 - `direct/ai_cn_direct.list` 属于显式国内 AI 直连入口，顺序上应放在 `direct/bytedance_direct.list` 与 `direct/cn_direct.list` 前，避免显式国内 AI 域名先被更宽泛的直连规则吞掉。

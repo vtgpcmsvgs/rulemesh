@@ -365,8 +365,8 @@
       "category": "region",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 230,
-        "mihomo_classical": 230
+        "surge_rules": 235,
+        "mihomo_classical": 235
       },
       "dist": {
         "surge_rules": "dist/surge/rules/region/us/google_us.list",

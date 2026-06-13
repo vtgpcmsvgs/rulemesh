@@ -9,6 +9,13 @@
 # Google FCM：以上游主体为主，承接推送与相关移动入口。
 INCLUDE,upstream/blackmatrix7/google_fcm.list
 
+# Google Play 下载与资源分发：显式兜住 APK、资源包与下载重定向，避免落到后面的通用 direct/gfw。
+DOMAIN-SUFFIX,googleplay.com
+DOMAIN-SUFFIX,googleusercontent.com
+DOMAIN-SUFFIX,android.com
+DOMAIN-SUFFIX,gvt3.com
+DOMAIN-SUFFIX,xn--ngstr-lra8j.com
+
 # YouTube：以上游主体为主，辅以媒体分发关键词兜底。
 INCLUDE,upstream/blackmatrix7/youtube.list
 DOMAIN-KEYWORD,youtube

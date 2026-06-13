@@ -264,7 +264,7 @@ python tools/build_rules.py
 
 ## Google 路由强约束
 
-- Google 通用服务（含 Google Play / YouTube / FCM）主维护在 `rules/region/us/google_us.list`
+- Google 通用服务（含 Google Play / YouTube / FCM）主维护在 `rules/region/us/google_us.list`；Google Play 下载 CDN 与重定向域也应在这里显式兜底，避免被后面的通用 direct/gfw 抢先接管
 - `Gemini` / `AI Studio` / `NotebookLM` 允许在 `rules/region/us/ai_us.list` 保留 AI 视角交叉兜底，但客户端顺序仍必须让 `google_us` 排在 `ai_us` 前
 - 客户端应接入 `dist/surge/rules/region/us/google_us.list` 或 `dist/mihomo/classical/region/us/google_us.yaml`
 - Google 规则必须绑定 `US-AUTO`（或等价美国策略组），不再提供 `proxy/google` 双入口
