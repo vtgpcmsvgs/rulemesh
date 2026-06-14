@@ -32,6 +32,7 @@
 - 两份 Mihomo 私有 provider 配置当前默认保持“单一 DNS 真相”版本：`ipv6: false`、`dns.ipv6: false`、`default-nameserver + nameserver + fake-ip-filter`。
 - `proxy-providers.*.override.ip-version: dual` 只表示节点栈能力，不等于两份私有文件必须重新打开全局 IPv6 或恢复复杂 DNS 叠层。
 - 默认启用 Tun 全量接管与域名嗅探，优先把 Mihomo 的实际体验拉到接近 Surge 的水位。
+- `region/hk/hk_brokers.yaml` 专门承接复星证券/复星财富、致富证券、辉立证券与富途，默认用激进品牌关键词兜底并绑定 `🇭🇰 香港-自动选择`
 - `region/hk/global_media.yaml` 额外承接 X / Twitter 网页、短链与静态资源，以及 Polymarket 显式域名与激进关键词兜底，并默认绑定 `🇭🇰 香港-自动选择`
 - `region/us/ai_us.yaml` 统一承接 OpenAI / Claude / Gemini / Copilot / Cursor / Grok / Windsurf / Augment 等海外 AI 平台，并保留更激进的关键词兜底；客户端默认绑定 `🇺🇸 美国-自动选择`
 - `direct/ai_cn_direct.yaml` 显式承接 Kimi / DeepSeek / 豆包 / 即梦 / Trae 中国大陆 / 元宝 / 混元 / 通义 / 千问 / 智谱 / MiniMax / 文心等国内 AI 入口；它应放在 `direct_bytedance`、`direct_cn` 前，但只有进入 `cn-dns-domains` 专用白名单的域名才走国内 `nameserver-policy`
@@ -128,6 +129,7 @@
 - `region/us/ai_us.yaml` 当前聚合海外 AI 平台，且对 Gemini / AI Studio / NotebookLM 保留 AI 视角交叉兜底；它也应继续放在广谱区域规则前，并统一绑定 `🇺🇸 美国-自动选择`。
 - `DeepSeek`、`Trae` 中国大陆入口与其他国内 AI 不应并入 `region/us/ai_us.yaml`；它们应优先由 `direct_ai_cn` 承接，字节共享基础设施与中国大陆通用兜底再继续落到 `direct_bytedance`、`direct_cn`。
 - `direct_ai_cn` 属于显式国内 AI 直连入口，顺序上应放在 `direct_bytedance`、`direct_cn` 前；是否进入国内 DNS 只由 `cn-dns-domains` 专用清单决定，不直接按 `DIRECT` 动作推导。
+- `region/hk/hk_brokers.yaml` 当前只承接复星证券/复星财富、致富证券、辉立证券与富途，应放在 `region/hk/global_media.yaml` 与 `proxy/gfw.yaml` 前，并绑定 `🇭🇰 香港-自动选择`。
 - `region/hk/global_media.yaml` 当前还承接 `x.com`、`t.co`、`twimg.com` 与 `twitter.com` 等 X / Twitter 网页域名，以及 `polymarket.com` 与 `DOMAIN-KEYWORD,polymarket` 这组 Polymarket 香港兜底；默认应继续绑定 `🇭🇰 香港-自动选择`，不要再让它们回落到 `proxy/gfw.yaml` 或误挂到日本区域。
 - 公开 `mihomo-public.yaml` 默认接入 `jp_domains` 规则提供器；当前用于让 `opinion.trade` 走 `🇯🇵 日本-自动选择`。
 - `direct/github_ssh_direct.yaml` 必须放在 `proxy/github_core_proxy.yaml` 与 `proxy/gfw.yaml` 前，只给 `github.com:22` 与 `ssh.github.com:443` 直连，避免把 GitHub 网页误放直连。

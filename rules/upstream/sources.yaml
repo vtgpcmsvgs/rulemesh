@@ -117,6 +117,12 @@ sources:
           note: 负责 gfw.txt 与 tld-not-cn.txt 主体
 
   region:
+    hk/hk_brokers.list:
+      preferred:
+        - repo: self
+          note: 专门承接复星证券/复星财富、致富证券、辉立证券与富途，默认用品牌关键词激进匹配并固定绑定香港自动选择
+        - repo: official broker websites
+          note: 参考 fotechwealth / fosunwealth / chiefgroup / chieftrade / poems / phillip / futuhk / futunn / futuholdings 等官方入口与交易平台域名
     hk/global_media.list:
       preferred:
         - repo: self

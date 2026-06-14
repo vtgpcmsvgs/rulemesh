@@ -393,6 +393,15 @@ rule-providers:
     interval: 86400
     proxy: "🚀 节点选择"
 
+  hk_brokers:
+    type: http
+    behavior: classical
+    format: yaml
+    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/hk/hk_brokers.yaml"
+    path: ./ruleset/region/hk/hk_brokers.yaml
+    interval: 86400
+    proxy: "🚀 节点选择"
+
   hk_global_media:
     type: http
     behavior: classical
@@ -624,6 +633,8 @@ rules:
   - RULE-SET,tw_crypto,🇨🇳 台湾-自动选择
   - RULE-SET,jp_domains,🇯🇵 日本-自动选择
   - RULE-SET,hk_telegram,🇭🇰 香港-自动选择
+  # 复星证券、致富证券、辉立证券与富途相关入口并入这组。
+  - RULE-SET,hk_brokers,🇭🇰 香港-自动选择
   # X / Twitter 网页、短链与静态资源，以及 Polymarket 相关域名并入这组。
   - RULE-SET,hk_global_media,🇭🇰 香港-自动选择
 

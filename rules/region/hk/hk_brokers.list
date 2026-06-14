@@ -1,0 +1,61 @@
+# 香港券商香港区域策略规则：按“明确券商范围 + 品牌关键词激进兜底”维护。
+# 维护约束：
+# 1) 只承接复星证券/复星财富、致富证券、辉立证券与富途相关域名，不承接其他券商、交易所或通用金融站点。
+# 2) 本文件优先使用 DOMAIN-KEYWORD 做激进匹配，允许品牌词误伤，目标是避免登录、开户、行情与交易接口漏回通用直连或 gfw。
+# 3) 本规则集设计目标固定为香港节点，客户端请绑定 HK-AUTO（或等价香港策略组），并放在 region/hk/global_media 与 proxy/gfw 前。
+# 4) 本文件不新增 DNS、IP、provider 或客户端运行时字段；DNS 出口继续按客户端现有海外解析链路处理。
+
+# 复星证券 / 复星财富：覆盖当前复星财富、旧复星恒利命名、星财富与移动端交易入口。
+DOMAIN-SUFFIX,fotechwealth.com
+DOMAIN-SUFFIX,fosunwealth.com
+DOMAIN-SUFFIX,fosunhani.com
+DOMAIN-KEYWORD,fotechwealth
+DOMAIN-KEYWORD,mfosunhani
+DOMAIN-KEYWORD,fosunhani
+DOMAIN-KEYWORD,fosunwealth
+DOMAIN-KEYWORD,xingwealth
+DOMAIN-KEYWORD,fosun
+
+# 致富证券：覆盖致富集团、致富交易平台与品牌英文名兜底。
+DOMAIN-SUFFIX,chiefgroup.com.hk
+DOMAIN-SUFFIX,chieftrade.com
+DOMAIN-KEYWORD,chiefgroup
+DOMAIN-KEYWORD,chieftrade
+DOMAIN-KEYWORD,chieftrader
+DOMAIN-KEYWORD,chiefsecurities
+DOMAIN-KEYWORD,chief
+
+# 辉立证券：覆盖 POEMS、Phillip HK、辉立资本与相关报价基础设施。
+DOMAIN-SUFFIX,poems.com.hk
+DOMAIN-SUFFIX,phillip.com.hk
+DOMAIN-SUFFIX,phillipfunds.com.hk
+DOMAIN-SUFFIX,cyberquote.com.hk
+DOMAIN-KEYWORD,poems
+DOMAIN-KEYWORD,phillip
+DOMAIN-KEYWORD,phillipcapital
+DOMAIN-KEYWORD,phillipfunds
+DOMAIN-KEYWORD,cyberquote
+DOMAIN-KEYWORD,phk
+
+# 富途：覆盖富途证券、富途牛牛、富途控股、moomoo 与常见交易/静态资源命名。
+DOMAIN-SUFFIX,futuhk.com
+DOMAIN-SUFFIX,futunn.com
+DOMAIN-SUFFIX,futuholdings.com
+DOMAIN-SUFFIX,moomoo.com
+DOMAIN-SUFFIX,futu5.com
+DOMAIN-SUFFIX,futuau.com
+DOMAIN-SUFFIX,futuesop.com
+DOMAIN-SUFFIX,futufin.com
+DOMAIN-SUFFIX,futuhn.com
+DOMAIN-SUFFIX,futuniuniu.com
+DOMAIN-SUFFIX,futustatic.com
+DOMAIN-SUFFIX,fututrade.com
+DOMAIN-SUFFIX,fututrustee.com
+DOMAIN-KEYWORD,futuhk
+DOMAIN-KEYWORD,futunn
+DOMAIN-KEYWORD,futuholdings
+DOMAIN-KEYWORD,futubull
+DOMAIN-KEYWORD,futustatic
+DOMAIN-KEYWORD,fututrade
+DOMAIN-KEYWORD,moomoo
+DOMAIN-KEYWORD,futu

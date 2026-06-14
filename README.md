@@ -154,6 +154,7 @@ python tools/build_rules.py
 - 对应上游登记与维护约定见 `rules/upstream/geodata/metacubex_country_mmdb.yaml` 与 [docs/geoip-upstream.md](docs/geoip-upstream.md)
 - Surge 的 `internet-test-url`、`proxy-test-url`、代理 `test-url=` 与 `smart / fallback / load-balance` 的 `url=` 统一保持 `http://`；不要因为 `policy-path`、GeoIP 或其他下载入口使用 `https://` 就顺手改成 `https://`。
 - 当前公开模板与本地私有 Surge 配置默认采用 `http://www.baidu.com`、`http://www.google.com/generate_204` 与 `http://www.gstatic.com/generate_204` 这组三段式测速 URL；它们不是唯一答案，但继续作为本仓库的轻量稳定基线。
+- `rules/region/hk/hk_brokers.list` 专门承接复星证券/复星财富、致富证券、辉立证券与富途，默认使用品牌关键词激进兜底并绑定 `🇭🇰 香港-自动选择`，顺序应放在 `region/hk/global_media` 与 `proxy/gfw` 前
 - `rules/region/hk/global_media.list` 额外承接 `x.com`、`t.co`、`twimg.com` 与 `twitter.com` 等 X / Twitter 网页域名，以及 `polymarket.com` 与 `DOMAIN-KEYWORD,polymarket` 这组 Polymarket 香港兜底，默认绑定 `🇭🇰 香港-自动选择`，减少回落到通用 `proxy/gfw` 或误挂到日本策略的超时与地区限制
 - 1Password 核心连接专项规则统一维护在 `rules/proxy/onepassword_proxy.list`
 - 上游快照由 `tools/sync_upstream_rules.py` 每日抓取 1Password 官方《ports and domains》支持页，保守收敛到核心一方域名与更新/基础设施端点
@@ -210,6 +211,7 @@ python tools/build_rules.py
 - `proxy-node-domains` 返回内容必须过滤 IP，并按一行一个域名输出；逗号分隔的一整行不符合 Surge `DOMAIN-SET` 预期
 - 这类 Surge 运行时参数不要求 Mihomo 公开模板逐项镜像；Mihomo 继续按各自的 Tun / DNS 语义单独维护
 - 默认接入 `direct/alicloud_hk_ipv4_ssh22_direct`，并在直连段显式保留 `DOMAIN-SUFFIX,aliyuncs.com` 与 `DOMAIN,check.myclientip.com`
+- 默认让复星证券/复星财富、致富证券、辉立证券与富途相关域名优先命中 `region/hk/hk_brokers`，并走 `🇭🇰 香港-自动选择`
 - 默认让 X / Twitter 网页、短链与静态资源，以及 Polymarket 相关域名优先命中 `region/hk/global_media`，避免落回通用 `proxy/gfw`
 - 默认接入 `region/jp/domains_to_jp` 入口；当前用于让 `opinion.trade` 走 `🇯🇵 日本-自动选择`
   - 刻意不承载私有工作路由白名单结构，避免把本地工作特化误当成公开模板默认值
@@ -223,6 +225,7 @@ python tools/build_rules.py
 - 默认接入 BSC 主网 RPC 专项 `proxy/bsc_rpc_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
 - 默认接入海外 DNS 主 IPv4 端点专项 `proxy/overseas_dns_ipv4_proxy` 规则，并保持在 `proxy/gfw` 前优先命中；命中后统一走 `🇺🇸 美国-自动选择`
 - 默认接入 `direct_alicloud_hk_ipv4_ssh22`，并在直连段显式保留 `DOMAIN-SUFFIX,aliyuncs.com` 与 `DOMAIN,check.myclientip.com`
+- 默认让复星证券/复星财富、致富证券、辉立证券与富途相关域名优先命中 `hk_brokers`，并走 `🇭🇰 香港-自动选择`
 - 默认让 X / Twitter 网页、短链与静态资源，以及 Polymarket 相关域名优先命中 `region/hk/global_media`，避免落回通用 `proxy/gfw`
 - 默认接入 `jp_domains` 规则提供器；当前用于让 `opinion.trade` 走 `🇯🇵 日本-自动选择`
   - 对两份 Mihomo 私有 provider 配置，当前默认保持 `ipv6: false` 与 `dns.ipv6: false`，优先先把 IPv4、fake-ip 与 DNS 链路做稳；不要因为 Surge 或某次临时实验可用，就把双栈重新开成默认基线
@@ -242,6 +245,7 @@ python tools/build_rules.py
 - BSC 主网 RPC 专项规则应先命中 `proxy/bsc_rpc_proxy`，再落到 `proxy/gfw`
 - 海外 DNS 主 IPv4 端点专项规则应先命中 `proxy/overseas_dns_ipv4_proxy` 并走美国地区策略，再落到 `proxy/gfw`
 - GitHub 相关访问应先命中 `direct/github_ssh_direct` 与 `proxy/github_core_proxy`，再落到 `proxy/gfw`
+- 复星证券/复星财富、致富证券、辉立证券与富途相关访问应先命中 `region/hk/hk_brokers`，并走 `🇭🇰 香港-自动选择`，再落到 `region/hk/global_media` 或 `proxy/gfw`
 - X / Twitter 网页、短链与静态资源，以及 Polymarket 相关域名应先命中 `region/hk/global_media`，再落到 `proxy/gfw`
 - 1Password 核心连接专项规则如启用，应先命中 `proxy/onepassword_proxy`，再落到 `proxy/gfw`
 - 操作系统时间同步专项规则应先命中 `direct/os_time_direct`，再落到其他普通 `direct/*`
@@ -268,7 +272,7 @@ python tools/build_rules.py
 - `Gemini` / `AI Studio` / `NotebookLM` 允许在 `rules/region/us/ai_us.list` 保留 AI 视角交叉兜底，但客户端顺序仍必须让 `google_us` 排在 `ai_us` 前
 - 客户端应接入 `dist/surge/rules/region/us/google_us.list` 或 `dist/mihomo/classical/region/us/google_us.yaml`
 - Google 规则必须绑定 `US-AUTO`（或等价美国策略组），不再提供 `proxy/google` 双入口
-- 规则顺序必须先放 Google US 规则，再放 `region/us/ai_us` 与 `region/hk/global_media` 等广谱区域规则；Google 通用服务与海外 AI 入口都统一命中美国策略
+- 规则顺序必须先放 Google US 规则，再放 `region/us/ai_us`、`region/hk/hk_brokers` 与 `region/hk/global_media` 等区域规则；Google 通用服务与海外 AI 入口都统一命中美国策略，香港券商与香港媒体入口统一命中香港策略
 - 新增或调整 Google 规则时，先改该源文件，再执行构建同步 `dist/`
 
 ## AI 路由约定

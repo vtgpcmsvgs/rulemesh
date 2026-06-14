@@ -2,10 +2,10 @@
   "summary": {
     "domain-only": 7,
     "ipcidr-only": 7,
-    "classical/mixed": 19,
+    "classical/mixed": 20,
     "dns-domain-set": 1,
     "empty": 0,
-    "total_sources": 34,
+    "total_sources": 35,
     "total_warnings": 0
   },
   "sources": [
@@ -241,6 +241,19 @@
       "dist": {
         "surge_rules": "dist/surge/rules/region/hk/hk_aws_ipv4.list",
         "mihomo_classical": "dist/mihomo/classical/region/hk/hk_aws_ipv4.yaml"
+      }
+    },
+    {
+      "source": "rules/region/hk/hk_brokers.list",
+      "category": "region",
+      "classification": "classical/mixed",
+      "counts": {
+        "surge_rules": 47,
+        "mihomo_classical": 47
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/region/hk/hk_brokers.list",
+        "mihomo_classical": "dist/mihomo/classical/region/hk/hk_brokers.yaml"
       }
     },
     {

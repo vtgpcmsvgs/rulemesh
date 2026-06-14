@@ -24,6 +24,7 @@
 - 多地区链式 SOCKS5 端点属于自维护链式代理入口，不再视为日本区域规则，也不应再挂到单一国家目录或固定日本组
 - 区域精确规则继续保留，且 `Google US` 与 `AI US` 都必须先于广谱区域规则
 - `AI US` 入口继续作为白名单显式放行项，但当前只承接海外 AI 平台并统一走美国节点；国内 AI 不应借这条入口放行
+- `region/hk/hk_brokers` 继续作为香港券商显式放行项，只承接复星证券/复星财富、致富证券、辉立证券与富途，并统一走香港自动选择
 - GitHub 仓库 SSH 定向直连继续保留独立 carve-out
 - GitHub 相关访问继续拆成三段：先保留 `DOMAIN,raw.githubusercontent.com` 自举入口，再显式放行 `proxy/github_core_proxy.list`，其后的 `DOMAIN-KEYWORD,github` 广覆盖观察兜底在工作白名单模式下统一使用 `REJECT`，专门用于发现 SSH / GitHub Core 之外的漏网之鱼
 - `raw.githubusercontent.com` 继续作为规则产物下载自举入口，但不再绑定 `server:system`；当前改用海外 DoH 解析，避免规则产物下载回落到本地/国内系统 DNS
@@ -65,21 +66,22 @@
 1. 拒绝规则
 2. 设备分流
 3. 区域精确规则
-4. GitHub 仓库 SSH 定向直连
-5. GitHub Raw 自举入口
-6. GitHub Core 代理入口
-7. GitHub 广覆盖 REJECT 观察兜底
-8. 私有订阅域名同步块
-9. 1Password 核心连接节点选择入口
-10. AdsPower 细分规则
-11. AdsPower 广覆盖 REJECT 观察兜底
-12. Polygon 主网 RPC 节点选择入口
-13. BSC 主网 RPC 节点选择入口
-14. 海外 DNS 主 IPv4 端点美国分流入口
-15. 代理节点 bootstrap DNS 直连例外
-16. 海外加密 DNS 显式白名单入口
-17. 指定直连入口（含阿里云广覆盖 REJECT 观察兜底）
-18. 全局 `FINAL,REJECT` 兜底
+4. 香港券商区域入口
+5. GitHub 仓库 SSH 定向直连
+6. GitHub Raw 自举入口
+7. GitHub Core 代理入口
+8. GitHub 广覆盖 REJECT 观察兜底
+9. 私有订阅域名同步块
+10. 1Password 核心连接节点选择入口
+11. AdsPower 细分规则
+12. AdsPower 广覆盖 REJECT 观察兜底
+13. Polygon 主网 RPC 节点选择入口
+14. BSC 主网 RPC 节点选择入口
+15. 海外 DNS 主 IPv4 端点美国分流入口
+16. 代理节点 bootstrap DNS 直连例外
+17. 海外加密 DNS 显式白名单入口
+18. 指定直连入口（含阿里云广覆盖 REJECT 观察兜底）
+19. 全局 `FINAL,REJECT` 兜底
 
 ## 不要误恢复的广谱放行项
 

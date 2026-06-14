@@ -139,6 +139,18 @@ merge_plan:
       - 香港节点通常更稳定、速度更快，适合 Telegram 大流量场景
       - 香港地区内容生态与支付方式也更友好
 
+  - id: hk-brokers
+    target: rules/region/hk/hk_brokers.list
+    purpose: 复星证券、致富证券、辉立证券与富途走香港区域策略
+    strategy:
+      - manual_only
+      - explicit_official_domains_first_then_aggressive_keyword_fallback
+      - bind_to_hk_auto
+    notes:
+      - 只围绕这四家香港券商维护，不扩展到其他券商、交易所或通用金融站点
+      - 客户端顺序应放在 region/hk/global_media 与 proxy/gfw 前，避免登录、开户、行情与交易接口被后续规则吞掉
+      - 允许品牌词级别误伤，优先保证相关域名全部命中香港自动选择
+
   - id: gfw-proxy
     target: rules/proxy/gfw.list
     purpose: GFW 代理兜底
