@@ -79,8 +79,8 @@
       "category": "direct",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 118365,
-        "mihomo_classical": 118365
+        "surge_rules": 118349,
+        "mihomo_classical": 118349
       },
       "dist": {
         "surge_rules": "dist/surge/rules/direct/cn_direct.list",
@@ -144,8 +144,8 @@
       "category": "proxy",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 112,
-        "mihomo_classical": 112
+        "surge_rules": 114,
+        "mihomo_classical": 114
       },
       "dist": {
         "surge_rules": "dist/surge/rules/proxy/bsc_rpc_proxy.list",
@@ -157,8 +157,8 @@
       "category": "proxy",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 5085,
-        "mihomo_classical": 5085
+        "surge_rules": 5088,
+        "mihomo_classical": 5088
       },
       "dist": {
         "surge_rules": "dist/surge/rules/proxy/gfw.list",
@@ -287,8 +287,8 @@
       "category": "region",
       "classification": "ipcidr-only",
       "counts": {
-        "surge_rules": 116,
-        "mihomo_classical": 116
+        "surge_rules": 118,
+        "mihomo_classical": 118
       },
       "dist": {
         "surge_rules": "dist/surge/rules/region/jp/osaka_aws_ipv4.list",

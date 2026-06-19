@@ -70,6 +70,8 @@ DOMAIN,bsc.blockrazor.xyz
 DOMAIN-WILDCARD,*.bsc.blockrazor.xyz
 DOMAIN,bsc.callstaticrpc.com
 DOMAIN-WILDCARD,*.bsc.callstaticrpc.com
+DOMAIN,bsc.campioneinfrastructure.com
+DOMAIN-WILDCARD,*.bsc.campioneinfrastructure.com
 DOMAIN,bsc.drpc.org
 DOMAIN-WILDCARD,*.bsc.drpc.org
 DOMAIN,bsc.meowrpc.com
