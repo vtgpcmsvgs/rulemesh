@@ -157,8 +157,8 @@
       "category": "proxy",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 5173,
-        "mihomo_classical": 5173
+        "surge_rules": 5174,
+        "mihomo_classical": 5174
       },
       "dist": {
         "surge_rules": "dist/surge/rules/proxy/gfw.list",
@@ -235,8 +235,8 @@
       "category": "region",
       "classification": "ipcidr-only",
       "counts": {
-        "surge_rules": 107,
-        "mihomo_classical": 107
+        "surge_rules": 108,
+        "mihomo_classical": 108
       },
       "dist": {
         "surge_rules": "dist/surge/rules/region/hk/hk_aws_ipv4.list",
@@ -352,8 +352,8 @@
       "category": "region",
       "classification": "ipcidr-only",
       "counts": {
-        "surge_rules": 45,
-        "mihomo_classical": 45
+        "surge_rules": 48,
+        "mihomo_classical": 48
       },
       "dist": {
         "surge_rules": "dist/surge/rules/region/tw/taipei_aws_ipv4.list",
