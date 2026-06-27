@@ -38,6 +38,7 @@ payload:
   - "IP-CIDR,99.77.140.0/24,no-resolve"
   - "IP-CIDR,35.50.228.0/24,no-resolve"
   - "IP-CIDR,52.93.120.176/32,no-resolve"
+  - "IP-CIDR,64.66.133.0/24,no-resolve"
   - "IP-CIDR,69.107.6.208/29,no-resolve"
   - "IP-CIDR,52.144.233.64/31,no-resolve"
   - "IP-CIDR,15.230.181.0/24,no-resolve"
