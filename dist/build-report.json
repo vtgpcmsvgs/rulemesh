@@ -79,8 +79,8 @@
       "category": "direct",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 118020,
-        "mihomo_classical": 118020
+        "surge_rules": 118085,
+        "mihomo_classical": 118085
       },
       "dist": {
         "surge_rules": "dist/surge/rules/direct/cn_direct.list",
