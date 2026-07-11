@@ -41,10 +41,10 @@
 - `region/hk/global_media.list` 额外承接 X / Twitter 网页、短链与静态资源，以及 Polymarket 显式域名与激进关键词兜底，并默认绑定 `🇭🇰 香港-自动选择`
 - `region/us/ai_us.list` 统一承接 OpenAI / Claude / Gemini / Copilot / Cursor / Grok / Windsurf / Augment 等海外 AI 平台，并保留更激进的关键词兜底；客户端默认绑定 `🇺🇸 美国-自动选择`
 - `direct/ai_cn_direct.list` 显式承接 Kimi / DeepSeek / 豆包 / 即梦 / Trae 中国大陆 / 元宝 / 混元 / 通义 / 千问 / 智谱 / MiniMax / 文心等国内 AI 入口，并应放在 `direct/bytedance_direct.list` 与 `direct/cn_direct.list` 前
-- 阿里云香港 SSH 继续走 `direct/alicloud_hk_ipv4_ssh22_direct.list`；阿里云控制面 `aliyuncs.com` 与出口探测 `check.myclientip.com` 通过单条 `DIRECT` 规则显式放行
+- 阿里云香港 SSH 继续走 `direct/alicloud_hk_ipv4_ssh22_direct.list`，调用层保留 `DIRECT,no-resolve`；阿里云控制面 `aliyuncs.com` 与出口探测 `check.myclientip.com` 通过单条 `DIRECT` 规则显式放行
 - AWS 香港区域入口已统一为 `region/hk/hk_aws_ipv4.list`
 - 多地区链式 SOCKS5 端点入口已统一为 `region/multi/chain_socks5_ipcidr.list`，默认应绑定统一的自动选择 / 负载均衡组，而不是 `🇯🇵 日本-自动选择`
-- 阿里云香港 SSH 直连入口已统一为 `direct/alicloud_hk_ipv4_ssh22_direct.list`，并继续在入口文件里直接保留 `SSH TCP/22` 条件，不要求本地配置二次拼装端口规则
+- 阿里云香港 SSH 直连入口已统一为 `direct/alicloud_hk_ipv4_ssh22_direct.list`，入口内直接保留 `IP-CIDR,no-resolve + PROTOCOL,TCP + DEST-PORT,22`，不要求本地配置二次拼装端口规则
 - AdsPower 专项 `reject/direct/proxy` 规则集与 `proxy/gfw.list` 广谱代理规则的顺序关系
 - Polygon 主网 RPC 专项 `proxy/polygon_rpc_proxy.list` 与 `proxy/gfw.list` 的顺序关系
 - BSC 主网 RPC 专项 `proxy/bsc_rpc_proxy.list` 与 `proxy/gfw.list` 的顺序关系
@@ -127,7 +127,7 @@
 - `direct/github_ssh_direct.list` 必须放在 `proxy/github_core_proxy.list` 与 `proxy/gfw.list` 前，只给 `github.com:22` 与 `ssh.github.com:443` 直连，避免把 GitHub 网页误放直连。
 - GitHub Raw 自举入口建议在 `direct/github_ssh_direct.list` 后额外保留一条 `DOMAIN,raw.githubusercontent.com,"🚀 节点选择"`，避免外部规则首轮下载依赖尚未加载完成的后续远程规则集；同时继续保留 `raw.githubusercontent.com = server:https://cloudflare-dns.com/dns-query` 这一条规则产物解析例外，避免回落到本地/国内系统 DNS；这不是代理节点 bootstrap，不得影响 `proxy-node-domains` 继续使用 AliDNS DoH。
 - `proxy/github_core_proxy.list` 应放在 `proxy/gfw.list` 前，显式承接 GitHub 网页、`api.github.com`、Gist、Raw、静态资源与附件；这也会覆盖 `https://api.github.com/gists`、`https://api.github.com/users` 与 `https://gist.githubusercontent.com/...` 这类连接。
-- `direct/alicloud_hk_ipv4_ssh22_direct.list`、`DOMAIN-SUFFIX,aliyuncs.com,DIRECT` 与 `DOMAIN,check.myclientip.com,DIRECT` 应统一放在直连段显式维护；其后可额外保留一条阿里云广覆盖 `REJECT` 观察兜底，用于发现上游阿里云规则的漏网之鱼。
+- `direct/alicloud_hk_ipv4_ssh22_direct.list` 应以 `RULE-SET,...,DIRECT,no-resolve` 调用，并与 `DOMAIN-SUFFIX,aliyuncs.com,DIRECT`、`DOMAIN,check.myclientip.com,DIRECT` 统一放在直连段；其后可额外保留一条阿里云广覆盖 `REJECT` 观察兜底。
 - `direct/adspower_direct.list` 与 `proxy/adspower_proxy.list` 都应放在 `proxy/gfw.list` 前，确保 AdsPower 的细分直连与节点选择优先命中。
 - `proxy/polygon_rpc_proxy.list` 应放在 `proxy/gfw.list` 前，确保 Polygon 主网 RPC 域名优先走 `🚀 节点选择`。
 - `proxy/bsc_rpc_proxy.list` 应放在 `proxy/gfw.list` 前，确保 BSC 主网 RPC 域名优先走 `🚀 节点选择`。

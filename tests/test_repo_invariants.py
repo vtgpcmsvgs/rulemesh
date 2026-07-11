@@ -13,6 +13,7 @@ if str(TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(TOOLS_DIR))
 
 import build_rules  # noqa: E402
+import sync_upstream_rules  # noqa: E402
 import validate_surge_test_urls  # noqa: E402
 
 
@@ -118,6 +119,68 @@ class RepoInvariantTests(unittest.TestCase):
         self.assertEqual(self.report["summary"]["total_warnings"], 0, self.report["warnings"])
         self.assertEqual(self.report["warnings"], [])
 
+    def test_alicloud_snapshot_and_built_rules_are_complete_and_consistent(self) -> None:
+        snapshot = sync_upstream_rules.ALICLOUD_REGION_SNAPSHOTS[0]
+        metadata_path = ROOT / "rules" / "upstream" / snapshot.metadata_path
+        payload = json.loads(metadata_path.read_text(encoding="utf-8"))
+        prefixes = sync_upstream_rules.validate_alicloud_snapshot_payload(payload, snapshot)
+
+        expected_page_count = (
+            payload["reportedTotalCount"] + payload["pageSize"] - 1
+        ) // payload["pageSize"]
+        self.assertEqual(payload["pageCount"], expected_page_count)
+
+        ipv4_path = ROOT / "rules" / "upstream" / snapshot.path
+        ipv4_prefixes = [
+            line
+            for line in ipv4_path.read_text(encoding="utf-8").splitlines()
+            if line and not line.startswith("#")
+        ]
+        self.assertEqual(ipv4_prefixes, prefixes)
+
+        expected_source_rules = [
+            f"AND,((IP-CIDR,{prefix},no-resolve),(PROTOCOL,TCP),(DST-PORT,22))"
+            for prefix in prefixes
+        ]
+        ssh_path = ROOT / "rules" / "upstream" / snapshot.ssh_path
+        source_rules = [
+            line
+            for line in ssh_path.read_text(encoding="utf-8").splitlines()
+            if line and not line.startswith("#")
+        ]
+        self.assertEqual(source_rules, expected_source_rules)
+
+        surge_path = (
+            ROOT / "dist" / "surge" / "rules" / "direct"
+            / "alicloud_hk_ipv4_ssh22_direct.list"
+        )
+        surge_rules = [
+            line
+            for line in surge_path.read_text(encoding="utf-8").splitlines()
+            if line and not line.startswith("#")
+        ]
+        self.assertEqual(
+            surge_rules,
+            [rule.replace("DST-PORT,", "DEST-PORT,") for rule in expected_source_rules],
+        )
+
+        mihomo_path = (
+            ROOT / "dist" / "mihomo" / "classical" / "direct"
+            / "alicloud_hk_ipv4_ssh22_direct.yaml"
+        )
+        mihomo_rules = [
+            json.loads(line.removeprefix("  - "))
+            for line in mihomo_path.read_text(encoding="utf-8").splitlines()
+            if line.startswith("  - ")
+        ]
+        self.assertEqual(
+            mihomo_rules,
+            [
+                rule.replace("PROTOCOL,TCP", "NETWORK,tcp")
+                for rule in expected_source_rules
+            ],
+        )
+
     def test_dist_only_contains_supported_output_roots(self) -> None:
         surge_root = ROOT / "dist" / "surge"
         mihomo_root = ROOT / "dist" / "mihomo"
@@ -196,6 +259,7 @@ class RepoInvariantTests(unittest.TestCase):
             "id: setup_python",
             "id: unit_tests",
             "id: sync_upstream",
+            "id: validate_synced_snapshots",
             "id: build_dist",
             "id: commit_changes",
         ):

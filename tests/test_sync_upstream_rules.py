@@ -1,8 +1,11 @@
 import inspect
+import io
 import json
 import os
 import sys
+import tempfile
 import unittest
+import urllib.error
 from pathlib import Path
 from unittest import mock
 
@@ -13,6 +16,7 @@ if str(TOOLS_DIR) not in sys.path:
 
 import sync_upstream_rules  # noqa: E402
 import send_upstream_alert  # noqa: E402
+import build_rules  # noqa: E402
 
 
 class BuildAwsSnapshotTextTests(unittest.TestCase):
@@ -52,8 +56,248 @@ class BuildAlicloudSnapshotTextTests(unittest.TestCase):
         self.assertIn(snapshot.title, ipv4_text)
         self.assertIn("203.0.113.0/24", ipv4_text)
         self.assertIn(f"{snapshot.title} SSH TCP/22", ssh_text)
-        self.assertIn("AND,((IP-CIDR,203.0.113.0/24),(DST-PORT,22))", ssh_text)
+        self.assertIn(
+            "AND,((IP-CIDR,203.0.113.0/24,no-resolve),(PROTOCOL,TCP),(DST-PORT,22))",
+            ssh_text,
+        )
         self.assertIn("alicloud/hk_ipv4.txt", ssh_text)
+
+
+class AlicloudPaginationTests(unittest.TestCase):
+    @staticmethod
+    def prefix(index: int) -> str:
+        return f"203.0.{index // 256}.{index % 256}/32"
+
+    @staticmethod
+    def page_payload(page_number: int, total_count: int, prefixes: list[str]) -> dict[str, object]:
+        return {
+            "Success": True,
+            "PageNumber": page_number,
+            "PageSize": 100,
+            "TotalCount": total_count,
+            "RegionId": "cn-hongkong",
+            "RequestId": f"request-{page_number}",
+            "PublicIpAddress": prefixes,
+        }
+
+    def test_duplicate_entry_does_not_end_pagination_early(self) -> None:
+        snapshot = sync_upstream_rules.ALICLOUD_REGION_SNAPSHOTS[0]
+        credentials = sync_upstream_rules.AlicloudCredentials("ak", "sk")
+        pages = {
+            1: self.page_payload(1, 204, [self.prefix(index) for index in range(100)]),
+            2: self.page_payload(
+                2,
+                204,
+                [self.prefix(index) for index in range(100, 199)] + [self.prefix(150)],
+            ),
+            3: self.page_payload(3, 204, [self.prefix(index) for index in range(199, 203)]),
+        }
+
+        with mock.patch(
+            "sync_upstream_rules.alicloud_rpc_get",
+            side_effect=lambda _snapshot, _credentials, *, page_number, **_kwargs: pages[page_number],
+        ) as mocked_get:
+            payload = sync_upstream_rules.fetch_alicloud_region_snapshot(snapshot, credentials)
+
+        self.assertEqual(mocked_get.call_count, 3)
+        self.assertEqual(payload["reportedTotalCount"], 204)
+        self.assertEqual(payload["fetchedEntryCount"], 204)
+        self.assertEqual(payload["duplicateEntryCount"], 1)
+        self.assertEqual(payload["uniquePrefixCount"], 203)
+        self.assertEqual(payload["uniqueIpv4AddressCount"], 203)
+        self.assertEqual(len(payload["publicIpAddress"]), 203)
+        self.assertIn(self.prefix(202), payload["publicIpAddress"])
+
+    def test_empty_page_before_total_count_fails_closed(self) -> None:
+        snapshot = sync_upstream_rules.ALICLOUD_REGION_SNAPSHOTS[0]
+        credentials = sync_upstream_rules.AlicloudCredentials("ak", "sk")
+        pages = {
+            1: self.page_payload(1, 101, [self.prefix(index) for index in range(100)]),
+            2: self.page_payload(2, 101, []),
+        }
+
+        with mock.patch(
+            "sync_upstream_rules.alicloud_rpc_get",
+            side_effect=lambda _snapshot, _credentials, *, page_number, **_kwargs: pages[page_number],
+        ):
+            with self.assertRaisesRegex(ValueError, "pagination ended early"):
+                sync_upstream_rules.fetch_alicloud_region_snapshot(snapshot, credentials)
+
+    def test_total_count_change_fails_closed(self) -> None:
+        snapshot = sync_upstream_rules.ALICLOUD_REGION_SNAPSHOTS[0]
+        credentials = sync_upstream_rules.AlicloudCredentials("ak", "sk")
+        pages = {
+            1: self.page_payload(1, 101, [self.prefix(index) for index in range(100)]),
+            2: self.page_payload(2, 102, [self.prefix(100)]),
+        }
+
+        with mock.patch(
+            "sync_upstream_rules.alicloud_rpc_get",
+            side_effect=lambda _snapshot, _credentials, *, page_number, **_kwargs: pages[page_number],
+        ):
+            with self.assertRaisesRegex(ValueError, "TotalCount changed"):
+                sync_upstream_rules.fetch_alicloud_region_snapshot(snapshot, credentials)
+
+    def test_snapshot_metadata_must_match_fetched_and_unique_counts(self) -> None:
+        snapshot = sync_upstream_rules.ALICLOUD_REGION_SNAPSHOTS[0]
+        payload = {
+            "regionId": "cn-hongkong",
+            "ipVersion": "ipv4",
+            "pageSize": 100,
+            "pageCount": 1,
+            "reportedTotalCount": 3,
+            "fetchedEntryCount": 3,
+            "duplicateEntryCount": 1,
+            "uniquePrefixCount": 2,
+            "uniqueIpv4AddressCount": 512,
+            "publicIpAddress": ["203.0.113.0/24", "198.51.100.0/24"],
+        }
+
+        self.assertEqual(
+            sync_upstream_rules.validate_alicloud_snapshot_payload(payload, snapshot),
+            ["203.0.113.0/24", "198.51.100.0/24"],
+        )
+
+        payload["fetchedEntryCount"] = 2
+        with self.assertRaisesRegex(ValueError, "snapshot is incomplete"):
+            sync_upstream_rules.validate_alicloud_snapshot_payload(payload, snapshot)
+
+    def test_snapshot_files_must_match_metadata(self) -> None:
+        snapshot = sync_upstream_rules.ALICLOUD_REGION_SNAPSHOTS[0]
+        payload = {
+            "regionId": "cn-hongkong",
+            "ipVersion": "ipv4",
+            "pageSize": 100,
+            "pageCount": 1,
+            "reportedTotalCount": 1,
+            "fetchedEntryCount": 1,
+            "duplicateEntryCount": 0,
+            "uniquePrefixCount": 1,
+            "uniqueIpv4AddressCount": 256,
+            "publicIpAddress": ["203.0.113.0/24"],
+            "syncedAt": "2026-07-11T00:00:00+00:00",
+        }
+
+        with tempfile.TemporaryDirectory() as temp_dir, mock.patch.object(
+            sync_upstream_rules,
+            "UPSTREAM_ROOT",
+            Path(temp_dir),
+        ):
+            metadata_path = Path(temp_dir) / snapshot.metadata_path
+            ipv4_path = Path(temp_dir) / snapshot.path
+            ssh_path = Path(temp_dir) / snapshot.ssh_path
+            for path in (metadata_path, ipv4_path, ssh_path):
+                path.parent.mkdir(parents=True, exist_ok=True)
+            metadata_path.write_text(
+                json.dumps(payload, ensure_ascii=False),
+                encoding="utf-8",
+            )
+            ipv4_path.write_text(
+                sync_upstream_rules.build_alicloud_snapshot_text(payload, snapshot),
+                encoding="utf-8",
+            )
+            ssh_path.write_text(
+                sync_upstream_rules.build_alicloud_ssh_snapshot_text(payload, snapshot),
+                encoding="utf-8",
+            )
+
+            self.assertEqual(
+                sync_upstream_rules.validate_alicloud_snapshot_files(snapshot),
+                payload,
+            )
+            self.assertFalse(build_rules.alicloud_snapshots_need_sync())
+
+            ssh_path.write_text("# 残缺文件\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "does not match metadata"):
+                sync_upstream_rules.validate_alicloud_snapshot_files(snapshot)
+            self.assertTrue(build_rules.alicloud_snapshots_need_sync())
+
+    def test_large_coverage_drop_requires_explicit_confirmation(self) -> None:
+        snapshot = sync_upstream_rules.ALICLOUD_REGION_SNAPSHOTS[0]
+        previous_payload = {"publicIpAddress": ["203.0.112.0/23"]}
+        current_payload = {"publicIpAddress": ["203.0.113.0/24"]}
+
+        with mock.patch.dict(os.environ, {}, clear=True):
+            with self.assertRaisesRegex(ValueError, "retained only"):
+                sync_upstream_rules.validate_alicloud_coverage_change(
+                    previous_payload,
+                    current_payload,
+                    snapshot,
+                )
+
+        with mock.patch.dict(
+            os.environ,
+            {sync_upstream_rules.ALICLOUD_ALLOW_COVERAGE_SHRINK_ENV: "1"},
+            clear=True,
+        ):
+            sync_upstream_rules.validate_alicloud_coverage_change(
+                previous_payload,
+                current_payload,
+                snapshot,
+            )
+
+    def test_same_size_disjoint_coverage_is_rejected(self) -> None:
+        snapshot = sync_upstream_rules.ALICLOUD_REGION_SNAPSHOTS[0]
+        previous_payload = {"publicIpAddress": ["203.0.112.0/23"]}
+        current_payload = {"publicIpAddress": ["198.51.100.0/23"]}
+
+        with mock.patch.dict(os.environ, {}, clear=True):
+            with self.assertRaisesRegex(ValueError, "retained only 0.00%"):
+                sync_upstream_rules.validate_alicloud_coverage_change(
+                    previous_payload,
+                    current_payload,
+                    snapshot,
+                )
+
+    def test_stable_fetch_requires_two_matching_full_snapshots(self) -> None:
+        snapshot = sync_upstream_rules.ALICLOUD_REGION_SNAPSHOTS[0]
+        credentials = sync_upstream_rules.AlicloudCredentials("ak", "sk")
+        first = {
+            "reportedTotalCount": 1,
+            "fetchedEntryCount": 1,
+            "duplicateEntryCount": 0,
+            "uniquePrefixCount": 1,
+            "uniqueIpv4AddressCount": 256,
+            "publicIpAddress": ["203.0.113.0/24"],
+        }
+        second = {**first, "syncToken": "newer"}
+
+        with mock.patch(
+            "sync_upstream_rules.fetch_alicloud_region_snapshot",
+            side_effect=[first, second],
+        ) as mocked_fetch:
+            payload = sync_upstream_rules.fetch_stable_alicloud_region_snapshot(
+                snapshot,
+                credentials,
+            )
+
+        self.assertEqual(mocked_fetch.call_count, 2)
+        self.assertEqual(payload, second)
+
+    def test_unstable_full_snapshots_fail_closed(self) -> None:
+        snapshot = sync_upstream_rules.ALICLOUD_REGION_SNAPSHOTS[0]
+        credentials = sync_upstream_rules.AlicloudCredentials("ak", "sk")
+        payloads = [
+            {
+                "reportedTotalCount": 1,
+                "fetchedEntryCount": 1,
+                "duplicateEntryCount": 0,
+                "uniquePrefixCount": 1,
+                "uniqueIpv4AddressCount": 256,
+                "publicIpAddress": [f"203.0.{index}.0/24"],
+            }
+            for index in range(sync_upstream_rules.ALICLOUD_STABILITY_FETCH_ATTEMPTS)
+        ]
+
+        with mock.patch(
+            "sync_upstream_rules.fetch_alicloud_region_snapshot",
+            side_effect=payloads,
+        ):
+            with self.assertRaisesRegex(ValueError, "consecutive full fetches"):
+                sync_upstream_rules.fetch_stable_alicloud_region_snapshot(
+                    snapshot,
+                    credentials,
+                )
 
 
 class BuildOnepasswordRulesTests(unittest.TestCase):
@@ -323,6 +567,29 @@ class AlicloudCredentialResolutionTests(unittest.TestCase):
             ),
         )
 
+    def test_http_error_log_does_not_expose_signed_request_details(self) -> None:
+        body = json.dumps(
+            {
+                "Code": "IncompleteSignature",
+                "RequestId": "request-id",
+                "Message": "server string contains AccessKeyId=private-id&Signature=private-signature",
+            }
+        ).encode("utf-8")
+        error = urllib.error.HTTPError(
+            "https://vpc.cn-hongkong.aliyuncs.com/",
+            400,
+            "Bad Request",
+            hdrs=None,
+            fp=io.BytesIO(body),
+        )
+
+        message = sync_upstream_rules.parse_alicloud_http_error(error)
+
+        self.assertIn("IncompleteSignature", message)
+        self.assertIn("request-id", message)
+        self.assertNotIn("private-id", message)
+        self.assertNotIn("private-signature", message)
+
 
 class SendUpstreamAlertScriptTests(unittest.TestCase):
     def test_build_workflow_failure_message_contains_step_results_and_run_url(self) -> None:
@@ -349,6 +616,15 @@ class SendUpstreamAlertScriptTests(unittest.TestCase):
 
 
 class SyncFailureTests(unittest.TestCase):
+    def test_main_returns_nonzero_when_any_sync_task_fails(self) -> None:
+        task = sync_upstream_rules.SyncTask(
+            name="failing",
+            runner=lambda _failures: (0, 1),
+        )
+
+        with mock.patch.object(sync_upstream_rules, "SYNC_TASKS", (task,)):
+            self.assertEqual(sync_upstream_rules.main(), 1)
+
     def test_sync_one_records_empty_upstream_content(self) -> None:
         failures: list[sync_upstream_rules.UpstreamFailure] = []
         item = sync_upstream_rules.UpstreamFile(

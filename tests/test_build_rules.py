@@ -120,7 +120,9 @@ class TempRepoBuildRulesTests(unittest.TestCase):
             "DST-PORT,80\n"
             "AND,((PROCESS-NAME,chrome.exe),(DST-PORT,80))\n"
             "DEST-PORT,443\n"
-            "AND,((PROCESS-NAME,firefox.exe),(DEST-PORT,443))\n",
+            "AND,((PROCESS-NAME,firefox.exe),(DEST-PORT,443))\n"
+            "AND,((IP-CIDR,203.0.113.0/24,no-resolve),(PROTOCOL,TCP),(DST-PORT,22))\n"
+            "AND,((DOMAIN,example.com),(NETWORK,UDP))\n",
             encoding="utf-8",
         )
 
@@ -134,6 +136,8 @@ class TempRepoBuildRulesTests(unittest.TestCase):
                 "AND,((PROCESS-NAME,chrome.exe),(DEST-PORT,80))",
                 "DEST-PORT,443",
                 "AND,((PROCESS-NAME,firefox.exe),(DEST-PORT,443))",
+                "AND,((IP-CIDR,203.0.113.0/24,no-resolve),(PROTOCOL,TCP),(DEST-PORT,22))",
+                "AND,((DOMAIN,example.com),(PROTOCOL,UDP))",
             ],
         )
         self.assertEqual(
@@ -143,6 +147,8 @@ class TempRepoBuildRulesTests(unittest.TestCase):
                 "AND,((PROCESS-NAME,chrome.exe),(DST-PORT,80))",
                 "DST-PORT,443",
                 "AND,((PROCESS-NAME,firefox.exe),(DST-PORT,443))",
+                "AND,((IP-CIDR,203.0.113.0/24,no-resolve),(NETWORK,tcp),(DST-PORT,22))",
+                "AND,((DOMAIN,example.com),(NETWORK,UDP))",
             ],
         )
         self.assertEqual(result.warnings, [])

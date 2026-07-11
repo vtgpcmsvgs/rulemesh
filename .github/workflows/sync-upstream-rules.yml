@@ -47,6 +47,10 @@ jobs:
         id: sync_upstream
         run: python -B tools/sync_upstream_rules.py
 
+      - name: Validate synchronized snapshots
+        id: validate_synced_snapshots
+        run: python -m unittest discover -s tests -p "test_repo_invariants.py"
+
       - name: Build dist
         id: build_dist
         run: python -B tools/build_rules.py
@@ -93,6 +97,7 @@ jobs:
             setup_python=${{ steps.setup_python.outcome }};
             unit_tests=${{ steps.unit_tests.outcome }};
             sync_upstream=${{ steps.sync_upstream.outcome }};
+            validate_synced_snapshots=${{ steps.validate_synced_snapshots.outcome }};
             build_dist=${{ steps.build_dist.outcome }};
             prepare_geoip_asset=${{ steps.prepare_geoip_asset.outcome }};
             publish_geoip_asset=${{ steps.publish_geoip_asset.outcome }};

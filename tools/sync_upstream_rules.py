@@ -7,6 +7,7 @@ import base64
 import datetime as dt
 import hashlib
 import hmac
+import ipaddress
 import json
 import os
 import re
@@ -36,6 +37,9 @@ ALICLOUD_VPC_ENDPOINT_DOC_URL = (
 )
 ALICLOUD_API_VERSION = "2016-04-28"
 ALICLOUD_ACTION = "DescribePublicIpAddress"
+ALICLOUD_STABILITY_FETCH_ATTEMPTS = 3
+ALICLOUD_MIN_COVERAGE_RETAIN_PERCENT = 95
+ALICLOUD_ALLOW_COVERAGE_SHRINK_ENV = "RULEMESH_ALICLOUD_ALLOW_COVERAGE_SHRINK"
 LOCAL_CONFIG_PATH = ROOT / ".rulemesh.local.json"
 MAX_FAILURES_IN_WEBHOOK = 8
 ONEPASSWORD_PORTS_DOMAINS_URL = "https://support.1password.com/ports-domains/"
@@ -1314,6 +1318,12 @@ def has_available_alicloud_snapshots() -> bool:
         existing = read_existing(path)
         if not existing or "Placeholder file kept in repo" in existing:
             return False
+
+    for snapshot in ALICLOUD_REGION_SNAPSHOTS:
+        try:
+            validate_alicloud_snapshot_files(snapshot)
+        except (OSError, ValueError):
+            return False
     return True
 
 
@@ -1352,10 +1362,6 @@ def resolve_alicloud_credentials() -> AlicloudCredentials | None:
     )
 
 
-def has_alicloud_credentials() -> bool:
-    return resolve_alicloud_credentials() is not None
-
-
 def percent_encode(value: Any) -> str:
     return urllib.parse.quote(str(value), safe="~")
 
@@ -1388,12 +1394,28 @@ def api_synced_at() -> str:
 
 def parse_alicloud_http_error(exc: urllib.error.HTTPError) -> str:
     try:
-        payload = decode_text(exc.read()).strip()
+        body = decode_text(exc.read()).strip()
     except OSError:
-        payload = ""
-    if not payload:
-        return f"HTTP {exc.code} {exc.reason}"
-    return f"HTTP {exc.code} {exc.reason}: {payload}"
+        body = ""
+    finally:
+        exc.close()
+
+    details: list[str] = []
+    if body:
+        try:
+            payload = json.loads(body)
+        except json.JSONDecodeError:
+            payload = None
+        if isinstance(payload, dict):
+            api_code = payload.get("Code")
+            request_id = payload.get("RequestId")
+            if isinstance(api_code, str) and api_code.strip():
+                details.append(f"Code={api_code.strip()}")
+            if isinstance(request_id, str) and request_id.strip():
+                details.append(f"RequestId={request_id.strip()}")
+
+    suffix = f" ({', '.join(details)})" if details else ""
+    return f"HTTP {exc.code} {exc.reason}{suffix}"
 
 
 def alicloud_rpc_get(
@@ -1430,7 +1452,7 @@ def alicloud_rpc_get(
         with urllib.request.urlopen(request, timeout=60) as response:
             body = decode_text(response.read())
     except urllib.error.HTTPError as exc:
-        raise ValueError(parse_alicloud_http_error(exc)) from exc
+        raise ValueError(parse_alicloud_http_error(exc)) from None
 
     try:
         payload = json.loads(body)
@@ -1451,31 +1473,252 @@ def extract_alicloud_public_ip_prefixes(payload: dict[str, Any]) -> list[str]:
     )
 
 
+def collapse_ipv4_networks(prefixes: list[str]) -> list[ipaddress.IPv4Network]:
+    networks: list[ipaddress.IPv4Network] = []
+    for prefix in prefixes:
+        network = ipaddress.ip_network(prefix, strict=True)
+        if not isinstance(network, ipaddress.IPv4Network):
+            raise ValueError(f"non-IPv4 CIDR in IPv4 coverage calculation: {prefix}")
+        networks.append(network)
+    return list(ipaddress.collapse_addresses(networks))
+
+
+def calculate_ipv4_coverage(prefixes: list[str]) -> int:
+    return sum(network.num_addresses for network in collapse_ipv4_networks(prefixes))
+
+
+def calculate_ipv4_intersection_coverage(
+    left_prefixes: list[str],
+    right_prefixes: list[str],
+) -> int:
+    left = collapse_ipv4_networks(left_prefixes)
+    right = collapse_ipv4_networks(right_prefixes)
+    left_index = 0
+    right_index = 0
+    intersection_count = 0
+
+    while left_index < len(left) and right_index < len(right):
+        left_network = left[left_index]
+        right_network = right[right_index]
+        left_start = int(left_network.network_address)
+        left_end = int(left_network.broadcast_address)
+        right_start = int(right_network.network_address)
+        right_end = int(right_network.broadcast_address)
+
+        overlap_start = max(left_start, right_start)
+        overlap_end = min(left_end, right_end)
+        if overlap_start <= overlap_end:
+            intersection_count += overlap_end - overlap_start + 1
+
+        if left_end <= right_end:
+            left_index += 1
+        if right_end <= left_end:
+            right_index += 1
+
+    return intersection_count
+
+
+def validate_alicloud_snapshot_payload(
+    payload: dict[str, Any],
+    snapshot: AlicloudRegionSnapshot,
+) -> list[str]:
+    raw_prefixes = payload.get("publicIpAddress")
+    if not isinstance(raw_prefixes, list):
+        raise ValueError(f"{snapshot.region_id} snapshot is missing publicIpAddress[]")
+    prefixes = extract_alicloud_public_ip_prefixes(payload)
+    if not prefixes:
+        raise ValueError(f"{snapshot.region_id} snapshot contains no IPv4 prefixes")
+    if len(raw_prefixes) != len(prefixes):
+        raise ValueError(
+            f"{snapshot.region_id} snapshot publicIpAddress[] must contain only "
+            "non-empty unique strings"
+        )
+
+    for prefix in prefixes:
+        try:
+            network = ipaddress.ip_network(prefix, strict=True)
+        except ValueError as exc:
+            raise ValueError(
+                f"{snapshot.region_id} snapshot contains an invalid CIDR: {prefix}"
+            ) from exc
+        if network.version != 4:
+            raise ValueError(
+                f"{snapshot.region_id} IPv4 snapshot contains a non-IPv4 CIDR: {prefix}"
+            )
+
+    reported_total_count = payload.get("reportedTotalCount")
+    fetched_entry_count = payload.get("fetchedEntryCount")
+    duplicate_entry_count = payload.get("duplicateEntryCount")
+    unique_prefix_count = payload.get("uniquePrefixCount")
+    unique_ipv4_address_count = payload.get("uniqueIpv4AddressCount")
+    for name, value in (
+        ("reportedTotalCount", reported_total_count),
+        ("fetchedEntryCount", fetched_entry_count),
+        ("duplicateEntryCount", duplicate_entry_count),
+        ("uniquePrefixCount", unique_prefix_count),
+        ("uniqueIpv4AddressCount", unique_ipv4_address_count),
+    ):
+        if not isinstance(value, int) or value < 0:
+            raise ValueError(
+                f"{snapshot.region_id} snapshot is missing a valid {name}"
+            )
+
+    if fetched_entry_count != reported_total_count:
+        raise ValueError(
+            f"{snapshot.region_id} snapshot is incomplete: fetched "
+            f"{fetched_entry_count} of {reported_total_count} entries"
+        )
+
+    page_size = payload.get("pageSize")
+    page_count = payload.get("pageCount")
+    if not isinstance(page_size, int) or page_size <= 0:
+        raise ValueError(f"{snapshot.region_id} snapshot is missing a valid pageSize")
+    if not isinstance(page_count, int) or page_count <= 0:
+        raise ValueError(f"{snapshot.region_id} snapshot is missing a valid pageCount")
+    expected_page_count = (reported_total_count + page_size - 1) // page_size
+    if page_count != expected_page_count:
+        raise ValueError(
+            f"{snapshot.region_id} snapshot page count mismatch: "
+            f"metadata={page_count}, calculated={expected_page_count}"
+        )
+
+    if payload.get("regionId") != snapshot.region_id:
+        raise ValueError(
+            f"{snapshot.region_id} snapshot region mismatch: {payload.get('regionId')}"
+        )
+    if payload.get("ipVersion") != "ipv4":
+        raise ValueError(
+            f"{snapshot.region_id} snapshot IP version is not ipv4"
+        )
+
+    expected_duplicate_count = fetched_entry_count - len(prefixes)
+    if duplicate_entry_count != expected_duplicate_count:
+        raise ValueError(
+            f"{snapshot.region_id} snapshot duplicate count mismatch: "
+            f"metadata={duplicate_entry_count}, calculated={expected_duplicate_count}"
+        )
+
+    if unique_prefix_count != len(prefixes):
+        raise ValueError(
+            f"{snapshot.region_id} snapshot unique prefix count mismatch: "
+            f"metadata={unique_prefix_count}, calculated={len(prefixes)}"
+        )
+
+    calculated_address_count = calculate_ipv4_coverage(prefixes)
+    if unique_ipv4_address_count != calculated_address_count:
+        raise ValueError(
+            f"{snapshot.region_id} snapshot address count mismatch: "
+            f"metadata={unique_ipv4_address_count}, calculated={calculated_address_count}"
+        )
+    return prefixes
+
+
+def validate_alicloud_coverage_change(
+    previous_payload: dict[str, Any],
+    current_payload: dict[str, Any],
+    snapshot: AlicloudRegionSnapshot,
+) -> None:
+    if env_value(ALICLOUD_ALLOW_COVERAGE_SHRINK_ENV) == "1":
+        return
+
+    previous_prefixes = extract_alicloud_public_ip_prefixes(previous_payload)
+    current_prefixes = extract_alicloud_public_ip_prefixes(current_payload)
+    if not previous_prefixes or not current_prefixes:
+        return
+
+    try:
+        previous_address_count = calculate_ipv4_coverage(previous_prefixes)
+        current_address_count = calculate_ipv4_coverage(current_prefixes)
+        retained_address_count = calculate_ipv4_intersection_coverage(
+            previous_prefixes,
+            current_prefixes,
+        )
+    except ValueError as exc:
+        raise ValueError(
+            f"{snapshot.region_id} cannot compare snapshot coverage: {exc}"
+        ) from exc
+
+    if (
+        retained_address_count * 100
+        < previous_address_count * ALICLOUD_MIN_COVERAGE_RETAIN_PERCENT
+    ):
+        retained_percent = retained_address_count * 100 / previous_address_count
+        raise ValueError(
+            f"{snapshot.region_id} retained only {retained_percent:.2f}% of the "
+            f"previous IPv4 coverage (current total: {current_address_count}); set "
+            f"{ALICLOUD_ALLOW_COVERAGE_SHRINK_ENV}=1 "
+            "only after manually confirming the upstream withdrawal"
+        )
+
+
 def validate_alicloud_page(
     payload: dict[str, Any],
     snapshot: AlicloudRegionSnapshot,
-) -> tuple[list[str], int | None, str | None]:
+    *,
+    expected_page_number: int,
+    expected_page_size: int,
+) -> tuple[list[str], int, str | None]:
     success = payload.get("Success")
-    if success is False:
-        message = payload.get("Message") or payload.get("Code") or "unknown error"
-        raise ValueError(f"{snapshot.region_id} returned an error: {message}")
+    if success is not True:
+        api_code = payload.get("Code") or "unknown error"
+        raise ValueError(f"{snapshot.region_id} returned an error: {api_code}")
 
     raw_prefixes = payload.get("PublicIpAddress")
     if not isinstance(raw_prefixes, list):
         raise ValueError(f"{snapshot.region_id} payload is missing PublicIpAddress[]")
 
-    prefixes = ordered_unique(
-        [item.strip() for item in raw_prefixes if isinstance(item, str) and item.strip()]
-    )
+    prefixes: list[str] = []
+    for index, item in enumerate(raw_prefixes):
+        if not isinstance(item, str) or not item.strip():
+            raise ValueError(
+                f"{snapshot.region_id} page {expected_page_number} "
+                f"contains an invalid PublicIpAddress[{index}]"
+            )
+        prefix = item.strip()
+        try:
+            network = ipaddress.ip_network(prefix, strict=True)
+        except ValueError as exc:
+            raise ValueError(
+                f"{snapshot.region_id} page {expected_page_number} "
+                f"contains an invalid IPv4 CIDR: {prefix}"
+            ) from exc
+        if network.version != 4:
+            raise ValueError(
+                f"{snapshot.region_id} page {expected_page_number} "
+                f"contains a non-IPv4 CIDR: {prefix}"
+            )
+        prefixes.append(str(network))
 
     raw_total_count = payload.get("TotalCount")
-    total_count: int | None
     if isinstance(raw_total_count, int):
         total_count = raw_total_count
     elif isinstance(raw_total_count, str) and raw_total_count.isdigit():
         total_count = int(raw_total_count)
     else:
-        total_count = None
+        raise ValueError(f"{snapshot.region_id} payload is missing a valid TotalCount")
+
+    if total_count < 0:
+        raise ValueError(f"{snapshot.region_id} returned a negative TotalCount")
+
+    response_page_number = payload.get("PageNumber")
+    if str(response_page_number) != str(expected_page_number):
+        raise ValueError(
+            f"{snapshot.region_id} returned PageNumber={response_page_number}, "
+            f"expected {expected_page_number}"
+        )
+
+    response_page_size = payload.get("PageSize")
+    if str(response_page_size) != str(expected_page_size):
+        raise ValueError(
+            f"{snapshot.region_id} returned PageSize={response_page_size}, "
+            f"expected {expected_page_size}"
+        )
+
+    response_region_id = payload.get("RegionId")
+    if response_region_id != snapshot.region_id:
+        raise ValueError(
+            f"{snapshot.region_id} request returned data for region {response_region_id}"
+        )
 
     request_id = payload.get("RequestId")
     if request_id is not None and not isinstance(request_id, str):
@@ -1493,6 +1736,7 @@ def fetch_alicloud_region_snapshot(
     all_prefixes: list[str] = []
     request_ids: list[str] = []
     reported_total_count: int | None = None
+    fetched_entry_count = 0
 
     while True:
         page_payload = alicloud_rpc_get(
@@ -1505,22 +1749,45 @@ def fetch_alicloud_region_snapshot(
         page_prefixes, page_total_count, request_id = validate_alicloud_page(
             page_payload,
             snapshot,
+            expected_page_number=page_number,
+            expected_page_size=page_size,
         )
         all_prefixes.extend(page_prefixes)
+        fetched_entry_count += len(page_prefixes)
         if request_id:
             request_ids.append(request_id)
-        if reported_total_count is None and page_total_count is not None:
+        if reported_total_count is None:
             reported_total_count = page_total_count
+        elif page_total_count != reported_total_count:
+            raise ValueError(
+                f"{snapshot.region_id} TotalCount changed during pagination: "
+                f"{reported_total_count} -> {page_total_count}"
+            )
 
         if not page_prefixes:
+            if fetched_entry_count < reported_total_count:
+                raise ValueError(
+                    f"{snapshot.region_id} pagination ended early on page {page_number}: "
+                    f"fetched {fetched_entry_count} of {reported_total_count} entries"
+                )
             break
-        if reported_total_count is not None and len(ordered_unique(all_prefixes)) >= reported_total_count:
-            break
-        if len(page_prefixes) < page_size:
+        if fetched_entry_count >= reported_total_count:
+            if fetched_entry_count != reported_total_count:
+                raise ValueError(
+                    f"{snapshot.region_id} pagination count mismatch: "
+                    f"fetched {fetched_entry_count}, expected {reported_total_count}"
+                )
             break
         page_number += 1
 
-    prefixes = ordered_unique(all_prefixes)
+    if reported_total_count is None or fetched_entry_count != reported_total_count:
+        raise ValueError(
+            f"{snapshot.region_id} pagination is incomplete: "
+            f"fetched {fetched_entry_count}, expected {reported_total_count}"
+        )
+
+    prefixes = sorted(ordered_unique(all_prefixes))
+    unique_ipv4_address_count = calculate_ipv4_coverage(prefixes)
     return {
         "syncToken": api_synced_at(),
         "source": {
@@ -1534,11 +1801,46 @@ def fetch_alicloud_region_snapshot(
         "ipVersion": "ipv4",
         "pageSize": page_size,
         "pageCount": page_number,
-        "reportedTotalCount": reported_total_count if reported_total_count is not None else len(prefixes),
+        "reportedTotalCount": reported_total_count,
+        "fetchedEntryCount": fetched_entry_count,
+        "duplicateEntryCount": fetched_entry_count - len(prefixes),
+        "uniquePrefixCount": len(prefixes),
+        "uniqueIpv4AddressCount": unique_ipv4_address_count,
         "requestIds": request_ids,
         "syncedAt": api_synced_at(),
         "publicIpAddress": prefixes,
     }
+
+
+def alicloud_snapshot_signature(payload: dict[str, Any]) -> tuple[Any, ...]:
+    return (
+        payload.get("reportedTotalCount"),
+        payload.get("fetchedEntryCount"),
+        payload.get("duplicateEntryCount"),
+        payload.get("uniquePrefixCount"),
+        payload.get("uniqueIpv4AddressCount"),
+        tuple(sorted(extract_alicloud_public_ip_prefixes(payload))),
+    )
+
+
+def fetch_stable_alicloud_region_snapshot(
+    snapshot: AlicloudRegionSnapshot,
+    credentials: AlicloudCredentials,
+) -> dict[str, Any]:
+    previous_signature: tuple[Any, ...] | None = None
+
+    for _attempt in range(1, ALICLOUD_STABILITY_FETCH_ATTEMPTS + 1):
+        payload = fetch_alicloud_region_snapshot(snapshot, credentials)
+        signature = alicloud_snapshot_signature(payload)
+        if previous_signature == signature:
+            return payload
+        previous_signature = signature
+
+    raise ValueError(
+        f"{snapshot.region_id} changed during "
+        f"{ALICLOUD_STABILITY_FETCH_ATTEMPTS} consecutive full fetches; "
+        "the previous snapshot was kept"
+    )
 
 
 def build_alicloud_snapshot_text(
@@ -1548,6 +1850,11 @@ def build_alicloud_snapshot_text(
     prefixes = extract_alicloud_public_ip_prefixes(payload)
     synced_at = str(payload.get("syncedAt", "unknown"))
     reported_total_count = payload.get("reportedTotalCount", len(prefixes))
+    fetched_entry_count = payload.get("fetchedEntryCount", len(prefixes))
+    duplicate_entry_count = payload.get("duplicateEntryCount", 0)
+    unique_ipv4_address_count = payload.get(
+        "uniqueIpv4AddressCount", calculate_ipv4_coverage(prefixes)
+    )
     page_count = payload.get("pageCount", "unknown")
 
     lines = [
@@ -1561,7 +1868,10 @@ def build_alicloud_snapshot_text(
         f"# 同步时间: {synced_at}",
         f"# 抓取页数: {page_count}",
         f"# 上游总数: {reported_total_count}",
+        f"# 抓取条目数量: {fetched_entry_count}",
+        f"# 重复条目数量: {duplicate_entry_count}",
         f"# IPv4 前缀数量: {len(prefixes)}",
+        f"# 唯一 IPv4 地址数量: {unique_ipv4_address_count}",
         "",
     ]
     lines.extend(prefixes)
@@ -1576,6 +1886,11 @@ def build_alicloud_ssh_snapshot_text(
     prefixes = extract_alicloud_public_ip_prefixes(payload)
     synced_at = str(payload.get("syncedAt", "unknown"))
     reported_total_count = payload.get("reportedTotalCount", len(prefixes))
+    fetched_entry_count = payload.get("fetchedEntryCount", len(prefixes))
+    duplicate_entry_count = payload.get("duplicateEntryCount", 0)
+    unique_ipv4_address_count = payload.get(
+        "uniqueIpv4AddressCount", calculate_ipv4_coverage(prefixes)
+    )
     page_count = payload.get("pageCount", "unknown")
 
     lines = [
@@ -1590,12 +1905,54 @@ def build_alicloud_ssh_snapshot_text(
         f"# 同步时间: {synced_at}",
         f"# 抓取页数: {page_count}",
         f"# 上游总数: {reported_total_count}",
+        f"# 抓取条目数量: {fetched_entry_count}",
+        f"# 重复条目数量: {duplicate_entry_count}",
         f"# SSH 规则数量: {len(prefixes)}",
+        f"# 唯一 IPv4 地址数量: {unique_ipv4_address_count}",
         "",
     ]
-    lines.extend(f"AND,((IP-CIDR,{prefix}),(DST-PORT,22))" for prefix in prefixes)
+    lines.extend(
+        f"AND,((IP-CIDR,{prefix},no-resolve),(PROTOCOL,TCP),(DST-PORT,22))"
+        for prefix in prefixes
+    )
     lines.append("")
     return "\n".join(lines)
+
+
+def validate_alicloud_snapshot_files(
+    snapshot: AlicloudRegionSnapshot,
+) -> dict[str, Any]:
+    metadata_path = UPSTREAM_ROOT / snapshot.metadata_path
+    try:
+        payload = json.loads(decode_text(metadata_path.read_bytes()))
+    except OSError as exc:
+        raise ValueError(
+            f"{snapshot.region_id} snapshot metadata cannot be read: {exc}"
+        ) from exc
+    except json.JSONDecodeError as exc:
+        raise ValueError(
+            f"{snapshot.region_id} snapshot metadata is invalid JSON: {exc}"
+        ) from exc
+    if not isinstance(payload, dict):
+        raise ValueError(f"{snapshot.region_id} snapshot metadata is not an object")
+
+    validate_alicloud_snapshot_payload(payload, snapshot)
+    expected_files = (
+        (snapshot.path, build_alicloud_snapshot_text(payload, snapshot)),
+        (snapshot.ssh_path, build_alicloud_ssh_snapshot_text(payload, snapshot)),
+    )
+    for relative_path, expected_text in expected_files:
+        actual_text = read_existing(UPSTREAM_ROOT / relative_path)
+        if actual_text is None:
+            raise ValueError(
+                f"{snapshot.region_id} snapshot file is missing: {relative_path.as_posix()}"
+            )
+        if actual_text != normalize_text(expected_text):
+            raise ValueError(
+                f"{snapshot.region_id} snapshot file does not match metadata: "
+                f"{relative_path.as_posix()}"
+            )
+    return payload
 
 
 def sync_alicloud_snapshots(failures: list[UpstreamFailure]) -> tuple[int, int]:
@@ -1629,7 +1986,7 @@ def sync_alicloud_snapshots(failures: list[UpstreamFailure]) -> tuple[int, int]:
 
     for snapshot in ALICLOUD_REGION_SNAPSHOTS:
         try:
-            payload = fetch_alicloud_region_snapshot(snapshot, credentials)
+            payload = fetch_stable_alicloud_region_snapshot(snapshot, credentials)
         except (urllib.error.URLError, TimeoutError, OSError, ValueError) as exc:
             print(f"[WARN] {snapshot.path.as_posix()} sync failed: {exc}")
             record_failure(
@@ -1643,20 +2000,47 @@ def sync_alicloud_snapshots(failures: list[UpstreamFailure]) -> tuple[int, int]:
             failed += 1
             continue
 
-        prefixes = extract_alicloud_public_ip_prefixes(payload)
-        if not prefixes:
-            detail = f"{snapshot.region_id} 返回的 publicIpAddress 为空"
+        try:
+            validate_alicloud_snapshot_payload(payload, snapshot)
+        except ValueError as exc:
+            detail = str(exc)
             print(f"[WARN] {snapshot.path.as_posix()} sync failed: {detail}")
             record_failure(
                 failures,
                 source="阿里云官方 API",
                 resource=snapshot.path.as_posix(),
                 url=f"https://{snapshot.endpoint}/",
-                category="上游内容为空",
+                category="上游内容不完整",
                 detail=detail,
             )
             failed += 1
             continue
+
+        existing_metadata_path = UPSTREAM_ROOT / snapshot.metadata_path
+        if existing_metadata_path.exists():
+            try:
+                existing_payload = json.loads(
+                    decode_text(existing_metadata_path.read_bytes())
+                )
+                if isinstance(existing_payload, dict):
+                    validate_alicloud_coverage_change(
+                        existing_payload,
+                        payload,
+                        snapshot,
+                    )
+            except (OSError, json.JSONDecodeError, ValueError) as exc:
+                detail = str(exc)
+                print(f"[WARN] {snapshot.path.as_posix()} sync failed: {detail}")
+                record_failure(
+                    failures,
+                    source="阿里云官方 API",
+                    resource=snapshot.path.as_posix(),
+                    url=f"https://{snapshot.endpoint}/",
+                    category="地址覆盖异常",
+                    detail=detail,
+                )
+                failed += 1
+                continue
 
         metadata_text = json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
         if write_if_changed(UPSTREAM_ROOT / snapshot.metadata_path, metadata_text):
@@ -1678,6 +2062,21 @@ def sync_alicloud_snapshots(failures: list[UpstreamFailure]) -> tuple[int, int]:
             changed += 1
         else:
             print(f"[SKIP] {snapshot.ssh_path.as_posix()}")
+
+        try:
+            validate_alicloud_snapshot_files(snapshot)
+        except ValueError as exc:
+            detail = str(exc)
+            print(f"[WARN] {snapshot.path.as_posix()} sync failed: {detail}")
+            record_failure(
+                failures,
+                source="阿里云官方 API",
+                resource=snapshot.path.as_posix(),
+                url=f"https://{snapshot.endpoint}/",
+                category="快照文件不一致",
+                detail=detail,
+            )
+            failed += 1
 
     return changed, failed
 
@@ -1706,7 +2105,7 @@ def main() -> int:
         ensure_upstream_failure_alerts_sent(failures)
 
     print(f"[DONE] Updated {changed} file(s); fetch failures: {failed}.")
-    return 0
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":

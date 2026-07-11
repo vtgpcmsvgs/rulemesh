@@ -25,7 +25,6 @@ DIST_ROOT = ROOT / "dist"
 SOURCE_GROUPS = ("reject", "direct", "proxy", "region")
 DNS_DOMAIN_SET_GROUP = "dns"
 AWS_UPSTREAM_BOOTSTRAP_PATH = RULES_ROOT / "upstream" / "aws" / "ip-ranges.json"
-ALICLOUD_UPSTREAM_BOOTSTRAP_PATH = RULES_ROOT / "upstream" / "alicloud" / "hk_ipv4.json"
 DOMAIN_CHARS = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._")
 DOMAIN_WILDCARD_CHARS = DOMAIN_CHARS | set("*?+")
 SUPPORTED_CLASSICAL_TOKENS = {
@@ -556,10 +555,14 @@ TARGET_RULE_REPLACEMENTS = {
     "surge": (
         ("DST-PORT,", "DEST-PORT,"),
         ("SRC-IP-CIDR,", "SRC-IP,"),
+        ("NETWORK,TCP", "PROTOCOL,TCP"),
+        ("NETWORK,UDP", "PROTOCOL,UDP"),
     ),
     "mihomo_classical": (
         ("DEST-PORT,", "DST-PORT,"),
         ("SRC-IP,", "SRC-IP-CIDR,"),
+        ("PROTOCOL,TCP", "NETWORK,tcp"),
+        ("PROTOCOL,UDP", "NETWORK,udp"),
     ),
 }
 
@@ -886,26 +889,12 @@ def aws_snapshots_need_sync() -> bool:
 
 
 def alicloud_snapshots_need_sync() -> bool:
-    if not sync_upstream_rules.has_alicloud_credentials():
-        return False
-
-    expected_snapshot_paths: list[Path] = []
     for snapshot in sync_upstream_rules.ALICLOUD_REGION_SNAPSHOTS:
-        expected_snapshot_paths.append(RULES_ROOT / "upstream" / snapshot.path)
-        expected_snapshot_paths.append(RULES_ROOT / "upstream" / snapshot.ssh_path)
-    for path in expected_snapshot_paths:
-        if not path.exists():
+        try:
+            sync_upstream_rules.validate_alicloud_snapshot_files(snapshot)
+        except (OSError, ValueError):
             return True
-        if "Placeholder file kept in repo" in read_text(path):
-            return True
-
-    if not ALICLOUD_UPSTREAM_BOOTSTRAP_PATH.exists():
-        return True
-    try:
-        payload = json.loads(read_text(ALICLOUD_UPSTREAM_BOOTSTRAP_PATH))
-    except json.JSONDecodeError:
-        return True
-    return isinstance(payload, dict) and payload.get("syncToken") == "bootstrap"
+    return False
 
 
 def chainlist_snapshots_need_sync() -> bool:

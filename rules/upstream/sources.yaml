@@ -41,7 +41,7 @@ sources:
         - repo: self
           note: 保持阿里云香港 IPv4 派生 SSH TCP/22 直连入口稳定，源规则只保留单一 INCLUDE
         - repo: Alibaba Cloud DescribePublicIpAddress
-          note: 每日同步 cn-hongkong 的全部公网 IPv4 前缀到 rules/upstream/alicloud/hk_ipv4.txt，并派生 SSH 22 直连规则到 rules/upstream/alicloud/hk_ssh22.txt
+          note: 每日按 TotalCount 完整分页并连续两次确认 cn-hongkong 公网 IPv4 前缀，校验条目数与旧地址保留率后再派生 SSH TCP/22 直连规则
     os_time_direct.list:
       preferred:
         - repo: self

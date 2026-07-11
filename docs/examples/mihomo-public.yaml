@@ -674,7 +674,7 @@ rules:
   - IP-CIDR,169.254.0.0/16,DIRECT,no-resolve
   - IP-CIDR,224.0.0.0/4,DIRECT,no-resolve
   - RULE-SET,direct_os_time,DIRECT
-  - RULE-SET,direct_alicloud_hk_ipv4_ssh22,DIRECT
+  - RULE-SET,direct_alicloud_hk_ipv4_ssh22,DIRECT,no-resolve
   - DOMAIN-SUFFIX,aliyuncs.com,DIRECT
   - DOMAIN,check.myclientip.com,DIRECT
   - RULE-SET,direct_ai_cn,DIRECT

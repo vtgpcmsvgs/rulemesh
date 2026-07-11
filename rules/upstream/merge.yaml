@@ -82,11 +82,13 @@ merge_plan:
     purpose: 阿里云香港 IPv4 派生 SSH TCP/22 直连入口
     strategy:
       - keep_source_file_as_single_include
-      - sync_alicloud_cn_hongkong_ipv4_daily_via_official_openapi
+      - sync_alicloud_cn_hongkong_ipv4_daily_via_complete_stable_openapi_pagination
+      - fail_closed_on_incomplete_or_less_than_ninety_five_percent_previous_coverage_retained
       - derive_ssh_tcp_22_rules_from_official_ipv4_prefixes
     notes:
       - 数据源为阿里云官方 VPC OpenAPI DescribePublicIpAddress
-      - 公开入口直接保留 SSH TCP/22 最终语义，不要求客户端额外拼接端口条件
+      - 原始条目累计达到 TotalCount 后才允许全局去重与发布，并记录重复条目、唯一地址覆盖量和旧地址保留率
+      - 公开入口直接保留 no-resolve 与 SSH TCP/22 最终语义，不要求客户端额外拼接端口条件
       - 首次同步需要具备该接口读取权限的 AccessKey 或 STS 临时凭证
 
   - id: github-ssh-direct

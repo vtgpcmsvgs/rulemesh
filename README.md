@@ -104,7 +104,7 @@ python tools/build_rules.py
 - `pull request` 到 `main` 时会校验单元测试、构建流程，以及 `rules/upstream` 与 `dist/` 是否已经提交最新结果
 - 每天 `09:30 Asia/Shanghai` 的上游同步、重建与自动回写由 [`.github/workflows/sync-upstream-rules.yml`](.github/workflows/sync-upstream-rules.yml) 单独负责
 - 这条每日上游工作流会在 `checkout` 前先发送一次 Feishu webhook 健康检查；只要 webhook 缺失、失效或发送失败，工作流会直接失败
-- 通用上游、Chainlist、1Password、AWS、阿里云等 upstream 抓取失败会统一聚合告警；如果工作流其他步骤失败，还会再发一条不依赖仓库 checkout 的工作流级失败兜底告警
+- 通用上游、Chainlist、1Password、AWS、阿里云等 upstream 抓取失败会统一聚合告警并让同步步骤失败，避免残缺快照继续构建或提交；如果工作流其他步骤失败，还会再发一条不依赖仓库 checkout 的工作流级失败兜底告警
 - 支持手动触发
 - [`.github/workflows/build-dist.yml`](.github/workflows/build-dist.yml) 不再自动拉上游或自动修复提交；如果网页端直接编辑 `main` 却漏提 `dist/`，工作流会明确报错提醒补齐
 
@@ -149,7 +149,7 @@ python tools/build_rules.py
 - 客户端应显式接入 `proxy/overseas_dns_ipv4_proxy`，并放在 `proxy/gfw` 前；Surge 侧继续按 `RULE-SET,...,"🇺🇸 美国-自动选择",no-resolve` 接入，让美国地区策略先命中 `1.1.1.1/32`、`8.8.8.8/32` 与 `9.9.9.9/32`
 - AWS 香港区域规则入口已统一命名为 `region/hk/hk_aws_ipv4`，与东京、大阪、首尔、台北保持同类命名
 - 自维护多地区链式 SOCKS5 端点入口已统一命名为 `region/multi/chain_socks5_ipcidr`，不再继续挂在 `region/jp/` 或默认绑定日本策略组
-- 阿里云香港 SSH 直连入口已统一命名为 `direct/alicloud_hk_ipv4_ssh22_direct`；`rules/upstream/alicloud/hk_ipv4.txt` 继续保留纯 IPv4 快照，而公开入口文件直接保留 `SSH TCP/22` 最终语义，不要求客户端额外拼接端口条件
+- 阿里云香港 SSH 直连入口已统一命名为 `direct/alicloud_hk_ipv4_ssh22_direct`；官方 API 必须按 `TotalCount` 完整分页、连续两次得到相同集合并确保至少保留上次 95% 的地址覆盖后才发布，入口文件直接保留 `no-resolve + TCP/22` 最终语义
 - Surge 与 Mihomo 当前统一把 GeoIP mmdb 显式固定到你自己的仓库 Release 镜像：`vtgpcmsvgs/rulemesh/releases/download/geoip-country-mmdb/country.mmdb`
 - 对应上游登记与维护约定见 `rules/upstream/geodata/metacubex_country_mmdb.yaml` 与 [docs/geoip-upstream.md](docs/geoip-upstream.md)
 - Surge 的 `internet-test-url`、`proxy-test-url`、代理 `test-url=` 与 `smart / fallback / load-balance` 的 `url=` 统一保持 `http://`；不要因为 `policy-path`、GeoIP 或其他下载入口使用 `https://` 就顺手改成 `https://`。
