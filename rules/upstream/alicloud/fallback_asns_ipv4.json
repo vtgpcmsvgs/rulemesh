@@ -1,5 +1,5 @@
 {
-  "syncToken": "2026-07-13T03:30:23+00:00",
+  "syncToken": "2026-07-13T03:36:27+00:00",
   "source": {
     "api": "RIPEstat announced-prefixes",
     "docUrl": "https://stat.ripe.net/docs/data-api/api-endpoints/announced-prefixes",
@@ -41,7 +41,7 @@
   ],
   "collapsedIpv4PrefixCount": 441,
   "uniqueIpv4AddressCount": 5696516,
-  "syncedAt": "2026-07-13T03:30:23+00:00",
+  "syncedAt": "2026-07-13T03:36:27+00:00",
   "ipv4Prefix": [
     "5.181.224.0/23",
     "8.25.82.0/24",

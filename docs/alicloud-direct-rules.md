@@ -20,14 +20,14 @@
 4. 写盘前校验原始条目数、唯一前缀数、重复条目数与唯一 IPv4 地址覆盖量
 5. 分别连续抓取 RIPEstat 中三个兜底 ASN 的完整 IPv4 公告，使用一个对等体可见的最低阈值，跨 ASN 去重并折叠
 6. 官方当前快照继续独立写入 `hk_ipv4.txt/json`；BGP 当前快照写入 `fallback_asns_ipv4.txt/json`
-7. 将官方当前、BGP 当前与 `ssh22_ipv4_history.txt` 的既有覆盖合并；这个历史文件只增不自动删，上游撤回或地域迁移不会缩小已发布范围
+7. 首次迁移时回看仓库 120 份官方快照，把当前 BGP 未覆盖的 28 个旧前缀固化为历史种子；随后将官方当前、BGP 当前与 `ssh22_ipv4_history.txt` 的既有覆盖合并
 8. `hk_ssh22.txt` 由单调历史 CIDR 派生，并在末尾增加三个 `IP-ASN + TCP/22` 运行时兜底；源入口仍只保留单一 `INCLUDE`
 
 命名与语义约定补充：
 
 - `rules/upstream/alicloud/hk_ipv4.txt` 继续保留纯 IPv4 快照，便于后续派生其他规则
 - `rules/upstream/alicloud/fallback_asns_ipv4.txt` 是当前 BGP 宽覆盖快照，不表示香港地理归属
-- `rules/upstream/alicloud/ssh22_ipv4_history.txt` 是实际 SSH 发布覆盖的单调并集，删除只能人工审计
+- `rules/upstream/alicloud/ssh22_ipv4_history.txt` 是实际 SSH 发布覆盖的单调并集；它从仓库 120 份历史快照的 942 个曾见前缀起步，删除只能人工审计
 - 对外入口统一命名为 `alicloud_hk_ipv4_ssh22_direct`
 - 这个入口文件本身直接保留 `AND,((IP-CIDR,...,no-resolve),(PROTOCOL,TCP),(DST-PORT,22))` 最终语义；Surge 构建为 `PROTOCOL + DEST-PORT`，Mihomo 构建为 `NETWORK + DST-PORT`
 - `no-resolve` 保证字面 IPv4 的规则判断不会额外触发 DNS；规则集调用层仍统一保留 `no-resolve` 作为客户端侧保险

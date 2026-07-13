@@ -39,6 +39,36 @@ ALICLOUD_API_VERSION = "2016-04-28"
 ALICLOUD_ACTION = "DescribePublicIpAddress"
 ALICLOUD_STABILITY_FETCH_ATTEMPTS = 3
 ALICLOUD_FALLBACK_ASNS = (45102, 134963, 24429)
+ALICLOUD_LEGACY_IPV4_SEED = (
+    "11.51.225.0/24",
+    "11.51.226.0/24",
+    "45.158.183.0/25",
+    "45.158.183.128/25",
+    "103.142.8.0/24",
+    "103.142.9.0/24",
+    "103.142.100.0/24",
+    "103.142.101.0/24",
+    "103.145.72.0/25",
+    "103.145.72.128/25",
+    "103.151.206.0/24",
+    "103.151.207.0/24",
+    "103.183.154.0/24",
+    "103.183.155.0/24",
+    "122.254.76.0/24",
+    "122.254.77.0/24",
+    "156.224.138.0/25",
+    "156.224.138.128/25",
+    "156.226.24.0/22",
+    "156.226.28.0/22",
+    "185.78.106.0/24",
+    "185.78.107.0/24",
+    "198.44.244.0/23",
+    "198.44.246.0/23",
+    "202.61.84.0/24",
+    "202.61.85.0/24",
+    "202.61.86.0/24",
+    "202.61.87.0/24",
+)
 RIPESTAT_ANNOUNCED_PREFIXES_DOC_URL = (
     "https://stat.ripe.net/docs/data-api/api-endpoints/announced-prefixes"
 )
@@ -2053,7 +2083,12 @@ def merge_alicloud_ssh_history(
     bgp_prefixes: list[str],
 ) -> list[str]:
     return canonicalize_ipv4_prefixes(
-        [*existing_prefixes, *official_prefixes, *bgp_prefixes]
+        [
+            *ALICLOUD_LEGACY_IPV4_SEED,
+            *existing_prefixes,
+            *official_prefixes,
+            *bgp_prefixes,
+        ]
     )
 
 
@@ -2175,6 +2210,11 @@ def validate_alicloud_snapshot_files(
         raise ValueError(f"{snapshot.region_id} 历史覆盖没有包含当前官方前缀")
     if not ipv4_coverage_contains(history_prefixes, bgp_prefixes):
         raise ValueError(f"{snapshot.region_id} 历史覆盖没有包含当前 BGP 前缀")
+    if not ipv4_coverage_contains(
+        history_prefixes,
+        list(ALICLOUD_LEGACY_IPV4_SEED),
+    ):
+        raise ValueError(f"{snapshot.region_id} 历史覆盖没有包含迁移前历史种子")
 
     expected_files = (
         (snapshot.path, build_alicloud_snapshot_text(payload, snapshot)),

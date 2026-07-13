@@ -158,6 +158,12 @@ class RepoInvariantTests(unittest.TestCase):
         self.assertTrue(
             sync_upstream_rules.ipv4_coverage_contains(history_prefixes, bgp_prefixes)
         )
+        self.assertTrue(
+            sync_upstream_rules.ipv4_coverage_contains(
+                history_prefixes,
+                list(sync_upstream_rules.ALICLOUD_LEGACY_IPV4_SEED),
+            )
+        )
 
         expected_source_rules = [
             f"AND,((IP-CIDR,{prefix},no-resolve),(PROTOCOL,TCP),(DST-PORT,22))"

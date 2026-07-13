@@ -241,7 +241,11 @@ class AlicloudPaginationTests(unittest.TestCase):
             "ipv4Prefix": ["198.51.100.0/24"],
             "syncedAt": "2026-07-11T00:00:00+00:00",
         }
-        history_prefixes = ["198.51.100.0/24", "203.0.113.0/24"]
+        history_prefixes = sync_upstream_rules.merge_alicloud_ssh_history(
+            [],
+            ["203.0.113.0/24"],
+            ["198.51.100.0/24"],
+        )
 
         with tempfile.TemporaryDirectory() as temp_dir, mock.patch.object(
             sync_upstream_rules,
