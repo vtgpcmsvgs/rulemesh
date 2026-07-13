@@ -38,8 +38,17 @@ ALICLOUD_VPC_ENDPOINT_DOC_URL = (
 ALICLOUD_API_VERSION = "2016-04-28"
 ALICLOUD_ACTION = "DescribePublicIpAddress"
 ALICLOUD_STABILITY_FETCH_ATTEMPTS = 3
-ALICLOUD_MIN_COVERAGE_RETAIN_PERCENT = 95
-ALICLOUD_ALLOW_COVERAGE_SHRINK_ENV = "RULEMESH_ALICLOUD_ALLOW_COVERAGE_SHRINK"
+ALICLOUD_FALLBACK_ASNS = (45102, 134963, 24429)
+RIPESTAT_ANNOUNCED_PREFIXES_DOC_URL = (
+    "https://stat.ripe.net/docs/data-api/api-endpoints/announced-prefixes"
+)
+RIPESTAT_ANNOUNCED_PREFIXES_API_URL = (
+    "https://stat.ripe.net/data/announced-prefixes/data.json"
+)
+RIPESTAT_ALICLOUD_IPV4_URL_TEMPLATE = (
+    f"{RIPESTAT_ANNOUNCED_PREFIXES_API_URL}?"
+    "resource=AS{asn}&min_peers_seeing=1&sourceapp=rulemesh"
+)
 LOCAL_CONFIG_PATH = ROOT / ".rulemesh.local.json"
 MAX_FAILURES_IN_WEBHOOK = 8
 ONEPASSWORD_PORTS_DOMAINS_URL = "https://support.1password.com/ports-domains/"
@@ -130,6 +139,9 @@ class AlicloudRegionSnapshot:
     path: Path
     ssh_path: Path
     metadata_path: Path
+    bgp_path: Path
+    bgp_metadata_path: Path
+    history_path: Path
     region_id: str
     endpoint: str
     title: str
@@ -307,6 +319,9 @@ ALICLOUD_REGION_SNAPSHOTS = (
         path=Path("alicloud/hk_ipv4.txt"),
         ssh_path=Path("alicloud/hk_ssh22.txt"),
         metadata_path=Path("alicloud/hk_ipv4.json"),
+        bgp_path=Path("alicloud/fallback_asns_ipv4.txt"),
+        bgp_metadata_path=Path("alicloud/fallback_asns_ipv4.json"),
+        history_path=Path("alicloud/ssh22_ipv4_history.txt"),
         region_id="cn-hongkong",
         endpoint="vpc.cn-hongkong.aliyuncs.com",
         title="阿里云香港 IPv4（cn-hongkong）",
@@ -1309,7 +1324,16 @@ def running_in_github_actions() -> bool:
 def has_available_alicloud_snapshots() -> bool:
     expected_paths: list[Path] = []
     for snapshot in ALICLOUD_REGION_SNAPSHOTS:
-        expected_paths.extend([snapshot.path, snapshot.ssh_path, snapshot.metadata_path])
+        expected_paths.extend(
+            [
+                snapshot.path,
+                snapshot.ssh_path,
+                snapshot.metadata_path,
+                snapshot.bgp_path,
+                snapshot.bgp_metadata_path,
+                snapshot.history_path,
+            ]
+        )
 
     for relative_path in expected_paths:
         path = UPSTREAM_ROOT / relative_path
@@ -1518,6 +1542,169 @@ def calculate_ipv4_intersection_coverage(
     return intersection_count
 
 
+def canonicalize_ipv4_prefixes(prefixes: list[str]) -> list[str]:
+    return [str(network) for network in collapse_ipv4_networks(prefixes)]
+
+
+def parse_ipv4_snapshot_prefixes(text: str, resource: str) -> list[str]:
+    prefixes = [
+        line.strip()
+        for line in normalize_text(text).splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    ]
+    if not prefixes:
+        raise ValueError(f"{resource} 不包含 IPv4 前缀")
+    try:
+        canonical = canonicalize_ipv4_prefixes(prefixes)
+    except ValueError as exc:
+        raise ValueError(f"{resource} 包含无效 IPv4 前缀: {exc}") from exc
+    if prefixes != canonical:
+        raise ValueError(f"{resource} 必须按地址排序、去重并折叠为规范 IPv4 前缀")
+    return prefixes
+
+
+def ipv4_coverage_contains(container: list[str], members: list[str]) -> bool:
+    return calculate_ipv4_intersection_coverage(container, members) == calculate_ipv4_coverage(
+        members
+    )
+
+
+def build_ripestat_alicloud_url(asn: int) -> str:
+    return RIPESTAT_ALICLOUD_IPV4_URL_TEMPLATE.format(asn=asn)
+
+
+def fetch_alicloud_bgp_snapshot() -> dict[str, Any]:
+    all_prefixes: list[str] = []
+    per_asn: list[dict[str, Any]] = []
+
+    for asn in ALICLOUD_FALLBACK_ASNS:
+        url = build_ripestat_alicloud_url(asn)
+        try:
+            payload = json.loads(fetch_text(url))
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"RIPEstat AS{asn} 返回无效 JSON: {exc}") from exc
+        if not isinstance(payload, dict) or payload.get("status") != "ok":
+            message = payload.get("message") if isinstance(payload, dict) else None
+            raise ValueError(f"RIPEstat AS{asn} 返回异常状态: {message or 'unknown'}")
+        data = payload.get("data")
+        if not isinstance(data, dict):
+            raise ValueError(f"RIPEstat AS{asn} 缺少 data 对象")
+        if str(data.get("resource")) not in {str(asn), f"AS{asn}"}:
+            raise ValueError(
+                f"RIPEstat AS{asn} 返回了错误资源: {data.get('resource')}"
+            )
+        raw_entries = data.get("prefixes")
+        if not isinstance(raw_entries, list):
+            raise ValueError(f"RIPEstat AS{asn} 缺少 prefixes[]")
+
+        ipv4_prefixes: list[str] = []
+        for entry in raw_entries:
+            if not isinstance(entry, dict) or not isinstance(entry.get("prefix"), str):
+                raise ValueError(f"RIPEstat AS{asn} prefixes[] 包含无效条目")
+            raw_prefix = entry["prefix"].strip()
+            try:
+                network = ipaddress.ip_network(raw_prefix, strict=True)
+            except ValueError as exc:
+                raise ValueError(
+                    f"RIPEstat AS{asn} 包含无效 CIDR: {raw_prefix}"
+                ) from exc
+            if isinstance(network, ipaddress.IPv4Network):
+                ipv4_prefixes.append(str(network))
+
+        unique_ipv4_prefixes = sorted(set(ipv4_prefixes))
+        if not unique_ipv4_prefixes:
+            raise ValueError(f"RIPEstat AS{asn} 没有任何 IPv4 公告")
+        collapsed_ipv4_prefixes = canonicalize_ipv4_prefixes(unique_ipv4_prefixes)
+        all_prefixes.extend(collapsed_ipv4_prefixes)
+        per_asn.append(
+            {
+                "asn": asn,
+                "queryStartTime": data.get("query_starttime"),
+                "queryEndTime": data.get("query_endtime"),
+                "reportedPrefixCount": len(raw_entries),
+                "reportedIpv4PrefixCount": len(ipv4_prefixes),
+                "uniqueIpv4PrefixCount": len(unique_ipv4_prefixes),
+                "collapsedIpv4PrefixCount": len(collapsed_ipv4_prefixes),
+            }
+        )
+
+    collapsed = canonicalize_ipv4_prefixes(all_prefixes)
+    return {
+        "syncToken": api_synced_at(),
+        "source": {
+            "api": "RIPEstat announced-prefixes",
+            "docUrl": RIPESTAT_ANNOUNCED_PREFIXES_DOC_URL,
+            "minPeersSeeing": 1,
+        },
+        "asns": list(ALICLOUD_FALLBACK_ASNS),
+        "perAsn": per_asn,
+        "collapsedIpv4PrefixCount": len(collapsed),
+        "uniqueIpv4AddressCount": calculate_ipv4_coverage(collapsed),
+        "syncedAt": api_synced_at(),
+        "ipv4Prefix": collapsed,
+    }
+
+
+def validate_alicloud_bgp_snapshot_payload(payload: dict[str, Any]) -> list[str]:
+    if payload.get("asns") != list(ALICLOUD_FALLBACK_ASNS):
+        raise ValueError("阿里云 BGP 快照 ASN 列表不匹配")
+    source = payload.get("source")
+    if not isinstance(source, dict) or source.get("minPeersSeeing") != 1:
+        raise ValueError("阿里云 BGP 快照必须使用 min_peers_seeing=1")
+    per_asn = payload.get("perAsn")
+    if not isinstance(per_asn, list) or len(per_asn) != len(ALICLOUD_FALLBACK_ASNS):
+        raise ValueError("阿里云 BGP 快照缺少逐 ASN 统计")
+    for expected_asn, item in zip(ALICLOUD_FALLBACK_ASNS, per_asn, strict=True):
+        if not isinstance(item, dict) or item.get("asn") != expected_asn:
+            raise ValueError("阿里云 BGP 快照逐 ASN 统计顺序或编号错误")
+        for name in (
+            "reportedPrefixCount",
+            "reportedIpv4PrefixCount",
+            "uniqueIpv4PrefixCount",
+            "collapsedIpv4PrefixCount",
+        ):
+            value = item.get(name)
+            if not isinstance(value, int) or value <= 0:
+                raise ValueError(f"阿里云 BGP 快照缺少有效的 {name}")
+
+    raw_prefixes = payload.get("ipv4Prefix")
+    if not isinstance(raw_prefixes, list) or not all(
+        isinstance(prefix, str) and prefix.strip() for prefix in raw_prefixes
+    ):
+        raise ValueError("阿里云 BGP 快照缺少 ipv4Prefix[]")
+    prefixes = canonicalize_ipv4_prefixes(raw_prefixes)
+    if raw_prefixes != prefixes:
+        raise ValueError("阿里云 BGP 快照 IPv4 前缀没有规范折叠")
+    if payload.get("collapsedIpv4PrefixCount") != len(prefixes):
+        raise ValueError("阿里云 BGP 快照前缀数量不一致")
+    coverage = calculate_ipv4_coverage(prefixes)
+    if payload.get("uniqueIpv4AddressCount") != coverage:
+        raise ValueError("阿里云 BGP 快照地址覆盖量不一致")
+    return prefixes
+
+
+def alicloud_bgp_snapshot_signature(payload: dict[str, Any]) -> tuple[Any, ...]:
+    return (
+        tuple(payload.get("asns", [])),
+        payload.get("collapsedIpv4PrefixCount"),
+        payload.get("uniqueIpv4AddressCount"),
+        tuple(payload.get("ipv4Prefix", [])),
+    )
+
+
+def fetch_stable_alicloud_bgp_snapshot() -> dict[str, Any]:
+    previous_signature: tuple[Any, ...] | None = None
+    for _attempt in range(1, ALICLOUD_STABILITY_FETCH_ATTEMPTS + 1):
+        payload = fetch_alicloud_bgp_snapshot()
+        signature = alicloud_bgp_snapshot_signature(payload)
+        if previous_signature == signature:
+            return payload
+        previous_signature = signature
+    raise ValueError(
+        "阿里云兜底 ASN 的 RIPEstat 公告在连续完整抓取期间持续变化，已保留旧快照"
+    )
+
+
 def validate_alicloud_snapshot_payload(
     payload: dict[str, Any],
     snapshot: AlicloudRegionSnapshot,
@@ -1611,44 +1798,6 @@ def validate_alicloud_snapshot_payload(
             f"metadata={unique_ipv4_address_count}, calculated={calculated_address_count}"
         )
     return prefixes
-
-
-def validate_alicloud_coverage_change(
-    previous_payload: dict[str, Any],
-    current_payload: dict[str, Any],
-    snapshot: AlicloudRegionSnapshot,
-) -> None:
-    if env_value(ALICLOUD_ALLOW_COVERAGE_SHRINK_ENV) == "1":
-        return
-
-    previous_prefixes = extract_alicloud_public_ip_prefixes(previous_payload)
-    current_prefixes = extract_alicloud_public_ip_prefixes(current_payload)
-    if not previous_prefixes or not current_prefixes:
-        return
-
-    try:
-        previous_address_count = calculate_ipv4_coverage(previous_prefixes)
-        current_address_count = calculate_ipv4_coverage(current_prefixes)
-        retained_address_count = calculate_ipv4_intersection_coverage(
-            previous_prefixes,
-            current_prefixes,
-        )
-    except ValueError as exc:
-        raise ValueError(
-            f"{snapshot.region_id} cannot compare snapshot coverage: {exc}"
-        ) from exc
-
-    if (
-        retained_address_count * 100
-        < previous_address_count * ALICLOUD_MIN_COVERAGE_RETAIN_PERCENT
-    ):
-        retained_percent = retained_address_count * 100 / previous_address_count
-        raise ValueError(
-            f"{snapshot.region_id} retained only {retained_percent:.2f}% of the "
-            f"previous IPv4 coverage (current total: {current_address_count}); set "
-            f"{ALICLOUD_ALLOW_COVERAGE_SHRINK_ENV}=1 "
-            "only after manually confirming the upstream withdrawal"
-        )
 
 
 def validate_alicloud_page(
@@ -1879,41 +2028,103 @@ def build_alicloud_snapshot_text(
     return "\n".join(lines)
 
 
+def build_alicloud_bgp_snapshot_text(payload: dict[str, Any]) -> str:
+    prefixes = validate_alicloud_bgp_snapshot_payload(payload)
+    asn_text = ", ".join(f"AS{asn}" for asn in ALICLOUD_FALLBACK_ASNS)
+    lines = [
+        f"# 来源文档: {RIPESTAT_ANNOUNCED_PREFIXES_DOC_URL}",
+        f"# 来源接口: {RIPESTAT_ANNOUNCED_PREFIXES_API_URL}",
+        f"# 阿里云兜底 ASN: {asn_text}",
+        "# 范围: RIPE RIS 最近观察窗口内至少被一个对等体看到的 IPv4 公告，已跨 ASN 去重折叠。",
+        "# 边界: 这是故意放宽的全球阿里网络兜底，不代表香港地域归属，只用于 SSH TCP/22。",
+        f"# 同步时间: {payload.get('syncedAt', 'unknown')}",
+        f"# 折叠后 IPv4 前缀数量: {len(prefixes)}",
+        f"# 唯一 IPv4 地址数量: {payload.get('uniqueIpv4AddressCount', 0)}",
+        "",
+    ]
+    lines.extend(prefixes)
+    lines.append("")
+    return "\n".join(lines)
+
+
+def merge_alicloud_ssh_history(
+    existing_prefixes: list[str],
+    official_prefixes: list[str],
+    bgp_prefixes: list[str],
+) -> list[str]:
+    return canonicalize_ipv4_prefixes(
+        [*existing_prefixes, *official_prefixes, *bgp_prefixes]
+    )
+
+
+def build_alicloud_history_snapshot_text(
+    payload: dict[str, Any],
+    bgp_payload: dict[str, Any],
+    snapshot: AlicloudRegionSnapshot,
+    prefixes: list[str],
+) -> str:
+    lines = [
+        f"# 标题: {snapshot.title} SSH TCP/22 单调历史覆盖",
+        f"# 官方来源: {ALICLOUD_PUBLIC_IP_DOC_URL}",
+        f"# BGP 来源: {RIPESTAT_ANNOUNCED_PREFIXES_DOC_URL}",
+        "# 范围: 官方香港 VPC 当前/历史前缀与阿里兜底 ASN 当前/历史 BGP 前缀的累计并集。",
+        "# 维护策略: 自动同步只增不减；上游撤回不会删除已发布覆盖，删除必须人工审计。",
+        f"# 官方同步时间: {payload.get('syncedAt', 'unknown')}",
+        f"# BGP 同步时间: {bgp_payload.get('syncedAt', 'unknown')}",
+        f"# 累计折叠后 IPv4 前缀数量: {len(prefixes)}",
+        f"# 累计唯一 IPv4 地址数量: {calculate_ipv4_coverage(prefixes)}",
+        "",
+    ]
+    lines.extend(prefixes)
+    lines.append("")
+    return "\n".join(lines)
+
+
 def build_alicloud_ssh_snapshot_text(
     payload: dict[str, Any],
     snapshot: AlicloudRegionSnapshot,
+    *,
+    history_prefixes: list[str] | None = None,
+    bgp_payload: dict[str, Any] | None = None,
 ) -> str:
-    prefixes = extract_alicloud_public_ip_prefixes(payload)
+    official_prefixes = extract_alicloud_public_ip_prefixes(payload)
+    prefixes = history_prefixes or official_prefixes
     synced_at = str(payload.get("syncedAt", "unknown"))
-    reported_total_count = payload.get("reportedTotalCount", len(prefixes))
-    fetched_entry_count = payload.get("fetchedEntryCount", len(prefixes))
+    reported_total_count = payload.get("reportedTotalCount", len(official_prefixes))
+    fetched_entry_count = payload.get("fetchedEntryCount", len(official_prefixes))
     duplicate_entry_count = payload.get("duplicateEntryCount", 0)
-    unique_ipv4_address_count = payload.get(
-        "uniqueIpv4AddressCount", calculate_ipv4_coverage(prefixes)
-    )
     page_count = payload.get("pageCount", "unknown")
+    asn_text = ", ".join(f"AS{asn}" for asn in ALICLOUD_FALLBACK_ASNS)
 
     lines = [
         f"# 来源文档: {ALICLOUD_PUBLIC_IP_DOC_URL}",
+        f"# BGP 来源文档: {RIPESTAT_ANNOUNCED_PREFIXES_DOC_URL}",
         f"# 终端节点文档: {ALICLOUD_VPC_ENDPOINT_DOC_URL}",
         f"# API: {ALICLOUD_ACTION}",
         f"# 标题: {snapshot.title} SSH TCP/22 直连规则",
         f"# 终端节点: {snapshot.endpoint}",
         f"# 区域: {snapshot.region_id}",
-        "# 范围: 将官方阿里云香港公网 IPv4 前缀转换为 SSH TCP/22 直连规则。",
-        "# 派生自: alicloud/hk_ipv4.txt",
+        "# 范围: 官方香港 VPC 与阿里兜底 ASN 的单调历史 IPv4 并集，只匹配 SSH TCP/22。",
+        f"# 运行时兜底 ASN: {asn_text}",
+        "# 派生自: alicloud/ssh22_ipv4_history.txt",
         f"# 同步时间: {synced_at}",
+        f"# BGP 同步时间: {(bgp_payload or {}).get('syncedAt', 'unknown')}",
         f"# 抓取页数: {page_count}",
         f"# 上游总数: {reported_total_count}",
         f"# 抓取条目数量: {fetched_entry_count}",
         f"# 重复条目数量: {duplicate_entry_count}",
-        f"# SSH 规则数量: {len(prefixes)}",
-        f"# 唯一 IPv4 地址数量: {unique_ipv4_address_count}",
+        f"# 静态 SSH CIDR 规则数量: {len(prefixes)}",
+        f"# 运行时 ASN 规则数量: {len(ALICLOUD_FALLBACK_ASNS)}",
+        f"# 累计唯一 IPv4 地址数量: {calculate_ipv4_coverage(prefixes)}",
         "",
     ]
     lines.extend(
         f"AND,((IP-CIDR,{prefix},no-resolve),(PROTOCOL,TCP),(DST-PORT,22))"
         for prefix in prefixes
+    )
+    lines.extend(
+        f"AND,((IP-ASN,{asn},no-resolve),(PROTOCOL,TCP),(DST-PORT,22))"
+        for asn in ALICLOUD_FALLBACK_ASNS
     )
     lines.append("")
     return "\n".join(lines)
@@ -1936,10 +2147,56 @@ def validate_alicloud_snapshot_files(
     if not isinstance(payload, dict):
         raise ValueError(f"{snapshot.region_id} snapshot metadata is not an object")
 
-    validate_alicloud_snapshot_payload(payload, snapshot)
+    official_prefixes = validate_alicloud_snapshot_payload(payload, snapshot)
+
+    bgp_metadata_path = UPSTREAM_ROOT / snapshot.bgp_metadata_path
+    try:
+        bgp_payload = json.loads(decode_text(bgp_metadata_path.read_bytes()))
+    except OSError as exc:
+        raise ValueError(
+            f"阿里云 BGP 快照元数据无法读取: {exc}"
+        ) from exc
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"阿里云 BGP 快照元数据不是有效 JSON: {exc}") from exc
+    if not isinstance(bgp_payload, dict):
+        raise ValueError("阿里云 BGP 快照元数据不是对象")
+    bgp_prefixes = validate_alicloud_bgp_snapshot_payload(bgp_payload)
+
+    history_text = read_existing(UPSTREAM_ROOT / snapshot.history_path)
+    if history_text is None:
+        raise ValueError(
+            f"{snapshot.region_id} 历史覆盖文件缺失: {snapshot.history_path.as_posix()}"
+        )
+    history_prefixes = parse_ipv4_snapshot_prefixes(
+        history_text,
+        snapshot.history_path.as_posix(),
+    )
+    if not ipv4_coverage_contains(history_prefixes, official_prefixes):
+        raise ValueError(f"{snapshot.region_id} 历史覆盖没有包含当前官方前缀")
+    if not ipv4_coverage_contains(history_prefixes, bgp_prefixes):
+        raise ValueError(f"{snapshot.region_id} 历史覆盖没有包含当前 BGP 前缀")
+
     expected_files = (
         (snapshot.path, build_alicloud_snapshot_text(payload, snapshot)),
-        (snapshot.ssh_path, build_alicloud_ssh_snapshot_text(payload, snapshot)),
+        (snapshot.bgp_path, build_alicloud_bgp_snapshot_text(bgp_payload)),
+        (
+            snapshot.history_path,
+            build_alicloud_history_snapshot_text(
+                payload,
+                bgp_payload,
+                snapshot,
+                history_prefixes,
+            ),
+        ),
+        (
+            snapshot.ssh_path,
+            build_alicloud_ssh_snapshot_text(
+                payload,
+                snapshot,
+                history_prefixes=history_prefixes,
+                bgp_payload=bgp_payload,
+            ),
+        ),
     )
     for relative_path, expected_text in expected_files:
         actual_text = read_existing(UPSTREAM_ROOT / relative_path)
@@ -1955,22 +2212,70 @@ def validate_alicloud_snapshot_files(
     return payload
 
 
+def load_existing_alicloud_official_snapshot(
+    snapshot: AlicloudRegionSnapshot,
+) -> dict[str, Any] | None:
+    metadata_path = UPSTREAM_ROOT / snapshot.metadata_path
+    try:
+        payload = json.loads(decode_text(metadata_path.read_bytes()))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+    try:
+        validate_alicloud_snapshot_payload(payload, snapshot)
+    except ValueError:
+        return None
+    actual_text = read_existing(UPSTREAM_ROOT / snapshot.path)
+    if actual_text != normalize_text(build_alicloud_snapshot_text(payload, snapshot)):
+        return None
+    return payload
+
+
 def sync_alicloud_snapshots(failures: list[UpstreamFailure]) -> tuple[int, int]:
     credentials = resolve_alicloud_credentials()
-    if credentials is None:
-        detail = (
-            "缺少阿里云凭据。请设置 RULEMESH_ALICLOUD_ACCESS_KEY_ID 和 "
-            "RULEMESH_ALICLOUD_ACCESS_KEY_SECRET（或标准阿里云环境变量；"
-            "本地也可写入 .rulemesh.local.json 的 alicloud 节点）。"
-        )
-        if can_skip_alicloud_sync_without_credentials():
+
+    changed = 0
+    failed = 0
+
+    for snapshot in ALICLOUD_REGION_SNAPSHOTS:
+        existing_payload = load_existing_alicloud_official_snapshot(snapshot)
+        payload: dict[str, Any] | None = None
+        if credentials is not None:
+            try:
+                payload = fetch_stable_alicloud_region_snapshot(snapshot, credentials)
+            except (urllib.error.URLError, TimeoutError, OSError, ValueError) as exc:
+                if existing_payload is not None and not running_in_github_actions():
+                    payload = existing_payload
+                    print(
+                        f"[SKIP] {snapshot.path.as_posix()} API 刷新失败，"
+                        f"本地构建继续使用已校验快照: {exc}"
+                    )
+                else:
+                    print(f"[WARN] {snapshot.path.as_posix()} sync failed: {exc}")
+                    record_failure(
+                        failures,
+                        source="阿里云官方 API",
+                        resource=snapshot.path.as_posix(),
+                        url=f"https://{snapshot.endpoint}/",
+                        category=classify_alicloud_failure(exc),
+                        detail=format_exception_message(exc),
+                    )
+                    failed += 1
+                    continue
+        elif existing_payload is not None and not running_in_github_actions():
+            payload = existing_payload
             print(
-                "[SKIP] alicloud sync skipped: 当前环境缺少阿里云凭据，"
-                "但仓库里已有可用快照，继续保留现有文件。"
+                f"[SKIP] {snapshot.path.as_posix()} 缺少阿里云凭据，"
+                "本地构建继续使用已校验官方快照并刷新公开 BGP 兜底。"
             )
-            return 0, 0
-        print(f"[WARN] alicloud sync failed: {detail}")
-        for snapshot in ALICLOUD_REGION_SNAPSHOTS:
+        else:
+            detail = (
+                "缺少阿里云凭据。请设置 RULEMESH_ALICLOUD_ACCESS_KEY_ID 和 "
+                "RULEMESH_ALICLOUD_ACCESS_KEY_SECRET（或标准阿里云环境变量；"
+                "本地也可写入 .rulemesh.local.json 的 alicloud 节点）。"
+            )
+            print(f"[WARN] alicloud sync failed: {detail}")
             record_failure(
                 failures,
                 source="阿里云官方 API",
@@ -1979,22 +2284,22 @@ def sync_alicloud_snapshots(failures: list[UpstreamFailure]) -> tuple[int, int]:
                 category="缺少凭据",
                 detail=detail,
             )
-        return 0, len(ALICLOUD_REGION_SNAPSHOTS)
+            failed += 1
+            continue
 
-    changed = 0
-    failed = 0
+        assert payload is not None
 
-    for snapshot in ALICLOUD_REGION_SNAPSHOTS:
         try:
-            payload = fetch_stable_alicloud_region_snapshot(snapshot, credentials)
+            bgp_payload = fetch_stable_alicloud_bgp_snapshot()
+            bgp_prefixes = validate_alicloud_bgp_snapshot_payload(bgp_payload)
         except (urllib.error.URLError, TimeoutError, OSError, ValueError) as exc:
-            print(f"[WARN] {snapshot.path.as_posix()} sync failed: {exc}")
+            print(f"[WARN] {snapshot.bgp_path.as_posix()} sync failed: {exc}")
             record_failure(
                 failures,
-                source="阿里云官方 API",
-                resource=snapshot.path.as_posix(),
-                url=f"https://{snapshot.endpoint}/",
-                category=classify_alicloud_failure(exc),
+                source="RIPEstat 阿里云兜底 ASN 公告",
+                resource=snapshot.bgp_path.as_posix(),
+                url=build_ripestat_alicloud_url(ALICLOUD_FALLBACK_ASNS[0]),
+                category=classify_fetch_failure(exc),
                 detail=format_exception_message(exc),
             )
             failed += 1
@@ -2016,27 +2321,23 @@ def sync_alicloud_snapshots(failures: list[UpstreamFailure]) -> tuple[int, int]:
             failed += 1
             continue
 
-        existing_metadata_path = UPSTREAM_ROOT / snapshot.metadata_path
-        if existing_metadata_path.exists():
+        existing_history_text = read_existing(UPSTREAM_ROOT / snapshot.history_path)
+        existing_history_prefixes: list[str] = []
+        if existing_history_text:
             try:
-                existing_payload = json.loads(
-                    decode_text(existing_metadata_path.read_bytes())
+                existing_history_prefixes = parse_ipv4_snapshot_prefixes(
+                    existing_history_text,
+                    snapshot.history_path.as_posix(),
                 )
-                if isinstance(existing_payload, dict):
-                    validate_alicloud_coverage_change(
-                        existing_payload,
-                        payload,
-                        snapshot,
-                    )
-            except (OSError, json.JSONDecodeError, ValueError) as exc:
+            except ValueError as exc:
                 detail = str(exc)
-                print(f"[WARN] {snapshot.path.as_posix()} sync failed: {detail}")
+                print(f"[WARN] {snapshot.history_path.as_posix()} sync failed: {detail}")
                 record_failure(
                     failures,
-                    source="阿里云官方 API",
-                    resource=snapshot.path.as_posix(),
-                    url=f"https://{snapshot.endpoint}/",
-                    category="地址覆盖异常",
+                    source="阿里云 SSH 单调历史覆盖",
+                    resource=snapshot.history_path.as_posix(),
+                    url=RULEMESH_REPO_URL,
+                    category="历史覆盖异常",
                     detail=detail,
                 )
                 failed += 1
@@ -2056,7 +2357,50 @@ def sync_alicloud_snapshots(failures: list[UpstreamFailure]) -> tuple[int, int]:
         else:
             print(f"[SKIP] {snapshot.path.as_posix()}")
 
-        ssh_snapshot_text = build_alicloud_ssh_snapshot_text(payload, snapshot)
+        bgp_metadata_text = json.dumps(bgp_payload, indent=2, ensure_ascii=False) + "\n"
+        if write_if_changed(
+            UPSTREAM_ROOT / snapshot.bgp_metadata_path,
+            bgp_metadata_text,
+        ):
+            print(f"[UPDATE] {snapshot.bgp_metadata_path.as_posix()}")
+            changed += 1
+        else:
+            print(f"[SKIP] {snapshot.bgp_metadata_path.as_posix()}")
+
+        bgp_snapshot_text = build_alicloud_bgp_snapshot_text(bgp_payload)
+        if write_if_changed(UPSTREAM_ROOT / snapshot.bgp_path, bgp_snapshot_text):
+            print(f"[UPDATE] {snapshot.bgp_path.as_posix()}")
+            changed += 1
+        else:
+            print(f"[SKIP] {snapshot.bgp_path.as_posix()}")
+
+        official_prefixes = extract_alicloud_public_ip_prefixes(payload)
+        history_prefixes = merge_alicloud_ssh_history(
+            existing_history_prefixes,
+            official_prefixes,
+            bgp_prefixes,
+        )
+        history_snapshot_text = build_alicloud_history_snapshot_text(
+            payload,
+            bgp_payload,
+            snapshot,
+            history_prefixes,
+        )
+        if write_if_changed(
+            UPSTREAM_ROOT / snapshot.history_path,
+            history_snapshot_text,
+        ):
+            print(f"[UPDATE] {snapshot.history_path.as_posix()}")
+            changed += 1
+        else:
+            print(f"[SKIP] {snapshot.history_path.as_posix()}")
+
+        ssh_snapshot_text = build_alicloud_ssh_snapshot_text(
+            payload,
+            snapshot,
+            history_prefixes=history_prefixes,
+            bgp_payload=bgp_payload,
+        )
         if write_if_changed(UPSTREAM_ROOT / snapshot.ssh_path, ssh_snapshot_text):
             print(f"[UPDATE] {snapshot.ssh_path.as_posix()}")
             changed += 1

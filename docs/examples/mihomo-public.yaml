@@ -498,7 +498,7 @@ rule-providers:
     format: yaml
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/direct/alicloud_hk_ipv4_ssh22_direct.yaml"
     path: ./ruleset/direct/alicloud_hk_ipv4_ssh22_direct.yaml
-    interval: 86400
+    interval: 3600
     proxy: "🚀 节点选择"
 
   us_microsoft:
@@ -674,6 +674,15 @@ rules:
   - IP-CIDR,169.254.0.0/16,DIRECT,no-resolve
   - IP-CIDR,224.0.0.0/4,DIRECT,no-resolve
   - RULE-SET,direct_os_time,DIRECT
+  # 阿里云 SSH 本地应急兜底必须放在远程 provider 前；即使远程缓存停留在残缺版本，也只放宽 TCP/22。
+  - AND,((IP-CIDR,8.208.0.0/12,no-resolve),(NETWORK,tcp),(DST-PORT,22)),DIRECT
+  - AND,((IP-CIDR,47.76.0.0/16,no-resolve),(NETWORK,tcp),(DST-PORT,22)),DIRECT
+  - AND,((IP-CIDR,47.86.0.0/16,no-resolve),(NETWORK,tcp),(DST-PORT,22)),DIRECT
+  - AND,((IP-CIDR,47.238.0.0/15,no-resolve),(NETWORK,tcp),(DST-PORT,22)),DIRECT
+  - AND,((IP-CIDR,47.243.0.0/16,no-resolve),(NETWORK,tcp),(DST-PORT,22)),DIRECT
+  - AND,((IP-ASN,45102,no-resolve),(NETWORK,tcp),(DST-PORT,22)),DIRECT
+  - AND,((IP-ASN,134963,no-resolve),(NETWORK,tcp),(DST-PORT,22)),DIRECT
+  - AND,((IP-ASN,24429,no-resolve),(NETWORK,tcp),(DST-PORT,22)),DIRECT
   - RULE-SET,direct_alicloud_hk_ipv4_ssh22,DIRECT,no-resolve
   - DOMAIN-SUFFIX,aliyuncs.com,DIRECT
   - DOMAIN,check.myclientip.com,DIRECT

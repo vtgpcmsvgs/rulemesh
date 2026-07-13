@@ -1,3 +1,3 @@
 # 阿里云香港 IPv4 派生 SSH TCP/22 直连规则，不负责其他地域、协议或端口。
-# 上游前缀基于官方 VPC DescribePublicIpAddress API 完整分页并通过防缩水校验，入口放在 FINAL 前且不触发 DNS 解析。
+# 上游采用官方香港 VPC 当前快照、阿里兜底 ASN 的 BGP 公告与永不自动删除的历史并集，并保留运行时 ASN 兜底；入口放在 FINAL 前且不触发 DNS 解析。
 INCLUDE,upstream/alicloud/hk_ssh22.txt

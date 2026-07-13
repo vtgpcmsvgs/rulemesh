@@ -138,10 +138,35 @@ class RepoInvariantTests(unittest.TestCase):
         ]
         self.assertEqual(ipv4_prefixes, prefixes)
 
+        bgp_payload = json.loads(
+            (ROOT / "rules" / "upstream" / snapshot.bgp_metadata_path).read_text(
+                encoding="utf-8"
+            )
+        )
+        bgp_prefixes = sync_upstream_rules.validate_alicloud_bgp_snapshot_payload(
+            bgp_payload
+        )
+        history_prefixes = sync_upstream_rules.parse_ipv4_snapshot_prefixes(
+            (ROOT / "rules" / "upstream" / snapshot.history_path).read_text(
+                encoding="utf-8"
+            ),
+            snapshot.history_path.as_posix(),
+        )
+        self.assertTrue(
+            sync_upstream_rules.ipv4_coverage_contains(history_prefixes, prefixes)
+        )
+        self.assertTrue(
+            sync_upstream_rules.ipv4_coverage_contains(history_prefixes, bgp_prefixes)
+        )
+
         expected_source_rules = [
             f"AND,((IP-CIDR,{prefix},no-resolve),(PROTOCOL,TCP),(DST-PORT,22))"
-            for prefix in prefixes
+            for prefix in history_prefixes
         ]
+        expected_source_rules.extend(
+            f"AND,((IP-ASN,{asn},no-resolve),(PROTOCOL,TCP),(DST-PORT,22))"
+            for asn in sync_upstream_rules.ALICLOUD_FALLBACK_ASNS
+        )
         ssh_path = ROOT / "rules" / "upstream" / snapshot.ssh_path
         source_rules = [
             line

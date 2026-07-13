@@ -41,7 +41,9 @@ sources:
         - repo: self
           note: 保持阿里云香港 IPv4 派生 SSH TCP/22 直连入口稳定，源规则只保留单一 INCLUDE
         - repo: Alibaba Cloud DescribePublicIpAddress
-          note: 每日按 TotalCount 完整分页并连续两次确认 cn-hongkong 公网 IPv4 前缀，校验条目数与旧地址保留率后再派生 SSH TCP/22 直连规则
+          note: 每日按 TotalCount 完整分页并连续两次确认 cn-hongkong VPC 公网 IPv4 当前前缀，接口明确不覆盖经典网络
+        - repo: RIPE NCC RIPEstat announced-prefixes
+          note: 以 min_peers_seeing=1 同步 AS45102、AS134963 与 AS24429 的当前 IPv4 公告，并与历史已发布覆盖做只增不减并集
     os_time_direct.list:
       preferred:
         - repo: self

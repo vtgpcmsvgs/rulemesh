@@ -60,7 +60,53 @@ class BuildAlicloudSnapshotTextTests(unittest.TestCase):
             "AND,((IP-CIDR,203.0.113.0/24,no-resolve),(PROTOCOL,TCP),(DST-PORT,22))",
             ssh_text,
         )
-        self.assertIn("alicloud/hk_ipv4.txt", ssh_text)
+        self.assertIn("alicloud/ssh22_ipv4_history.txt", ssh_text)
+        self.assertIn(
+            "AND,((IP-ASN,45102,no-resolve),(PROTOCOL,TCP),(DST-PORT,22))",
+            ssh_text,
+        )
+
+    def test_bgp_snapshot_and_history_are_canonical_and_monotonic(self) -> None:
+        bgp_payload = {
+            "source": {"minPeersSeeing": 1},
+            "asns": list(sync_upstream_rules.ALICLOUD_FALLBACK_ASNS),
+            "perAsn": [
+                {
+                    "asn": asn,
+                    "reportedPrefixCount": 1,
+                    "reportedIpv4PrefixCount": 1,
+                    "uniqueIpv4PrefixCount": 1,
+                    "collapsedIpv4PrefixCount": 1,
+                }
+                for asn in sync_upstream_rules.ALICLOUD_FALLBACK_ASNS
+            ],
+            "collapsedIpv4PrefixCount": 1,
+            "uniqueIpv4AddressCount": 512,
+            "ipv4Prefix": ["198.51.100.0/23"],
+            "syncedAt": "2026-07-13T00:00:00+00:00",
+        }
+        self.assertEqual(
+            sync_upstream_rules.validate_alicloud_bgp_snapshot_payload(bgp_payload),
+            ["198.51.100.0/23"],
+        )
+
+        merged = sync_upstream_rules.merge_alicloud_ssh_history(
+            ["192.0.2.0/24"],
+            ["203.0.113.0/24"],
+            bgp_payload["ipv4Prefix"],
+        )
+        self.assertTrue(
+            sync_upstream_rules.ipv4_coverage_contains(merged, ["192.0.2.0/24"])
+        )
+        self.assertTrue(
+            sync_upstream_rules.ipv4_coverage_contains(merged, ["203.0.113.0/24"])
+        )
+        self.assertTrue(
+            sync_upstream_rules.ipv4_coverage_contains(
+                merged,
+                bgp_payload["ipv4Prefix"],
+            )
+        )
 
 
 class AlicloudPaginationTests(unittest.TestCase):
@@ -177,6 +223,25 @@ class AlicloudPaginationTests(unittest.TestCase):
             "publicIpAddress": ["203.0.113.0/24"],
             "syncedAt": "2026-07-11T00:00:00+00:00",
         }
+        bgp_payload = {
+            "source": {"minPeersSeeing": 1},
+            "asns": list(sync_upstream_rules.ALICLOUD_FALLBACK_ASNS),
+            "perAsn": [
+                {
+                    "asn": asn,
+                    "reportedPrefixCount": 1,
+                    "reportedIpv4PrefixCount": 1,
+                    "uniqueIpv4PrefixCount": 1,
+                    "collapsedIpv4PrefixCount": 1,
+                }
+                for asn in sync_upstream_rules.ALICLOUD_FALLBACK_ASNS
+            ],
+            "collapsedIpv4PrefixCount": 1,
+            "uniqueIpv4AddressCount": 256,
+            "ipv4Prefix": ["198.51.100.0/24"],
+            "syncedAt": "2026-07-11T00:00:00+00:00",
+        }
+        history_prefixes = ["198.51.100.0/24", "203.0.113.0/24"]
 
         with tempfile.TemporaryDirectory() as temp_dir, mock.patch.object(
             sync_upstream_rules,
@@ -186,7 +251,17 @@ class AlicloudPaginationTests(unittest.TestCase):
             metadata_path = Path(temp_dir) / snapshot.metadata_path
             ipv4_path = Path(temp_dir) / snapshot.path
             ssh_path = Path(temp_dir) / snapshot.ssh_path
-            for path in (metadata_path, ipv4_path, ssh_path):
+            bgp_metadata_path = Path(temp_dir) / snapshot.bgp_metadata_path
+            bgp_path = Path(temp_dir) / snapshot.bgp_path
+            history_path = Path(temp_dir) / snapshot.history_path
+            for path in (
+                metadata_path,
+                ipv4_path,
+                ssh_path,
+                bgp_metadata_path,
+                bgp_path,
+                history_path,
+            ):
                 path.parent.mkdir(parents=True, exist_ok=True)
             metadata_path.write_text(
                 json.dumps(payload, ensure_ascii=False),
@@ -196,8 +271,30 @@ class AlicloudPaginationTests(unittest.TestCase):
                 sync_upstream_rules.build_alicloud_snapshot_text(payload, snapshot),
                 encoding="utf-8",
             )
+            bgp_metadata_path.write_text(
+                json.dumps(bgp_payload, ensure_ascii=False),
+                encoding="utf-8",
+            )
+            bgp_path.write_text(
+                sync_upstream_rules.build_alicloud_bgp_snapshot_text(bgp_payload),
+                encoding="utf-8",
+            )
+            history_path.write_text(
+                sync_upstream_rules.build_alicloud_history_snapshot_text(
+                    payload,
+                    bgp_payload,
+                    snapshot,
+                    history_prefixes,
+                ),
+                encoding="utf-8",
+            )
             ssh_path.write_text(
-                sync_upstream_rules.build_alicloud_ssh_snapshot_text(payload, snapshot),
+                sync_upstream_rules.build_alicloud_ssh_snapshot_text(
+                    payload,
+                    snapshot,
+                    history_prefixes=history_prefixes,
+                    bgp_payload=bgp_payload,
+                ),
                 encoding="utf-8",
             )
 
@@ -211,43 +308,6 @@ class AlicloudPaginationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "does not match metadata"):
                 sync_upstream_rules.validate_alicloud_snapshot_files(snapshot)
             self.assertTrue(build_rules.alicloud_snapshots_need_sync())
-
-    def test_large_coverage_drop_requires_explicit_confirmation(self) -> None:
-        snapshot = sync_upstream_rules.ALICLOUD_REGION_SNAPSHOTS[0]
-        previous_payload = {"publicIpAddress": ["203.0.112.0/23"]}
-        current_payload = {"publicIpAddress": ["203.0.113.0/24"]}
-
-        with mock.patch.dict(os.environ, {}, clear=True):
-            with self.assertRaisesRegex(ValueError, "retained only"):
-                sync_upstream_rules.validate_alicloud_coverage_change(
-                    previous_payload,
-                    current_payload,
-                    snapshot,
-                )
-
-        with mock.patch.dict(
-            os.environ,
-            {sync_upstream_rules.ALICLOUD_ALLOW_COVERAGE_SHRINK_ENV: "1"},
-            clear=True,
-        ):
-            sync_upstream_rules.validate_alicloud_coverage_change(
-                previous_payload,
-                current_payload,
-                snapshot,
-            )
-
-    def test_same_size_disjoint_coverage_is_rejected(self) -> None:
-        snapshot = sync_upstream_rules.ALICLOUD_REGION_SNAPSHOTS[0]
-        previous_payload = {"publicIpAddress": ["203.0.112.0/23"]}
-        current_payload = {"publicIpAddress": ["198.51.100.0/23"]}
-
-        with mock.patch.dict(os.environ, {}, clear=True):
-            with self.assertRaisesRegex(ValueError, "retained only 0.00%"):
-                sync_upstream_rules.validate_alicloud_coverage_change(
-                    previous_payload,
-                    current_payload,
-                    snapshot,
-                )
 
     def test_stable_fetch_requires_two_matching_full_snapshots(self) -> None:
         snapshot = sync_upstream_rules.ALICLOUD_REGION_SNAPSHOTS[0]
@@ -653,6 +713,9 @@ class SyncFailureTests(unittest.TestCase):
         ), mock.patch(
             "sync_upstream_rules.fetch_alicloud_region_snapshot",
             side_effect=ValueError("HTTP 403 Forbidden: InvalidAccessKeyId.NotFound"),
+        ), mock.patch(
+            "sync_upstream_rules.running_in_github_actions",
+            return_value=True,
         ):
             changed, failed = sync_upstream_rules.sync_alicloud_snapshots(failures)
 
@@ -668,8 +731,8 @@ class SyncFailureTests(unittest.TestCase):
             "sync_upstream_rules.resolve_alicloud_credentials",
             return_value=None,
         ), mock.patch(
-            "sync_upstream_rules.can_skip_alicloud_sync_without_credentials",
-            return_value=False,
+            "sync_upstream_rules.load_existing_alicloud_official_snapshot",
+            return_value=None,
         ):
             changed, failed = sync_upstream_rules.sync_alicloud_snapshots(failures)
 
@@ -678,15 +741,35 @@ class SyncFailureTests(unittest.TestCase):
         self.assertEqual(failures[0].category, "缺少凭据")
         self.assertEqual(failures[0].resource, "alicloud/hk_ipv4.txt")
 
-    def test_sync_alicloud_snapshots_skips_missing_credentials_when_snapshot_exists(self) -> None:
+    def test_sync_alicloud_snapshots_refreshes_bgp_without_local_credentials(self) -> None:
         failures: list[sync_upstream_rules.UpstreamFailure] = []
+        snapshot = sync_upstream_rules.ALICLOUD_REGION_SNAPSHOTS[0]
+        official_payload = json.loads(
+            (
+                sync_upstream_rules.UPSTREAM_ROOT / snapshot.metadata_path
+            ).read_text(encoding="utf-8")
+        )
+        bgp_payload = json.loads(
+            (
+                sync_upstream_rules.UPSTREAM_ROOT / snapshot.bgp_metadata_path
+            ).read_text(encoding="utf-8")
+        )
 
         with mock.patch(
             "sync_upstream_rules.resolve_alicloud_credentials",
             return_value=None,
         ), mock.patch(
-            "sync_upstream_rules.can_skip_alicloud_sync_without_credentials",
-            return_value=True,
+            "sync_upstream_rules.load_existing_alicloud_official_snapshot",
+            return_value=official_payload,
+        ), mock.patch(
+            "sync_upstream_rules.fetch_stable_alicloud_bgp_snapshot",
+            return_value=bgp_payload,
+        ), mock.patch(
+            "sync_upstream_rules.write_if_changed",
+            return_value=False,
+        ), mock.patch(
+            "sync_upstream_rules.validate_alicloud_snapshot_files",
+            return_value=official_payload,
         ):
             changed, failed = sync_upstream_rules.sync_alicloud_snapshots(failures)
 

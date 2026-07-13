@@ -83,11 +83,15 @@ merge_plan:
     strategy:
       - keep_source_file_as_single_include
       - sync_alicloud_cn_hongkong_ipv4_daily_via_complete_stable_openapi_pagination
-      - fail_closed_on_incomplete_or_less_than_ninety_five_percent_previous_coverage_retained
-      - derive_ssh_tcp_22_rules_from_official_ipv4_prefixes
+      - sync_alicloud_fallback_asns_via_ripestat_with_minimum_one_peer
+      - keep_published_ipv4_coverage_monotonic_without_automatic_deletion
+      - add_runtime_ip_asn_fallback_for_new_allocations_and_stale_remote_caches
+      - derive_ssh_tcp_22_rules_from_official_bgp_and_history_union
     notes:
-      - 数据源为阿里云官方 VPC OpenAPI DescribePublicIpAddress
-      - 原始条目累计达到 TotalCount 后才允许全局去重与发布，并记录重复条目、唯一地址覆盖量和旧地址保留率
+      - 地域精确数据源为阿里云官方 VPC OpenAPI DescribePublicIpAddress；官方明确说明它不能查询经典网络，因此不能单独视为阿里云公网全集
+      - 原始条目累计达到 TotalCount 后才允许全局去重与发布，并记录重复条目与唯一地址覆盖量
+      - 宽覆盖数据源为 RIPEstat 的阿里兜底 ASN 当前 BGP 公告；发布集合与历史文件做单调并集，上游撤回不触发自动删除
+      - 静态累计 CIDR 后继续保留 AS45102、AS134963 与 AS24429 的运行时 TCP/22 兜底，用于承接静态同步间隙内出现的新切片
       - 公开入口直接保留 no-resolve 与 SSH TCP/22 最终语义，不要求客户端额外拼接端口条件
       - 首次同步需要具备该接口读取权限的 AccessKey 或 STS 临时凭证
 

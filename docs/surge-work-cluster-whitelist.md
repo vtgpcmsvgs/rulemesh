@@ -49,6 +49,7 @@
 - 单个白名单专属拒绝域名，或只用于阻断浏览器扩展更新链路的拒绝规则，优先直接维护在 1)“拒绝规则”入口，不为单条规则额外新增公开 `rules/` 文件
 - `region/us/microsoft_us` 继续作为美国分流入口，Windows 更新禁用仍由前置 `reject/os_update_reject` 先拦截
 - `region/us/macos_update_us` 继续作为美国分流入口，用于需要时临时放开 macOS 系统升级；它只匹配 Apple 官方标注为 macOS only 的更新主机，且必须位于前置拒绝规则之后
+- 阿里云注册大块与 `AS45102/AS134963/AS24429` 的内联规则只在 TCP/22 下直连，并放在 `alicloud_hk_ipv4_ssh22_direct` 远程规则及阿里云观察 `REJECT` 前；这样远程缓存残缺也不会落入 `FINAL,REJECT`
 - `alicloud_hk_ipv4_ssh22_direct` 继续以 `DIRECT,no-resolve` 保留，并与 `DOMAIN-SUFFIX,aliyuncs.com`、`DOMAIN,check.myclientip.com` 共同构成阿里云显式白名单；其后保留广覆盖 `REJECT` 观察兜底
 - 工作白名单模式下，广覆盖观察规则统一只允许使用 `REJECT`；不要对 `DIRECT` 或 `PROXY` 规则使用 `extended-matching`，否则会把可伪造的 Host / SNI 纳入放行判断，放大绕过白名单的风险
 - `bytedance_direct.list` 继续保留 `DIRECT`
