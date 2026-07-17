@@ -315,12 +315,13 @@ merge_plan:
 
   - id: multi-chain-socks5-ipcidr
     target: rules/region/multi/chain_socks5_ipcidr.list
-    purpose: 多地区链式 SOCKS5 端点 CIDR 入口
+    purpose: 私有链式 SOCKS5 端点池 CIDR 入口
     strategy:
       - manual_only
-      - keep_scope_small_and_stable
+      - replace_from_private_provider_export
+      - keep_only_valid_unique_public_ipv4_32
     notes:
-      - 当前以你自己维护的端点清单为准，不引入额外上游聚合
+      - 每次以私有服务商当前导出清单全量替换；公开仓库不得保存下载地址、端口或认证信息
 
   - id: reject-os-update
     target: rules/reject/os_update_reject.list

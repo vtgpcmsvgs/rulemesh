@@ -178,7 +178,7 @@ sources:
     multi/chain_socks5_ipcidr.list:
       preferred:
         - repo: self
-          note: 当前是你自己维护的多地区链式 SOCKS5 端点 CIDR
+          note: 私有代理服务商导出清单的脱敏快照；只保留经校验、去重的端点 IPv4，不记录下载地址、端口或认证信息
 
     hk/hk_aws_ipv4.list:
       preferred:

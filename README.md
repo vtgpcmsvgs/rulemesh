@@ -148,7 +148,7 @@ python tools/build_rules.py
 - 海外 DNS 主 IPv4 端点专项规则统一维护在 `rules/proxy/overseas_dns_ipv4_proxy.list`
 - 客户端应显式接入 `proxy/overseas_dns_ipv4_proxy`，并放在 `proxy/gfw` 前；Surge 侧继续按 `RULE-SET,...,"🇺🇸 美国-自动选择",no-resolve` 接入，让美国地区策略先命中 `1.1.1.1/32`、`8.8.8.8/32` 与 `9.9.9.9/32`
 - AWS 香港区域规则入口已统一命名为 `region/hk/hk_aws_ipv4`，与东京、大阪、首尔、台北保持同类命名
-- 自维护多地区链式 SOCKS5 端点入口已统一命名为 `region/multi/chain_socks5_ipcidr`，不再继续挂在 `region/jp/` 或默认绑定日本策略组
+- 私有代理服务商导出的链式 SOCKS5 端点脱敏快照统一维护在 `region/multi/chain_socks5_ipcidr`；公开仓库只保留严格校验、去重并排序后的公网 IPv4 `/32`，不保存下载地址、端口或认证信息，也不再挂在 `region/jp/` 或默认绑定日本策略组
 - 阿里云香港 SSH 直连入口统一为 `direct/alicloud_hk_ipv4_ssh22_direct`；发布覆盖由官方香港 VPC 当前快照、`AS45102/AS134963/AS24429` 当前与历史 BGP 公告的单调并集组成，自动同步不再删除旧覆盖，并直接保留 `no-resolve + TCP/22` 最终语义
 - Surge 与 Mihomo 当前统一把 GeoIP mmdb 显式固定到你自己的仓库 Release 镜像：`vtgpcmsvgs/rulemesh/releases/download/geoip-country-mmdb/country.mmdb`
 - 对应上游登记与维护约定见 `rules/upstream/geodata/metacubex_country_mmdb.yaml` 与 [docs/geoip-upstream.md](docs/geoip-upstream.md)
