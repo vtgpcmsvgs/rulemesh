@@ -36,6 +36,8 @@ DOMAIN,polygon-public.nodies.app
 DOMAIN-WILDCARD,*.polygon-public.nodies.app
 DOMAIN,polygon-rpc.com
 DOMAIN-WILDCARD,*.polygon-rpc.com
+DOMAIN,polygon-rpc.keccak.io
+DOMAIN-WILDCARD,*.polygon-rpc.keccak.io
 DOMAIN,polygon.api.onfinality.io
 DOMAIN-WILDCARD,*.polygon.api.onfinality.io
 DOMAIN,polygon.drpc.org

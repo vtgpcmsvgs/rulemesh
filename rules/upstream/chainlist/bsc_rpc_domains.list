@@ -4,9 +4,9 @@
 # chainId: 56
 # 维护策略: 只增不减；保留历史已收录主机名，避免上游日常波动导致覆盖面回撤。
 # 规则展开: 每个主机名同时生成 DOMAIN 与 DOMAIN-WILDCARD，统一收敛为节点选择入口。
-# 本次抓取主机数: 54
-# 累计主机数: 57
-# 同步时间: 2026-07-13T03:29:12+00:00
+# 本次抓取主机数: 55
+# 累计主机数: 58
+# 同步时间: 2026-07-18T08:28:54+00:00
 
 DOMAIN,0.48.club
 DOMAIN-WILDCARD,*.0.48.club
@@ -64,6 +64,8 @@ DOMAIN,bsc-mainnet.public.blastapi.io
 DOMAIN-WILDCARD,*.bsc-mainnet.public.blastapi.io
 DOMAIN,bsc-mainnet.rpcfast.com
 DOMAIN-WILDCARD,*.bsc-mainnet.rpcfast.com
+DOMAIN,bsc-rpc.keccak.io
+DOMAIN-WILDCARD,*.bsc-rpc.keccak.io
 DOMAIN,bsc-rpc.publicnode.com
 DOMAIN-WILDCARD,*.bsc-rpc.publicnode.com
 DOMAIN,bsc-ws-node.nariox.org

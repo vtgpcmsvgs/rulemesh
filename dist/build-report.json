@@ -79,8 +79,8 @@
       "category": "direct",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 118002,
-        "mihomo_classical": 118002
+        "surge_rules": 117888,
+        "mihomo_classical": 117888
       },
       "dist": {
         "surge_rules": "dist/surge/rules/direct/cn_direct.list",
@@ -144,8 +144,8 @@
       "category": "proxy",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 114,
-        "mihomo_classical": 114
+        "surge_rules": 116,
+        "mihomo_classical": 116
       },
       "dist": {
         "surge_rules": "dist/surge/rules/proxy/bsc_rpc_proxy.list",
@@ -157,8 +157,8 @@
       "category": "proxy",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 5193,
-        "mihomo_classical": 5193
+        "surge_rules": 5191,
+        "mihomo_classical": 5191
       },
       "dist": {
         "surge_rules": "dist/surge/rules/proxy/gfw.list",
@@ -209,8 +209,8 @@
       "category": "proxy",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 72,
-        "mihomo_classical": 72
+        "surge_rules": 74,
+        "mihomo_classical": 74
       },
       "dist": {
         "surge_rules": "dist/surge/rules/proxy/polygon_rpc_proxy.list",

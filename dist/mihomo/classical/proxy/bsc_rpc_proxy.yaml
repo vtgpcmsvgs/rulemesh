@@ -57,6 +57,8 @@ payload:
   - "DOMAIN-WILDCARD,*.bsc-mainnet.public.blastapi.io"
   - "DOMAIN,bsc-mainnet.rpcfast.com"
   - "DOMAIN-WILDCARD,*.bsc-mainnet.rpcfast.com"
+  - "DOMAIN,bsc-rpc.keccak.io"
+  - "DOMAIN-WILDCARD,*.bsc-rpc.keccak.io"
   - "DOMAIN,bsc-rpc.publicnode.com"
   - "DOMAIN-WILDCARD,*.bsc-rpc.publicnode.com"
   - "DOMAIN,bsc-ws-node.nariox.org"
