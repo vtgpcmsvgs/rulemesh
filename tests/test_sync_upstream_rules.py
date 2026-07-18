@@ -737,6 +737,9 @@ class SyncFailureTests(unittest.TestCase):
         ), mock.patch(
             "sync_upstream_rules.load_existing_alicloud_official_snapshot",
             return_value=None,
+        ), mock.patch(
+            "sync_upstream_rules.running_in_github_actions",
+            return_value=False,
         ):
             changed, failed = sync_upstream_rules.sync_alicloud_snapshots(failures)
 
@@ -745,7 +748,9 @@ class SyncFailureTests(unittest.TestCase):
         self.assertEqual(failures[0].category, "缺少凭据")
         self.assertEqual(failures[0].resource, "alicloud/hk_ipv4.txt")
 
-    def test_sync_alicloud_snapshots_refreshes_bgp_without_local_credentials(self) -> None:
+    def test_sync_alicloud_snapshots_refreshes_bgp_outside_github_actions_without_credentials(
+        self,
+    ) -> None:
         failures: list[sync_upstream_rules.UpstreamFailure] = []
         snapshot = sync_upstream_rules.ALICLOUD_REGION_SNAPSHOTS[0]
         official_payload = json.loads(
@@ -774,11 +779,51 @@ class SyncFailureTests(unittest.TestCase):
         ), mock.patch(
             "sync_upstream_rules.validate_alicloud_snapshot_files",
             return_value=official_payload,
+        ), mock.patch(
+            "sync_upstream_rules.running_in_github_actions",
+            return_value=False,
         ):
             changed, failed = sync_upstream_rules.sync_alicloud_snapshots(failures)
 
         self.assertEqual((changed, failed), (0, 0))
         self.assertEqual(failures, [])
+
+    def test_sync_alicloud_snapshots_rejects_missing_credentials_in_github_actions(
+        self,
+    ) -> None:
+        failures: list[sync_upstream_rules.UpstreamFailure] = []
+        snapshot = sync_upstream_rules.ALICLOUD_REGION_SNAPSHOTS[0]
+        existing_payload = json.loads(
+            (
+                sync_upstream_rules.UPSTREAM_ROOT / snapshot.metadata_path
+            ).read_text(encoding="utf-8")
+        )
+
+        with mock.patch(
+            "sync_upstream_rules.resolve_alicloud_credentials",
+            return_value=None,
+        ), mock.patch(
+            "sync_upstream_rules.load_existing_alicloud_official_snapshot",
+            return_value=existing_payload,
+        ), mock.patch(
+            "sync_upstream_rules.running_in_github_actions",
+            return_value=True,
+        ), mock.patch(
+            "sync_upstream_rules.fetch_stable_alicloud_bgp_snapshot",
+        ) as mocked_bgp_fetch:
+            changed, failed = sync_upstream_rules.sync_alicloud_snapshots(failures)
+
+        self.assertEqual(
+            (changed, failed),
+            (0, len(sync_upstream_rules.ALICLOUD_REGION_SNAPSHOTS)),
+        )
+        self.assertEqual(
+            len(failures),
+            len(sync_upstream_rules.ALICLOUD_REGION_SNAPSHOTS),
+        )
+        self.assertEqual(failures[0].category, "缺少凭据")
+        self.assertEqual(failures[0].resource, snapshot.path.as_posix())
+        mocked_bgp_fetch.assert_not_called()
 
 
 if __name__ == "__main__":
