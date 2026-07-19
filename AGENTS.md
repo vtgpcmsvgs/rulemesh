@@ -55,6 +55,7 @@
 - 允许落盘的主机名只限关注目标和失败 `FINAL` 候选；设备、策略、DNS 答案、远端地址与事件只保留随机盐生成的不可逆摘要。全量请求去重键固定保留 1 小时加一次清理间隔，关注请求明细固定保留 36 小时，其余采样和建议索引默认保留 14 天
 - macOS LaunchAgent 使用 `com.rulemesh.surge-monitor`，运行副本位于 `~/Library/Application Support/RuleMesh/surge-monitor/runtime`，避免直接读取受 TCC 保护的仓库目录；修改监控程序或国内 DNS 分类清单后必须重新运行安装器同步运行副本
 - Codex 每日任务必须调用状态目录中的已安装运行副本与运行配置，只运行只读 `report` 并发送 `RM-INV-*`；不得在无人值守任务中运行 `collect`、接受 `RM-EXEC-*`、修改 Surge、编辑仓库、提交或推送
+- 飞书 Webhook 只能作为 Scheduled 日报的旁路提醒：默认由本地守护进程在每日 `09:05 Asia/Shanghai` 发送采集质量与待查看项数量，不发送证据、域名、`RM-*` ID 或配置。飞书回复永远不构成调查或执行授权；Webhook 配置 / 网络失败不得阻断采集、`report` 或 Scheduled，真实 URL / 签名密钥只允许保存在状态目录的私有 `config.json`
 
 ## 仓库默认流程
 

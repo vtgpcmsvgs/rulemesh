@@ -17,6 +17,15 @@
     "probe_seconds": 900,
     "retention_days": 14,
     "max_database_mb": 256,
+    "notifications": {
+      "feishu": {
+        "enabled": false,
+        "webhook_url": "",
+        "secret": "",
+        "daily_hour": 9,
+        "daily_minute": 5
+      }
+    },
     "probes": [
       {
         "name": "baidu",

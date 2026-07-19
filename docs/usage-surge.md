@@ -17,9 +17,9 @@
 
 如果 Surge Mac 长期承担 DHCP、网关与全局流量接管，建议安装独立的本地只读监控，持续区分“中国大陆网站因 DNS / 规则遗漏误入美国 `FINAL`”与“Google / ChatGPT 所用美国策略短时不可用”这两类问题。安装、数据结构与日报格式见 [docs/surge-local-monitoring.md](surge-local-monitoring.md)。
 
-该机制使用 macOS `launchd`，与 Surge 的交互只调用自带 `surge-cli`，不开放 HTTP API，不启用 MITM。默认节奏为请求 20 秒、DNS / 配置摘要 5 分钟、轻量主动探测 15 分钟；HMAC 请求去重键约保留 1 小时，关注请求明细 36 小时，其他摘要与建议索引 14 天。独立的 Codex automation 每日 `09:00 Asia/Shanghai` 从已安装运行副本读取脱敏报告并发送建议；采集缺失、失败或过期时停止网络优化判断。
+该机制使用 macOS `launchd`，与 Surge 的交互只调用自带 `surge-cli`，不开放 HTTP API，不启用 MITM。默认节奏为请求 20 秒、DNS / 配置摘要 5 分钟、轻量主动探测 15 分钟；HMAC 请求去重键约保留 1 小时，关注请求明细 36 小时，其他摘要与建议索引 14 天。独立的 Codex automation 每日 `09:00 Asia/Shanghai` 从已安装运行副本读取脱敏报告并把完整建议留在 Scheduled；可选飞书 Webhook 在 `09:05` 独立提醒采集质量和待查看项数量，不作为 Scheduled 成功回执。采集缺失、失败或过期时停止网络优化判断。
 
-隐私边界是只保存国内分类目标、Google / ChatGPT 受控依赖、配置中的主动探测主机及其子域、明确命中 `google_us` / `ai_us` 的美国平台目标与失败 `FINAL` 候选主机名，以及匿名客户端 / 策略 ID、规则类型、错误类别、计时和去重 / 关联所需的不可逆摘要；不得保存 URL 路径或查询、设备名或 IP、headers、body、原始 profile 或完整 CLI 输出。监控绝不自动执行 `set`、`reload`、`flush dns`、`switch-profile`、配置编辑或策略切换。日报的 `RM-INV-*` 只授权只读调查；调查后必须形成精确 `RM-EXEC-*`，经用户第二次明确批准才进入独立的执行与复测步骤。
+隐私边界是只保存国内分类目标、Google / ChatGPT 受控依赖、配置中的主动探测主机及其子域、明确命中 `google_us` / `ai_us` 的美国平台目标与失败 `FINAL` 候选主机名，以及匿名客户端 / 策略 ID、规则类型、错误类别、计时和去重 / 关联所需的不可逆摘要；不得保存 URL 路径或查询、设备名或 IP、headers、body、原始 profile 或完整 CLI 输出。飞书消息不包含证据、域名、`RM-*` ID、配置或密钥，Webhook 失败也不影响 Scheduled 日报。监控绝不自动执行 `set`、`reload`、`flush dns`、`switch-profile`、配置编辑或策略切换。日报的 `RM-INV-*` 只允许在 Scheduled 中批准只读调查；调查后必须形成精确 `RM-EXEC-*`，经用户第二次明确批准才进入独立的执行与复测步骤。
 
 ## 版本划分
 

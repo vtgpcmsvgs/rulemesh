@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import concurrent.futures
 import contextlib
 import datetime as dt
@@ -16,7 +17,9 @@ import sqlite3
 import subprocess
 import sys
 import time
+import urllib.error
 import urllib.parse
+import urllib.request
 from pathlib import Path
 from typing import Any, Iterable, Iterator, Mapping, Optional, Sequence
 
@@ -29,6 +32,13 @@ CN_DNS_DOMAINS_PATH = ROOT / "rules" / "dns" / "cn_dns_domains.list"
 REQUEST_DETAIL_RETENTION_HOURS = 36
 REQUEST_SEEN_RETENTION_SECONDS = 3600
 DEFAULT_MAX_DATABASE_MB = 256
+FEISHU_ALLOWED_HOSTS = {"open.feishu.cn", "open.larksuite.com"}
+FEISHU_WEBHOOK_PATH_RE = re.compile(r"^/open-apis/bot/v2/hook/[A-Za-z0-9-]{10,}$")
+FEISHU_MESSAGE_MAX_BYTES = 20 * 1024
+FEISHU_RESPONSE_MAX_BYTES = 64 * 1024
+FEISHU_RETRY_SECONDS = 15 * 60
+FEISHU_MAX_ATTEMPTS = 3
+FEISHU_TIMEZONE = dt.timezone(dt.timedelta(hours=8), "Asia/Shanghai")
 
 DOMESTIC_DNS_NEEDLES = (
     "223.5.5.5",
@@ -70,6 +80,15 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "probe_seconds": 900,
     "retention_days": 14,
     "max_database_mb": DEFAULT_MAX_DATABASE_MB,
+    "notifications": {
+        "feishu": {
+            "enabled": False,
+            "webhook_url": "",
+            "secret": "",
+            "daily_hour": 9,
+            "daily_minute": 5,
+        }
+    },
     "probes": [
         {
             "name": "baidu",
@@ -141,6 +160,68 @@ def _require_int(config: Mapping[str, Any], key: str, minimum: int) -> int:
     return value
 
 
+def normalize_feishu_config(config: Mapping[str, Any]) -> dict[str, Any]:
+    notifications = config.get("notifications")
+    if not isinstance(notifications, Mapping):
+        raise MonitorError("invalid_config_notifications")
+    feishu = notifications.get("feishu")
+    if not isinstance(feishu, Mapping):
+        raise MonitorError("invalid_config_feishu")
+
+    enabled = feishu.get("enabled")
+    webhook_url = feishu.get("webhook_url")
+    secret = feishu.get("secret")
+    if not isinstance(enabled, bool):
+        raise MonitorError("invalid_config_feishu_enabled")
+    if not isinstance(webhook_url, str) or not isinstance(secret, str):
+        raise MonitorError("invalid_config_feishu_credentials")
+    webhook_url = webhook_url.strip()
+    secret = secret.strip()
+    if enabled and not webhook_url:
+        raise MonitorError("missing_config_feishu_webhook")
+
+    if webhook_url:
+        try:
+            parsed = urllib.parse.urlsplit(webhook_url)
+            port = parsed.port
+        except ValueError as exc:
+            raise MonitorError("invalid_config_feishu_webhook") from exc
+        if (
+            parsed.scheme != "https"
+            or (parsed.hostname or "").lower() not in FEISHU_ALLOWED_HOSTS
+            or port not in (None, 443)
+            or parsed.username is not None
+            or parsed.password is not None
+            or not FEISHU_WEBHOOK_PATH_RE.fullmatch(parsed.path)
+            or bool(parsed.query)
+            or bool(parsed.fragment)
+        ):
+            raise MonitorError("invalid_config_feishu_webhook")
+
+    daily_hour = feishu.get("daily_hour")
+    daily_minute = feishu.get("daily_minute")
+    if (
+        isinstance(daily_hour, bool)
+        or not isinstance(daily_hour, int)
+        or not 0 <= daily_hour <= 23
+    ):
+        raise MonitorError("invalid_config_feishu_daily_hour")
+    if (
+        isinstance(daily_minute, bool)
+        or not isinstance(daily_minute, int)
+        or not 0 <= daily_minute <= 59
+    ):
+        raise MonitorError("invalid_config_feishu_daily_minute")
+
+    return {
+        "enabled": enabled,
+        "webhook_url": webhook_url,
+        "secret": secret,
+        "daily_hour": daily_hour,
+        "daily_minute": daily_minute,
+    }
+
+
 def load_config(path: Optional[Path]) -> dict[str, Any]:
     override: Mapping[str, Any] = {}
     if path and path.exists():
@@ -163,6 +244,20 @@ def load_config(path: Optional[Path]) -> dict[str, Any]:
     _require_int(config, "probe_seconds", 300)
     _require_int(config, "retention_days", 1)
     _require_int(config, "max_database_mb", 32)
+    try:
+        feishu_config = normalize_feishu_config(config)
+        feishu_config["config_error"] = ""
+    except MonitorError as exc:
+        # 通知通道是旁路能力，配置错误不得阻断采集、日报或 Scheduled 审批入口。
+        feishu_config = {
+            "enabled": False,
+            "webhook_url": "",
+            "secret": "",
+            "daily_hour": 9,
+            "daily_minute": 5,
+            "config_error": exc.code,
+        }
+    config["notifications"] = {"feishu": feishu_config}
 
     privacy = config.get("privacy")
     if not isinstance(privacy, Mapping):
@@ -607,8 +702,33 @@ def connect_database(state_dir: Path, readonly: bool = False) -> sqlite3.Connect
             status TEXT NOT NULL,
             evidence_json TEXT NOT NULL
         );
+
+        CREATE TABLE IF NOT EXISTS notification_deliveries (
+            local_day TEXT NOT NULL,
+            purpose TEXT NOT NULL,
+            attempts INTEGER NOT NULL,
+            delivered INTEGER NOT NULL,
+            last_ok INTEGER NOT NULL,
+            retryable INTEGER NOT NULL,
+            code TEXT NOT NULL,
+            sampled_at REAL NOT NULL,
+            PRIMARY KEY (local_day, purpose)
+        );
+        CREATE INDEX IF NOT EXISTS notification_deliveries_time_idx
+            ON notification_deliveries(sampled_at);
         """
         )
+        notification_columns = {
+            str(row["name"])
+            for row in connection.execute(
+                "PRAGMA table_info(notification_deliveries)"
+            ).fetchall()
+        }
+        if "last_ok" not in notification_columns:
+            connection.execute(
+                "ALTER TABLE notification_deliveries "
+                "ADD COLUMN last_ok INTEGER NOT NULL DEFAULT 0"
+            )
         privacy_vacuum_required = False
         request_columns = {
             str(row["name"])
@@ -1381,6 +1501,7 @@ def purge_old_data(
         ("runtime_events", "sampled_at"),
         ("health_events", "sampled_at"),
         ("recommendations", "last_seen"),
+        ("notification_deliveries", "sampled_at"),
     ):
         connection.execute("DELETE FROM " + table + " WHERE " + column + " < ?", (cutoff,))
     connection.commit()
@@ -1922,6 +2043,224 @@ def local_time_text(timestamp: float) -> str:
     return dt.datetime.fromtimestamp(timestamp).astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
 
 
+def feishu_time_text(timestamp: float) -> str:
+    return dt.datetime.fromtimestamp(timestamp, FEISHU_TIMEZONE).strftime(
+        "%Y-%m-%d %H:%M:%S Asia/Shanghai"
+    )
+
+
+def feishu_config(config: Mapping[str, Any]) -> Mapping[str, Any]:
+    notifications = config.get("notifications", {})
+    if not isinstance(notifications, Mapping):
+        return {}
+    value = notifications.get("feishu", {})
+    return value if isinstance(value, Mapping) else {}
+
+
+def build_feishu_sign(timestamp: str, secret: str) -> str:
+    key = "{}\n{}".format(timestamp, secret).encode("utf-8")
+    digest = hmac.new(key, digestmod=hashlib.sha256).digest()
+    return base64.b64encode(digest).decode("ascii")
+
+
+def build_feishu_payload(
+    message: str,
+    channel: Mapping[str, Any],
+    *,
+    timestamp: Optional[str] = None,
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "msg_type": "text",
+        "content": {"text": message},
+    }
+    secret = str(channel.get("secret", ""))
+    if secret:
+        effective_timestamp = timestamp or str(int(utc_now()))
+        payload["timestamp"] = effective_timestamp
+        payload["sign"] = build_feishu_sign(effective_timestamp, secret)
+    return payload
+
+
+def _feishu_business_code(payload: Mapping[str, Any]) -> Optional[int]:
+    value = payload.get("code")
+    if value is None:
+        value = payload.get("StatusCode")
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str) and value.strip().lstrip("-").isdigit():
+        return int(value.strip())
+    return None
+
+
+class _NoFeishuRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(
+        self,
+        req: Any,
+        fp: Any,
+        code: int,
+        msg: str,
+        headers: Any,
+        newurl: str,
+    ) -> None:
+        return None
+
+
+def send_feishu_message(
+    channel: Mapping[str, Any],
+    message: str,
+    *,
+    opener: Any = None,
+) -> tuple[bool, str, bool]:
+    """发送脱敏文本，返回 (成功, 状态码, 是否可重试)，绝不回显 Webhook。"""
+    if channel.get("config_error"):
+        return False, "feishu_config_error", False
+    if not bool(channel.get("enabled")) or not str(channel.get("webhook_url", "")):
+        return False, "feishu_not_configured", False
+
+    payload = build_feishu_payload(message, channel)
+    body = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    if len(body) > FEISHU_MESSAGE_MAX_BYTES:
+        return False, "feishu_message_too_large", False
+
+    request = urllib.request.Request(
+        str(channel["webhook_url"]),
+        data=body,
+        headers={
+            "Content-Type": "application/json; charset=utf-8",
+            "User-Agent": "RuleMesh-Surge-Monitor/1.0",
+        },
+        method="POST",
+    )
+    try:
+        open_request = opener
+        if open_request is None:
+            open_request = urllib.request.build_opener(_NoFeishuRedirect()).open
+        with open_request(request, timeout=15) as response:
+            response_body = response.read(FEISHU_RESPONSE_MAX_BYTES + 1)
+    except urllib.error.HTTPError as exc:
+        status = int(getattr(exc, "code", 0) or 0)
+        retryable = status == 429 or status >= 500
+        return False, "feishu_http_error", retryable
+    except (urllib.error.URLError, TimeoutError, OSError):
+        return False, "feishu_network_error", True
+
+    if len(response_body) > FEISHU_RESPONSE_MAX_BYTES:
+        return False, "feishu_response_too_large", False
+    try:
+        response_payload = json.loads(response_body.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return False, "feishu_invalid_response", False
+    if not isinstance(response_payload, Mapping):
+        return False, "feishu_invalid_response", False
+
+    code = _feishu_business_code(response_payload)
+    if code == 0:
+        return True, "ok", False
+    if code == 11232:
+        return False, "feishu_rate_limited", True
+    if code in {19021, 19022, 19024}:
+        return False, "feishu_security_rejected", False
+    return False, "feishu_business_error", False
+
+
+def local_day_key(timestamp: float) -> str:
+    return dt.datetime.fromtimestamp(timestamp, FEISHU_TIMEZONE).date().isoformat()
+
+
+def feishu_notification_due(
+    connection: sqlite3.Connection,
+    config: Mapping[str, Any],
+    now: Optional[float] = None,
+) -> bool:
+    channel = feishu_config(config)
+    if not bool(channel.get("enabled")) or channel.get("config_error"):
+        return False
+    sampled_at = now or utc_now()
+    local = dt.datetime.fromtimestamp(sampled_at, FEISHU_TIMEZONE)
+    scheduled = (int(channel["daily_hour"]), int(channel["daily_minute"]))
+    if (local.hour, local.minute) < scheduled:
+        return False
+
+    row = connection.execute(
+        """
+        SELECT attempts, delivered, retryable, sampled_at
+        FROM notification_deliveries
+        WHERE local_day = ? AND purpose = 'daily'
+        """,
+        (local_day_key(sampled_at),),
+    ).fetchone()
+    if row is None:
+        return True
+    if bool(row["delivered"]):
+        return False
+    if int(row["attempts"]) >= FEISHU_MAX_ATTEMPTS:
+        return False
+    if not bool(row["retryable"]):
+        return False
+    return sampled_at - float(row["sampled_at"]) >= FEISHU_RETRY_SECONDS
+
+
+def feishu_daily_delivery_state(
+    connection: sqlite3.Connection,
+    now: float,
+) -> tuple[int, bool, bool, float]:
+    row = connection.execute(
+        """
+        SELECT attempts, delivered, retryable, sampled_at
+        FROM notification_deliveries
+        WHERE local_day = ? AND purpose = 'daily'
+        """,
+        (local_day_key(now),),
+    ).fetchone()
+    if row is None:
+        return 0, False, True, 0.0
+    return (
+        int(row["attempts"]),
+        bool(row["delivered"]),
+        bool(row["retryable"]),
+        float(row["sampled_at"]),
+    )
+
+
+def record_feishu_result(
+    connection: sqlite3.Connection,
+    result: tuple[bool, str, bool],
+    sampled_at: Optional[float] = None,
+    *,
+    purpose: str = "daily",
+) -> None:
+    if purpose not in {"daily", "manual", "test"}:
+        raise ValueError("invalid_feishu_delivery_purpose")
+    effective_time = sampled_at or utc_now()
+    ok, code, retryable = result
+    connection.execute(
+        """
+        INSERT INTO notification_deliveries(
+            local_day, purpose, attempts, delivered, last_ok, retryable, code, sampled_at
+        ) VALUES (?, ?, 1, ?, ?, ?, ?, ?)
+        ON CONFLICT(local_day, purpose) DO UPDATE SET
+            attempts = notification_deliveries.attempts + 1,
+            delivered = MAX(notification_deliveries.delivered, excluded.delivered),
+            last_ok = excluded.last_ok,
+            retryable = excluded.retryable,
+            code = excluded.code,
+            sampled_at = excluded.sampled_at
+        """,
+        (
+            local_day_key(effective_time),
+            purpose,
+            int(ok),
+            int(ok),
+            int(retryable),
+            "test_ok" if purpose == "test" and ok else code,
+            effective_time,
+        ),
+    )
+    connection.commit()
+
+
 def data_quality(
     connection: sqlite3.Connection,
     config: Mapping[str, Any],
@@ -2033,6 +2372,45 @@ def quality_recommendation(quality: Mapping[str, Any]) -> dict[str, Any]:
         "只读核对 LaunchAgent 状态、运行副本版本、最近采集时间与有界错误日志；恢复连续新鲜样本后再生成网络建议。",
         "低：该调查不操作 Surge，也不改变规则、DNS 或策略组。",
     )
+
+
+def build_feishu_notification_message(
+    connection: sqlite3.Connection,
+    config: Mapping[str, Any],
+    hours: int = 24,
+    now: Optional[float] = None,
+    *,
+    test: bool = False,
+) -> str:
+    sampled_at = now or utc_now()
+    if test:
+        return "\n".join(
+            [
+                "RuleMesh Surge Webhook 测试",
+                "时间: " + feishu_time_text(sampled_at),
+                "状态: 飞书提醒通道已接通",
+                "查看与审批: Codex → Scheduled → Surge 每日网络健康建议",
+                "安全边界: 飞书仅用于提醒；飞书中的回复不构成任何调查或执行授权。",
+            ]
+        )
+
+    quality = data_quality(connection, config, sampled_at)
+    recommendations = (
+        analyze(connection, config, hours, sampled_at, persist=False)
+        if bool(quality["ok"])
+        else [quality_recommendation(quality)]
+    )
+    lines = [
+        "RuleMesh Surge 日报提醒",
+        "时间: " + feishu_time_text(sampled_at),
+        "采集质量: " + str(quality["status"]),
+        "待查看调查项: {} 项".format(len(recommendations)),
+        "查看与审批: Codex → Scheduled → Surge 每日网络健康建议",
+        "安全边界: 飞书只发送状态和数量，不发送证据、域名、RM ID 或配置；飞书回复不构成授权。",
+    ]
+    if not recommendations:
+        lines.insert(4, "摘要: 当前没有达到阈值的优化建议，完整日报仍保留在 Scheduled。")
+    return "\n".join(lines)
 
 
 def report_markdown(
@@ -2174,6 +2552,34 @@ def status_payload(connection: sqlite3.Connection, config: Mapping[str, Any]) ->
             if row
             else None
         )
+    channel = feishu_config(config)
+    notification_row = connection.execute(
+        """
+        SELECT sampled_at, purpose, delivered, last_ok, code
+        FROM notification_deliveries ORDER BY sampled_at DESC LIMIT 1
+        """
+    ).fetchone()
+    result["notification"] = {
+        "channel": "feishu",
+        "enabled": bool(channel.get("enabled")),
+        "schedule": "{:02d}:{:02d} Asia/Shanghai".format(
+            int(channel.get("daily_hour", 9)), int(channel.get("daily_minute", 5))
+        ),
+        "config_status": str(channel.get("config_error") or "ok")
+        if bool(channel.get("enabled")) or channel.get("config_error")
+        else "disabled",
+        "last": (
+            {
+                "sampled_at": local_time_text(float(notification_row["sampled_at"])),
+                "purpose": str(notification_row["purpose"]),
+                "ok": bool(notification_row["last_ok"]),
+                "delivered_today": bool(notification_row["delivered"]),
+                "code": str(notification_row["code"]),
+            }
+            if notification_row
+            else None
+        ),
+    }
     return result
 
 
@@ -2236,6 +2642,64 @@ def truncate_log_if_needed(path: Path, maximum_bytes: int = 1024 * 1024) -> None
         pass
 
 
+def complete_feishu_future(
+    connection: sqlite3.Connection,
+    future: concurrent.futures.Future[tuple[bool, str, bool]],
+    sampled_at: Optional[float] = None,
+) -> Optional[tuple[bool, str, bool]]:
+    try:
+        if not future.done():
+            return None
+        result = future.result()
+    except Exception:
+        result = (False, "feishu_internal_error", True)
+    try:
+        record_feishu_result(connection, result, sampled_at)
+    except Exception:
+        try:
+            connection.rollback()
+        except sqlite3.Error:
+            pass
+    try:
+        if result[0]:
+            print("[surge-monitor] feishu_webhook_sent", flush=True)
+        else:
+            print("[surge-monitor] " + result[1], file=sys.stderr, flush=True)
+    except Exception:
+        pass
+    return result
+
+
+def submit_feishu_notification(
+    connection: sqlite3.Connection,
+    config: Mapping[str, Any],
+    executor: concurrent.futures.ThreadPoolExecutor,
+    now: float,
+) -> Optional[concurrent.futures.Future[tuple[bool, str, bool]]]:
+    try:
+        if not feishu_notification_due(connection, config, now):
+            return None
+        message = build_feishu_notification_message(connection, config, now=now)
+        return executor.submit(send_feishu_message, feishu_config(config), message)
+    except Exception:
+        try:
+            record_feishu_result(
+                connection,
+                (False, "feishu_internal_error", False),
+                now,
+            )
+        except Exception:
+            try:
+                connection.rollback()
+            except sqlite3.Error:
+                pass
+        try:
+            print("[surge-monitor] feishu_internal_error", file=sys.stderr, flush=True)
+        except Exception:
+            pass
+        return None
+
+
 def run_daemon(connection: sqlite3.Connection, config: Mapping[str, Any], secret: bytes) -> int:
     if not bool(config["enabled"]):
         return 0
@@ -2256,58 +2720,164 @@ def run_daemon(connection: sqlite3.Connection, config: Mapping[str, Any], secret
     next_snapshot = 0.0
     next_probe = utc_now() + min(30, request_interval)
     next_purge = 0.0
+    channel = feishu_config(config)
+    notification_enabled = bool(channel.get("enabled")) and not channel.get("config_error")
+    notification_executor = None
+    if notification_enabled:
+        try:
+            notification_executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        except Exception:
+            print("[surge-monitor] feishu_internal_error", file=sys.stderr, flush=True)
+    notification_future: Optional[
+        concurrent.futures.Future[tuple[bool, str, bool]]
+    ] = None
+    next_notification_check = 0.0 if notification_executor is not None else float("inf")
+    notification_memory_day = local_day_key(utc_now())
+    try:
+        (
+            notification_memory_attempts,
+            notification_memory_delivered,
+            notification_memory_retryable,
+            notification_memory_last_attempt,
+        ) = feishu_daily_delivery_state(connection, utc_now())
+    except sqlite3.Error:
+        notification_memory_attempts = FEISHU_MAX_ATTEMPTS
+        notification_memory_delivered = False
+        notification_memory_retryable = False
+        notification_memory_last_attempt = 0.0
 
-    with daemon_lock(state_dir):
-        while not stop:
-            now = utc_now()
-            if now >= next_request:
-                try:
-                    collect_requests(connection, config, secret, cn_suffixes, now)
-                except (MonitorError, sqlite3.Error) as exc:
-                    code = exc.code if isinstance(exc, MonitorError) else "database_error"
+    try:
+        with daemon_lock(state_dir):
+            while not stop:
+                now = utc_now()
+                if now >= next_request:
                     try:
-                        record_health(connection, "request", False, code, 0, now)
-                        connection.commit()
+                        collect_requests(connection, config, secret, cn_suffixes, now)
+                    except (MonitorError, sqlite3.Error) as exc:
+                        code = exc.code if isinstance(exc, MonitorError) else "database_error"
+                        try:
+                            record_health(connection, "request", False, code, 0, now)
+                            connection.commit()
+                        except sqlite3.Error:
+                            connection.rollback()
+                    next_request = now + request_interval
+                if now >= next_snapshot:
+                    try:
+                        collect_snapshot(connection, config, secret, cn_suffixes, now)
                     except sqlite3.Error:
                         connection.rollback()
-                next_request = now + request_interval
-            if now >= next_snapshot:
-                try:
-                    collect_snapshot(connection, config, secret, cn_suffixes, now)
-                except sqlite3.Error:
-                    connection.rollback()
-                next_snapshot = now + snapshot_interval
-            if now >= next_probe:
-                try:
-                    collect_probes(connection, config, secret, now)
-                except (MonitorError, OSError, sqlite3.Error):
+                    next_snapshot = now + snapshot_interval
+                if now >= next_probe:
                     try:
-                        record_health(connection, "probe", False, "probe_exec_error", 0, now)
-                        connection.commit()
+                        collect_probes(connection, config, secret, now)
+                    except (MonitorError, OSError, sqlite3.Error):
+                        try:
+                            record_health(connection, "probe", False, "probe_exec_error", 0, now)
+                            connection.commit()
+                        except sqlite3.Error:
+                            connection.rollback()
+                    next_probe = now + probe_interval
+                if now >= next_purge:
+                    try:
+                        purge_old_data(
+                            connection,
+                            int(config["retention_days"]),
+                            now,
+                            int(config["max_database_mb"]),
+                        )
                     except sqlite3.Error:
                         connection.rollback()
-                next_probe = now + probe_interval
-            if now >= next_purge:
-                try:
-                    purge_old_data(
-                        connection,
-                        int(config["retention_days"]),
-                        now,
-                        int(config["max_database_mb"]),
+                    truncate_log_if_needed(state_dir / "monitor.stderr.log")
+                    if state_dir != DEFAULT_STATE_DIR:
+                        truncate_log_if_needed(DEFAULT_STATE_DIR / "monitor.stderr.log")
+                    next_purge = now + min(3600, snapshot_interval)
+                if notification_future is not None:
+                    try:
+                        notification_result = complete_feishu_future(
+                            connection, notification_future, now
+                        )
+                    except Exception:
+                        notification_result = (
+                            False,
+                            "feishu_internal_error",
+                            True,
+                        )
+                    if notification_result is not None:
+                        notification_memory_delivered = (
+                            notification_memory_delivered
+                            or bool(notification_result[0])
+                        )
+                        notification_memory_retryable = bool(
+                            notification_result[2]
+                        )
+                        notification_future = None
+                current_notification_day = local_day_key(now)
+                if current_notification_day != notification_memory_day:
+                    notification_memory_day = current_notification_day
+                    try:
+                        (
+                            notification_memory_attempts,
+                            notification_memory_delivered,
+                            notification_memory_retryable,
+                            notification_memory_last_attempt,
+                        ) = feishu_daily_delivery_state(connection, now)
+                    except sqlite3.Error:
+                        notification_memory_attempts = FEISHU_MAX_ATTEMPTS
+                        notification_memory_delivered = False
+                        notification_memory_retryable = False
+                        notification_memory_last_attempt = now
+                notification_memory_allows = (
+                    not notification_memory_delivered
+                    and notification_memory_attempts < FEISHU_MAX_ATTEMPTS
+                    and (
+                        notification_memory_attempts == 0
+                        or (
+                            notification_memory_retryable
+                            and now - notification_memory_last_attempt
+                            >= FEISHU_RETRY_SECONDS
+                        )
                     )
-                except sqlite3.Error:
-                    connection.rollback()
-                truncate_log_if_needed(state_dir / "monitor.stderr.log")
-                if state_dir != DEFAULT_STATE_DIR:
-                    truncate_log_if_needed(DEFAULT_STATE_DIR / "monitor.stderr.log")
-                next_purge = now + min(3600, snapshot_interval)
-            wake_at = min(next_request, next_snapshot, next_probe, next_purge)
-            time.sleep(max(0.2, min(1.0, wake_at - utc_now())))
+                )
+                if (
+                    notification_executor is not None
+                    and notification_future is None
+                    and notification_memory_allows
+                    and now >= next_notification_check
+                ):
+                    notification_future = submit_feishu_notification(
+                        connection,
+                        config,
+                        notification_executor,
+                        now,
+                    )
+                    if notification_future is not None:
+                        notification_memory_attempts += 1
+                        notification_memory_last_attempt = now
+                    next_notification_check = now + 60
+                wake_at = min(
+                    next_request,
+                    next_snapshot,
+                    next_probe,
+                    next_purge,
+                    next_notification_check,
+                )
+                time.sleep(max(0.2, min(1.0, wake_at - utc_now())))
+    finally:
+        if notification_executor is not None:
+            try:
+                notification_executor.shutdown(wait=True)
+            except Exception:
+                print("[surge-monitor] feishu_internal_error", file=sys.stderr, flush=True)
+        if notification_future is not None:
+            try:
+                complete_feishu_future(connection, notification_future)
+            except Exception:
+                print("[surge-monitor] feishu_internal_error", file=sys.stderr, flush=True)
     return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Surge 本地只读监控与脱敏建议生成器")
+    parser = argparse.ArgumentParser(description="Surge 本地只读监控、脱敏建议与旁路提醒工具")
     parser.add_argument(
         "--config",
         type=Path,
@@ -2321,6 +2891,9 @@ def build_parser() -> argparse.ArgumentParser:
     report_parser = subparsers.add_parser("report", help="输出脱敏监控报告")
     report_parser.add_argument("--hours", type=int, default=24, help="报告时间窗口，默认 24 小时")
     report_parser.add_argument("--format", choices=("markdown", "json"), default="markdown")
+    notify_parser = subparsers.add_parser("notify", help="向已配置的飞书机器人发送脱敏提醒")
+    notify_parser.add_argument("--hours", type=int, default=24, help="摘要时间窗口，默认 24 小时")
+    notify_parser.add_argument("--test", action="store_true", help="仅发送固定的脱敏连通性测试")
     subparsers.add_parser("status", help="输出各采集器最近状态")
     return parser
 
@@ -2399,6 +2972,25 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                     print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
                 else:
                     print(report_markdown(connection, config, args.hours), end="")
+                return 0
+            if args.command == "notify":
+                if args.hours < 1 or args.hours > int(config["retention_days"]) * 24:
+                    raise MonitorError("invalid_report_hours")
+                message = build_feishu_notification_message(
+                    connection,
+                    config,
+                    args.hours,
+                    test=bool(args.test),
+                )
+                result = send_feishu_message(feishu_config(config), message)
+                record_feishu_result(
+                    connection,
+                    result,
+                    purpose="test" if bool(args.test) else "manual",
+                )
+                if not result[0]:
+                    raise MonitorError(result[1])
+                print("[surge-monitor] feishu_webhook_sent")
                 return 0
             if args.command == "status":
                 print(json.dumps(status_payload(connection, config), ensure_ascii=False, indent=2, sort_keys=True))

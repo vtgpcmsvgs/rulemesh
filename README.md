@@ -315,6 +315,7 @@ python tools/build_rules.py
 - `alicloud.access_key_secret`
 - `alicloud.security_token`
 - `surge_monitor`：Surge 7×24 本地监控的脱敏运行参数、公共轻量探测目标与固定隐私边界；匿名化随机盐由运行时在本机自动生成，不写入配置样例
+- `surge_monitor.notifications.feishu`：可选的本机飞书日报提醒；真实 Webhook / 签名密钥只写入状态目录私有配置，公开样例保持空值
 
 约定如下：
 
@@ -348,9 +349,9 @@ python tools/build_rules.py
 
 长期承担 DHCP 与旁路由流量接管的 Surge Mac，可使用 [docs/surge-local-monitoring.md](docs/surge-local-monitoring.md) 中的本地监控闭环。该机制由 macOS `launchd` 启动，与 Surge 的交互只通过自带 `surge-cli` 读取请求、DNS、规则、策略与有效配置摘要；它不要求打开 HTTP API，也不启用 MITM。
 
-默认每 20 秒读取请求增量、每 5 分钟检查 DNS 与配置摘要、每 15 分钟执行轻量主动探测；全量 HMAC 去重键约保留 1 小时，关注请求明细保留 36 小时，探测、DNS 摘要、配置 / 健康审计与建议索引保留 14 天，数据库预算默认 256 MiB。独立的 Codex automation 每日 `09:00 Asia/Shanghai` 从已安装的运行副本读取脱敏报告并发送建议。落盘主机名只限国内分类目标、Google / ChatGPT 受控依赖、配置中的主动探测主机及其子域、明确命中 `google_us` / `ai_us` 的美国平台目标与失败 `FINAL` 候选；其余只保存匿名客户端与策略 ID、规则类型、错误类别、计时，以及去重和关联所需的不可逆摘要。不得保存 URL 路径或查询、设备名或 IP、headers、body、原始 profile 或完整 CLI 输出。
+默认每 20 秒读取请求增量、每 5 分钟检查 DNS 与配置摘要、每 15 分钟执行轻量主动探测；全量 HMAC 去重键约保留 1 小时，关注请求明细保留 36 小时，探测、DNS 摘要、配置 / 健康审计与建议索引保留 14 天，数据库预算默认 256 MiB。独立的 Codex automation 每日 `09:00 Asia/Shanghai` 从已安装的运行副本读取脱敏报告并把完整建议留在 Scheduled；可选飞书提醒由本地守护进程在 `09:05` 独立发送，只包含采集质量和待查看项数量，它不是 Scheduled 成功完成的回执。落盘主机名只限国内分类目标、Google / ChatGPT 受控依赖、配置中的主动探测主机及其子域、明确命中 `google_us` / `ai_us` 的美国平台目标与失败 `FINAL` 候选；其余只保存匿名客户端与策略 ID、规则类型、错误类别、计时，以及去重和关联所需的不可逆摘要。不得保存 URL 路径或查询、设备名或 IP、headers、body、原始 profile 或完整 CLI 输出。
 
-监控和日报只负责提出 `RM-INV-*` 调查建议；用户回复 `批准调查 RM-INV-*` 只授权只读深挖。调查形成精确 diff、风险、回滚与复测步骤后，必须另行生成 `RM-EXEC-*` 并获得第二次明确批准，才允许执行 `set`、`reload`、`flush dns`、`switch-profile`、配置编辑或策略切换。采集缺失、失败或过期时，日报暂停网络优化判断；获批后的变更仍要同时复测规则命中、IP 出口与 DNS 出口。
+监控和日报只负责提出 `RM-INV-*` 调查建议；用户只能在对应 Scheduled 任务中回复 `批准调查 RM-INV-*` 来授权只读深挖，飞书回复不计入审批。调查形成精确 diff、风险、回滚与复测步骤后，必须另行生成 `RM-EXEC-*` 并获得第二次明确批准，才允许执行 `set`、`reload`、`flush dns`、`switch-profile`、配置编辑或策略切换。采集缺失、失败或过期时，日报暂停网络优化判断；获批后的变更仍要同时复测规则命中、IP 出口与 DNS 出口。
 
 ## 维护建议
 

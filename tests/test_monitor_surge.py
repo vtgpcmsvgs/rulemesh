@@ -1,10 +1,17 @@
 from __future__ import annotations
 
+import base64
+import concurrent.futures
+import datetime as dt
+import hashlib
+import hmac
 import json
 import sqlite3
 import tempfile
 import unittest
+import urllib.error
 from pathlib import Path
+from unittest import mock
 
 import sys
 
@@ -111,6 +118,406 @@ class MonitorSurgeTest(unittest.TestCase):
         loaded = monitor_surge.load_config(config_path)
         self.assertEqual(loaded["request_poll_seconds"], 20)
         self.assertEqual(Path(loaded["state_dir"]), self.state_dir.resolve())
+
+    def test_load_config_accepts_private_feishu_notification(self) -> None:
+        config_path = Path(self.temporary.name) / "config.json"
+        config_path.write_text(
+            json.dumps(
+                {
+                    "surge_monitor": {
+                        "state_dir": str(self.state_dir),
+                        "notifications": {
+                            "feishu": {
+                                "enabled": True,
+                                "webhook_url": "https://open.feishu.cn/open-apis/bot/v2/hook/00000000-0000-0000-0000-000000000000",
+                                "daily_hour": 9,
+                                "daily_minute": 5,
+                            }
+                        },
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        loaded = monitor_surge.load_config(config_path)
+        channel = monitor_surge.feishu_config(loaded)
+        self.assertTrue(channel["enabled"])
+        self.assertEqual(channel["config_error"], "")
+
+    def test_invalid_feishu_config_does_not_block_monitor(self) -> None:
+        config_path = Path(self.temporary.name) / "config.json"
+        config_path.write_text(
+            json.dumps(
+                {
+                    "surge_monitor": {
+                        "state_dir": str(self.state_dir),
+                        "notifications": {
+                            "feishu": {
+                                "enabled": True,
+                                "webhook_url": "http://example.test/private",
+                            }
+                        },
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        loaded = monitor_surge.load_config(config_path)
+        channel = monitor_surge.feishu_config(loaded)
+        self.assertFalse(channel["enabled"])
+        self.assertEqual(channel["config_error"], "invalid_config_feishu_webhook")
+        self.assertEqual(loaded["request_poll_seconds"], 20)
+
+    def test_feishu_payload_uses_official_text_shape_and_optional_sign(self) -> None:
+        timestamp = "1700000000"
+        secret = "local-secret"
+        payload = monitor_surge.build_feishu_payload(
+            "监控提醒",
+            {"secret": secret},
+            timestamp=timestamp,
+        )
+        expected = base64.b64encode(
+            hmac.new(
+                (timestamp + "\n" + secret).encode("utf-8"),
+                digestmod=hashlib.sha256,
+            ).digest()
+        ).decode("ascii")
+        self.assertEqual(payload["msg_type"], "text")
+        self.assertEqual(payload["content"], {"text": "监控提醒"})
+        self.assertEqual(payload["timestamp"], timestamp)
+        self.assertEqual(payload["sign"], expected)
+
+    def test_send_feishu_message_validates_business_response(self) -> None:
+        class FakeResponse:
+            def __init__(self, body: bytes) -> None:
+                self.body = body
+
+            def __enter__(self) -> "FakeResponse":
+                return self
+
+            def __exit__(self, *_args: object) -> None:
+                return None
+
+            def read(self, _maximum: int) -> bytes:
+                return self.body
+
+        channel = {
+            "enabled": True,
+            "webhook_url": "https://open.feishu.cn/open-apis/bot/v2/hook/00000000-0000-0000-0000-000000000000",
+            "secret": "",
+            "config_error": "",
+        }
+        captured: list[object] = []
+
+        def successful_opener(request: object, timeout: int) -> FakeResponse:
+            captured.extend((request, timeout))
+            return FakeResponse(b'{"code":0,"msg":"success"}')
+
+        self.assertEqual(
+            monitor_surge.send_feishu_message(channel, "测试", opener=successful_opener),
+            (True, "ok", False),
+        )
+        request = captured[0]
+        self.assertEqual(getattr(request, "method"), "POST")
+        self.assertNotIn("00000000", getattr(request, "data").decode("utf-8"))
+
+        def rejected_opener(_request: object, timeout: int) -> FakeResponse:
+            self.assertEqual(timeout, 15)
+            return FakeResponse(b'{"code":19024,"msg":"keyword missing"}')
+
+        self.assertEqual(
+            monitor_surge.send_feishu_message(channel, "测试", opener=rejected_opener),
+            (False, "feishu_security_rejected", False),
+        )
+
+    def test_send_feishu_message_classifies_transport_failures(self) -> None:
+        channel = {
+            "enabled": True,
+            "webhook_url": "https://open.feishu.cn/open-apis/bot/v2/hook/00000000-0000-0000-0000-000000000000",
+            "secret": "",
+            "config_error": "",
+        }
+
+        def http_error(status: int) -> object:
+            def opener(_request: object, timeout: int) -> object:
+                self.assertEqual(timeout, 15)
+                raise urllib.error.HTTPError(
+                    "https://open.feishu.cn/redacted",
+                    status,
+                    "failure",
+                    None,
+                    None,
+                )
+
+            return opener
+
+        self.assertEqual(
+            monitor_surge.send_feishu_message(channel, "测试", opener=http_error(302)),
+            (False, "feishu_http_error", False),
+        )
+        self.assertEqual(
+            monitor_surge.send_feishu_message(channel, "测试", opener=http_error(429)),
+            (False, "feishu_http_error", True),
+        )
+        self.assertEqual(
+            monitor_surge.send_feishu_message(channel, "测试", opener=http_error(503)),
+            (False, "feishu_http_error", True),
+        )
+
+        def network_error(_request: object, timeout: int) -> object:
+            self.assertEqual(timeout, 15)
+            raise urllib.error.URLError("offline")
+
+        self.assertEqual(
+            monitor_surge.send_feishu_message(channel, "测试", opener=network_error),
+            (False, "feishu_network_error", True),
+        )
+        self.assertIsNone(
+            monitor_surge._NoFeishuRedirect().redirect_request(
+                object(), None, 302, "redirect", {}, "https://example.test/"
+            )
+        )
+
+    def test_feishu_daily_delivery_deduplicates_and_retries(self) -> None:
+        self.config = monitor_surge.deep_merge(
+            self.config,
+            {
+                "notifications": {
+                    "feishu": {
+                        "enabled": True,
+                        "webhook_url": "https://open.feishu.cn/open-apis/bot/v2/hook/00000000-0000-0000-0000-000000000000",
+                        "config_error": "",
+                    }
+                }
+            },
+        )
+        before = dt.datetime(2026, 7, 20, 9, 4, tzinfo=monitor_surge.FEISHU_TIMEZONE).timestamp()
+        due = dt.datetime(2026, 7, 20, 9, 5, tzinfo=monitor_surge.FEISHU_TIMEZONE).timestamp()
+        self.assertFalse(monitor_surge.feishu_notification_due(self.connection, self.config, before))
+        self.assertTrue(monitor_surge.feishu_notification_due(self.connection, self.config, due))
+
+        monitor_surge.record_feishu_result(
+            self.connection,
+            (False, "feishu_network_error", True),
+            due,
+            purpose="daily",
+        )
+        self.assertFalse(
+            monitor_surge.feishu_notification_due(self.connection, self.config, due + 899)
+        )
+        self.assertTrue(
+            monitor_surge.feishu_notification_due(self.connection, self.config, due + 900)
+        )
+        monitor_surge.record_feishu_result(
+            self.connection,
+            (True, "ok", False),
+            due + 900,
+            purpose="daily",
+        )
+        self.assertFalse(
+            monitor_surge.feishu_notification_due(self.connection, self.config, due + 1800)
+        )
+
+    def test_feishu_test_delivery_does_not_consume_daily_slot(self) -> None:
+        self.config = monitor_surge.deep_merge(
+            self.config,
+            {
+                "notifications": {
+                    "feishu": {
+                        "enabled": True,
+                        "webhook_url": "https://open.feishu.cn/open-apis/bot/v2/hook/00000000-0000-0000-0000-000000000000",
+                        "config_error": "",
+                    }
+                }
+            },
+        )
+        due = dt.datetime(2026, 7, 20, 9, 5, tzinfo=monitor_surge.FEISHU_TIMEZONE).timestamp()
+        monitor_surge.record_feishu_result(
+            self.connection,
+            (True, "ok", False),
+            due,
+            purpose="test",
+        )
+        self.assertTrue(monitor_surge.feishu_notification_due(self.connection, self.config, due))
+
+    def test_feishu_daily_stops_after_three_failures_and_resets_next_day(self) -> None:
+        self.config = monitor_surge.deep_merge(
+            self.config,
+            {
+                "notifications": {
+                    "feishu": {
+                        "enabled": True,
+                        "webhook_url": "https://open.feishu.cn/open-apis/bot/v2/hook/00000000-0000-0000-0000-000000000000",
+                        "config_error": "",
+                    }
+                }
+            },
+        )
+        due = dt.datetime(2026, 7, 20, 9, 5, tzinfo=monitor_surge.FEISHU_TIMEZONE).timestamp()
+        for offset in (0, 900, 1800):
+            monitor_surge.record_feishu_result(
+                self.connection,
+                (False, "feishu_network_error", True),
+                due + offset,
+                purpose="daily",
+            )
+        self.assertFalse(
+            monitor_surge.feishu_notification_due(self.connection, self.config, due + 2700)
+        )
+        next_day = due + 86400
+        self.assertTrue(
+            monitor_surge.feishu_notification_due(self.connection, self.config, next_day)
+        )
+
+    def test_feishu_message_and_status_never_expose_private_values(self) -> None:
+        self.config = monitor_surge.deep_merge(
+            self.config,
+            {
+                "notifications": {
+                    "feishu": {
+                        "enabled": True,
+                        "webhook_url": "https://open.feishu.cn/open-apis/bot/v2/hook/private-secret-value",
+                        "secret": "signing-secret-value",
+                        "config_error": "",
+                    }
+                }
+            },
+        )
+        message = monitor_surge.build_feishu_notification_message(
+            self.connection,
+            self.config,
+            now=1_700_000_000,
+        )
+        self.assertNotIn("RM-INV", message)
+        self.assertNotIn("private-secret-value", message)
+        self.assertNotIn("signing-secret-value", message)
+        self.assertIn("Scheduled", message)
+        serialized = json.dumps(
+            monitor_surge.status_payload(self.connection, self.config),
+            ensure_ascii=False,
+        )
+        self.assertNotIn("private-secret-value", serialized)
+        self.assertNotIn("signing-secret-value", serialized)
+
+    def test_feishu_message_uses_fixed_whitelist_even_with_sensitive_analysis(self) -> None:
+        sensitive = {
+            "recommendation_id": "RM-INV-SENSITIVE-ID",
+            "title": "包含 sensitive.example 的标题",
+            "subject": "sensitive.example",
+            "evidence": {"hostname": "sensitive.example", "token": "private-token"},
+        }
+        with mock.patch.object(
+            monitor_surge,
+            "data_quality",
+            return_value={"ok": True, "status": "healthy", "issues": [], "latest": {}},
+        ), mock.patch.object(monitor_surge, "analyze", return_value=[sensitive]):
+            message = monitor_surge.build_feishu_notification_message(
+                self.connection,
+                self.config,
+                now=1_700_000_000,
+            )
+        self.assertIn("待查看调查项: 1 项", message)
+        for forbidden in ("RM-INV", "sensitive.example", "private-token", "包含"):
+            self.assertNotIn(forbidden, message)
+
+    def test_report_never_calls_webhook_when_notification_is_invalid(self) -> None:
+        config = monitor_surge.deep_merge(
+            self.config,
+            {
+                "notifications": {
+                    "feishu": {
+                        "enabled": False,
+                        "config_error": "invalid_config_feishu_webhook",
+                    }
+                }
+            },
+        )
+        with mock.patch.object(monitor_surge, "send_feishu_message") as sender:
+            report = monitor_surge.report_markdown(
+                self.connection,
+                config,
+                hours=24,
+                now=1_700_000_000,
+            )
+        sender.assert_not_called()
+        self.assertIn("RuleMesh Surge 本地监控日报", report)
+
+    def test_notification_side_channel_exceptions_are_contained(self) -> None:
+        now = dt.datetime(2026, 7, 20, 9, 5, tzinfo=monitor_surge.FEISHU_TIMEZONE).timestamp()
+
+        class BrokenExecutor:
+            def submit(self, *_args: object) -> object:
+                raise RuntimeError("submit failed")
+
+        config = monitor_surge.deep_merge(
+            self.config,
+            {
+                "notifications": {
+                    "feishu": {
+                        "enabled": True,
+                        "webhook_url": "https://open.feishu.cn/open-apis/bot/v2/hook/00000000-0000-0000-0000-000000000000",
+                        "config_error": "",
+                    }
+                }
+            },
+        )
+        future = monitor_surge.submit_feishu_notification(
+            self.connection,
+            config,
+            BrokenExecutor(),
+            now,
+        )
+        self.assertIsNone(future)
+        row = self.connection.execute(
+            "SELECT code, retryable FROM notification_deliveries "
+            "WHERE local_day = ? AND purpose = 'daily'",
+            (monitor_surge.local_day_key(now),),
+        ).fetchone()
+        self.assertEqual((row["code"], row["retryable"]), ("feishu_internal_error", 0))
+
+        raised: concurrent.futures.Future[tuple[bool, str, bool]] = (
+            concurrent.futures.Future()
+        )
+        raised.set_exception(RuntimeError("sender failed"))
+        self.assertEqual(
+            monitor_surge.complete_feishu_future(self.connection, raised, now + 1),
+            (False, "feishu_internal_error", True),
+        )
+
+        class TransitionFuture:
+            def __init__(self) -> None:
+                self.done_calls = 0
+
+            def done(self) -> bool:
+                self.done_calls += 1
+                return self.done_calls >= 2
+
+            def result(self) -> tuple[bool, str, bool]:
+                return True, "ok", False
+
+        transition = TransitionFuture()
+        with mock.patch.object(
+            monitor_surge,
+            "record_feishu_result",
+            side_effect=sqlite3.OperationalError("ledger unavailable"),
+        ):
+            self.assertIsNone(
+                monitor_surge.complete_feishu_future(
+                    self.connection,
+                    transition,
+                    now + 2,
+                )
+            )
+            self.assertEqual(transition.done_calls, 1)
+            self.assertEqual(
+                monitor_surge.complete_feishu_future(
+                    self.connection,
+                    transition,
+                    now + 3,
+                ),
+                (True, "ok", False),
+            )
+            self.assertEqual(transition.done_calls, 2)
 
     def test_load_config_rejects_string_booleans(self) -> None:
         for payload, code in (
@@ -793,6 +1200,12 @@ FINAL,US,dns-failed
     def test_purge_enforces_hard_database_budget(self) -> None:
         now = 1_700_300_000
         large_answer = "x" * 700
+        monitor_surge.record_feishu_result(
+            self.connection,
+            (True, "ok", False),
+            now,
+            purpose="daily",
+        )
         self.connection.executemany(
             """
             INSERT INTO dns_samples(
@@ -827,6 +1240,13 @@ FINAL,US,dns-failed
             "SELECT ok, code FROM health_events WHERE component = 'storage' ORDER BY id DESC LIMIT 1"
         ).fetchone()
         self.assertEqual((storage["ok"], storage["code"]), (0, "budget_compacted"))
+        delivery = self.connection.execute(
+            "SELECT delivered FROM notification_deliveries "
+            "WHERE local_day = ? AND purpose = 'daily'",
+            (monitor_surge.local_day_key(now),),
+        ).fetchone()
+        self.assertIsNotNone(delivery)
+        self.assertEqual(delivery["delivered"], 1)
 
     def test_budget_exceeded_applies_collection_backpressure(self) -> None:
         monitor_surge.record_health(

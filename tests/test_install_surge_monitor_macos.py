@@ -225,6 +225,38 @@ class InstallSurgeMonitorMacosTests(unittest.TestCase):
         )
         self.assertIn("-lint", self.plutil_log.read_text(encoding="utf-8"))
 
+    def test_install_tightens_existing_runtime_config_permissions(self) -> None:
+        self.state_dir.mkdir(parents=True)
+        config_path = self.state_dir / "config.json"
+        secret_marker = "SENSITIVE_RUNTIME_WEBHOOK_SECRET"
+        config_path.write_text(
+            '{"surge_monitor":{"enabled":true,"notifications":{"feishu":{"secret":"'
+            + secret_marker
+            + '"}}}}\n',
+            encoding="utf-8",
+        )
+        config_path.chmod(0o644)
+
+        result = self.run_installer()
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(config_path.stat().st_mode & 0o777, 0o600)
+        self.assertNotIn(secret_marker, result.stdout)
+        self.assertNotIn(secret_marker, result.stderr)
+        self.assertNotIn(secret_marker, self.plist_path.read_text(encoding="utf-8"))
+
+    def test_install_rejects_runtime_config_symlink(self) -> None:
+        self.state_dir.mkdir(parents=True)
+        private_target = Path(self.temp_dir.name) / "外部私有配置.json"
+        private_target.write_text('{"surge_monitor":{"enabled":true}}\n', encoding="utf-8")
+        (self.state_dir / "config.json").symlink_to(private_target)
+
+        result = self.run_installer()
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("拒绝符号链接", result.stderr)
+        self.assertFalse(self.plist_path.exists())
+
     def test_install_resolves_symlink_to_absolute_repository_path(self) -> None:
         link_dir = Path(self.temp_dir.name) / "快捷方式"
         link_dir.mkdir()

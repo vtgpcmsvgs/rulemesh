@@ -159,6 +159,11 @@ install_agent() {
 
     mkdir -p "$LAUNCH_AGENTS_DIR" "$STATE_DIR" "$RUNTIME_TOOLS_DIR" "$RUNTIME_DNS_DIR"
     chmod 700 "$STATE_DIR"
+    if [ -e "$RUNTIME_CONFIG" ] || [ -L "$RUNTIME_CONFIG" ]; then
+        [ -f "$RUNTIME_CONFIG" ] && [ ! -L "$RUNTIME_CONFIG" ] \
+            || die "运行配置必须是状态目录中的普通文件，拒绝符号链接或其他类型"
+        chmod 600 "$RUNTIME_CONFIG"
+    fi
     touch "$STDOUT_PATH" "$STDERR_PATH"
     chmod 600 "$STDOUT_PATH" "$STDERR_PATH"
     if ! "$PYTHON_BIN" -c 'import pathlib,sys; p=pathlib.Path(sys.argv[1]); compile(p.read_bytes(), str(p), "exec")' "$SOURCE_MONITOR_SCRIPT"; then
