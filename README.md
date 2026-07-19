@@ -119,6 +119,7 @@ python tools/build_rules.py
 接入示例见：
 
 - [docs/usage-surge.md](docs/usage-surge.md)
+- [docs/surge-local-monitoring.md](docs/surge-local-monitoring.md)
 - [docs/usage-mihomo.md](docs/usage-mihomo.md)
 - [docs/examples/surge-public.conf](docs/examples/surge-public.conf)
 - [docs/examples/mihomo-public.yaml](docs/examples/mihomo-public.yaml)
@@ -313,6 +314,7 @@ python tools/build_rules.py
 - `alicloud.access_key_id`
 - `alicloud.access_key_secret`
 - `alicloud.security_token`
+- `surge_monitor`：Surge 7×24 本地监控的脱敏运行参数、公共轻量探测目标与固定隐私边界；匿名化随机盐由运行时在本机自动生成，不写入配置样例
 
 约定如下：
 
@@ -341,6 +343,14 @@ python tools/build_rules.py
 - 这组私有订阅域名同步规则只记录在本地目录与私有文档约定中，不回写公开 `rules/`、`dist/` 或公开模板
 - 详细维护方式见 [docs/private-subscription-direct-sync.md](docs/private-subscription-direct-sync.md)
 - 若私有配置结构发生变化，必须同步更新 `.rulemesh.local.example.json` 与相关文档，但只能提交脱敏占位值
+
+## Surge 7×24 本地监控
+
+长期承担 DHCP 与旁路由流量接管的 Surge Mac，可使用 [docs/surge-local-monitoring.md](docs/surge-local-monitoring.md) 中的本地监控闭环。该机制由 macOS `launchd` 启动，与 Surge 的交互只通过自带 `surge-cli` 读取请求、DNS、规则、策略与有效配置摘要；它不要求打开 HTTP API，也不启用 MITM。
+
+默认每 20 秒读取请求增量、每 5 分钟检查 DNS 与配置摘要、每 15 分钟执行轻量主动探测；全量 HMAC 去重键约保留 1 小时，关注请求明细保留 36 小时，探测、DNS 摘要、配置 / 健康审计与建议索引保留 14 天，数据库预算默认 256 MiB。独立的 Codex automation 每日 `09:00 Asia/Shanghai` 从已安装的运行副本读取脱敏报告并发送建议。落盘主机名只限国内分类目标、Google / ChatGPT 受控依赖、配置中的主动探测主机及其子域、明确命中 `google_us` / `ai_us` 的美国平台目标与失败 `FINAL` 候选；其余只保存匿名客户端与策略 ID、规则类型、错误类别、计时，以及去重和关联所需的不可逆摘要。不得保存 URL 路径或查询、设备名或 IP、headers、body、原始 profile 或完整 CLI 输出。
+
+监控和日报只负责提出 `RM-INV-*` 调查建议；用户回复 `批准调查 RM-INV-*` 只授权只读深挖。调查形成精确 diff、风险、回滚与复测步骤后，必须另行生成 `RM-EXEC-*` 并获得第二次明确批准，才允许执行 `set`、`reload`、`flush dns`、`switch-profile`、配置编辑或策略切换。采集缺失、失败或过期时，日报暂停网络优化判断；获批后的变更仍要同时复测规则命中、IP 出口与 DNS 出口。
 
 ## 维护建议
 

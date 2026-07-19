@@ -7,5 +7,55 @@
     "access_key_id": "请替换为本地阿里云 AccessKey ID；如仅依赖 GitHub Actions 可删除整个 alicloud 节点",
     "access_key_secret": "请替换为本地阿里云 AccessKey Secret",
     "security_token": "可选；使用 STS 时再填写"
+  },
+  "surge_monitor": {
+    "enabled": false,
+    "surge_cli_path": "/Applications/Surge.app/Contents/Applications/surge-cli",
+    "state_dir": "",
+    "request_poll_seconds": 20,
+    "snapshot_seconds": 300,
+    "probe_seconds": 900,
+    "retention_days": 14,
+    "max_database_mb": 256,
+    "probes": [
+      {
+        "name": "baidu",
+        "category": "domestic",
+        "url": "https://www.baidu.com/",
+        "accepted_status": [200, 301, 302, 403]
+      },
+      {
+        "name": "qq",
+        "category": "domestic",
+        "url": "https://www.qq.com/",
+        "accepted_status": [200, 301, 302, 403]
+      },
+      {
+        "name": "google",
+        "category": "google",
+        "url": "https://www.google.com/generate_204",
+        "accepted_status": [204]
+      },
+      {
+        "name": "chatgpt",
+        "category": "openai",
+        "url": "https://chatgpt.com/",
+        "accepted_status": [200, 301, 302, 307, 308, 403, 429]
+      }
+    ],
+    "thresholds": {
+      "minimum_samples": 5,
+      "minimum_failures": 3,
+      "failure_ratio": 0.2,
+      "final_hit_count": 5,
+      "dns_slow_ms": 1000,
+      "connect_slow_ms": 3000,
+      "total_slow_ms": 10000
+    },
+    "privacy": {
+      "store_final_hostnames": true,
+      "store_url_paths_queries": false,
+      "store_device_names_addresses": false
+    }
   }
 }

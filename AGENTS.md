@@ -47,6 +47,15 @@
 - Surge `[Host]` 引用 `proxy-node-domains` 时，必须使用 Surge 生产设备可直接访问的 Sub-Store 分享文件 URL；不要把未经同网络验证的 `https://sub.store/api/file/proxy-node-domains` 写进生产配置
 - 涉及代理、旁路由、Surge、Mihomo、Sub-Store、DNS、DoH、fake-ip、mapping、Tun、透明代理或规则分流时，默认同时检查 DNS 出口；不能只验证“网页能打开”
 
+## 本地 Surge 监控约束
+
+- `tools/monitor_surge.py` 与 `tools/install_surge_monitor_macos.sh` 组成只读监控层；采集器只能调用 Surge CLI 的 `dump` 类命令与公共轻量 HTTPS 探测，不得自动执行 `set`、`reload`、`flush dns`、`switch-profile`、策略切换、外部资源更新或配置编辑
+- 日报只能生成 `RM-INV-*`，状态为 `pending_investigation_approval`；用户回复 `批准调查 RM-INV-*` 只授权只读调查，不能授权任何变更。调查形成精确 diff、风险、回滚与复测步骤后，必须另行生成不可变的 `RM-EXEC-*` 并获得第二次明确批准才可实施
+- 原始 CLI 输出只能在内存中解析；不得落盘 URL 路径 / 查询、设备名、MAC / 客户端 IP、真实策略 / 节点名、header、body、原始 profile、订阅 URL 或密钥
+- 允许落盘的主机名只限关注目标和失败 `FINAL` 候选；设备、策略、DNS 答案、远端地址与事件只保留随机盐生成的不可逆摘要。全量请求去重键固定保留 1 小时加一次清理间隔，关注请求明细固定保留 36 小时，其余采样和建议索引默认保留 14 天
+- macOS LaunchAgent 使用 `com.rulemesh.surge-monitor`，运行副本位于 `~/Library/Application Support/RuleMesh/surge-monitor/runtime`，避免直接读取受 TCC 保护的仓库目录；修改监控程序或国内 DNS 分类清单后必须重新运行安装器同步运行副本
+- Codex 每日任务必须调用状态目录中的已安装运行副本与运行配置，只运行只读 `report` 并发送 `RM-INV-*`；不得在无人值守任务中运行 `collect`、接受 `RM-EXEC-*`、修改 Surge、编辑仓库、提交或推送
+
 ## 仓库默认流程
 
 - 动手前先按“源规则、上游登记、公开文档/模板、构建与检查脚本、私有同步项”给本次任务分类；高风险联动没分清前，不要直接编辑

@@ -7,10 +7,19 @@
 - 国内业务域名 DNS 清单入口：`dist/surge/dns/cn_dns_domains.list`
 - 代理组过滤方法论：[`docs/proxy-group-filter-methodology.md`](proxy-group-filter-methodology.md)
 - DNS 防泄漏方法论：[`docs/network-security/dns-leak-prevention.md`](network-security/dns-leak-prevention.md)
+- 7×24 本地监控与审批闭环：[`docs/surge-local-monitoring.md`](surge-local-monitoring.md)
 
 这个模板是基于本地长期使用的 Surge 配置整理出来的公开版，保留了总开关、区域自动切换、拒绝规则、直连规则与 IP 规则的完整结构，但移除了不适合公开仓库的个人化部分。
 
 > 重要边界：Surge 可以继续保留当前 `[Host] + 海外全局 DNS + 国内 bootstrap 例外` 的复杂 DNS 方案；[docs/mihomo-tun-dns-methodology.md](mihomo-tun-dns-methodology.md) 里针对两份 Mihomo 私有 provider 配置的“单一 DNS 真相”红线，不适用于 Surge，也不要反向把 Surge 这套复杂 DNS 抄回 Mihomo 私有配置。
+
+## 7×24 本地监控
+
+如果 Surge Mac 长期承担 DHCP、网关与全局流量接管，建议安装独立的本地只读监控，持续区分“中国大陆网站因 DNS / 规则遗漏误入美国 `FINAL`”与“Google / ChatGPT 所用美国策略短时不可用”这两类问题。安装、数据结构与日报格式见 [docs/surge-local-monitoring.md](surge-local-monitoring.md)。
+
+该机制使用 macOS `launchd`，与 Surge 的交互只调用自带 `surge-cli`，不开放 HTTP API，不启用 MITM。默认节奏为请求 20 秒、DNS / 配置摘要 5 分钟、轻量主动探测 15 分钟；HMAC 请求去重键约保留 1 小时，关注请求明细 36 小时，其他摘要与建议索引 14 天。独立的 Codex automation 每日 `09:00 Asia/Shanghai` 从已安装运行副本读取脱敏报告并发送建议；采集缺失、失败或过期时停止网络优化判断。
+
+隐私边界是只保存国内分类目标、Google / ChatGPT 受控依赖、配置中的主动探测主机及其子域、明确命中 `google_us` / `ai_us` 的美国平台目标与失败 `FINAL` 候选主机名，以及匿名客户端 / 策略 ID、规则类型、错误类别、计时和去重 / 关联所需的不可逆摘要；不得保存 URL 路径或查询、设备名或 IP、headers、body、原始 profile 或完整 CLI 输出。监控绝不自动执行 `set`、`reload`、`flush dns`、`switch-profile`、配置编辑或策略切换。日报的 `RM-INV-*` 只授权只读调查；调查后必须形成精确 `RM-EXEC-*`，经用户第二次明确批准才进入独立的执行与复测步骤。
 
 ## 版本划分
 
