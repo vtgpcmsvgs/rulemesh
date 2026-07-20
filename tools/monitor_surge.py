@@ -1789,13 +1789,13 @@ def analyze(
                AVG(total_ms) AS avg_total_ms,
                MAX(total_ms) AS max_total_ms,
                SUM(CASE WHEN dns_ms >= ? THEN 1 ELSE 0 END) AS slow_dns_samples,
-               SUM(CASE WHEN connect_ms >= ? OR total_ms >= ? THEN 1 ELSE 0 END) AS slow_path_samples
+               SUM(CASE WHEN connect_ms >= ? THEN 1 ELSE 0 END) AS slow_path_samples
         FROM requests
         WHERE started_at >= ?
           AND host_scope IN ('domestic', 'google', 'openai', 'us_platform', 'final_candidate')
         GROUP BY host_key, host_scope, policy_id
         """,
-        (dns_slow_ms, connect_slow_ms, total_slow_ms, cutoff),
+        (dns_slow_ms, connect_slow_ms, cutoff),
     ).fetchall()
     for row in host_rows:
         samples = int(row["samples"] or 0)

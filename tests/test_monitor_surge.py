@@ -915,7 +915,7 @@ FINAL,US,dns-failed
                     "cdn.oaistatic.com",
                     rule="RULE-SET,ai_us",
                     failed=False,
-                    total_seconds=30,
+                    total_seconds=5,
                     connect_ms=4000,
                     started_at=1_700_000_000 + index,
                 )
@@ -936,6 +936,35 @@ FINAL,US,dns-failed
         self.assertEqual([item["kind"] for item in recommendations], ["US-PATH"])
         self.assertEqual(recommendations[0]["evidence"]["failures"], 0)
         self.assertEqual(recommendations[0]["evidence"]["slow_path_samples"], 5)
+
+    def test_analyze_ignores_long_successful_request_duration(self) -> None:
+        payload = {
+            "recent-requests": [
+                self.request_item(
+                    index,
+                    "service.example.cn",
+                    rule="RULE-SET,cn_direct",
+                    policy="DIRECT",
+                    failed=False,
+                    total_seconds=180,
+                    connect_ms=20,
+                    started_at=1_700_000_000 + index,
+                )
+                for index in range(200, 205)
+            ]
+        }
+        monitor_surge.collect_requests(
+            self.connection,
+            self.config,
+            self.secret,
+            ("cn",),
+            now=1_700_000_400,
+            payload=payload,
+        )
+        recommendations = monitor_surge.analyze(
+            self.connection, self.config, hours=24, now=1_700_000_500
+        )
+        self.assertEqual(recommendations, [])
 
     def test_profile_change_moves_analysis_window_boundary(self) -> None:
         self.connection.executemany(
@@ -1046,7 +1075,7 @@ FINAL,US,dns-failed
                 "error_category": "none",
                 "http_code": 204 if is_google else 200,
                 "dns_ms": 5.0,
-                "connect_ms": 4000.0 if is_google else 20.0,
+                "connect_ms": 20.0,
                 "tls_ms": 40.0,
                 "total_ms": 12000.0 if is_google else 60.0,
                 "remote_id": "remote#abc",

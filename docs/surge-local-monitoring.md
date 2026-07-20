@@ -110,6 +110,8 @@ Codex automation 每日 09:00 只读分析
 
 ## 归因原则
 
+请求记录里的完整持续时间是 `completedDate - startDate`，会包含长轮询、流式传输、下载和其他正常会话存活时间，不能等同于路径建立延迟。请求类慢路径建议只使用 DNS / TCP 建连计时和明确失败作为触发依据；完整持续时间仅保留为调查上下文。由监控器主动发起、具有固定轻量响应预期的 HTTPS 探测仍可使用总耗时判断端到端异常。
+
 ### 中国大陆网站打不开
 
 报告应至少区分以下证据链：
@@ -177,7 +179,7 @@ validation: 形成目标归属、规则命中、IP 出口与 DNS 出口证据
 - `notifications.feishu.secret`：可选的飞书签名校验密钥；建议在机器人安全设置中启用签名后填写，公开样例保持空值
 - `notifications.feishu.daily_hour` / `daily_minute`：固定按 `Asia/Shanghai` 解释，默认 `09:05`，比 Scheduled 日报计划时间晚 5 分钟
 - `probes`：公共轻量 HTTPS 端点，每项只包含 `name`、`category`、`url` 与允许的 `accepted_status`；`category` 只能是 `domestic`、`google` 或 `openai`
-- `thresholds`：最小样本数、最小失败数、失败比例、`FINAL` 命中数，以及 DNS、TCP 建连和请求总耗时的慢阈值
+- `thresholds`：最小样本数、最小失败数、失败比例、`FINAL` 命中数，以及 DNS、TCP 建连和主动 HTTPS 探测总耗时的慢阈值
 - `privacy.store_final_hostnames`：是否在本地短期保存失败 `FINAL` 候选主机名；设为 `false` 会关闭未分类目标的 `FINAL-FAIL` 归因
 - `privacy.store_url_paths_queries=false` 与 `privacy.store_device_names_addresses=false`：不可放宽的固定边界
 
