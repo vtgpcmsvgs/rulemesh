@@ -2,10 +2,10 @@
   "summary": {
     "domain-only": 7,
     "ipcidr-only": 7,
-    "classical/mixed": 20,
+    "classical/mixed": 21,
     "dns-domain-set": 1,
     "empty": 0,
-    "total_sources": 35,
+    "total_sources": 36,
     "total_warnings": 0
   },
   "sources": [
@@ -267,6 +267,19 @@
       "dist": {
         "surge_rules": "dist/surge/rules/region/hk/telegram.list",
         "mihomo_classical": "dist/mihomo/classical/region/hk/telegram.yaml"
+      }
+    },
+    {
+      "source": "rules/region/hk/wps_kdocs.list",
+      "category": "region",
+      "classification": "classical/mixed",
+      "counts": {
+        "surge_rules": 23,
+        "mihomo_classical": 23
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/region/hk/wps_kdocs.list",
+        "mihomo_classical": "dist/mihomo/classical/region/hk/wps_kdocs.yaml"
       }
     },
     {

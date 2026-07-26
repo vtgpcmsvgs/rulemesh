@@ -8,6 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PUBLIC_SURGE_TEMPLATE = ROOT / "docs" / "examples" / "surge-public.conf"
 LOCAL_CURRENT_ROOT = Path.home() / "Desktop" / "rulemesh-local" / "current"
+LOCAL_REPO_ROOT = Path.home() / "Desktop" / "rulemesh-local"
 URL_BASED_GROUP_TYPES = frozenset({"url-test", "fallback", "load-balance", "smart"})
 
 GENERAL_TEST_URL_PATTERN = re.compile(
@@ -94,8 +95,9 @@ def collect_default_paths() -> list[Path]:
     if PUBLIC_SURGE_TEMPLATE.exists():
         paths.append(PUBLIC_SURGE_TEMPLATE)
 
-    if LOCAL_CURRENT_ROOT.exists():
-        paths.extend(sorted(path for path in LOCAL_CURRENT_ROOT.glob("*.conf") if path.is_file()))
+    local_config_root = LOCAL_CURRENT_ROOT if LOCAL_CURRENT_ROOT.exists() else LOCAL_REPO_ROOT
+    if local_config_root.exists():
+        paths.extend(sorted(path for path in local_config_root.glob("*.conf") if path.is_file()))
 
     return paths
 

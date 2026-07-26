@@ -145,6 +145,19 @@ merge_plan:
       - 香港节点通常更稳定、速度更快，适合 Telegram 大流量场景
       - 香港地区内容生态与支付方式也更友好
 
+  - id: hk-wps-kdocs
+    target: rules/region/hk/wps_kdocs.list
+    purpose: WPS Office 与金山文档相关连接统一走香港策略
+    strategy:
+      - manual_only
+      - explicit_official_domains_first_then_brand_keyword_fallback
+      - bind_to_hk_auto
+      - reuse_same_ruleset_for_surge_overseas_dns_override
+    notes:
+      - 客户端顺序必须放在 direct/cn_direct 与工作白名单 FINAL,REJECT 前，避免 WPS 专用域名被通用大陆直连或最终拒绝抢先命中
+      - Surge 的 [Host] 应在 cn_dns_domains 前复用本 RULE-SET 并绑定海外 DoH；Mihomo 保持单一海外 nameserver，不恢复 nameserver-policy
+      - 不使用 DOMAIN-KEYWORD,wps，避免误伤 jwpsrv.com 等无关域名；ksyun.com 是为旧文件和对象存储完整性接受的共享基础设施边界
+
   - id: hk-brokers
     target: rules/region/hk/hk_brokers.list
     purpose: 复星证券、致富证券、辉立证券与富途走香港区域策略

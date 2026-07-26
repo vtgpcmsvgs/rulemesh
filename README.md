@@ -155,6 +155,7 @@ python tools/build_rules.py
 - Surge 的 `internet-test-url`、`proxy-test-url`、代理 `test-url=` 与 `smart / fallback / load-balance` 的 `url=` 统一保持 `http://`；不要因为 `policy-path`、GeoIP 或其他下载入口使用 `https://` 就顺手改成 `https://`。
 - 当前公开模板与本地私有 Surge 配置默认采用 `http://www.baidu.com`、`http://www.google.com/generate_204` 与 `http://www.gstatic.com/generate_204` 这组三段式测速 URL；它们不是唯一答案，但继续作为本仓库的轻量稳定基线。
 - `rules/region/hk/hk_brokers.list` 专门承接复星证券/复星财富、致富证券、辉立证券与富途，默认使用品牌关键词激进兜底并绑定 `🇭🇰 香港-自动选择`，顺序应放在 `region/hk/global_media` 与 `proxy/gfw` 前
+- `rules/region/hk/wps_kdocs.list` 专门承接 WPS Office、金山文档、开放平台、云文档与资源分发连接，默认绑定 `🇭🇰 香港-自动选择`，并必须放在 `direct/cn_direct` 与工作白名单 `FINAL,REJECT` 前
 - `rules/region/hk/global_media.list` 额外承接 `x.com`、`t.co`、`twimg.com` 与 `twitter.com` 等 X / Twitter 网页域名，以及 `polymarket.com` 与 `DOMAIN-KEYWORD,polymarket` 这组 Polymarket 香港兜底，默认绑定 `🇭🇰 香港-自动选择`，减少回落到通用 `proxy/gfw` 或误挂到日本策略的超时与地区限制
 - 1Password 核心连接专项规则统一维护在 `rules/proxy/onepassword_proxy.list`
 - 上游快照由 `tools/sync_upstream_rules.py` 每日抓取 1Password 官方《ports and domains》支持页，保守收敛到核心一方域名与更新/基础设施端点
@@ -163,6 +164,7 @@ python tools/build_rules.py
 - 客户端应显式接入 `direct/os_time_direct`，并放在其他普通 `direct/*` 前，默认保持 `DIRECT`
 - 如果你采用“默认禁更，升级时手动临时放行”的习惯，建议同时接入 `direct/os_time_direct`、`reject/os_update_reject`、`region/us/microsoft_us` 与 `region/us/macos_update_us`；其中 `os_time_direct` 负责系统时间同步直连，其余入口必须放在 `reject` 之后并绑定美国策略
 - 国内业务域名 DNS 白名单统一维护在 `rules/dns/cn_dns_domains.list`，并生成 `dist/surge/dns/cn_dns_domains.list`；该清单只放明确国内业务域名 / 国内域名后缀，不放代理节点 server 域名、订阅入口域名、IP 或复杂规则
+- 因 `cn_dns_domains` 包含宽泛 `.cn`，Surge 必须在它前面用 `[Host] + RULE-SET,region/hk/wps_kdocs` 将 WPS / 金山文档域名覆盖到海外 DoH；Mihomo 两份私有配置继续保持单一海外 `nameserver`，不恢复复杂 DNS 分层
 
 其中 Surge 当前建议明确区分两种使用版本：
 
@@ -172,13 +174,15 @@ python tools/build_rules.py
 - 其中私有 `rulemesh-substore-surge-work-whitelist.conf` 当前采用工作电脑白名单模式：只保留明确列出的放行入口，未列入白名单的流量统一 `REJECT`。
 - 这份工作白名单默认不额外开放局域网代理入口；旁路由已接管流量，工作文件不承担 LAN 代理服务。
 - 其中只有设备分流继续按局域网源 IP 约束，并按指定 AWS 区域 / 多地区链式 SOCKS5 IP 段定向到对应工作机亚洲出口组；区域精确、GitHub SSH、GitHub Raw 自举入口、GitHub Core 代理入口、GitHub 观察兜底、私有订阅域名同步块、1Password 核心连接、AdsPower、Polygon 主网 RPC、BSC 主网 RPC、海外 DNS 主 IPv4 端点、代理节点 bootstrap DNS 直连例外、海外加密 DNS 显式入口与指定直连不再额外限制源 IP。
+- 工作白名单的区域精确入口显式包含 `region/hk/wps_kdocs`，用于让 WPS / 金山文档先走香港策略，避免落入最终拒绝。
 - 在该白名单里，`direct/os_time_direct` 属于系统时间同步直连入口，`region/us/microsoft_us` 与 `region/us/macos_update_us` 属于允许保留的系统类美国分流入口。
 - 白名单专属的单个直连域名例外（例如 `smtp.163.com`）默认直接维护在“指定直连”入口，不为单条规则额外拆分公开 `rules/` 文件。
 - 白名单专属的单个拒绝域名，或只用于阻断浏览器扩展更新链路的拒绝规则，也默认直接维护在白名单的“拒绝规则”入口，不为单条规则额外拆分公开 `rules/` 文件。
 - 其中 `proxy/onepassword_proxy`、`proxy/polygon_rpc_proxy`、`proxy/bsc_rpc_proxy`、`proxy/overseas_dns_ipv4_proxy`，代理节点 bootstrap DNS 直连例外 `dns.alidns.com` / `doh.pub`，以及 DoH / DoH3 / DoQ、`cloudflare-dns.com`、`dns.google`、`dns.quad9.net` 都是允许保留的白名单入口；bootstrap DNS 走 `DIRECT`，海外加密 DNS 端点走美国出口。
   - 其中 GitHub SSH 后先进入 GitHub Raw 自举入口，再显式放行 `proxy/github_core_proxy`，并保留一条 `DOMAIN-KEYWORD,github,REJECT` 广覆盖观察兜底，用于发现 SSH / GitHub Core 之外的漏网之鱼；AdsPower 细分规则后也保留一条 `DOMAIN-KEYWORD,adspower,REJECT` 广覆盖观察兜底。
   - 阿里云香港 SSH、`aliyuncs.com` 与 `check.myclientip.com` 统一收敛到“指定直连”段显式放行；其后额外保留一条阿里云广覆盖 `REJECT` 观察兜底，用于发现上游阿里云规则的漏网之鱼。
-  - 私有订阅域名统一在 `%USERPROFILE%\Desktop\rulemesh-local\current\private_subscription_direct.list` 维护，并通过脚本同步到本地四份私有配置中的“Chrome 访问节点选择例外 + 订阅更新直连”规则块，不回写公开模板。
+- 私有订阅域名统一在 `%USERPROFILE%\Desktop\rulemesh-local\current\private_subscription_direct.list` 维护，并通过脚本同步到本地四份私有配置中的“Chrome 访问节点选择例外 + 订阅更新直连”规则块，不回写公开模板。
+- 私有仓库若没有 `current` 子目录、而四份主配置直接位于 `rulemesh-local` 根目录，则以实际仓库根目录为当前配置目录；不要为满足旧路径说明凭空创建 `current`。
   - 其中 `raw.githubusercontent.com` 作为规则产物下载自举入口，但不再使用 `server:system`；普通目标网站的全局 DNS 仍保持海外 DNS，不再回退到 `system + 国内 DNS`。
   - 工作白名单模式下，广覆盖观察规则统一只允许使用 `REJECT`；不要对 `DIRECT` 或 `PROXY` 规则使用 `extended-matching`，否则会把可伪造的 Host / SNI 纳入放行判断，扩大绕过白名单的攻击面。
   - 原单独 `IP 规则` 段已删除，避免与设备分流重复。
@@ -211,7 +215,7 @@ python tools/build_rules.py
 - `proxy-node-domains` 返回内容必须过滤 IP，并按一行一个域名输出；逗号分隔的一整行不符合 Surge `DOMAIN-SET` 预期
 - 这类 Surge 运行时参数不要求 Mihomo 公开模板逐项镜像；Mihomo 继续按各自的 Tun / DNS 语义单独维护
 - 默认在远程 `direct/alicloud_hk_ipv4_ssh22_direct` 前内联仅限 TCP/22 的阿里注册大块与 ASN 应急兜底，避免客户端残缺缓存继续落入 `FINAL`；随后显式保留 `DOMAIN-SUFFIX,aliyuncs.com` 与 `DOMAIN,check.myclientip.com`
-- 默认让复星证券/复星财富、致富证券、辉立证券与富途相关域名优先命中 `region/hk/hk_brokers`，并走 `🇭🇰 香港-自动选择`
+- 默认让 WPS / 金山文档相关连接优先命中 `region/hk/wps_kdocs`，再让复星证券/复星财富、致富证券、辉立证券与富途相关域名命中 `region/hk/hk_brokers`；两者都走 `🇭🇰 香港-自动选择`
 - 默认让 X / Twitter 网页、短链与静态资源，以及 Polymarket 相关域名优先命中 `region/hk/global_media`，避免落回通用 `proxy/gfw`
 - 默认接入 `region/jp/domains_to_jp` 入口；当前用于让 `opinion.trade` 走 `🇯🇵 日本-自动选择`
   - 刻意不承载私有工作路由白名单结构，避免把本地工作特化误当成公开模板默认值
@@ -225,7 +229,7 @@ python tools/build_rules.py
 - 默认接入 BSC 主网 RPC 专项 `proxy/bsc_rpc_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
 - 默认接入海外 DNS 主 IPv4 端点专项 `proxy/overseas_dns_ipv4_proxy` 规则，并保持在 `proxy/gfw` 前优先命中；命中后统一走 `🇺🇸 美国-自动选择`
 - 默认把 `direct_alicloud_hk_ipv4_ssh22` provider 更新间隔收紧到 3600 秒，并在它之前内联仅限 TCP/22 的阿里注册大块与 ASN 应急兜底；随后显式保留 `DOMAIN-SUFFIX,aliyuncs.com` 与 `DOMAIN,check.myclientip.com`
-- 默认让复星证券/复星财富、致富证券、辉立证券与富途相关域名优先命中 `hk_brokers`，并走 `🇭🇰 香港-自动选择`
+- 默认让 WPS / 金山文档相关连接优先命中 `hk_wps_kdocs`，再让复星证券/复星财富、致富证券、辉立证券与富途相关域名命中 `hk_brokers`；两者都走 `🇭🇰 香港-自动选择`
 - 默认让 X / Twitter 网页、短链与静态资源，以及 Polymarket 相关域名优先命中 `region/hk/global_media`，避免落回通用 `proxy/gfw`
 - 默认接入 `jp_domains` 规则提供器；当前用于让 `opinion.trade` 走 `🇯🇵 日本-自动选择`
   - 对两份 Mihomo 私有 provider 配置，当前默认保持 `ipv6: false` 与 `dns.ipv6: false`，优先先把 IPv4、fake-ip 与 DNS 链路做稳；不要因为 Surge 或某次临时实验可用，就把双栈重新开成默认基线
@@ -246,6 +250,7 @@ python tools/build_rules.py
 - 海外 DNS 主 IPv4 端点专项规则应先命中 `proxy/overseas_dns_ipv4_proxy` 并走美国地区策略，再落到 `proxy/gfw`
 - GitHub 相关访问应先命中 `direct/github_ssh_direct` 与 `proxy/github_core_proxy`，再落到 `proxy/gfw`
 - 复星证券/复星财富、致富证券、辉立证券与富途相关访问应先命中 `region/hk/hk_brokers`，并走 `🇭🇰 香港-自动选择`，再落到 `region/hk/global_media` 或 `proxy/gfw`
+- WPS / 金山文档相关访问应先命中 `region/hk/wps_kdocs` 并走 `🇭🇰 香港-自动选择`，再进入 `direct/cn_direct` 或最终兜底；Surge 同时需要前置海外 DNS 覆盖
 - X / Twitter 网页、短链与静态资源，以及 Polymarket 相关域名应先命中 `region/hk/global_media`，再落到 `proxy/gfw`
 - 1Password 核心连接专项规则如启用，应先命中 `proxy/onepassword_proxy`，再落到 `proxy/gfw`
 - 操作系统时间同步专项规则应先命中 `direct/os_time_direct`，再落到其他普通 `direct/*`
@@ -263,6 +268,8 @@ python tools/build_rules.py
 - IP 类源规则可以只写 `IP-CIDR`、`IP-CIDR6`、`GEOIP`、`IP-ASN`、`ASN` 主体；构建产物会自动补 `no-resolve`，客户端调用纯 IP 规则集时仍建议在 `RULE-SET` 层保留 `no-resolve`
 - 像 `ai_us`、`ai_cn_direct`、`bytedance_direct`、`google_us`、`crypto_tw` 这类多平台或多服务混合文件，优先按平台或服务分组
 - 像 `cn_direct`、`telegram` 这类入口型或通用基础兜底文件，可以保持“上游主体 + 本地最高优先级兜底”的简单结构，但仍要把边界写清楚
+- 任务中一旦出现错误、用户纠正、错误假设、验证失败或回滚，必须在同一任务内自动完成“现象—根因—修复—防复发”复盘；可机械验证的经验优先落到测试或检查脚本，其余写入最窄的维护文档，并同步 `AGENTS.md` 与规则编排文档
+- 私有配置排障时，脱敏必须发生在命令输出之前；不得先打印完整私有行再依赖最终回复隐藏，优先只输出字段名、计数、哈希或已替换敏感值的片段
 - 如果本次修改只影响注释、分组与顺序，且构建后确认 `dist/` 内容不变，允许最终只提交源文件；但仍然必须完整执行构建和检查
 - 详细规则见 [docs/rule-authoring-style.md](docs/rule-authoring-style.md)
 

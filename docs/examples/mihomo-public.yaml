@@ -393,6 +393,15 @@ rule-providers:
     interval: 86400
     proxy: "🚀 节点选择"
 
+  hk_wps_kdocs:
+    type: http
+    behavior: classical
+    format: yaml
+    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/hk/wps_kdocs.yaml"
+    path: ./ruleset/region/hk/wps_kdocs.yaml
+    interval: 86400
+    proxy: "🚀 节点选择"
+
   hk_brokers:
     type: http
     behavior: classical
@@ -633,6 +642,8 @@ rules:
   - RULE-SET,tw_crypto,🇨🇳 台湾-自动选择
   - RULE-SET,jp_domains,🇯🇵 日本-自动选择
   - RULE-SET,hk_telegram,🇭🇰 香港-自动选择
+  # WPS Office、金山文档、开放平台、云文档与资源分发连接统一走香港；必须先于 direct_cn 与 MATCH。
+  - RULE-SET,hk_wps_kdocs,🇭🇰 香港-自动选择
   # 复星证券、致富证券、辉立证券与富途相关入口并入这组。
   - RULE-SET,hk_brokers,🇭🇰 香港-自动选择
   # X / Twitter 网页、短链与静态资源，以及 Polymarket 相关域名并入这组。

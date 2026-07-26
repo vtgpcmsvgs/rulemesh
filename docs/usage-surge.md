@@ -121,6 +121,8 @@
 - `region/us/ai_us.list` 当前聚合海外 AI 平台，且对 Gemini / AI Studio / NotebookLM 保留 AI 视角交叉兜底；它也应继续放在广谱区域规则前，并统一绑定 `🇺🇸 美国-自动选择`。
 - `DeepSeek`、`Trae` 中国大陆入口与其他国内 AI 不应并入 `region/us/ai_us.list`；它们应优先由 `direct/ai_cn_direct.list` 承接，字节共享基础设施与中国大陆通用兜底再继续落到 `direct/bytedance_direct.list`、`direct/cn_direct.list`。
 - `direct/ai_cn_direct.list` 属于显式国内 AI 直连入口，顺序上应放在 `direct/bytedance_direct.list` 与 `direct/cn_direct.list` 前，避免显式国内 AI 域名先被更宽泛的直连规则吞掉。
+- `region/hk/wps_kdocs.list` 统一承接 WPS Office、金山文档、开放平台、云文档与资源分发连接，必须放在 `direct/cn_direct.list` 与 `FINAL` 前并绑定 `🇭🇰 香港-自动选择`；它不是 reject 规则，历史上的失败主要来自通用直连抢先命中或工作白名单最终拒绝。
+- Surge 的 `[Host]` 还应在 `cn_dns_domains` 前复用 `region/hk/wps_kdocs.list` 并绑定海外 DoH；这是为了覆盖 `cn_dns_domains` 中宽泛的 `.cn`，不能只删除几条 WPS 显式域名来假装完成 DNS 隔离。
 - `region/hk/hk_brokers.list` 当前只承接复星证券/复星财富、致富证券、辉立证券与富途，应放在 `region/hk/global_media.list` 与 `proxy/gfw.list` 前，并绑定 `🇭🇰 香港-自动选择`。
 - `region/hk/global_media.list` 当前还承接 `x.com`、`t.co`、`twimg.com` 与 `twitter.com` 等 X / Twitter 网页域名，以及 `polymarket.com` 与 `DOMAIN-KEYWORD,polymarket` 这组 Polymarket 香港兜底；默认应继续绑定 `🇭🇰 香港-自动选择`，不要再让它们回落到 `proxy/gfw.list` 或误挂到日本区域。
 - 公开 `surge-public.conf` 默认接入 `region/jp/domains_to_jp.list`；当前用于让 `opinion.trade` 走 `🇯🇵 日本-自动选择`。

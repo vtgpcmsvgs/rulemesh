@@ -251,6 +251,38 @@ class RepoInvariantTests(unittest.TestCase):
         )
         self.assertEqual(findings, [])
 
+    def test_wps_kdocs_hk_route_precedes_cn_direct_and_final_fallbacks(self) -> None:
+        surge = (ROOT / "docs" / "examples" / "surge-public.conf").read_text(
+            encoding="utf-8"
+        )
+        mihomo = (ROOT / "docs" / "examples" / "mihomo-public.yaml").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertLess(
+            surge.index("region/hk/wps_kdocs.list,\"🇭🇰 香港-自动选择\""),
+            surge.index("direct/cn_direct.list,DIRECT"),
+        )
+        self.assertLess(
+            surge.index("region/hk/wps_kdocs.list,\"🇭🇰 香港-自动选择\""),
+            surge.index("FINAL,🚀 节点选择"),
+        )
+        self.assertLess(
+            mihomo.index("RULE-SET,hk_wps_kdocs,🇭🇰 香港-自动选择"),
+            mihomo.index("RULE-SET,direct_cn,DIRECT"),
+        )
+        self.assertLess(
+            mihomo.index("RULE-SET,hk_wps_kdocs,🇭🇰 香港-自动选择"),
+            mihomo.index("MATCH,🚀 节点选择"),
+        )
+
+    def test_wps_kdocs_rule_avoids_overbroad_wps_keyword(self) -> None:
+        content = (ROOT / "rules" / "region" / "hk" / "wps_kdocs.list").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertNotIn("\nDOMAIN-KEYWORD,wps\n", f"\n{content}\n")
+
     def test_all_scheduled_workflows_keep_webhook_guardrails(self) -> None:
         workflow_root = ROOT / ".github" / "workflows"
         offenders: list[str] = []

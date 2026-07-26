@@ -1,6 +1,7 @@
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 
@@ -54,6 +55,56 @@ DOMAIN-SET:https://example.com/share/file/proxy-node-domains = server:https://dn
         )
 
         self.assertEqual(check_dns_safety.validate_path(path), [])
+
+    def test_surge_rejects_cn_dns_before_wps_kdocs_override(self) -> None:
+        path = self.write_temp(
+            "surge-public.conf",
+            """[General]
+use-local-host-item-for-proxy = false
+dns-server = 1.1.1.1, 8.8.8.8, 9.9.9.9
+encrypted-dns-server = https://cloudflare-dns.com/dns-query
+
+[Host]
+DOMAIN-SET:https://example.com/cn_dns_domains.list = server:https://dns.alidns.com/dns-query
+RULE-SET:https://example.com/wps_kdocs.list = server:https://cloudflare-dns.com/dns-query
+DOMAIN-SET:https://example.com/share/file/proxy-node-domains = server:https://dns.alidns.com/dns-query
+""",
+        )
+
+        findings = check_dns_safety.validate_path(path)
+
+        self.assertTrue(any("WPS / 金山文档" in finding.message for finding in findings))
+
+    def test_surge_accepts_wps_kdocs_override_before_cn_dns(self) -> None:
+        path = self.write_temp(
+            "surge-public.conf",
+            """[General]
+use-local-host-item-for-proxy = false
+dns-server = 1.1.1.1, 8.8.8.8, 9.9.9.9
+encrypted-dns-server = https://cloudflare-dns.com/dns-query
+
+[Host]
+RULE-SET:https://example.com/wps_kdocs.list = server:https://cloudflare-dns.com/dns-query
+DOMAIN-SET:https://example.com/cn_dns_domains.list = server:https://dns.alidns.com/dns-query
+DOMAIN-SET:https://example.com/share/file/proxy-node-domains = server:https://dns.alidns.com/dns-query
+""",
+        )
+
+        self.assertEqual(check_dns_safety.validate_path(path), [])
+
+    def test_default_paths_fall_back_to_private_repo_root(self) -> None:
+        temp_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(temp_dir.cleanup)
+        user_profile = Path(temp_dir.name)
+        private_repo = user_profile / "Desktop" / "rulemesh-local"
+        private_repo.mkdir(parents=True)
+        expected = private_repo / "rulemesh-substore-surge-personal.conf"
+        expected.write_text("[General]\n", encoding="utf-8")
+
+        with patch.dict("os.environ", {"USERPROFILE": str(user_profile)}):
+            paths = check_dns_safety.default_paths(ROOT)
+
+        self.assertIn(expected, paths)
 
     def test_surge_rejects_api_file_proxy_node_domains(self) -> None:
         path = self.write_temp(

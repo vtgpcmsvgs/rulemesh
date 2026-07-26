@@ -38,11 +38,14 @@ encrypted-dns-follow-outbound-mode = true
 
 [Host]
 raw.githubusercontent.com = server:https://cloudflare-dns.com/dns-query
+RULE-SET:https://example.com/rulemesh/dist/surge/rules/region/hk/wps_kdocs.list = server:https://cloudflare-dns.com/dns-query
 DOMAIN-SET:https://example.com/rulemesh/dist/surge/dns/cn_dns_domains.list = server:https://dns.alidns.com/dns-query
 DOMAIN-SET:https://example.com/share/file/proxy-node-domains = server:https://dns.alidns.com/dns-query
 ```
 
 `raw.githubusercontent.com = server:https://cloudflare-dns.com/dns-query` 是规则产物下载解析例外，不得被扩展成普通目标网站解析方案，也不是代理节点 bootstrap。
+
+`region/hk/wps_kdocs` 是明确的区域特化例外：它必须排在 `cn_dns_domains` 前并绑定海外 DoH，因为后者包含宽泛 `.cn`，否则 `kdocs.cn`、`wps.cn` 即使流量走香港，DNS 仍会先交给国内解析。Mihomo 私有配置不照搬这条 `[Host]`，继续使用单一海外 `nameserver`。
 
 `cn_dns_domains` 是国内业务域名 DNS 例外，只能包含明确国内业务域名 / 国内域名后缀，不包含代理节点 server 域名、订阅入口域名、IP 或复杂规则。它的职责是减少海外 DNS 导致的国内 CDN 调度偏差，不是把所有 `DIRECT` 流量交给国内 DNS。
 

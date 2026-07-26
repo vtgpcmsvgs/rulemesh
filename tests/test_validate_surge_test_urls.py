@@ -2,6 +2,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 TOOLS_DIR = Path(__file__).resolve().parents[1] / "tools"
@@ -89,6 +90,22 @@ class ValidateSurgeTestUrlsTests(unittest.TestCase):
         )
 
         self.assertEqual(validate_surge_test_urls.validate_surge_profile(path), [])
+
+    def test_default_paths_fall_back_to_private_repo_root(self) -> None:
+        temp_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(temp_dir.cleanup)
+        private_repo = Path(temp_dir.name) / "rulemesh-local"
+        private_repo.mkdir()
+        profile = private_repo / "rulemesh-substore-surge-personal.conf"
+        profile.write_text("[General]\n", encoding="utf-8")
+
+        with (
+            patch.object(validate_surge_test_urls, "LOCAL_CURRENT_ROOT", private_repo / "current"),
+            patch.object(validate_surge_test_urls, "LOCAL_REPO_ROOT", private_repo),
+        ):
+            paths = validate_surge_test_urls.collect_default_paths()
+
+        self.assertIn(profile, paths)
 
 
 if __name__ == "__main__":

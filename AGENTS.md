@@ -52,10 +52,15 @@
 - 动手前先按“源规则、上游登记、公开文档/模板、构建与检查脚本、私有同步项”给本次任务分类；高风险联动没分清前，不要直接编辑
 - 对本仓库的任何实际修改，默认同时同步更新 `%USERPROFILE%\Desktop\rulemesh-local\current` 中对应文件；除非用户明确说明不要同步
 - 修改前后都要判断 `%USERPROFILE%\Desktop\rulemesh-local\current` 是否存在对应文件；只有存在对应关系时才同步；若本次没有对应同步项，最终回复中必须明确写出“本次无对应同步项”
+- 私有配置目录解析必须以实际仓库布局为准：优先使用 `%USERPROFILE%\Desktop\rulemesh-local\current`；若该目录不存在、但 `rulemesh-local` 根目录直接存在四份主配置与同步脚本，则使用仓库根目录作为当前配置目录，不要凭空创建 `current` 或因此跳过同步，并在最终回复说明实际路径
 - `%USERPROFILE%\Desktop\rulemesh-local` 是独立的私有 Git 仓库，远程默认分支是私有配置的最终数据源，本地目录仅作为工作副本；不要把它嵌入或合并到公开 `rulemesh` 仓库
 - 修改 `rulemesh-local` 前先确认工作区、当前分支和远程同步状态；修改完成后必须提交并推送，且只有远程推送成功并确认本地未领先远程时才算私有配置同步完成
 - 私有仓库可以完整纳管配置内容，但检查、提交和验证过程中仍不得在回复或日志中回显真实订阅地址、密钥、签名、证书参数或其他敏感值
+- 检查私有配置时，脱敏必须在命令或工具产生输出之前完成；不要先输出整行再事后遮盖。默认只查看字段名、命中计数、哈希或已经替换 URL、令牌、密钥与证书参数的片段
 - 修改完成后，必须检查整个仓库中同类问题是否仍然存在，并检查是否有耦合项、重复项、残留项；发现后应一并处理或明确报告
+- 任务执行中一旦出现命令失败、错误假设、用户纠正、验证失败、回滚或安全边界误触，自动触发“现象—根因—修复—防复发”经验沉淀，不等到用户再次提醒
+- 错误经验必须在当前任务内落到最窄且可执行的位置：能机械验证的优先新增测试、检查或 guardrail；不能机械验证的写入对应脚本注释、专项文档或 `AGENTS.md`，并删除会诱发同类错误的旧说明
+- 沉淀前先区分可复现的仓库问题与一次性外部故障；临时网络波动、外部服务偶发失败不写成永久规则，但要记录本次验证限制。每次沉淀后重新执行受影响的最小验证与全量检查，形成持续迭代闭环
 - 提交前默认运行 `powershell -ExecutionPolicy Bypass -File tools/check.ps1`；若因为环境或权限限制无法执行，必须在最终回复中明确说明
 - `tools/check.ps1` 默认包含 `tools/check_change_guardrails.py` 变更联动闸门：当前对“源规则 `.list` 新增 / 删除 / 重命名未同步 `rules/upstream/sources.yaml` 与 `rules/upstream/merge.yaml`”以及“`docs/rule-authoring-style.md` 变更未同步 `AGENTS.md` 与 `README.md`”直接失败；其余高风险联动至少会显式提醒
 - 新增、删除或重命名 `rules/{reject,direct,proxy,region}/` 下的 `.list` 源规则文件时，必须同步更新 `rules/upstream/sources.yaml` 与 `rules/upstream/merge.yaml`
@@ -65,6 +70,7 @@
 - 私有 `rulemesh-substore-surge-work-whitelist.conf` 属于长期特化的工作路由白名单配置；它与 `rulemesh-substore-surge-personal.conf`、`rulemesh-substore-mihomo-clash-verge.yaml`、`rulemesh-substore-mihomo-clash-meta.yaml` 从现在起允许永久不一致，不得因为“统一模板”或“对齐 personal 配置”而回滚
 - 维护 `rulemesh-substore-surge-work-whitelist.conf` 时，默认应维持“仅放行明确白名单入口，其余流量对工作电脑统一 REJECT”的原则；若要恢复广谱放行（如 `proxy/gfw`、广谱 `direct`、`FINAL` 兜底放行），必须得到用户明确确认
 - 当前该工作路由白名单默认允许入口包括：设备分流、区域精确规则、GitHub SSH、GitHub Raw 下载入口、GitHub 广覆盖观察兜底、私有订阅域名同步块、1Password、AdsPower、Polygon RPC、BSC RPC、海外 DNS 主 IPv4 端点、代理节点 bootstrap DNS 直连例外（dns.alidns.com / doh.pub）、海外加密 DNS 显式入口（DoH / DoH3 / DoQ 与 cloudflare-dns.com / dns.google / dns.quad9.net）、`LAN,DIRECT`、`direct/os_time_direct`、`region/us/microsoft_us`、`region/us/macos_update_us`、阿里云指定直连与 `direct/bytedance_direct`；`[Host]` 中的 `cn_dns_domains` 只用于国内业务域名解析调度，不新增流量放行；其中只有 2.1 设备分流保留 `SRC-IP + AWS 区域 / 多地区链式 SOCKS5 IP 段` 约束，2.2-2.10 不再额外限制 `SRC-IP`，原独立 IP 规则段已删除；未命中上述入口的流量最终 `FINAL,REJECT`
+- `region/hk/wps_kdocs` 是工作白名单的区域精确显式放行入口，统一绑定香港自动选择并放在 `FINAL,REJECT` 前；Surge `[Host]` 必须在 `cn_dns_domains` 前复用该规则集绑定海外 DoH，避免 `.cn` 国内解析覆盖 WPS / 金山文档
 - GitHub 在该工作路由文件中除 `github_ssh_direct` 外，还允许紧随其后保留 `DOMAIN,raw.githubusercontent.com` 下载入口与一条广覆盖 `DOMAIN-KEYWORD,github` 观察兜底；它们用于显式放行 GitHub Raw 规则产物下载，并发现 SSH / Raw 之外的漏网之鱼，不得被“去重”或“收敛”掉
 - GitHub Raw 下载链路默认还应保留独立 `[Host]` 解析例外；当前私有配置使用 `raw.githubusercontent.com = server:https://cloudflare-dns.com/dns-query`，避免规则产物下载回落到本地/国内系统 DNS；但这不是代理节点 bootstrap，不能影响 `proxy-node-domains` 继续使用 AliDNS DoH
 - AdsPower 在该工作路由文件中除精细 `adspower_direct` / `adspower_proxy` 外，还允许紧随其后保留一条广覆盖 `DOMAIN-KEYWORD,adspower` 观察兜底；它是故意用于发现细分规则漏网之鱼的，不得被“去重”或“收敛”掉
@@ -88,6 +94,7 @@
   - 显式域名 / 网段 / IP 入口
   - `DOMAIN-KEYWORD` 或其他高价值兜底
 - `ai_us`、`ai_cn_direct`、`bytedance_direct`、`google_us`、`crypto_tw` 这类多平台或多服务混合文件，优先按平台或服务分组
+- `wps_kdocs` 这类从大陆通用直连中切出的区域特化入口，客户端必须排在 `cn_direct` 前，并同时检查 DNS 清单是否存在更宽后缀覆盖
 - `region/hk/global_media` 继续承接 `blackmatrix7/global_media` 主体，并允许额外收敛 X / Twitter 网页域名与 Polymarket；若上游仍只有 `gfw` 通用条目，本地可保留 `DOMAIN-SUFFIX,polymarket.com` + `DOMAIN-KEYWORD,polymarket` 这类高价值香港兜底，不要再回挂到 `region/jp`
 - `cn_direct`、`telegram` 这类入口型或通用基础兜底文件，可以保持“上游主体 + 本地最高优先级兜底”的简单结构，但仍要把边界写清楚
 - 本地兜底只补“真实需要、上游暂未稳定覆盖、或需要更激进覆盖”的高价值入口，不要把本地规则膨胀成上游镜像

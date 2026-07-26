@@ -24,6 +24,7 @@
 - 多地区链式 SOCKS5 端点属于私有服务商导出后脱敏的链式代理入口，不再视为日本区域规则，也不应再挂到单一国家目录或固定日本组
 - 区域精确规则继续保留，且 `Google US` 与 `AI US` 都必须先于广谱区域规则
 - `AI US` 入口继续作为白名单显式放行项，但当前只承接海外 AI 平台并统一走美国节点；国内 AI 不应借这条入口放行
+- `region/hk/wps_kdocs` 继续作为 WPS Office 与金山文档显式白名单入口，统一走香港自动选择，并必须先于最终拒绝；`[Host]` 同时在 `cn_dns_domains` 前复用该规则集绑定海外 DoH
 - `region/hk/hk_brokers` 继续作为香港券商显式放行项，只承接复星证券/复星财富、致富证券、辉立证券与富途，并统一走香港自动选择
 - GitHub 仓库 SSH 定向直连继续保留独立 carve-out
 - GitHub 相关访问继续拆成三段：先保留 `DOMAIN,raw.githubusercontent.com` 自举入口，再显式放行 `proxy/github_core_proxy.list`，其后的 `DOMAIN-KEYWORD,github` 广覆盖观察兜底在工作白名单模式下统一使用 `REJECT`，专门用于发现 SSH / GitHub Core 之外的漏网之鱼
@@ -66,7 +67,7 @@
 
 1. 拒绝规则
 2. 设备分流
-3. 区域精确规则
+3. 区域精确规则（含 WPS / 金山文档香港入口）
 4. 香港券商区域入口
 5. GitHub 仓库 SSH 定向直连
 6. GitHub Raw 自举入口
