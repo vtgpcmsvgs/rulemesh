@@ -164,7 +164,7 @@ python tools/build_rules.py
 - 操作系统时间同步专项规则统一维护在 `rules/direct/os_time_direct.list`
 - 客户端应显式接入 `direct/os_time_direct`，并放在其他普通 `direct/*` 前，默认保持 `DIRECT`
 - 如果你采用“默认禁更，升级时手动临时放行”的习惯，建议同时接入 `direct/os_time_direct`、`reject/os_update_reject`、`region/us/microsoft_us` 与 `region/us/macos_update_us`；其中 `os_time_direct` 负责系统时间同步直连，其余入口必须放在 `reject` 之后并绑定美国策略
-- 国内业务域名 DNS 白名单统一维护在 `rules/dns/cn_dns_domains.list`，并生成 `dist/surge/dns/cn_dns_domains.list`；该清单只放明确国内业务域名 / 国内域名后缀，不放代理节点 server 域名、订阅入口域名、IP 或复杂规则
+- 国内业务域名 DNS 白名单统一维护在 `rules/dns/cn_dns_domains.list`，并生成 `dist/surge/dns/cn_dns_domains.list`；该清单只放明确国内业务域名 / 国内域名后缀，不放代理节点 server 域名、订阅入口域名、IP 或复杂规则。小米 / MIUI、国内天气数据服务与微信小程序运行域等明确依赖也在此按服务族维护，避免局域网接管时因海外 DNS 调度异常造成局部数据加载失败
 - 因 `cn_dns_domains` 包含宽泛 `.cn`，Surge 必须在它前面用 `[Host] + RULE-SET,region/hk/wps_kdocs` 将 WPS / 金山文档域名覆盖到海外 DoH；Mihomo 两份私有配置继续保持单一海外 `nameserver`，不恢复复杂 DNS 分层
 
 其中 Surge 当前建议明确区分两种使用版本：

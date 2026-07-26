@@ -59,7 +59,7 @@
 - BSC 主网 RPC 专项 `proxy/bsc_rpc_proxy.list` 与 `proxy/gfw.list` 的顺序关系
 - 海外 DNS 主 IPv4 端点专项 `proxy/overseas_dns_ipv4_proxy.list` 与 `proxy/gfw.list` 的顺序关系
 - `direct/os_time_direct.list` 与其他普通直连规则的顺序关系
-- `dist/surge/dns/cn_dns_domains.list` 作为国内业务域名 DNS 白名单，可在 `[Host]` 中映射到 AliDNS / DNSPod；它与 `proxy-node-domains` 分离维护，不能混入代理节点 server 域名
+- `dist/surge/dns/cn_dns_domains.list` 作为国内业务域名 DNS 白名单，可在 `[Host]` 中映射到 AliDNS / DNSPod；它与 `proxy-node-domains` 分离维护，不能混入代理节点 server 域名。小米 / MIUI、和风天气与微信小程序运行域等明确国内依赖应在该清单中按服务族维护，流量仍由 `direct/cn_direct` 等规则独立判定
 - `allow-wifi-access = false`、`test-timeout = 3`、`use-local-host-item-for-proxy = false`、`hijack-dns = *:53` 与 `encrypted-dns-follow-outbound-mode = true` 这组运行时默认值
 - 默认关闭 `ipv6 = false`，并注释 `ipv6-vif = auto`；如需 IPv6，应先完成 DNS 泄漏、WebRTC 与出口一致性测试
 - Surge profile 不写 `dns-mode = fake-ip`；Fake IP 由 Surge Enhanced Mode / VIF 运行时提供，Mac 端加载 profile 后需要在 Surge 里启用 Enhanced Mode

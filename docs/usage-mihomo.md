@@ -87,7 +87,7 @@
 ## Tun / DNS / 嗅探方法论
 
 - Mihomo 的体验优化优先级，不是继续堆规则，而是先把 `tun`、`sniffer`、`dns` 这层运行时补齐。
-- DNS 分流不按 `DIRECT` / `PROXY` 两分；普通目标网站域名默认走海外 `nameserver`，只有 `cn-dns-domains` 专用清单里的明确国内业务域名才进入国内 `nameserver-policy`。
+- DNS 分流不按 `DIRECT` / `PROXY` 两分；普通目标网站域名默认走海外 `nameserver`，只有 `cn-dns-domains` 专用清单里的明确国内业务域名才进入国内 `nameserver-policy`。小米 / MIUI、和风天气与微信小程序运行域等已确认国内依赖在该清单中按服务族维护。
 - 新增直连规则时，要先判断它是否仍属于普通目标网站域名；只有明确国内业务域名 / 国内域名后缀，才允许评估是否加入 `rules/dns/cn_dns_domains.list`。
 - 对两份 Mihomo 私有 provider 配置来说，`default-nameserver` 只负责 `nameserver` 自身的 bootstrap；不要再默认引入 `proxy-server-nameserver`、`fallback` 或其他多层 DNS 字段。
 - 如果未来确有 Clash Meta for Android 的定向兼容需求，也必须先保住“单一 DNS 真相”基线；只有用户明确确认且 Android 运行时复测证明必须例外时，才允许单独讨论特化。

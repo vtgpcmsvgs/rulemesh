@@ -47,7 +47,7 @@ DOMAIN-SET:https://example.com/share/file/proxy-node-domains = server:https://dn
 
 `region/hk/wps_kdocs` 是明确的区域特化例外：它必须排在 `cn_dns_domains` 前并绑定海外 DoH，因为后者包含宽泛 `.cn`，否则 `kdocs.cn`、`wps.cn` 即使流量走香港，DNS 仍会先交给国内解析。Mihomo 私有配置不照搬这条 `[Host]`，继续使用单一海外 `nameserver`。
 
-`cn_dns_domains` 是国内业务域名 DNS 例外，只能包含明确国内业务域名 / 国内域名后缀，不包含代理节点 server 域名、订阅入口域名、IP 或复杂规则。它的职责是减少海外 DNS 导致的国内 CDN 调度偏差，不是把所有 `DIRECT` 流量交给国内 DNS。
+`cn_dns_domains` 是国内业务域名 DNS 例外，只能包含明确国内业务域名 / 国内域名后缀，不包含代理节点 server 域名、订阅入口域名、IP 或复杂规则。它的职责是减少海外 DNS 导致的国内 CDN 调度偏差，不是把所有 `DIRECT` 流量交给国内 DNS。小米 / MIUI、国内天气数据服务与微信小程序运行域等已确认依赖可以按服务族加入，但不能据此扩展成所有 `DIRECT` 域名的镜像。
 
 上述海外 `dns-server` 的明文 IPv4 端点应先命中 `proxy/overseas_dns_ipv4_proxy` 并统一走美国地区策略，避免 1.1.1.1 / 8.8.8.8 / 9.9.9.9 的出口与普通代理出口错位。
 

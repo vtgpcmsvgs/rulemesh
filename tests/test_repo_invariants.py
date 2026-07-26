@@ -231,6 +231,27 @@ class RepoInvariantTests(unittest.TestCase):
             ["classical"],
         )
 
+    def test_cn_dns_domains_keep_domestic_app_runtime_families(self) -> None:
+        path = ROOT / "rules" / "dns" / "cn_dns_domains.list"
+        entries = {
+            line.strip().lower()
+            for line in path.read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.lstrip().startswith("#")
+        }
+        expected = {
+            ".heweather.com",
+            ".heweather.net",
+            ".miui.com",
+            ".qweather.com",
+            ".qweather.net",
+            ".qweatherapi.com",
+            ".servicewechat.com",
+            ".serviceweixin.com",
+            ".weixin.com",
+            ".xiaomi.net",
+        }
+        self.assertTrue(expected <= entries, sorted(expected - entries))
+
     def test_repo_text_files_use_utf8_without_bom(self) -> None:
         offenders = [
             path.relative_to(ROOT).as_posix()

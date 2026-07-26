@@ -27,6 +27,8 @@
 .myqcloud.com
 .qpic.cn
 .qq.com
+.servicewechat.com
+.serviceweixin.com
 .tencent.com
 .tencent-cloud.com
 .tencentcloud.com
@@ -37,6 +39,7 @@
 .tencentmusic.com
 .tencentyun.com
 .wechat.com
+.weixin.com
 
 # 百度
 .baidu.com
@@ -196,6 +199,13 @@
 .z.ai
 .zhipuai.cn
 
+# 国内天气数据服务
+.heweather.com
+.heweather.net
+.qweather.com
+.qweather.net
+.qweatherapi.com
+
 # 常用国内业务平台
 .10010.com
 .10086.cn
@@ -229,6 +239,7 @@
 .mgtv.com
 .mi.com
 .mi-img.com
+.miui.com
 .sina.com.cn
 .sogou.com
 .sohu.com
@@ -241,6 +252,7 @@
 .wpsoffice.com
 .xiaohongshu.com
 .xiaomi.com
+.xiaomi.net
 .ximalaya.com
 .youku.com
 .youkupic.com
