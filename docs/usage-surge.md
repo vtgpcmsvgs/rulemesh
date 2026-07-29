@@ -49,7 +49,7 @@
 - `region/hk/hk_brokers.list` 专门承接复星证券/复星财富、致富证券、辉立证券与富途，默认用激进品牌关键词兜底并绑定 `🇭🇰 香港-自动选择`
 - `region/hk/global_media.list` 额外承接 X / Twitter 网页、短链与静态资源，以及 Polymarket 显式域名与激进关键词兜底，并默认绑定 `🇭🇰 香港-自动选择`
 - `region/us/ai_us.list` 统一承接 OpenAI / Claude / Gemini / Copilot / Cursor / Grok / Windsurf / Augment 等海外 AI 平台，并保留更激进的关键词兜底；客户端默认绑定 `🇺🇸 美国-自动选择`
-- `direct/ai_cn_direct.list` 显式承接 Kimi / DeepSeek / 豆包 / 即梦 / Trae 中国大陆 / 元宝 / 混元 / 通义 / 千问 / 智谱 / MiniMax / 文心等国内 AI 入口，并应放在 `direct/bytedance_direct.list` 与 `direct/cn_direct.list` 前
+- `direct/ai_cn_direct.list` 显式承接 Kimi / DeepSeek / 豆包 / 即梦 / Trae 中国大陆 / 元宝 / 混元 / 通义 / 千问 / 智谱 / MiniMax / 文心等国内 AI 入口，并与 `direct/bytedance_direct.list` 一起放在 `region/hk/global_media.list` 前；三者固定为 `ai_cn_direct < bytedance_direct < hk_global_media`
 - 阿里云香港 SSH 继续走 `direct/alicloud_hk_ipv4_ssh22_direct.list`，调用层保留 `DIRECT,no-resolve`；远程规则前必须先放仅限 TCP/22 的阿里注册大块与 `AS45102/AS134963/AS24429` 内联兜底，避免客户端缓存残缺规则时落入 `FINAL`
 - AWS 香港区域入口已统一为 `region/hk/hk_aws_ipv4.list`
 - 多地区链式 SOCKS5 端点入口已统一为 `region/multi/chain_socks5_ipcidr.list`，默认应绑定统一的自动选择 / 负载均衡组，而不是 `🇯🇵 日本-自动选择`
@@ -59,10 +59,11 @@
 - BSC 主网 RPC 专项 `proxy/bsc_rpc_proxy.list` 与 `proxy/gfw.list` 的顺序关系
 - 海外 DNS 主 IPv4 端点专项 `proxy/overseas_dns_ipv4_proxy.list` 与 `proxy/gfw.list` 的顺序关系
 - `direct/os_time_direct.list` 与其他普通直连规则的顺序关系
-- `dist/surge/dns/cn_dns_domains.list` 作为国内业务域名 DNS 白名单，可在 `[Host]` 中映射到 AliDNS / DNSPod；它与 `proxy-node-domains` 分离维护，不能混入代理节点 server 域名。小米 / MIUI、和风天气与微信小程序运行域等明确国内依赖应在该清单中按服务族维护，流量仍由 `direct/cn_direct` 等规则独立判定
+- `dist/surge/dns/cn_dns_domains.list` 作为国内业务域名 DNS 白名单，可在 `[Host]` 中映射到 AliDNS / DNSPod；它与 `proxy-node-domains` 分离维护，不能混入代理节点 server 域名。小米 / MIUI、和风天气、微信小程序、抖音专项、拼多多与小红书 CDN 等明确国内依赖应在该清单中按服务族维护，流量仍由规则顺序独立判定
 - `allow-wifi-access = false`、`test-timeout = 3`、`use-local-host-item-for-proxy = false`、`hijack-dns = *:53` 与 `encrypted-dns-follow-outbound-mode = true` 这组运行时默认值
 - 默认关闭 `ipv6 = false`，并注释 `ipv6-vif = auto`；如需 IPv6，应先完成 DNS 泄漏、WebRTC 与出口一致性测试
 - Surge profile 不写 `dns-mode = fake-ip`；Fake IP 由 Surge Enhanced Mode / VIF 运行时提供，Mac 端加载 profile 后需要在 Surge 里启用 Enhanced Mode
+- `always-real-ip` 只精确加入 `localhost.weixin.qq.com`，避免微信本机回环入口被 VIF Fake IP 改写；这不是扩大微信域名直连或国内 DNS 白名单，禁止改成 `*.weixin.qq.com`
 - `skip-proxy`、`always-real-ip`、海外全局 DNS 与测速参数
 - `skip-proxy` 不再包含 Apple `17.0.0.0/8`，避免 macOS 更新流量绕过前置拒绝规则和后续美国分流规则
 
@@ -108,7 +109,7 @@
 ## 规则顺序建议
 
 1. 拒绝规则
-2. 区域精确规则
+2. 区域精确规则；在 `region/hk/global_media` 前依次插入 `direct/ai_cn_direct`、`direct/bytedance_direct`
 3. GitHub 仓库 SSH 定向直连
 4. GitHub Raw 自举入口
 5. GitHub Core 节点选择规则
@@ -118,7 +119,7 @@
 9. BSC 主网 RPC 节点选择规则
 10. 海外 DNS 主 IPv4 端点美国分流规则
 11. 可选：1Password 核心连接节点选择规则
-12. 直连规则
+12. 其余直连规则
 13. 代理优先规则
 14. IP 规则
 15. `FINAL`
@@ -129,7 +130,7 @@
 - Google Play 下载 CDN 与重定向域应继续由 `region/us/google_us.list` 显式承接，不要依赖后面的 `direct/cn_direct.list` 或 `proxy/gfw.list` 兜底。
 - `region/us/ai_us.list` 当前聚合海外 AI 平台，且对 Gemini / AI Studio / NotebookLM 保留 AI 视角交叉兜底；它也应继续放在广谱区域规则前，并统一绑定 `🇺🇸 美国-自动选择`。
 - `DeepSeek`、`Trae` 中国大陆入口与其他国内 AI 不应并入 `region/us/ai_us.list`；它们应优先由 `direct/ai_cn_direct.list` 承接，字节共享基础设施与中国大陆通用兜底再继续落到 `direct/bytedance_direct.list`、`direct/cn_direct.list`。
-- `direct/ai_cn_direct.list` 属于显式国内 AI 直连入口，顺序上应放在 `direct/bytedance_direct.list` 与 `direct/cn_direct.list` 前，避免显式国内 AI 域名先被更宽泛的直连规则吞掉。
+- `direct/ai_cn_direct.list` 属于显式国内 AI 直连入口，顺序上固定为 `direct/ai_cn_direct < direct/bytedance_direct < region/hk/global_media < direct/cn_direct`；静态交集审计确认这只会把 `snssdk.com` 从香港媒体策略纠正为直连。
 - `region/hk/wps_kdocs.list` 统一承接 WPS Office、金山文档、开放平台、云文档与资源分发连接，必须放在 `direct/cn_direct.list` 与 `FINAL` 前并绑定 `🇭🇰 香港-自动选择`；它不是 reject 规则，历史上的失败主要来自通用直连抢先命中或工作白名单最终拒绝。
 - Surge 的 `[Host]` 还应在 `cn_dns_domains` 前复用 `region/hk/wps_kdocs.list` 并绑定海外 DoH；这是为了覆盖 `cn_dns_domains` 中宽泛的 `.cn`，不能只删除几条 WPS 显式域名来假装完成 DNS 隔离。
 - `region/hk/hk_brokers.list` 当前只承接复星证券/复星财富、致富证券、辉立证券与富途，应放在 `region/hk/global_media.list` 与 `proxy/gfw.list` 前，并绑定 `🇭🇰 香港-自动选择`。

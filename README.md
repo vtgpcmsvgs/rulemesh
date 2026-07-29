@@ -160,14 +160,14 @@ python tools/build_rules.py
 - 当前公开模板与本地私有 Surge 配置默认采用 `http://www.baidu.com`、`http://www.google.com/generate_204` 与 `http://www.gstatic.com/generate_204` 这组三段式测速 URL；它们不是唯一答案，但继续作为本仓库的轻量稳定基线。
 - `rules/region/hk/hk_brokers.list` 专门承接复星证券/复星财富、致富证券、辉立证券与富途，默认使用品牌关键词激进兜底并绑定 `🇭🇰 香港-自动选择`，顺序应放在 `region/hk/global_media` 与 `proxy/gfw` 前
 - `rules/region/hk/wps_kdocs.list` 专门承接 WPS Office、金山文档、开放平台、云文档与资源分发连接，默认绑定 `🇭🇰 香港-自动选择`，并必须放在 `direct/cn_direct` 与工作白名单 `FINAL,REJECT` 前
-- `rules/region/hk/global_media.list` 额外承接 `x.com`、`t.co`、`twimg.com` 与 `twitter.com` 等 X / Twitter 网页域名，以及 `polymarket.com` 与 `DOMAIN-KEYWORD,polymarket` 这组 Polymarket 香港兜底，默认绑定 `🇭🇰 香港-自动选择`，减少回落到通用 `proxy/gfw` 或误挂到日本策略的超时与地区限制
+- `rules/region/hk/global_media.list` 额外承接 `x.com`、`t.co`、`twimg.com` 与 `twitter.com` 等 X / Twitter 网页域名，以及 `polymarket.com` 与 `DOMAIN-KEYWORD,polymarket` 这组 Polymarket 香港兜底，默认绑定 `🇭🇰 香港-自动选择`；客户端必须先放 `direct/ai_cn_direct` 与 `direct/bytedance_direct`，避免唯一交集 `snssdk.com` 被香港媒体规则抢先命中
 - 1Password 核心连接专项规则统一维护在 `rules/proxy/onepassword_proxy.list`
 - 上游快照由 `tools/sync_upstream_rules.py` 每日抓取 1Password 官方《ports and domains》支持页，保守收敛到核心一方域名与更新/基础设施端点
 - 如需启用，请显式接入 `proxy/onepassword_proxy` 并放在 `proxy/gfw` 前；公开模板默认不内置这条重度用户特化入口
 - 操作系统时间同步专项规则统一维护在 `rules/direct/os_time_direct.list`
 - 客户端应显式接入 `direct/os_time_direct`，并放在其他普通 `direct/*` 前，默认保持 `DIRECT`
 - 如果你采用“默认禁更，升级时手动临时放行”的习惯，建议同时接入 `direct/os_time_direct`、`reject/os_update_reject`、`region/us/microsoft_us` 与 `region/us/macos_update_us`；其中 `os_time_direct` 负责系统时间同步直连，其余入口必须放在 `reject` 之后并绑定美国策略
-- 国内业务域名 DNS 白名单统一维护在 `rules/dns/cn_dns_domains.list`，并生成 `dist/surge/dns/cn_dns_domains.list`；该清单只放明确国内业务域名 / 国内域名后缀，不放代理节点 server 域名、订阅入口域名、IP 或复杂规则。小米 / MIUI、国内天气数据服务与微信小程序运行域等明确依赖也在此按服务族维护，避免局域网接管时因海外 DNS 调度异常造成局部数据加载失败
+- 国内业务域名 DNS 白名单统一维护在 `rules/dns/cn_dns_domains.list`，并生成 `dist/surge/dns/cn_dns_domains.list`；该清单只放明确国内业务域名 / 国内域名后缀，不放代理节点 server 域名、订阅入口域名、IP 或复杂规则。小米 / MIUI、国内天气、微信小程序、抖音专项、拼多多与小红书 CDN 等明确依赖在此按服务族维护，避免局域网接管时因海外 DNS 调度异常造成局部数据加载失败；共享风控或统计第三方域名没有专项证据时不自动纳入
 - 因 `cn_dns_domains` 包含宽泛 `.cn`，Surge 必须在它前面用 `[Host] + RULE-SET,region/hk/wps_kdocs` 将 WPS / 金山文档域名覆盖到海外 DoH；Mihomo 两份私有配置继续保持单一海外 `nameserver`，不恢复复杂 DNS 分层
 
 其中 Surge 当前建议明确区分两种使用版本：
@@ -206,6 +206,7 @@ python tools/build_rules.py
   - 已移除设备分流、私有订阅地址与 `[MITM]`
 - 默认保持 `allow-wifi-access = false`，不把个人终端直接暴露给局域网其他设备
 - Surge profile 不写 `dns-mode = fake-ip`；Fake IP 由 Surge Enhanced Mode / VIF 运行时提供，Mac 端加载 profile 后需要在 Surge 里启用 Enhanced Mode
+- Surge 的 `always-real-ip` 精确保留 `localhost.weixin.qq.com`，让微信本机回环入口取得真实 loopback，而不是被 VIF 分配 Fake IP；不要扩成 `*.weixin.qq.com`，也不要把它照搬成 Mihomo DNS 字段
 - Surge `skip-proxy` 不再包含 Apple `17.0.0.0/8`，避免 macOS 更新流量绕过 `reject/os_update_reject` 与 `region/us/macos_update_us`
 - 默认启用 `use-local-host-item-for-proxy = false`、`hijack-dns = *:53`、海外 `encrypted-dns-server`、`encrypted-dns-follow-outbound-mode = true` 与 `test-timeout = 3` 这组运行时参数
 - 默认关闭 `ipv6 = false`，并注释 `ipv6-vif = auto`；如需 IPv6，应先完成 DNS 泄漏、WebRTC 与出口一致性测试
@@ -283,7 +284,7 @@ python tools/build_rules.py
 - `Gemini` / `AI Studio` / `NotebookLM` 允许在 `rules/region/us/ai_us.list` 保留 AI 视角交叉兜底，但客户端顺序仍必须让 `google_us` 排在 `ai_us` 前
 - 客户端应接入 `dist/surge/rules/region/us/google_us.list` 或 `dist/mihomo/classical/region/us/google_us.yaml`
 - Google 规则必须绑定 `US-AUTO`（或等价美国策略组），不再提供 `proxy/google` 双入口
-- 规则顺序必须先放 Google US 规则，再放 `region/us/ai_us`、`region/hk/hk_brokers` 与 `region/hk/global_media` 等区域规则；Google 通用服务与海外 AI 入口都统一命中美国策略，香港券商与香港媒体入口统一命中香港策略
+- 规则顺序必须先放 Google US 与 AI US 等精确入口，再放 WPS / 香港券商；随后按 `direct/ai_cn_direct`、`direct/bytedance_direct`、`region/hk/global_media` 排列，最后才进入其余普通直连与广谱代理规则
 - 新增或调整 Google 规则时，先改该源文件，再执行构建同步 `dist/`
 
 ## AI 路由约定
@@ -292,7 +293,7 @@ python tools/build_rules.py
 - `rules/direct/ai_cn_direct.list` 新增为“国内 AI 显式直连入口”，优先承接 `Kimi / Moonshot`、`DeepSeek`、`豆包`、`即梦`、`Trae 中国大陆入口`、`元宝`、`混元`、`通义 / 千问`、`智谱 / ChatGLM`、`MiniMax / 海螺`、`文心` 等国内 AI 平台
 - `Trae` 只在 `ai_us` 中保留明确海外入口；`DeepSeek`、`Trae` 中国大陆入口与其他国内 AI 不应并入 `ai_us`，而应优先落到 `direct/ai_cn_direct`，共享基础设施再继续落到 `direct/bytedance_direct`、`direct/cn_direct`
 - 上游主体优先引用 `blackmatrix7/ios_rule_script`、`SkywalkerJi/Clash-Rules` 与 `Accademia/Additional_Rule_For_Clash` 的快照；其中 `Trae` 只参考第三方上游，不再直接整包并入，避免把国内入口误送到海外 AI 代理策略
-- 客户端顺序继续保持 `google_us` 在前、`ai_us` 在后；国内 AI 侧则让 `direct/ai_cn_direct` 排在 `direct/bytedance_direct`、`direct/cn_direct` 前，确保显式国内入口优先命中
+- 客户端顺序继续保持 `google_us` 在前、`ai_us` 在后；国内侧固定为 `direct/ai_cn_direct < direct/bytedance_direct < region/hk/global_media < direct/cn_direct`，确保显式国内入口优先命中，并只改变 `snssdk.com` 这一已确认交集
 - 私有 `rulemesh-substore-surge-work-whitelist.conf` 不会自动并入这组新的国内 AI 放行入口；工作白名单仍需继续按“只放行明确白名单入口，其余统一 REJECT”的原则单独评估
 
 ## 上游维护方式

@@ -234,24 +234,80 @@ class RepoInvariantTests(unittest.TestCase):
 
     def test_cn_dns_domains_keep_domestic_app_runtime_families(self) -> None:
         path = ROOT / "rules" / "dns" / "cn_dns_domains.list"
-        entries = {
+        entries = [
             line.strip().lower()
             for line in path.read_text(encoding="utf-8").splitlines()
             if line.strip() and not line.lstrip().startswith("#")
-        }
+        ]
+        unique_entries = set(entries)
         expected = {
+            ".amemv.com",
+            ".douyinvod.com",
             ".heweather.com",
             ".heweather.net",
+            ".idouyinvod.com",
+            ".ixigua.com",
+            ".ixiguavideo.com",
             ".miui.com",
+            ".pddpic.com",
+            ".pinduoduo.com",
             ".qweather.com",
             ".qweather.net",
             ".qweatherapi.com",
             ".servicewechat.com",
             ".serviceweixin.com",
             ".weixin.com",
+            ".xhscdn.com",
+            ".xhscdn.net",
+            ".xiaohongshu.com",
             ".xiaomi.net",
+            ".yangkeduo.com",
+            "lf3-static.bytednsdoc.com",
+            "v5-dy-o-abtest.zjcdn.com",
         }
-        self.assertTrue(expected <= entries, sorted(expected - entries))
+        self.assertEqual(len(entries), len(unique_entries), "国内 DNS 清单仍有重复项")
+        self.assertEqual(len(entries), 239)
+        self.assertTrue(expected <= unique_entries, sorted(expected - unique_entries))
+
+    def test_domestic_direct_rules_precede_hk_global_media(self) -> None:
+        surge = (ROOT / "docs" / "examples" / "surge-public.conf").read_text(
+            encoding="utf-8"
+        )
+        mihomo = (ROOT / "docs" / "examples" / "mihomo-public.yaml").read_text(
+            encoding="utf-8"
+        )
+        surge_needles = (
+            "direct/ai_cn_direct.list,DIRECT",
+            "direct/bytedance_direct.list,DIRECT",
+            "region/hk/global_media.list,\"🇭🇰 香港-自动选择\"",
+        )
+        mihomo_needles = (
+            "RULE-SET,direct_ai_cn,DIRECT",
+            "RULE-SET,direct_bytedance,DIRECT",
+            "RULE-SET,hk_global_media,🇭🇰 香港-自动选择",
+        )
+
+        for content, needles in ((surge, surge_needles), (mihomo, mihomo_needles)):
+            for needle in needles:
+                self.assertEqual(content.count(needle), 1, needle)
+            self.assertLess(content.index(needles[0]), content.index(needles[1]))
+            self.assertLess(content.index(needles[1]), content.index(needles[2]))
+
+    def test_public_surge_template_keeps_weixin_loopback_real_ip(self) -> None:
+        surge = (ROOT / "docs" / "examples" / "surge-public.conf").read_text(
+            encoding="utf-8"
+        )
+        always_real_line = next(
+            line for line in surge.splitlines() if line.startswith("always-real-ip =")
+        )
+        hosts = {
+            item.strip().lower()
+            for item in always_real_line.split("=", 1)[1].split(",")
+        }
+
+        self.assertIn("localhost.weixin.qq.com", hosts)
+        self.assertNotIn("*.weixin.qq.com", hosts)
+        self.assertEqual(surge.count("localhost.weixin.qq.com"), 1)
 
     def test_repo_text_files_use_utf8_without_bom(self) -> None:
         offenders = [

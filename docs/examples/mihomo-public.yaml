@@ -646,6 +646,9 @@ rules:
   - RULE-SET,hk_wps_kdocs,🇭🇰 香港-自动选择
   # 复星证券、致富证券、辉立证券与富途相关入口并入这组。
   - RULE-SET,hk_brokers,🇭🇰 香港-自动选择
+  # 国内 AI 与字节共享基础设施先直连，避免 snssdk.com 这一交集被后面的香港媒体广谱规则抢先命中。
+  - RULE-SET,direct_ai_cn,DIRECT
+  - RULE-SET,direct_bytedance,DIRECT
   # X / Twitter 网页、短链与静态资源，以及 Polymarket 相关域名并入这组。
   - RULE-SET,hk_global_media,🇭🇰 香港-自动选择
 
@@ -672,7 +675,7 @@ rules:
   # 8) 海外 DNS 主 IPv4 端点美国分流（必须放在 gfw 前）
   - RULE-SET,proxy_overseas_dns_ipv4,🇺🇸 美国-自动选择,no-resolve
 
-  # 9) 直连规则（先放系统时间同步，再接其他直连入口）
+  # 9) 其余直连规则（direct_ai_cn 与 direct_bytedance 已在上方前置；这里先放系统时间同步，再接其他直连入口）
   - DOMAIN,localhost,DIRECT
   - DOMAIN-SUFFIX,local,DIRECT
   - DOMAIN-SUFFIX,lan,DIRECT
@@ -697,8 +700,6 @@ rules:
   - RULE-SET,direct_alicloud_hk_ipv4_ssh22,DIRECT,no-resolve
   - DOMAIN-SUFFIX,aliyuncs.com,DIRECT
   - DOMAIN,check.myclientip.com,DIRECT
-  - RULE-SET,direct_ai_cn,DIRECT
-  - RULE-SET,direct_bytedance,DIRECT
   - RULE-SET,direct_netease,DIRECT
   - RULE-SET,direct_bilibili,DIRECT
   - RULE-SET,direct_cn,DIRECT

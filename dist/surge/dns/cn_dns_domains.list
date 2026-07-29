@@ -45,6 +45,7 @@
 .baiduyuncdn.com
 .bdimg.com
 .bdstatic.com
+.amemv.com
 .bytecdn.cn
 .bytecdn.com
 .bytecdntp.com
@@ -70,7 +71,11 @@
 .douyinpic.com
 .douyinstatic.com
 .douyinvideo.net
+.douyinvod.com
+.idouyinvod.com
 .iesdouyin.com
+.ixigua.com
+.ixiguavideo.com
 .jimeng.com
 .pstatp.com
 .snssdk.com
@@ -80,6 +85,8 @@
 .volcengine.com
 .volces.com
 .zjbyte.com
+lf3-static.bytednsdoc.com
+v5-dy-o-abtest.zjcdn.com
 .feishu-3rd-party-services.com
 .feishu-boe.net
 .feishu-pre.net
@@ -180,6 +187,12 @@
 .qweather.com
 .qweather.net
 .qweatherapi.com
+.pddpic.com
+.pinduoduo.com
+.yangkeduo.com
+.xiaohongshu.com
+.xhscdn.com
+.xhscdn.net
 .10010.com
 .10086.cn
 .189.cn
@@ -223,7 +236,6 @@
 .wps.cn
 .wpscdn.com
 .wpsoffice.com
-.xiaohongshu.com
 .xiaomi.com
 .xiaomi.net
 .ximalaya.com

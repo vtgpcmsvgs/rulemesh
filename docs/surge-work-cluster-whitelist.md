@@ -30,11 +30,11 @@
 - GitHub 相关访问继续拆成三段：先保留 `DOMAIN,raw.githubusercontent.com` 自举入口，再显式放行 `proxy/github_core_proxy.list`，其后的 `DOMAIN-KEYWORD,github` 广覆盖观察兜底在工作白名单模式下统一使用 `REJECT`，专门用于发现 SSH / GitHub Core 之外的漏网之鱼
 - `raw.githubusercontent.com` 继续作为规则产物下载自举入口，但不再绑定 `server:system`；当前改用海外 DoH 解析，避免规则产物下载回落到本地/国内系统 DNS
 - 工作白名单默认不额外开放局域网代理入口；旁路由已接管流量，`allow-wifi-access` 继续保持 `false`
-- Surge profile 不写 `dns-mode = fake-ip`；Fake IP 由 Surge Enhanced Mode / VIF 运行时提供，工作路由设备加载 profile 后需要在 Surge 里启用 Enhanced Mode
+- Surge profile 不写 `dns-mode = fake-ip`；Fake IP 由 Surge Enhanced Mode / VIF 运行时提供，工作路由设备加载 profile 后需要在 Surge 里启用 Enhanced Mode；`always-real-ip` 只精确加入 `localhost.weixin.qq.com` 以保留微信本机 loopback，不新增任何白名单流量入口
 - `skip-proxy` 不再包含 Apple `17.0.0.0/8`，避免 macOS 更新流量绕过白名单里的拒绝规则和美国分流入口
 - IPv6 默认关闭，等完成 IPv6 DNS 泄露、WebRTC 与出口测试后再重新评估
 - `hijack-dns = *:53` 负责接管传统 UDP/TCP 53 DNS；加密 DNS 流量只能作为显式白名单入口放行，不能靠 `FINAL` 兜底
-- 海外 `encrypted-dns-server`、`encrypted-dns-follow-outbound-mode = true` 与 `use-local-host-item-for-proxy = false` 继续保留，配合 `[Host]` 中的 GitHub Raw 规则产物解析、`cn_dns_domains` 国内业务域名 DNS 清单与 `proxy-node-domains` 节点 server 域名专用 bootstrap 解析；`cn_dns_domains` 只影响 DNS 解析，不新增白名单流量放行
+- 海外 `encrypted-dns-server`、`encrypted-dns-follow-outbound-mode = true` 与 `use-local-host-item-for-proxy = false` 继续保留，配合 `[Host]` 中的 GitHub Raw 规则产物解析、`cn_dns_domains` 国内业务域名 DNS 清单与 `proxy-node-domains` 节点 server 域名专用 bootstrap 解析；新增的抖音专项、拼多多与小红书 CDN 域仍只影响 DNS 解析，不新增白名单流量放行
 - 私有订阅域名同步块继续保留独立显式放行入口，顺序位于 GitHub 观察兜底之后、1Password 之前；域名清单统一在解析后的私人当前配置目录中的 `private_subscription_direct.list` 维护，再通过同步脚本先插入 Chrome 访问这些域名时改走 `🚀 节点选择` 的例外，再保留订阅更新直连
 - `proxy/onepassword_proxy.list` 继续保留 `🚀 节点选择`，用于白名单模式下显式放行 1Password 核心连接；其上游快照由仓库每天自动抓取官方支持页生成，但默认只覆盖官方自有核心域名与更新/基础设施端点
 - AdsPower 继续维持 `adspower_reject`、`adspower_direct`、`adspower_proxy` 三段细分
@@ -53,7 +53,7 @@
 - 阿里云注册大块与 `AS45102/AS134963/AS24429` 的内联规则只在 TCP/22 下直连，并放在 `alicloud_hk_ipv4_ssh22_direct` 远程规则及阿里云观察 `REJECT` 前；这样远程缓存残缺也不会落入 `FINAL,REJECT`
 - `alicloud_hk_ipv4_ssh22_direct` 继续以 `DIRECT,no-resolve` 保留，并与 `DOMAIN-SUFFIX,aliyuncs.com`、`DOMAIN,check.myclientip.com` 共同构成阿里云显式白名单；其后保留广覆盖 `REJECT` 观察兜底
 - 工作白名单模式下，广覆盖观察规则统一只允许使用 `REJECT`；不要对 `DIRECT` 或 `PROXY` 规则使用 `extended-matching`，否则会把可伪造的 Host / SNI 纳入放行判断，放大绕过白名单的风险
-- `bytedance_direct.list` 继续保留 `DIRECT`
+- `bytedance_direct.list` 继续保留 `DIRECT` 并早于 `region/hk/global_media`；工作白名单不因通用模板调整而新增 `ai_cn_direct` 或其他广谱放行
 - 原独立 2.6 `IP 规则` 段已删除，避免与 2.1 设备分流重复
 - 未命中上述白名单入口的流量最终统一落到 `FINAL,REJECT`
 

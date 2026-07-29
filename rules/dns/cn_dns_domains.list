@@ -54,6 +54,7 @@
 .bdstatic.com
 
 # 字节、抖音、豆包与火山
+.amemv.com
 .bytecdn.cn
 .bytecdn.com
 .bytecdntp.com
@@ -79,7 +80,11 @@
 .douyinpic.com
 .douyinstatic.com
 .douyinvideo.net
+.douyinvod.com
+.idouyinvod.com
 .iesdouyin.com
+.ixigua.com
+.ixiguavideo.com
 .jimeng.com
 .pstatp.com
 .snssdk.com
@@ -89,6 +94,8 @@
 .volcengine.com
 .volces.com
 .zjbyte.com
+lf3-static.bytednsdoc.com
+v5-dy-o-abtest.zjcdn.com
 
 # 飞书、Lark 与文档协作
 .feishu-3rd-party-services.com
@@ -175,12 +182,8 @@
 .chatglm.cn
 .deepseek.com
 .deepseeksvc.com
-.doubao.com
-.doubaocdn.com
-.doubaozhidao.com
 .hailuoai.com
 .hunyuan.tencent.com
-.jimeng.com
 .kimi.com
 .minimax.chat
 .minimaxi.com
@@ -189,8 +192,6 @@
 .qianwen.com
 .tongyi.aliyun.com
 .tongyi.com
-.trae.cn
-.trae.com.cn
 .wenxin.baidu.com
 .wenxinapp.com
 .yiyan.baidu.com
@@ -205,6 +206,16 @@
 .qweather.com
 .qweather.net
 .qweatherapi.com
+
+# 拼多多
+.pddpic.com
+.pinduoduo.com
+.yangkeduo.com
+
+# 小红书
+.xiaohongshu.com
+.xhscdn.com
+.xhscdn.net
 
 # 常用国内业务平台
 .10010.com
@@ -250,7 +261,6 @@
 .wps.cn
 .wpscdn.com
 .wpsoffice.com
-.xiaohongshu.com
 .xiaomi.com
 .xiaomi.net
 .ximalaya.com

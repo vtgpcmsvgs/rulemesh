@@ -31,6 +31,7 @@ Surge 没有 Mihomo 的 `proxy-server-nameserver` 或 `dns-mode` 字段，不能
 推荐基线：
 
 ```ini
+always-real-ip = localhost.weixin.qq.com
 use-local-host-item-for-proxy = false
 dns-server = 1.1.1.1, 8.8.8.8, 9.9.9.9
 encrypted-dns-server = https://cloudflare-dns.com/dns-query, https://dns.google/dns-query
@@ -43,11 +44,13 @@ DOMAIN-SET:https://example.com/rulemesh/dist/surge/dns/cn_dns_domains.list = ser
 DOMAIN-SET:https://example.com/share/file/proxy-node-domains = server:https://dns.alidns.com/dns-query
 ```
 
+`localhost.weixin.qq.com` 是微信本机回环入口。Surge 必须用精确 `always-real-ip` 让它保留真实 loopback，避免 Enhanced Mode / VIF 的 Fake IP 把本机连接送到网关；不得扩成 `*.weixin.qq.com`，也不得据此增加路由放行或 Mihomo 仿制字段。
+
 `raw.githubusercontent.com = server:https://cloudflare-dns.com/dns-query` 是规则产物下载解析例外，不得被扩展成普通目标网站解析方案，也不是代理节点 bootstrap。
 
 `region/hk/wps_kdocs` 是明确的区域特化例外：它必须排在 `cn_dns_domains` 前并绑定海外 DoH，因为后者包含宽泛 `.cn`，否则 `kdocs.cn`、`wps.cn` 即使流量走香港，DNS 仍会先交给国内解析。Mihomo 私有配置不照搬这条 `[Host]`，继续使用单一海外 `nameserver`。
 
-`cn_dns_domains` 是国内业务域名 DNS 例外，只能包含明确国内业务域名 / 国内域名后缀，不包含代理节点 server 域名、订阅入口域名、IP 或复杂规则。它的职责是减少海外 DNS 导致的国内 CDN 调度偏差，不是把所有 `DIRECT` 流量交给国内 DNS。小米 / MIUI、国内天气数据服务与微信小程序运行域等已确认依赖可以按服务族加入，但不能据此扩展成所有 `DIRECT` 域名的镜像。
+`cn_dns_domains` 是国内业务域名 DNS 例外，只能包含明确国内业务域名 / 国内域名后缀，不包含代理节点 server 域名、订阅入口域名、IP 或复杂规则。它的职责是减少海外 DNS 导致的国内 CDN 调度偏差，不是把所有 `DIRECT` 流量交给国内 DNS。小米 / MIUI、国内天气、微信小程序、抖音专项、拼多多与小红书 CDN 等已确认依赖可以按服务族加入；精确 host 不扩成宽后缀，共享风控或统计第三方域名没有专项证据时不纳入。
 
 上述海外 `dns-server` 的明文 IPv4 端点应先命中 `proxy/overseas_dns_ipv4_proxy` 并统一走美国地区策略，避免 1.1.1.1 / 8.8.8.8 / 9.9.9.9 的出口与普通代理出口错位。
 
@@ -155,6 +158,7 @@ $content = Array.from(domains).sort().join("\n") + "\n";
 - `dnsleaktest.com` 不再泄漏到国内 DNS。
 - `browserleaks.com/dns` 不再泄漏到国内 DNS。
 - Surge DNS 日志 / 请求日志中，普通海外目标域名没有走国内 DNS。
+- LAN 客户端解析 `localhost.weixin.qq.com` 时得到真实 loopback 而非 Fake IP，且该本机连接不再上送 Surge 网关。
 - Mihomo 运行时 `/configs` 或客户端日志中，当前生效的 DNS 结构与目标客户端边界一致：公开模板按其设计分层；两份私有 provider 配置则应收敛为 `default-nameserver + nameserver` 的单一 DNS 真相。
 - 普通浏览器访问海外网站时，DNS 出口与代理出口 IP 不再冲突。
 - 代理节点仍能正常连接。

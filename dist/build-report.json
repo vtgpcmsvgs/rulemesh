@@ -469,7 +469,7 @@
       "category": "dns",
       "classification": "dns-domain-set",
       "counts": {
-        "surge_dns_domains": 227
+        "surge_dns_domains": 239
       },
       "dist": {
         "surge_dns_domains": "dist/surge/dns/cn_dns_domains.list"

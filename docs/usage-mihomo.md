@@ -36,7 +36,7 @@
 - `region/hk/wps_kdocs.yaml` 专门承接 WPS Office、金山文档、开放平台、云文档与资源分发连接，并绑定 `🇭🇰 香港-自动选择`
 - `region/hk/global_media.yaml` 额外承接 X / Twitter 网页、短链与静态资源，以及 Polymarket 显式域名与激进关键词兜底，并默认绑定 `🇭🇰 香港-自动选择`
 - `region/us/ai_us.yaml` 统一承接 OpenAI / Claude / Gemini / Copilot / Cursor / Grok / Windsurf / Augment 等海外 AI 平台，并保留更激进的关键词兜底；客户端默认绑定 `🇺🇸 美国-自动选择`
-- `direct/ai_cn_direct.yaml` 显式承接 Kimi / DeepSeek / 豆包 / 即梦 / Trae 中国大陆 / 元宝 / 混元 / 通义 / 千问 / 智谱 / MiniMax / 文心等国内 AI 入口；它应放在 `direct_bytedance`、`direct_cn` 前，两份 Mihomo 私有配置继续保持单一海外 `nameserver`，不恢复 `nameserver-policy`
+- `direct/ai_cn_direct.yaml` 显式承接 Kimi / DeepSeek / 豆包 / 即梦 / Trae 中国大陆 / 元宝 / 混元 / 通义 / 千问 / 智谱 / MiniMax / 文心等国内 AI 入口；调用顺序固定为 `direct_ai_cn < direct_bytedance < hk_global_media < direct_cn`，两份 Mihomo 私有配置继续保持单一海外 `nameserver`，不恢复 `nameserver-policy`
 - 阿里云香港 SSH 继续走 `direct/alicloud_hk_ipv4_ssh22_direct.yaml`，调用层保留 `DIRECT,no-resolve`，该 provider 更新间隔使用 3600 秒；远程 provider 前必须先放仅限 TCP/22 的阿里注册大块与 `AS45102/AS134963/AS24429` 内联兜底
 - AWS 香港区域入口已统一为 `region/hk/hk_aws_ipv4.yaml`
 - 多地区链式 SOCKS5 端点入口已统一为 `region/multi/chain_socks5_ipcidr.yaml`，默认应绑定统一的自动选择 / 负载均衡组，而不是固定地区组
@@ -87,7 +87,8 @@
 ## Tun / DNS / 嗅探方法论
 
 - Mihomo 的体验优化优先级，不是继续堆规则，而是先把 `tun`、`sniffer`、`dns` 这层运行时补齐。
-- DNS 分流不按 `DIRECT` / `PROXY` 两分；普通目标网站域名默认走海外 `nameserver`，只有 `cn-dns-domains` 专用清单里的明确国内业务域名才进入国内 `nameserver-policy`。小米 / MIUI、和风天气与微信小程序运行域等已确认国内依赖在该清单中按服务族维护。
+- DNS 分流不按 `DIRECT` / `PROXY` 两分；普通目标网站域名默认走海外 `nameserver`。公开分层示例中的 `cn-dns-domains` 可承接小米 / MIUI、和风天气、微信小程序、抖音专项、拼多多与小红书 CDN 等明确国内依赖；两份私有 Mihomo 配置仍保持单一海外 `nameserver`，不因本次 Surge 修复恢复 `nameserver-policy`。
+- `localhost.weixin.qq.com` 的回环保护是 Surge `always-real-ip` 运行时语义；Mihomo 不新增同名仿制字段，也不为它改变 DNS 结构。
 - 新增直连规则时，要先判断它是否仍属于普通目标网站域名；只有明确国内业务域名 / 国内域名后缀，才允许评估是否加入 `rules/dns/cn_dns_domains.list`。
 - 对两份 Mihomo 私有 provider 配置来说，`default-nameserver` 只负责 `nameserver` 自身的 bootstrap；不要再默认引入 `proxy-server-nameserver`、`fallback` 或其他多层 DNS 字段。
 - 如果未来确有 Clash Meta for Android 的定向兼容需求，也必须先保住“单一 DNS 真相”基线；只有用户明确确认且 Android 运行时复测证明必须例外时，才允许单独讨论特化。
@@ -109,7 +110,7 @@
 ## 规则顺序建议
 
 1. 拒绝规则
-2. 区域精确规则
+2. 区域精确规则；在 `hk_global_media` 前依次插入 `direct_ai_cn`、`direct_bytedance`
 3. GitHub 仓库 SSH 定向直连
 4. GitHub Core 节点选择规则
 5. AdsPower 细分直连规则
@@ -118,7 +119,7 @@
 8. BSC 主网 RPC 节点选择规则
 9. 海外 DNS 主 IPv4 端点美国分流规则
 10. 可选：1Password 核心连接节点选择规则
-11. 直连规则
+11. 其余直连规则
 12. 代理优先规则
 13. IP 规则
 14. `MATCH`
@@ -129,7 +130,7 @@
 - Google Play 下载 CDN 与重定向域应继续由 `region/us/google_us.yaml` 显式承接，不要依赖后面的 `direct_cn` 或 `proxy_gfw` 兜底。
 - `region/us/ai_us.yaml` 当前聚合海外 AI 平台，且对 Gemini / AI Studio / NotebookLM 保留 AI 视角交叉兜底；它也应继续放在广谱区域规则前，并统一绑定 `🇺🇸 美国-自动选择`。
 - `DeepSeek`、`Trae` 中国大陆入口与其他国内 AI 不应并入 `region/us/ai_us.yaml`；它们应优先由 `direct_ai_cn` 承接，字节共享基础设施与中国大陆通用兜底再继续落到 `direct_bytedance`、`direct_cn`。
-- `direct_ai_cn` 属于显式国内 AI 直连入口，顺序上应放在 `direct_bytedance`、`direct_cn` 前；路由动作不直接推导 DNS 出口，两份 Mihomo 私有配置继续遵守单一海外 `nameserver` 基线。
+- `direct_ai_cn` 属于显式国内 AI 直连入口，顺序固定为 `direct_ai_cn < direct_bytedance < hk_global_media < direct_cn`；静态交集审计确认只纠正 `snssdk.com`，路由动作不直接推导 DNS 出口，两份 Mihomo 私有配置继续遵守单一海外 `nameserver` 基线。
 - `region/hk/wps_kdocs.yaml` 必须放在 `direct_cn` 与 `MATCH` 前并绑定 `🇭🇰 香港-自动选择`；两份 Mihomo 私有配置继续依赖单一海外 `nameserver`，不要为它恢复 `nameserver-policy` 或 `proxy-server-nameserver`。
 - `region/hk/hk_brokers.yaml` 当前只承接复星证券/复星财富、致富证券、辉立证券与富途，应放在 `region/hk/global_media.yaml` 与 `proxy/gfw.yaml` 前，并绑定 `🇭🇰 香港-自动选择`。
 - `region/hk/global_media.yaml` 当前还承接 `x.com`、`t.co`、`twimg.com` 与 `twitter.com` 等 X / Twitter 网页域名，以及 `polymarket.com` 与 `DOMAIN-KEYWORD,polymarket` 这组 Polymarket 香港兜底；默认应继续绑定 `🇭🇰 香港-自动选择`，不要再让它们回落到 `proxy/gfw.yaml` 或误挂到日本区域。
