@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "repository": "vtgpcmsvgs/rulemesh-local",
+  "clone_url": "https://github.com/vtgpcmsvgs/rulemesh-local.git",
+  "visibility": "private",
+  "default_branch": "main",
+  "windows_checkout": "%USERPROFILE%\\Desktop\\rulemesh-local",
+  "current_config_candidates": [
+    "current",
+    "."
+  ],
+  "documentation": "docs/private-repository-bootstrap.md"
+}

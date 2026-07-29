@@ -77,7 +77,7 @@ sniffer:
 # 2) 国内 DNS 只允许用于 DNS 服务器域名 bootstrap 与代理节点 server 域名 bootstrap，不进入业务 nameserver。
 # 3) Mihomo 使用 default-nameserver 引导 DNS 服务器域名，使用 proxy-server-nameserver 处理节点域名；不要套用 Surge 的 [Host] 方案。
 # 4) 这份公开参考模板的 DNS 结构不等于两份私有 provider 配置的维护红线。
-# 5) 若维护 `%USERPROFILE%\Desktop\rulemesh-local\current` 下的 `rulemesh-substore-mihomo-clash-verge.yaml` / `rulemesh-substore-mihomo-clash-meta.yaml`，若与此处冲突，以 docs/mihomo-tun-dns-methodology.md 的“单一 DNS 真相”约束为准。
+# 5) 若维护解析后的私人当前配置目录中的 `rulemesh-substore-mihomo-clash-verge.yaml` / `rulemesh-substore-mihomo-clash-meta.yaml`，若与此处冲突，以 docs/mihomo-tun-dns-methodology.md 的“单一 DNS 真相”约束为准。
 dns:
   enable: true
   ipv6: true

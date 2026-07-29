@@ -17,7 +17,7 @@
 
 这个模板是基于本地长期使用的 Mihomo 配置整理出来的公开版，保留了多订阅聚合、区域自动切换、`rule-providers` 与完整规则顺序，但移除了真实机场地址和其他不适合公开仓库的私有信息。
 重要边界：
-对 `%USERPROFILE%\Desktop\rulemesh-local\current` 下的 `rulemesh-substore-mihomo-clash-verge.yaml` 与 `rulemesh-substore-mihomo-clash-meta.yaml` 两份私有 provider 配置，如果与本文或公开示例冲突，以 [docs/mihomo-tun-dns-methodology.md](mihomo-tun-dns-methodology.md) 里的“单一 DNS 真相”约束为准，不要把本文历史上的复杂 DNS 结构回灌到私有文件。
+对解析后的私人当前配置目录中的 `rulemesh-substore-mihomo-clash-verge.yaml` 与 `rulemesh-substore-mihomo-clash-meta.yaml` 两份私有 provider 配置，如果与本文或公开示例冲突，以 [docs/mihomo-tun-dns-methodology.md](mihomo-tun-dns-methodology.md) 里的“单一 DNS 真相”约束为准，不要把本文历史上的复杂 DNS 结构回灌到私有文件。
 
 
 ## 模板保留了什么
@@ -97,8 +97,8 @@
 
 ## 私有订阅域名同步约定
 
-- 真实订阅更新域名只在 `%USERPROFILE%\Desktop\rulemesh-local\current\private_subscription_direct.list` 维护，不写回公开模板
-- 修改后运行 `powershell -ExecutionPolicy Bypass -File "%USERPROFILE%\Desktop\rulemesh-local\current\sync_private_subscription_direct.ps1"`，统一同步到两份 Mihomo 私有配置与两份 Surge 私有配置
+- 真实订阅更新域名只在解析后的私人当前配置目录中的 `private_subscription_direct.list` 维护，不写回公开模板
+- 修改后运行同一目录中的 `sync_private_subscription_direct.ps1`，统一同步到两份 Mihomo 私有配置与两份 Surge 私有配置；目录解析与可直接执行的 PowerShell 命令见 [docs/private-subscription-direct-sync.md](private-subscription-direct-sync.md)
 - 同步脚本会先写入 Chrome 访问这些域名时的 `🚀 节点选择` 例外，再写入订阅更新继续 `DIRECT` 的规则；这负责“浏览器打开机场网站走代理”的那条访问路径
 - Mihomo 后台自动刷新机场订阅时，不依赖浏览器进程规则，而是由对应 `proxy-providers.*.proxy: DIRECT` 显式控制；这负责“后台订阅更新直连”的那条更新路径
 - 不要把 `proxy-providers.*.proxy` 与 `rule-providers.*.proxy` 混为一谈：前者是机场订阅节点清单更新，后者是 GitHub 规则集更新

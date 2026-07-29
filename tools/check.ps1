@@ -160,6 +160,26 @@ function Invoke-ChangeGuardrailValidation {
     }
 }
 
+function Invoke-PrivateRepositoryRegistrationValidation {
+    $python = Resolve-PythonCommand
+    $validatorScript = Join-Path $PSScriptRoot "check_private_repository_registration.py"
+    $env:PYTHONUTF8 = "1"
+    $env:PYTHONDONTWRITEBYTECODE = "1"
+
+    Write-Host ("[check] validate private repository registration with {0}: {1}" -f $python.Label, $python.Value)
+
+    if ($python.Kind -eq "Launcher") {
+        & $python.Value -3 -B -X utf8 $validatorScript
+    }
+    else {
+        & $python.Value -B -X utf8 $validatorScript
+    }
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "Private repository registration validation failed."
+    }
+}
+
 function Assert-OnlyExpectedDirectories {
     param(
         [Parameter(Mandatory = $true)]
@@ -226,6 +246,9 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host "[check] validate change guardrails"
 Invoke-ChangeGuardrailValidation
+
+Write-Host "[check] validate private repository registration"
+Invoke-PrivateRepositoryRegistrationValidation
 
 Write-Host "[check] validate DNS safety"
 Invoke-DnsSafetyValidation

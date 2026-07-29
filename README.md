@@ -34,7 +34,10 @@ tools/
   build_rules.py
   check.ps1
   check_change_guardrails.py
+  check_private_repository_registration.py
   check_dns_safety.py
+
+private-repository.json # 私人配置仓库的机器可读发现登记
 ```
 
 说明：
@@ -67,7 +70,7 @@ powershell -ExecutionPolicy Bypass -File tools/check.ps1
 - `docs/rule-authoring-style.md` 已修改，但没有同步更新 `AGENTS.md` 与 `README.md`
 
 其余暂时还不适合机械化硬判定的联动项，会以显式提醒输出，逼着维护者在提交前再看一眼，而不是只靠记忆。
-这个脚本现在还会额外校验 Surge 配置里的测速 URL 约定，防止把必须保持 `http://` 的字段误改成 `https://`；同时执行 `tools/check_dns_safety.py`，检查 Surge / Mihomo 配置是否把普通目标网站域名泄漏到国内 DNS。
+这个脚本现在还会执行 `tools/check_private_repository_registration.py`，确保私人配置仓库的远程标识、本地路径、恢复文档和 Codex 约定没有失联；并校验 Surge 配置里的测速 URL 约定，防止把必须保持 `http://` 的字段误改成 `https://`，同时执行 `tools/check_dns_safety.py`，检查 Surge / Mihomo 配置是否把普通目标网站域名泄漏到国内 DNS。
 
 CI 或其他非 Windows 环境如果已经确认本机 `python` 可用，也可以直接执行：
 
@@ -182,7 +185,7 @@ python tools/build_rules.py
 - 其中 `proxy/onepassword_proxy`、`proxy/polygon_rpc_proxy`、`proxy/bsc_rpc_proxy`、`proxy/overseas_dns_ipv4_proxy`，代理节点 bootstrap DNS 直连例外 `dns.alidns.com` / `doh.pub`，以及 DoH / DoH3 / DoQ、`cloudflare-dns.com`、`dns.google`、`dns.quad9.net` 都是允许保留的白名单入口；bootstrap DNS 走 `DIRECT`，海外加密 DNS 端点走美国出口。
   - 其中 GitHub SSH 后先进入 GitHub Raw 自举入口，再显式放行 `proxy/github_core_proxy`，并保留一条 `DOMAIN-KEYWORD,github,REJECT` 广覆盖观察兜底，用于发现 SSH / GitHub Core 之外的漏网之鱼；AdsPower 细分规则后也保留一条 `DOMAIN-KEYWORD,adspower,REJECT` 广覆盖观察兜底。
   - 阿里云香港 SSH、`aliyuncs.com` 与 `check.myclientip.com` 统一收敛到“指定直连”段显式放行；其后额外保留一条阿里云广覆盖 `REJECT` 观察兜底，用于发现上游阿里云规则的漏网之鱼。
-- 私有订阅域名统一在 `%USERPROFILE%\Desktop\rulemesh-local\current\private_subscription_direct.list` 维护，并通过脚本同步到本地四份私有配置中的“Chrome 访问节点选择例外 + 订阅更新直连”规则块，不回写公开模板。
+- 私有订阅域名统一在解析后的私人当前配置目录中的 `private_subscription_direct.list` 维护，并通过脚本同步到本地四份私有配置中的“Chrome 访问节点选择例外 + 订阅更新直连”规则块，不回写公开模板。
 - 私有仓库若没有 `current` 子目录、而四份主配置直接位于 `rulemesh-local` 根目录，则以实际仓库根目录为当前配置目录；不要为满足旧路径说明凭空创建 `current`。
   - 其中 `raw.githubusercontent.com` 作为规则产物下载自举入口，但不再使用 `server:system`；普通目标网站的全局 DNS 仍保持海外 DNS，不再回退到 `system + 国内 DNS`。
   - 工作白名单模式下，广覆盖观察规则统一只允许使用 `REJECT`；不要对 `DIRECT` 或 `PROXY` 规则使用 `extended-matching`，否则会把可伪造的 Host / SNI 纳入放行判断，扩大绕过白名单的攻击面。
@@ -305,6 +308,12 @@ python tools/build_rules.py
 
 这几类文件当前都不参与规则构建，只负责把维护策略写清楚，避免后续继续依赖口头约定。
 
+## 私人配置仓库发现与恢复
+
+真实客户端配置的最终数据源是 GitHub 私人仓库 [`vtgpcmsvgs/rulemesh-local`](https://github.com/vtgpcmsvgs/rulemesh-local)，Windows 默认工作副本位于 `%USERPROFILE%\Desktop\rulemesh-local`。根目录 [`private-repository.json`](private-repository.json) 是这项对应关系的机器可读登记。
+
+同一 GitHub 账号已经登录，并不意味着另一台机器已经克隆该仓库，也不意味着新的 Codex 会话自动知道本地目录对应关系。若本机不存在 `rulemesh-local`，应先读取登记文件，通过 GitHub 确认私人仓库可访问，再克隆到登记路径；不得直接断言配置不存在或创建新的空仓库。完整恢复、校验与脱敏边界见 [docs/private-repository-bootstrap.md](docs/private-repository-bootstrap.md)。
+
 ## 本地私有配置
 
 仓库提供 [`.rulemesh.local.example.json`](.rulemesh.local.example.json) 作为本地私有配置模板。复制为 `.rulemesh.local.json` 后，可给 `tools/sync_upstream_rules.py` 提供本地告警与阿里云上游鉴权配置；当前支持：
@@ -321,8 +330,8 @@ python tools/build_rules.py
 
 - `.rulemesh.local.json` 只用于本地私有环境，已经被 `.gitignore` 忽略，不应提交到公开仓库
 - 缺少本地配置时，不影响本地构建与手工同步主流程，只会跳过本地 Feishu 告警发送；但 GitHub Actions 的每日 upstream 工作流会要求 webhook secrets 可用
-- 真实 Webhook、密钥、私有订阅地址、MITM 参数与本地长期使用配置应继续保留在公开仓库外部，例如 `%USERPROFILE%\Desktop\rulemesh-local\current`
-- 私有订阅域名同步块当前也统一保留在 `%USERPROFILE%\Desktop\rulemesh-local\current` 中：使用 `private_subscription_direct.list` 作为单一源文件，再通过 `sync_private_subscription_direct.ps1` 同步到四份本地私有配置中的“Chrome 访问节点选择例外 + 订阅更新直连”规则块
+- 真实 Webhook、密钥、私有订阅地址、MITM 参数与本地长期使用配置应继续保留在公开仓库外部的私人 `rulemesh-local` 仓库中
+- 私有订阅域名同步块统一保留在解析后的私人当前配置目录中：使用 `private_subscription_direct.list` 作为单一源文件，再通过 `sync_private_subscription_direct.ps1` 同步到四份本地私有配置中的“Chrome 访问节点选择例外 + 订阅更新直连”规则块；目录解析见 [docs/private-repository-bootstrap.md](docs/private-repository-bootstrap.md)
 - 两份 Mihomo 私有配置里的机场 `proxy-providers` 默认必须保留 `proxy: DIRECT`，用于让后台订阅 URL 更新直连；这和 `rule-providers` 拉 GitHub 规则集时可使用 `proxy: "🚀 节点选择"` 是两条不同链路
 - 四份本地私有配置里，所有基于 `policy-path` / provider 的代理组默认共用同一套排除条件：`剩余流量`、`套餐到期`、`距离下次重置`、`过滤掉`、`Expire Date`、`Traffic Reset` 这类状态/提示项按前缀匹配，`直接连接` 这类独立占位项按整行精确匹配，`联系我们` 与 `1.2 GB | 50 GB` 这类提示继续专项匹配
 - 如果某个 provider 会给真实节点名追加统一前缀，不要把供应商名或独立占位项写成宽匹配，否则可能误伤真实节点

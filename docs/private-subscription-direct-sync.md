@@ -4,12 +4,14 @@
 
 ## 适用范围
 
-- `%USERPROFILE%\Desktop\rulemesh-local\current\private_subscription_direct.list`
-- `%USERPROFILE%\Desktop\rulemesh-local\current\sync_private_subscription_direct.ps1`
-- `%USERPROFILE%\Desktop\rulemesh-local\current\rulemesh-substore-surge-personal.conf`
-- `%USERPROFILE%\Desktop\rulemesh-local\current\rulemesh-substore-surge-work-whitelist.conf`
-- `%USERPROFILE%\Desktop\rulemesh-local\current\rulemesh-substore-mihomo-clash-verge.yaml`
-- `%USERPROFILE%\Desktop\rulemesh-local\current\rulemesh-substore-mihomo-clash-meta.yaml`
+下文的 `<私有当前配置目录>` 必须按 [private-repository-bootstrap.md](private-repository-bootstrap.md) 解析：优先使用 `rulemesh-local/current`，不存在时使用直接包含主配置与同步脚本的仓库根目录。
+
+- `<私有当前配置目录>\private_subscription_direct.list`
+- `<私有当前配置目录>\sync_private_subscription_direct.ps1`
+- `<私有当前配置目录>\rulemesh-substore-surge-personal.conf`
+- `<私有当前配置目录>\rulemesh-substore-surge-work-whitelist.conf`
+- `<私有当前配置目录>\rulemesh-substore-mihomo-clash-verge.yaml`
+- `<私有当前配置目录>\rulemesh-substore-mihomo-clash-meta.yaml`
 
 ## 设计目标
 
@@ -30,8 +32,16 @@
 
 ## 同步方式
 
-1. 修改 `private_subscription_direct.list`
-2. 运行 `powershell -ExecutionPolicy Bypass -File "%USERPROFILE%\Desktop\rulemesh-local\current\sync_private_subscription_direct.ps1"`
+1. 修改解析后的私人当前配置目录中的 `private_subscription_direct.list`
+2. 解析实际目录并运行同步脚本：
+
+   ```powershell
+   $privateRepo = Join-Path $env:USERPROFILE "Desktop\rulemesh-local"
+   $privateCurrent = Join-Path $privateRepo "current"
+   if (-not (Test-Path -LiteralPath $privateCurrent -PathType Container)) { $privateCurrent = $privateRepo }
+   powershell -ExecutionPolicy Bypass -File (Join-Path $privateCurrent "sync_private_subscription_direct.ps1")
+   ```
+
 3. 脚本会自动刷新四份本地私有配置中的“Chrome 访问节点选择例外 + 订阅更新直连”规则块，并保留源文件中的分组注释与顺序
 4. 如需人工确认，可检查四份目标文件中的 `PRIVATE_SUBSCRIPTION_DIRECT_START` 与 `PRIVATE_SUBSCRIPTION_DIRECT_END` 标记段
 

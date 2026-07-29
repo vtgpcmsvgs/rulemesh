@@ -58,7 +58,7 @@ DOMAIN-SET:https://example.com/share/file/proxy-node-domains = server:https://dn
 RuleMesh 里的 Mihomo DNS 维护边界分两层：
 
 - 公开参考模板 `docs/examples/mihomo-public.yaml` 仍可表达通用的分层 DNS 思路。
-- `%USERPROFILE%\Desktop\rulemesh-local\current\rulemesh-substore-mihomo-clash-verge.yaml` 与 `rulemesh-substore-mihomo-clash-meta.yaml` 这两份私有 provider 配置，默认必须保持“单一 DNS 真相”：`ipv6: false`、`dns.ipv6: false`、`use-hosts: false`、`use-system-hosts: false`，并把 `dns:` 收敛为 `default-nameserver + nameserver + fake-ip-filter + 最少必要字段`。
+- 解析后的私人当前配置目录中的 `rulemesh-substore-mihomo-clash-verge.yaml` 与 `rulemesh-substore-mihomo-clash-meta.yaml` 这两份私有 provider 配置，默认必须保持“单一 DNS 真相”：`ipv6: false`、`dns.ipv6: false`、`use-hosts: false`、`use-system-hosts: false`，并把 `dns:` 收敛为 `default-nameserver + nameserver + fake-ip-filter + 最少必要字段`。
 - 未经用户明确确认与运行时复测，不得把 `nameserver-policy`、`proxy-server-nameserver`、`proxy-server-nameserver-policy`、`direct-nameserver`、`fallback` 或 `respect-rules: true` 重新带回这两份私有 Mihomo 配置。
 - 这不是“所有 Mihomo 都应该更简单”的泛化结论，而是已经在当前私有 provider 链路中实测验证过的稳定基线。
 

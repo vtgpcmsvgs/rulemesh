@@ -29,6 +29,7 @@ BUILD_TOOL_PATHS = (
     "tools/build_rules.py",
     "tools/check.ps1",
     "tools/check_change_guardrails.py",
+    "tools/check_private_repository_registration.py",
 )
 STYLE_DOC_PATH = "docs/rule-authoring-style.md"
 WORKFLOW_PREFIX = ".github/workflows/"

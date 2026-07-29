@@ -28,6 +28,7 @@ TEXT_FILE_ROOTS = (
 TEXT_FILE_PATHS = (
     ROOT / "AGENTS.md",
     ROOT / "README.md",
+    ROOT / "private-repository.json",
     ROOT / ".rulemesh.local.example.json",
 )
 SOURCE_RULE_GROUPS = ("reject", "direct", "proxy", "region")

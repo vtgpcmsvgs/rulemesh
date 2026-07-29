@@ -31,7 +31,7 @@
 - 其中私有 `rulemesh-substore-surge-work-whitelist.conf` 当前使用工作电脑白名单模式，并与两个 `personal` 配置永久有意不一致。
 - 维护这份白名单文件时请同时参考 [docs/surge-work-cluster-whitelist.md](surge-work-cluster-whitelist.md)。
 - 若只新增某个白名单专属的单个直连域名，默认直接维护在 2.10“指定直连”入口，不为单条规则额外新增公开 `rules/` 文件。
-- 如果本地存在需要每日刷新的私有订阅域名，统一维护在 `%USERPROFILE%\Desktop\rulemesh-local\current\private_subscription_direct.list`，再通过同步脚本分发到私有配置中的“Chrome 访问节点选择例外 + 订阅更新直连”规则块。
+- 如果本地存在需要每日刷新的私有订阅域名，统一维护在解析后的私人当前配置目录中的 `private_subscription_direct.list`，再通过同步脚本分发到私有配置中的“Chrome 访问节点选择例外 + 订阅更新直连”规则块。
 - 个人终端版
   - 用于同事个人终端或可公开分享的配置。
   - 对应本仓库的 [`docs/examples/surge-public.conf`](examples/surge-public.conf)。
@@ -98,8 +98,8 @@
 
 ## 私有订阅域名同步约定
 
-- 真实订阅更新域名只在 `%USERPROFILE%\Desktop\rulemesh-local\current\private_subscription_direct.list` 维护，不写回公开模板
-- 修改后运行 `powershell -ExecutionPolicy Bypass -File "%USERPROFILE%\Desktop\rulemesh-local\current\sync_private_subscription_direct.ps1"`，统一同步到两份 Surge 私有配置与两份 Mihomo 私有配置
+- 真实订阅更新域名只在解析后的私人当前配置目录中的 `private_subscription_direct.list` 维护，不写回公开模板
+- 修改后运行同一目录中的 `sync_private_subscription_direct.ps1`，统一同步到两份 Surge 私有配置与两份 Mihomo 私有配置；目录解析与可直接执行的 PowerShell 命令见 [docs/private-subscription-direct-sync.md](private-subscription-direct-sync.md)
 - Surge 私有配置里的 `PROCESS-NAME + DOMAIN-*` 节点选择例外属于逻辑规则，末尾策略名必须裸写成 `...,🚀 节点选择`，不要手改成 `...,"🚀 节点选择"`；详细说明见 [docs/private-subscription-direct-sync.md](private-subscription-direct-sync.md)
 - 同步脚本会先写入 Chrome 访问这些域名时的 `🚀 节点选择` 例外，再写入订阅更新继续 `DIRECT` 的规则
 - 这组同步块在 Surge 私有配置中必须位于 `proxy/gfw.list` 前；在工作白名单里则属于显式放行入口

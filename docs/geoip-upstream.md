@@ -34,4 +34,4 @@
   - `docs/examples/mihomo-public.yaml`
   - `.github/workflows/build-dist.yml`
   - `.github/workflows/sync-upstream-rules.yml`
-  - 本地 `rulemesh-local/current` 中对应的 Surge / Mihomo 私有配置
+  - 解析后的私人当前配置目录中对应的 Surge / Mihomo 私有配置
