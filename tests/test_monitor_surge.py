@@ -16,6 +16,10 @@ from unittest import mock
 import sys
 
 
+if sys.platform == "win32":
+    raise unittest.SkipTest("Surge 本地监控依赖 fcntl，仅在类 Unix 环境运行")
+
+
 ROOT = Path(__file__).resolve().parents[1]
 TOOLS = ROOT / "tools"
 if str(TOOLS) not in sys.path:

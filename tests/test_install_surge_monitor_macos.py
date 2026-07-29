@@ -16,6 +16,7 @@ INSTALLER = ROOT / "tools" / "install_surge_monitor_macos.sh"
 LABEL = "com.rulemesh.surge-monitor"
 
 
+@unittest.skipIf(os.name == "nt", "Surge macOS 安装器测试仅在类 Unix 环境运行")
 class InstallSurgeMonitorMacosTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temp_dir = tempfile.TemporaryDirectory(prefix="rulemesh 安装测试 ")
