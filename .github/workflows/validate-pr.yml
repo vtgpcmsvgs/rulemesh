@@ -15,11 +15,17 @@ jobs:
     env:
       PYTHONDONTWRITEBYTECODE: "1"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
+
+      - name: 安装 zsh 测试依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends zsh
+          zsh --version
 
       - name: 运行单元测试
         run: python -m unittest discover -s tests -p "test_*.py"

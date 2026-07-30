@@ -31,13 +31,20 @@ jobs:
         run: |
           echo "::warning::RULEMESH_UPSTREAM_ALERT_FEISHU_WEBHOOK_URL 未配置，无法发送 webhook 失败告警；若后续出现上游抓取失败，将按 required 策略直接判定任务失败。"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         id: checkout_repo
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         id: setup_python
         with:
           python-version: "3.11"
+
+      - name: 安装 zsh 测试依赖
+        id: setup_zsh
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends zsh
+          zsh --version
 
       - name: Run unit tests
         id: unit_tests
@@ -95,6 +102,7 @@ jobs:
           RULEMESH_STEP_RESULTS: >-
             checkout_repo=${{ steps.checkout_repo.outcome }};
             setup_python=${{ steps.setup_python.outcome }};
+            setup_zsh=${{ steps.setup_zsh.outcome }};
             unit_tests=${{ steps.unit_tests.outcome }};
             sync_upstream=${{ steps.sync_upstream.outcome }};
             validate_synced_snapshots=${{ steps.validate_synced_snapshots.outcome }};

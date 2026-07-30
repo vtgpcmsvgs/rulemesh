@@ -14,6 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 INSTALLER = ROOT / "tools" / "install_surge_monitor_macos.sh"
 LABEL = "com.rulemesh.surge-monitor"
+ZSH = shutil.which("zsh")
 
 
 @unittest.skipIf(os.name == "nt", "Surge macOS 安装器测试仅在类 Unix 环境运行")
@@ -275,7 +276,12 @@ class InstallSurgeMonitorMacosTests(unittest.TestCase):
         )
 
     def test_install_is_compatible_with_zsh_function_argzero_behavior(self) -> None:
-        result = self.run_installer(shell="/bin/zsh")
+        if ZSH is None:
+            if os.environ.get("CI", "").lower() == "true":
+                self.fail("CI 缺少 zsh；请先安装并验证 zsh 测试依赖")
+            self.skipTest("当前环境未安装 zsh，跳过 zsh 专项兼容测试")
+
+        result = self.run_installer(shell=ZSH)
 
         self.assertEqual(result.returncode, 0, result.stderr)
         with self.plist_path.open("rb") as stream:

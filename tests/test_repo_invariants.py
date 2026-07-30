@@ -317,6 +317,48 @@ class RepoInvariantTests(unittest.TestCase):
         ]
         self.assertEqual(offenders, [], f"以下文件仍包含 UTF-8 BOM: {offenders}")
 
+    def test_ubuntu_full_suite_workflows_prepare_zsh(self) -> None:
+        workflow_root = ROOT / ".github" / "workflows"
+        test_command = 'python -m unittest discover -s tests -p "test_*.py"'
+        required_before_tests = (
+            "sudo apt-get install --yes --no-install-recommends zsh",
+            "zsh --version",
+        )
+        offenders: list[str] = []
+
+        for path in sorted(workflow_root.glob("*.yml")):
+            workflow = path.read_text(encoding="utf-8")
+            if "runs-on: ubuntu" not in workflow or test_command not in workflow:
+                continue
+
+            test_position = workflow.index(test_command)
+            missing_or_late = [
+                needle
+                for needle in required_before_tests
+                if needle not in workflow or workflow.index(needle) > test_position
+            ]
+            if missing_or_late:
+                offenders.append(f"{path.name}: 缺少或顺序错误 {missing_or_late}")
+
+        self.assertEqual(offenders, [])
+
+    def test_workflows_avoid_deprecated_node20_action_versions(self) -> None:
+        workflow_root = ROOT / ".github" / "workflows"
+        deprecated = (
+            "actions/checkout@v4",
+            "actions/setup-python@v5",
+            "actions/upload-artifact@v4",
+        )
+        offenders: list[str] = []
+
+        for path in sorted(workflow_root.glob("*.yml")):
+            workflow = path.read_text(encoding="utf-8")
+            matches = [needle for needle in deprecated if needle in workflow]
+            if matches:
+                offenders.append(f"{path.name}: 仍引用已弃用的 Node 20 Action {matches}")
+
+        self.assertEqual(offenders, [])
+
     def test_sources_yaml_covers_all_rule_sources(self) -> None:
         self.assertEqual(collect_sources_yaml_entries(), collect_source_rule_paths())
 
@@ -398,6 +440,7 @@ class RepoInvariantTests(unittest.TestCase):
         for needle in (
             "id: checkout_repo",
             "id: setup_python",
+            "id: setup_zsh",
             "id: unit_tests",
             "id: sync_upstream",
             "id: validate_synced_snapshots",
