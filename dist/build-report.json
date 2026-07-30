@@ -40,8 +40,8 @@
       "category": "direct",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 459,
-        "mihomo_classical": 459
+        "surge_rules": 460,
+        "mihomo_classical": 460
       },
       "dist": {
         "surge_rules": "dist/surge/rules/direct/alicloud_hk_ipv4_ssh22_direct.list",
@@ -79,8 +79,8 @@
       "category": "direct",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 117937,
-        "mihomo_classical": 117937
+        "surge_rules": 117637,
+        "mihomo_classical": 117637
       },
       "dist": {
         "surge_rules": "dist/surge/rules/direct/cn_direct.list",
@@ -144,8 +144,8 @@
       "category": "proxy",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 116,
-        "mihomo_classical": 116
+        "surge_rules": 118,
+        "mihomo_classical": 118
       },
       "dist": {
         "surge_rules": "dist/surge/rules/proxy/bsc_rpc_proxy.list",
@@ -157,8 +157,8 @@
       "category": "proxy",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 5198,
-        "mihomo_classical": 5198
+        "surge_rules": 5199,
+        "mihomo_classical": 5199
       },
       "dist": {
         "surge_rules": "dist/surge/rules/proxy/gfw.list",

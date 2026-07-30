@@ -58,6 +58,8 @@ DOMAIN,bsc-mainnet.public.blastapi.io
 DOMAIN-WILDCARD,*.bsc-mainnet.public.blastapi.io
 DOMAIN,bsc-mainnet.rpcfast.com
 DOMAIN-WILDCARD,*.bsc-mainnet.rpcfast.com
+DOMAIN,bsc-rpc-public.chainpulse.cc
+DOMAIN-WILDCARD,*.bsc-rpc-public.chainpulse.cc
 DOMAIN,bsc-rpc.keccak.io
 DOMAIN-WILDCARD,*.bsc-rpc.keccak.io
 DOMAIN,bsc-rpc.publicnode.com
