@@ -25,7 +25,7 @@
 - `tun + sniffer + dns + proxy-providers + proxy-groups + rule-providers + rules` 的完整结构
 - `geodata-mode: false` + `geox-url.mmdb` 显式固定到与 Surge 共用的本仓库 Release 镜像地址
 - 多订阅聚合后的统一总开关与区域自动组
-- `proxy-providers.*.proxy: DIRECT` 的订阅更新基线：它只控制 Mihomo 后台拉取机场订阅 URL，浏览器访问机场官网 / 面板仍由后面的 `rules` 判断
+- `proxy-providers.*.proxy: DIRECT` 的订阅更新基线：它只控制 Mihomo 后台拉取机场订阅 URL，普通流量访问这些端点仍由后面的精确 `DOMAIN` / `IP-CIDR` 规则判断
 - `reject`、`direct`、`proxy`、`region` 四类 RuleMesh `classical` 产物接入
 - GitHub 继续采用“SSH 定向直连 + Core HTTPS 显式代理”拆分：`direct/github_ssh_direct.yaml` 只承接 `github.com:22` 与 `ssh.github.com:443`，`proxy/github_core_proxy.yaml` 则显式承接 GitHub 网页、`api.github.com`、Gist、Raw、静态资源与附件
 - 公开参考模板保留 Mihomo 的 Tun、嗅探与 DNS 隔离思路，但两份私有 provider 配置不要直接照搬这里的历史复杂 DNS 分层。
@@ -39,7 +39,7 @@
 - `direct/ai_cn_direct.yaml` 显式承接 Kimi / DeepSeek / 豆包 / 即梦 / Trae 中国大陆 / 元宝 / 混元 / 通义 / 千问 / 智谱 / MiniMax / 文心等国内 AI 入口；调用顺序固定为 `direct_ai_cn < direct_bytedance < hk_global_media < direct_cn`，两份 Mihomo 私有配置继续保持单一海外 `nameserver`，不恢复 `nameserver-policy`
 - 阿里云香港 SSH 继续走 `direct/alicloud_hk_ipv4_ssh22_direct.yaml`，调用层保留 `DIRECT,no-resolve`，该 provider 更新间隔使用 3600 秒；远程 provider 前必须先放仅限 TCP/22 的阿里注册大块与 `AS45102/AS134963/AS24429` 内联兜底
 - AWS 香港区域入口已统一为 `region/hk/hk_aws_ipv4.yaml`
-- 多地区链式 SOCKS5 端点入口已统一为 `region/multi/chain_socks5_ipcidr.yaml`，默认应绑定统一的自动选择 / 负载均衡组，而不是固定地区组
+- 多地区链式 SOCKS5 端点产物仍发布为 `region/multi/chain_socks5_ipcidr.yaml`，但默认 Mihomo 模板不注册或调用它；普通 `RULE-SET` 分流不等价于代理节点拨号层的链式连接，只有配置并复测 `dialer-proxy` 后才能接入
 - 阿里云香港 SSH 直连入口已统一为 `direct/alicloud_hk_ipv4_ssh22_direct.yaml`，入口内直接保留单调历史 `IP-CIDR` 与运行时 `IP-ASN` 的 `no-resolve + NETWORK,tcp + DST-PORT,22` 语义；阿里云控制面 `aliyuncs.com` 与出口探测 `check.myclientip.com` 仍通过单条 `DIRECT` 规则显式放行
 - AdsPower 专项 `reject/direct/proxy` 规则集与 `proxy/gfw.yaml` 广谱代理规则的顺序关系
 - Polygon 主网 RPC 专项 `proxy/polygon_rpc_proxy.yaml` 与 `proxy/gfw.yaml` 的顺序关系
@@ -98,12 +98,12 @@
 
 ## 私有订阅域名同步约定
 
-- 真实订阅更新域名只在解析后的私人当前配置目录中的 `private_subscription_direct.list` 维护，不写回公开模板
-- 修改后运行同一目录中的 `sync_private_subscription_direct.ps1`，统一同步到两份 Mihomo 私有配置与两份 Surge 私有配置；目录解析与可直接执行的 PowerShell 命令见 [docs/private-subscription-direct-sync.md](private-subscription-direct-sync.md)
-- 同步脚本会先写入 Chrome 访问这些域名时的 `🚀 节点选择` 例外，再写入订阅更新继续 `DIRECT` 的规则；这负责“浏览器打开机场网站走代理”的那条访问路径
-- Mihomo 后台自动刷新机场订阅时，不依赖浏览器进程规则，而是由对应 `proxy-providers.*.proxy: DIRECT` 显式控制；这负责“后台订阅更新直连”的那条更新路径
+- 真实订阅更新域名 / IP 只在解析后的私人当前配置目录中的 `private_subscription_direct.list` 维护，不写回公开模板
+- 修改后运行同一目录中的 `sync_private_subscription_direct.ps1 -Target mihomo`，只同步两份 Mihomo 私有配置；只有用户明确要求两类客户端同时更新时才使用 `-Target all`。目录解析与可直接执行的 PowerShell 命令见 [docs/private-subscription-direct-sync.md](private-subscription-direct-sync.md)
+- Mihomo 分支会把每个精确端点生成成普通 `DOMAIN` / `IP-CIDR` 节点选择规则，不附加 `PROCESS-NAME`，也不在这段规则里生成 `DIRECT`
+- Mihomo 后台自动刷新机场订阅时，由对应 `proxy-providers.*.proxy: DIRECT` 显式控制；它与上一条“端点普通流量走节点选择”是两条独立路径
 - 不要把 `proxy-providers.*.proxy` 与 `rule-providers.*.proxy` 混为一谈：前者是机场订阅节点清单更新，后者是 GitHub 规则集更新
-- 这份共享源文件应只保留 Surge / Mihomo 都能直接复用的规则语法；当前优先使用 `DOMAIN`、`DOMAIN-SUFFIX`、`DOMAIN-WILDCARD`
+- 这份共享源文件应只保留 Surge / Mihomo 都能直接复用的规则语法；当前只允许 `DOMAIN`、`DOMAIN-SUFFIX`、`IP-CIDR`、`IP-CIDR6`，并优先使用精确 `DOMAIN` / 主机网段
 - 在两份 Mihomo 私有配置中，这组同步块都应继续放在 `proxy_gfw` 前
 - 详细维护方式见 [docs/private-subscription-direct-sync.md](private-subscription-direct-sync.md)
 

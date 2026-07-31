@@ -152,7 +152,7 @@ python tools/build_rules.py
 - 海外 DNS 主 IPv4 端点专项规则统一维护在 `rules/proxy/overseas_dns_ipv4_proxy.list`
 - 客户端应显式接入 `proxy/overseas_dns_ipv4_proxy`，并放在 `proxy/gfw` 前；Surge 侧继续按 `RULE-SET,...,"🇺🇸 美国-自动选择",no-resolve` 接入，让美国地区策略先命中 `1.1.1.1/32`、`8.8.8.8/32` 与 `9.9.9.9/32`
 - AWS 香港区域规则入口已统一命名为 `region/hk/hk_aws_ipv4`，与东京、大阪、首尔、台北保持同类命名
-- 私有代理服务商导出的链式 SOCKS5 端点脱敏快照统一维护在 `region/multi/chain_socks5_ipcidr`；公开仓库只保留严格校验、去重并排序后的公网 IPv4 `/32`，不保存下载地址、端口或认证信息，也不再挂在 `region/jp/` 或默认绑定日本策略组
+- 私有代理服务商导出的链式 SOCKS5 端点脱敏快照统一维护在 `region/multi/chain_socks5_ipcidr`；公开仓库只保留严格校验、去重并排序后的公网 IPv4 `/32`，不保存下载地址、端口或认证信息，也不再挂在 `region/jp/`。Surge 可在规则层把端点连接交给链式 / 自动选择组；Mihomo 默认模板不调用该规则，必须另行配置并复测 `dialer-proxy`，不能用普通 `RULE-SET` 冒充链式拨号
 - 阿里云香港 SSH 直连入口统一为 `direct/alicloud_hk_ipv4_ssh22_direct`；发布覆盖由官方香港 VPC 当前快照、`AS45102/AS134963/AS24429` 当前与历史 BGP 公告的单调并集组成，自动同步不再删除旧覆盖，并直接保留 `no-resolve + TCP/22` 最终语义
 - Surge 与 Mihomo 当前统一把 GeoIP mmdb 显式固定到你自己的仓库 Release 镜像：`vtgpcmsvgs/rulemesh/releases/download/geoip-country-mmdb/country.mmdb`
 - 对应上游登记与维护约定见 `rules/upstream/geodata/metacubex_country_mmdb.yaml` 与 [docs/geoip-upstream.md](docs/geoip-upstream.md)
@@ -185,7 +185,7 @@ python tools/build_rules.py
 - 其中 `proxy/onepassword_proxy`、`proxy/polygon_rpc_proxy`、`proxy/bsc_rpc_proxy`、`proxy/overseas_dns_ipv4_proxy`，代理节点 bootstrap DNS 直连例外 `dns.alidns.com` / `doh.pub`，以及 DoH / DoH3 / DoQ、`cloudflare-dns.com`、`dns.google`、`dns.quad9.net` 都是允许保留的白名单入口；bootstrap DNS 走 `DIRECT`，海外加密 DNS 端点走美国出口。
   - 其中 GitHub SSH 后先进入 GitHub Raw 自举入口，再显式放行 `proxy/github_core_proxy`，并保留一条 `DOMAIN-KEYWORD,github,REJECT` 广覆盖观察兜底，用于发现 SSH / GitHub Core 之外的漏网之鱼；AdsPower 细分规则后也保留一条 `DOMAIN-KEYWORD,adspower,REJECT` 广覆盖观察兜底。
   - 阿里云香港 SSH、`aliyuncs.com` 与 `check.myclientip.com` 统一收敛到“指定直连”段显式放行；其后额外保留一条阿里云广覆盖 `REJECT` 观察兜底，用于发现上游阿里云规则的漏网之鱼。
-- 私有订阅域名统一在解析后的私人当前配置目录中的 `private_subscription_direct.list` 维护，并通过脚本同步到本地四份私有配置中的“Chrome 访问节点选择例外 + 订阅更新直连”规则块，不回写公开模板。
+- 私有订阅端点统一在解析后的私人当前配置目录中的 `private_subscription_direct.list` 维护；同步脚本必须显式指定 `-Target surge`、`-Target mihomo` 或 `-Target all`。Surge 目标生成“Chrome 节点选择例外 + 普通订阅更新直连”，Mihomo 目标则让这些精确域名 / IP 的普通流量直接命中节点选择；真实端点不回写公开模板。
 - 私有仓库若没有 `current` 子目录、而四份主配置直接位于 `rulemesh-local` 根目录，则以实际仓库根目录为当前配置目录；不要为满足旧路径说明凭空创建 `current`。
   - 其中 `raw.githubusercontent.com` 作为规则产物下载自举入口，但不再使用 `server:system`；普通目标网站的全局 DNS 仍保持海外 DNS，不再回退到 `system + 国内 DNS`。
   - 工作白名单模式下，广覆盖观察规则统一只允许使用 `REJECT`；不要对 `DIRECT` 或 `PROXY` 规则使用 `extended-matching`，否则会把可伪造的 Host / SNI 纳入放行判断，扩大绕过白名单的攻击面。
@@ -227,7 +227,7 @@ python tools/build_rules.py
 - `docs/examples/mihomo-public.yaml`
   - 保留完整 `tun + sniffer + dns + proxy-providers + proxy-groups + rule-providers + rules` 结构
   - 已移除真实机场订阅链接、供应商命名与控制面参数
-  - `proxy-providers.*.proxy` 默认显式写 `DIRECT`，只控制 Mihomo 后台更新机场订阅 URL；浏览器访问机场官网 / 面板仍由 `rules` 里的进程与域名规则控制
+  - `proxy-providers.*.proxy` 默认显式写 `DIRECT`，只控制 Mihomo 后台更新机场订阅 URL；普通流量访问这些端点仍由 `rules` 里的精确域名 / IP 规则控制。若上游按请求头协商格式，可为单个 provider 显式配置已验证的 `header.User-Agent`
 - 默认同时接入 `direct/os_time_direct`，并配套接入 `reject/os_update_reject`、`region/us/microsoft_us` 与 `region/us/macos_update_us`；前者负责系统时间同步，后两者在放开拒绝规则后统一走美国节点
 - 默认接入 AdsPower 专项 `reject/direct/proxy` 规则集，并保持在 `proxy/gfw` 前完成细分控制
 - 默认接入 Polygon 主网 RPC 专项 `proxy/polygon_rpc_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
@@ -332,8 +332,8 @@ python tools/build_rules.py
 - `.rulemesh.local.json` 只用于本地私有环境，已经被 `.gitignore` 忽略，不应提交到公开仓库
 - 缺少本地配置时，不影响本地构建与手工同步主流程，只会跳过本地 Feishu 告警发送；但 GitHub Actions 的每日 upstream 工作流会要求 webhook secrets 可用
 - 真实 Webhook、密钥、私有订阅地址、MITM 参数与本地长期使用配置应继续保留在公开仓库外部的私人 `rulemesh-local` 仓库中
-- 私有订阅域名同步块统一保留在解析后的私人当前配置目录中：使用 `private_subscription_direct.list` 作为单一源文件，再通过 `sync_private_subscription_direct.ps1` 同步到四份本地私有配置中的“Chrome 访问节点选择例外 + 订阅更新直连”规则块；目录解析见 [docs/private-repository-bootstrap.md](docs/private-repository-bootstrap.md)
-- 两份 Mihomo 私有配置里的机场 `proxy-providers` 默认必须保留 `proxy: DIRECT`，用于让后台订阅 URL 更新直连；这和 `rule-providers` 拉 GitHub 规则集时可使用 `proxy: "🚀 节点选择"` 是两条不同链路
+- 私有订阅端点同步块统一保留在解析后的私人当前配置目录中：使用 `private_subscription_direct.list` 作为单一源文件，运行 `sync_private_subscription_direct.ps1` 时显式选择 `-Target surge`、`-Target mihomo` 或 `-Target all`；不要在用户明确排除某一客户端时顺带更新它。目录解析见 [docs/private-repository-bootstrap.md](docs/private-repository-bootstrap.md)
+- 两份 Mihomo 私有配置里的机场 `proxy-providers` 默认必须保留 `proxy: DIRECT`，用于让后台订阅 URL 更新直连；订阅端点的普通流量由 Mihomo `rules` 中的精确 `DOMAIN` / `IP-CIDR` 规则交给节点选择。这和 `rule-providers` 拉 GitHub 规则集时可使用 `proxy: "🚀 节点选择"` 是三条彼此独立的链路
 - 四份本地私有配置里，所有基于 `policy-path` / provider 的代理组默认共用同一套排除条件：`剩余流量`、`套餐到期`、`距离下次重置`、`过滤掉`、`Expire Date`、`Traffic Reset` 这类状态/提示项按前缀匹配，`直接连接` 这类独立占位项按整行精确匹配，`联系我们` 与 `1.2 GB | 50 GB` 这类提示继续专项匹配
 - 如果某个 provider 会给真实节点名追加统一前缀，不要把供应商名或独立占位项写成宽匹配，否则可能误伤真实节点
 - 详细背景、禁止事项与改动前检查清单见 [docs/proxy-group-filter-methodology.md](docs/proxy-group-filter-methodology.md)

@@ -31,7 +31,7 @@
 - 其中私有 `rulemesh-substore-surge-work-whitelist.conf` 当前使用工作电脑白名单模式，并与两个 `personal` 配置永久有意不一致。
 - 维护这份白名单文件时请同时参考 [docs/surge-work-cluster-whitelist.md](surge-work-cluster-whitelist.md)。
 - 若只新增某个白名单专属的单个直连域名，默认直接维护在 2.10“指定直连”入口，不为单条规则额外新增公开 `rules/` 文件。
-- 如果本地存在需要每日刷新的私有订阅域名，统一维护在解析后的私人当前配置目录中的 `private_subscription_direct.list`，再通过同步脚本分发到私有配置中的“Chrome 访问节点选择例外 + 订阅更新直连”规则块。
+- 如果本地存在需要维护的私有订阅端点，统一记录在解析后的私人当前配置目录中的 `private_subscription_direct.list`；仅更新 Surge 时必须以 `-Target surge` 运行同步脚本，生成“Chrome 访问节点选择例外 + 订阅更新直连”规则块。
 - 个人终端版
   - 用于同事个人终端或可公开分享的配置。
   - 对应本仓库的 [`docs/examples/surge-public.conf`](examples/surge-public.conf)。
@@ -52,7 +52,7 @@
 - `direct/ai_cn_direct.list` 显式承接 Kimi / DeepSeek / 豆包 / 即梦 / Trae 中国大陆 / 元宝 / 混元 / 通义 / 千问 / 智谱 / MiniMax / 文心等国内 AI 入口，并与 `direct/bytedance_direct.list` 一起放在 `region/hk/global_media.list` 前；三者固定为 `ai_cn_direct < bytedance_direct < hk_global_media`
 - 阿里云香港 SSH 继续走 `direct/alicloud_hk_ipv4_ssh22_direct.list`，调用层保留 `DIRECT,no-resolve`；远程规则前必须先放仅限 TCP/22 的阿里注册大块与 `AS45102/AS134963/AS24429` 内联兜底，避免客户端缓存残缺规则时落入 `FINAL`
 - AWS 香港区域入口已统一为 `region/hk/hk_aws_ipv4.list`
-- 多地区链式 SOCKS5 端点入口已统一为 `region/multi/chain_socks5_ipcidr.list`，默认应绑定统一的自动选择 / 负载均衡组，而不是 `🇯🇵 日本-自动选择`
+- 多地区链式 SOCKS5 端点入口已统一为 `region/multi/chain_socks5_ipcidr.list`；Surge 可在规则层将端点连接绑定统一的自动选择 / 负载均衡组，而不是 `🇯🇵 日本-自动选择`。该调用方式不应机械照搬为 Mihomo 普通 `RULE-SET`
 - 阿里云香港 SSH 直连入口已统一为 `direct/alicloud_hk_ipv4_ssh22_direct.list`，入口内直接保留单调历史 `IP-CIDR` 与运行时 `IP-ASN` 的 `no-resolve + PROTOCOL,TCP + DEST-PORT,22` 语义；阿里云控制面 `aliyuncs.com` 与出口探测 `check.myclientip.com` 仍通过单条 `DIRECT` 规则显式放行
 - AdsPower 专项 `reject/direct/proxy` 规则集与 `proxy/gfw.list` 广谱代理规则的顺序关系
 - Polygon 主网 RPC 专项 `proxy/polygon_rpc_proxy.list` 与 `proxy/gfw.list` 的顺序关系
@@ -99,8 +99,8 @@
 
 ## 私有订阅域名同步约定
 
-- 真实订阅更新域名只在解析后的私人当前配置目录中的 `private_subscription_direct.list` 维护，不写回公开模板
-- 修改后运行同一目录中的 `sync_private_subscription_direct.ps1`，统一同步到两份 Surge 私有配置与两份 Mihomo 私有配置；目录解析与可直接执行的 PowerShell 命令见 [docs/private-subscription-direct-sync.md](private-subscription-direct-sync.md)
+- 真实订阅更新域名 / IP 只在解析后的私人当前配置目录中的 `private_subscription_direct.list` 维护，不写回公开模板
+- 修改后运行同一目录中的 `sync_private_subscription_direct.ps1 -Target surge`，只同步两份 Surge 私有配置；只有用户明确要求两类客户端同时更新时才使用 `-Target all`。目录解析与可直接执行的 PowerShell 命令见 [docs/private-subscription-direct-sync.md](private-subscription-direct-sync.md)
 - Surge 私有配置里的 `PROCESS-NAME + DOMAIN-*` 节点选择例外属于逻辑规则，末尾策略名必须裸写成 `...,🚀 节点选择`，不要手改成 `...,"🚀 节点选择"`；详细说明见 [docs/private-subscription-direct-sync.md](private-subscription-direct-sync.md)
 - 同步脚本会先写入 Chrome 访问这些域名时的 `🚀 节点选择` 例外，再写入订阅更新继续 `DIRECT` 的规则
 - 这组同步块在 Surge 私有配置中必须位于 `proxy/gfw.list` 前；在工作白名单里则属于显式放行入口
@@ -150,7 +150,7 @@
 - `direct/os_time_direct.list` 建议放在其他普通 `direct/*.list` 前，优先保障 `time.windows.com`、`time.apple.com` 与 `time-macos.apple.com` 直连。
 - 如果你希望默认禁用系统更新、升级时再临时放行，建议同时接入 `direct/os_time_direct.list`、`reject/os_update_reject.list`、`region/us/microsoft_us.list` 与 `region/us/macos_update_us.list`；平时由 `reject` 先拦截升级流量，系统时间同步仍由 `os_time_direct` 保持直连，放开拒绝入口后 Microsoft / macOS 更新流量统一走美国节点。
 - `proxy/gfw.list` 建议放在国内直连规则之后，至少晚于 `LAN`、`direct/os_time_direct`、`direct/ai_cn_direct`、`direct/bytedance_direct`、`direct/netease_direct`、`direct/bilibili_direct` 与 `direct/cn_direct`，避免国内域名被广谱代理规则提前抢走；GitHub、AdsPower、RPC、海外 DNS 端点等精确代理入口仍应放在 `proxy/gfw.list` 前。
-- 私有 `rulemesh-substore-surge-work-whitelist.conf` 是白名单例外：它保留设备分流、区域精确、香港券商、GitHub SSH、GitHub Raw 自举入口、GitHub Core 代理入口、GitHub 广覆盖 `REJECT` 观察兜底、私有订阅域名同步块、1Password 核心连接、AdsPower、Polygon 主网 RPC、BSC 主网 RPC、海外 DNS 主 IPv4 端点、代理节点 bootstrap DNS 直连例外、海外加密 DNS 显式入口、`LAN,DIRECT`、`direct/os_time_direct`、`region/us/microsoft_us`、`region/us/macos_update_us`、阿里云指定直连与 ByteDance；其中只有设备分流继续保留 `SRC-IP` 约束，并按指定 AWS 区域 / 多地区链式 SOCKS5 IP 段定向到对应工作机亚洲出口组，后续规则不再额外限制源 IP，原独立 `IP 规则` 段已移除；`github_ssh_direct` 后先保留 `DOMAIN,raw.githubusercontent.com` 自举入口，再显式放行 `proxy/github_core_proxy.list`，并额外用 `DOMAIN-KEYWORD,github,REJECT` 观察 GitHub 漏网之鱼；阿里云香港 SSH、`aliyuncs.com` 与 `check.myclientip.com` 统一收敛到“指定直连”段显式放行，其后额外保留一条阿里云广覆盖 `REJECT` 观察兜底；私有订阅域名统一从本地单一源文件同步到白名单显式放行段，并在订阅更新直连前额外插入 Chrome 访问这些域名时改走 `🚀 节点选择` 的例外；`proxy/onepassword_proxy.list` 也作为白名单显式放行入口放在 `proxy/gfw` 之前；AdsPower 细分规则后额外保留一条 `DOMAIN-KEYWORD,adspower,REJECT` 广覆盖观察兜底，用来发现细分规则漏网之鱼；海外 DNS 主 IPv4 端点统一走美国地区策略，`dns.alidns.com` / `doh.pub` 作为节点 bootstrap DNS 直连例外，DoH / DoH3 / DoQ 与 `cloudflare-dns.com`、`dns.google`、`dns.quad9.net` 也统一作为美国出口白名单入口；未命中上述入口的流量最终统一 `REJECT`。不要把公开模板里的广谱放行段机械同步回去。
+- 私有 `rulemesh-substore-surge-work-whitelist.conf` 是白名单例外：它保留设备分流、区域精确、香港券商、GitHub SSH、GitHub Raw 自举入口、GitHub Core 代理入口、GitHub 广覆盖 `REJECT` 观察兜底、私有订阅域名同步块、1Password 核心连接、AdsPower、Polygon 主网 RPC、BSC 主网 RPC、海外 DNS 主 IPv4 端点、代理节点 bootstrap DNS 直连例外、海外加密 DNS 显式入口、`LAN,DIRECT`、`direct/os_time_direct`、`region/us/microsoft_us`、`region/us/macos_update_us`、阿里云指定直连与 ByteDance；其中只有设备分流继续保留 `SRC-IP` 约束，并按指定 AWS 区域 / 多地区链式 SOCKS5 IP 段定向到对应工作机亚洲出口组，后续规则不再额外限制源 IP，原独立 `IP 规则` 段已移除；`github_ssh_direct` 后先保留 `DOMAIN,raw.githubusercontent.com` 自举入口，再显式放行 `proxy/github_core_proxy.list`，并额外用 `DOMAIN-KEYWORD,github,REJECT` 观察 GitHub 漏网之鱼；阿里云香港 SSH、`aliyuncs.com` 与 `check.myclientip.com` 统一收敛到“指定直连”段显式放行，其后额外保留一条阿里云广覆盖 `REJECT` 观察兜底；私有订阅域名统一从本地单一源文件以 `-Target surge` 同步到白名单显式放行段，并在订阅更新直连前额外插入 Chrome 访问这些域名时改走 `🚀 节点选择` 的例外；`proxy/onepassword_proxy.list` 也作为白名单显式放行入口放在 `proxy/gfw` 之前；AdsPower 细分规则后额外保留一条 `DOMAIN-KEYWORD,adspower,REJECT` 广覆盖观察兜底，用来发现细分规则漏网之鱼；海外 DNS 主 IPv4 端点统一走美国地区策略，`dns.alidns.com` / `doh.pub` 作为节点 bootstrap DNS 直连例外，DoH / DoH3 / DoQ 与 `cloudflare-dns.com`、`dns.google`、`dns.quad9.net` 也统一作为美国出口白名单入口；未命中上述入口的流量最终统一 `REJECT`。不要把公开模板里的广谱放行段机械同步回去。
 - 工作白名单模式下，广覆盖观察规则统一只允许使用 `REJECT`；personal 配置即使当前风险可接受，也不应把 `DIRECT` / `PROXY + extended-matching` 这类写法继续扩散回白名单模板。
 - 若只新增某个白名单专属的单个拒绝域名，或只用于阻断浏览器扩展更新链路的拒绝规则，默认直接维护在这份私有白名单的拒绝段，不为单条规则额外新增公开 `rules/` 文件。
 

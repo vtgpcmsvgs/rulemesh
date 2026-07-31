@@ -42,6 +42,15 @@
 
    正常结果应满足：`origin` 指向登记的私人仓库、当前分支为 `main`、工作区无意外变更、领先与落后均为 `0`。
 
+   Codex 沙箱若报告 `detected dubious ownership`，不要修改全局 Git 配置；只给当前命令附加已经核对过的绝对路径：
+
+   ```powershell
+   git -c "safe.directory=$target" -C $target status -sb
+   git -c "safe.directory=$target" -C $target rev-list --left-right --count 'HEAD...@{upstream}'
+   ```
+
+   PowerShell 会把未加引号的 `@{...}` 当作哈希表语法，因此包含 `@{upstream}` 的 revision 必须整体使用单引号。只应把实际登记的私人仓库路径传给 `safe.directory`，不得用 `*` 或写入全局配置。
+
 5. 解析当前配置目录时以实际布局为准：优先使用 `rulemesh-local/current`；若没有 `current`，但主配置与同步脚本直接位于仓库根目录，则使用根目录。不得为适配旧说明凭空创建 `current`。
 
 ## Codex 行为边界

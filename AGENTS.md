@@ -26,13 +26,19 @@
 ## Codex 注意事项
 
 - 在 Codex Windows 沙箱里，`python` / `py -3` 可能不可用，即使 Python 已安装
+- 使用 `rg` 搜索以连字符开头的模式（例如 `-Target`）时，必须在模式前加 `--`，避免被解析成命令行选项
+- `rg` 未命中时会以退出码 `1` 结束；把“确认不存在”作为预期结果的审计命令应单独处理该退出码，避免让后续已完成的检查被误报为失败
+- 重跑任务临时验证脚本前先检查其 `param` 块或 `Get-Help`，显式传入全部必需参数，不要假设临时脚本可以无参数运行
 - 当前机器已确认存在的解释器路径是：
   - `%LocalAppData%\Programs\Python\Python314\python.exe`
 - 如果直接执行该解释器出现 `Access is denied`（访问被拒绝），这是沙箱限制，不是仓库问题；需要申请提升权限后再运行
 - 维护解析后的私人当前配置目录中的 `sync_private_subscription_direct.ps1` 这类 Windows PowerShell 私有同步脚本时，不要直接硬编码中文或 emoji 策略组名；UTF-8 无 BOM 的 `.ps1` 在 Windows PowerShell 5.1 下可能被按本地代码页误读，导致 Mihomo / Surge 配置里写出乱码策略组名并触发 `proxy not found`。优先保持脚本源码 ASCII-only，或从目标配置提取现有策略组名后再写回
+- 运行上述私有订阅同步脚本时必须显式传入 `-Target surge`、`-Target mihomo` 或 `-Target all`；用户明确要求只改某一客户端时，只运行对应目标，不得用共享源文件为理由顺带改动另一客户端
 - 上述私有订阅同步脚本在生成 Surge 的 `AND,((PROCESS-NAME,...),(...)),策略名` 逻辑规则时，末尾策略名必须裸写，不要再套双引号；`RULE-SET,...,"🚀 节点选择"` 这类普通规则允许带引号，但 `AND` 规则若写成 `...,"🚀 节点选择"`，Surge 会把引号算进策略名并报 `unknown policy`
-- 维护解析后的私人当前配置目录里的私有机场 provider 时，如果某个机场同时存在“入口域名”和“真实落地主机”，默认两者都要加入私有订阅直连同步块；不要只保留入口域名，否则 Clash Verge / Mihomo 可能在刷新 provider 时走偏、报 EOF，或把本地缓存刷成不完整内容
-- 维护两份 Mihomo 私有配置里的机场 `proxy-providers` 时，默认每个机场 provider 都要显式保留 `proxy: DIRECT`，表示 Mihomo 后台下载 / 更新订阅 URL 直连；浏览器打开机场官网 / 面板走代理由后面的 `PROCESS-NAME + 域名` 规则负责，不要把 `rule-providers` 拉 GitHub 规则集用的代理出站逻辑套到机场订阅 provider 上
+- 维护解析后的私人当前配置目录里的私有机场 provider 时，如果某个机场同时存在“入口域名”和“真实落地主机”，默认两者都要加入私有订阅端点源；优先使用精确 `DOMAIN` / `IP-CIDR`，不要用无必要的宽后缀覆盖，也不要只保留入口域名，否则 Clash Verge / Mihomo 可能在刷新 provider 时走偏、报 EOF，或把本地缓存刷成不完整内容
+- 维护两份 Mihomo 私有配置里的机场 `proxy-providers` 时，默认每个机场 provider 都要显式保留 `proxy: DIRECT`，表示 Mihomo 后台下载 / 更新订阅 URL 直连；普通流量访问这些订阅端点则由 `rules` 中的精确域名 / IP 规则统一交给节点选择，不使用 Surge 的 `PROCESS-NAME + 域名` 逻辑规则，也不要把 `rule-providers` 拉 GitHub 规则集用的代理出站逻辑套到机场订阅 provider 上
+- 对会按请求头协商响应格式的私有机场 provider，先实际探测返回内容；若通用 Mihomo 标识不能稳定返回 Clash YAML，可在该 provider 上显式使用已验证的 `header.User-Agent`，并让两份 Mihomo 配置保持一致
+- 用 Mihomo 原生 `-t -d` 做临时语法检查时，`-d` 必须指向已确认位于任务临时目录下的专用目录；PowerShell 变量不得使用大小写不敏感的 `$home` / `$HOME`，避免把缓存或数据库误写到用户主目录
 - 私有机场 provider 若发生重命名（例如机场别名变更），除同步更新 `current` 下的 Mihomo / Surge 配置外，还要检查 Clash Verge 运行目录中的旧 provider 缓存、辅助 profile、remote profile 注册项与历史当前项；避免新旧 provider id 并存，导致 UI 继续读取旧缓存或把问题误判成“节点被过滤”
 - DNS 泄漏按安全事故级别处理：普通目标网站域名默认不得交给国内 DNS；国内 DNS 只能作为“DNS 服务器域名 bootstrap”、“代理节点 server 域名 bootstrap”以及 `cn_dns_domains` 国内业务域名白名单的专用例外
 - 维护 Surge DNS 时只能使用 `[Host] + DOMAIN-SET` 隔离节点 server 域名；`use-local-host-item-for-proxy` 默认保持 `false`，不要在 Surge 里伪造 Mihomo 的 `proxy-server-nameserver`
@@ -66,9 +72,13 @@
 - `%USERPROFILE%\Desktop\rulemesh-local` 是独立的私有 Git 仓库，远程默认分支是私有配置的最终数据源，本地目录仅作为工作副本；不要把它嵌入或合并到公开 `rulemesh` 仓库
 - 根目录 `private-repository.json` 是私人仓库远程地址、本地默认路径与布局候选的机器可读单一登记；当前登记仓库为 `vtgpcmsvgs/rulemesh-local`，恢复流程见 `docs/private-repository-bootstrap.md`
 - 同一 GitHub 账号的登录状态不会自动建立本地目录映射；当 `rulemesh-local` 在本机不存在时，必须先读取登记文件、通过 GitHub 查询登记仓库并按文档恢复，不能直接声称私人配置不存在，也不能新建同名空仓库
+- Codex 沙箱若把已登记私人仓库报为 `dubious ownership`，只对当前命令使用 `git -c "safe.directory=<已确认的私人仓库绝对路径>" ...`，不要修改全局 `safe.directory`；PowerShell 中包含 `@{upstream}` 的 Git revision 必须整体加引号，避免被解释为哈希表语法
+- Codex 当前工作区若只允许写公开仓库，私有同步脚本可能在 `WriteAllText` 阶段报 `Access denied`；这是独立私人仓库的沙箱写权限限制，应在确认目标绝对路径后申请提升权限重跑，不要误改脚本或配置来绕过
+- Codex 沙箱若不允许写 `.git/FETCH_HEAD`、索引或对象库，`git fetch` / `add` / `commit` 应在确认仓库路径后申请提升权限；不要把后续只读命令的成功退出码误当成前一个 Git 写操作也已成功
 - 修改 `rulemesh-local` 前先确认工作区、当前分支和远程同步状态；修改完成后必须提交并推送，且只有远程推送成功并确认本地未领先远程时才算私有配置同步完成
 - 私有仓库可以完整纳管配置内容，但检查、提交和验证过程中仍不得在回复或日志中回显真实订阅地址、密钥、签名、证书参数或其他敏感值
 - 检查私有配置时，脱敏必须在命令或工具产生输出之前完成；不要先输出整行再事后遮盖。默认只查看字段名、命中计数、哈希或已经替换 URL、令牌、密钥与证书参数的片段
+- 私人仓库使用 `.gitattributes` 的 `* -text` 时，保留未修改行的既有换行风格；新增或重写行统一使用 LF，并在提交前运行 `git diff --check`，避免 CR 字符被识别为行尾空白
 - 修改私人仓库名称、所有者、默认分支、本地默认路径或布局候选时，必须同步更新 `private-repository.json`、`docs/private-repository-bootstrap.md`、`README.md`、本文件与对应检查脚本
 - 修改完成后，必须检查整个仓库中同类问题是否仍然存在，并检查是否有耦合项、重复项、残留项；发现后应一并处理或明确报告
 - 任务执行中一旦出现命令失败、错误假设、用户纠正、验证失败、回滚或安全边界误触，自动触发“现象—根因—修复—防复发”经验沉淀，不等到用户再次提醒
@@ -98,8 +108,9 @@
 
 - 修改 `rules/{reject,direct,proxy,region}/` 下的中大型 `.list` 源规则文件时，默认按“同平台 / 同服务聚合展示 + 上游优先 + 本地兜底”维护，不要把显式域名和关键词兜底简单堆成一坨
 - 文件头必须先写清楚：这份规则负责什么、不负责什么、与相邻规则文件的边界是什么、客户端顺序上应放在哪里
-- 像多地区链式 SOCKS5 端点这类非单一区域入口，不要因为历史来源继续挂在 `rules/region/jp/` 之类的单国家目录；应按当前语义放到更合适的路径，并在文件头写明它默认接到链式代理 / 负载均衡组，而不是固定地区组
+- 像多地区链式 SOCKS5 端点这类非单一区域入口，不要因为历史来源继续挂在 `rules/region/jp/` 之类的单国家目录；应按当前语义放到更合适的路径，并在文件头写清客户端能力边界：Surge 可以在规则层把端点连接交给链式 / 负载均衡组，Mihomo 普通 `RULE-SET` 不等价于节点拨号层的 `dialer-proxy`
 - `rules/region/multi/chain_socks5_ipcidr.list` 维护私有代理服务商导出清单的脱敏快照；更新时必须在内存中完整校验每行 IPv4、端口与认证字段，拒绝空响应、异常行、非公网 IPv4 和重复 IP，全部通过后再按 IPv4 数值排序并原子全量替换。公开仓库只能保留 `IP-CIDR,<IPv4>/32`，不得保存或输出下载地址、端口、用户名、密码、令牌或 `plan_id`
+- 两份 Mihomo 私有配置与公开 Mihomo 模板默认不得注册或调用 `region/multi/chain_socks5_ipcidr`；只有完成 `dialer-proxy` 配置、节点选择关系与运行时出口复测后才能恢复，不能因为 Surge 存在同名规则入口就机械对齐
 - `IP-CIDR`、`IP-CIDR6`、`GEOIP`、`IP-ASN`、`ASN` 这类 IP 判断规则构建时默认补 `no-resolve`；纯 IP 规则集在客户端 `RULE-SET` 调用层仍建议保留 `no-resolve`
 - 同一小节内部默认顺序是：
   - 小节注释

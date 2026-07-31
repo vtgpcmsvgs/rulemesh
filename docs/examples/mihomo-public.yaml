@@ -131,8 +131,9 @@ proxy-providers:
   # 说明：下面这 3 个是公开模板里的占位订阅源。
   # interval: 21600 = 每 6 小时自动重新拉一次订阅。
   # proxy: DIRECT = Mihomo 后台下载 / 更新机场订阅 URL 时直连。
-  # 这里控制的是 proxy-providers 自己的订阅更新连接，不控制浏览器访问机场官网 / 面板。
-  # 浏览器访问机场网站应交给 rules 里的 PROCESS-NAME + 域名规则判断；私有配置会先让 Chrome 命中节点选择，再让后台订阅更新直连。
+  # 这里控制的是 proxy-providers 自己的订阅更新连接，不控制普通流量访问机场订阅端点。
+  # 普通端点流量应交给 rules 里的精确 DOMAIN / IP-CIDR 规则判断；私有配置可让它们命中节点选择，同时让后台订阅更新直连。
+  # 若上游会按请求头协商响应格式，可为对应 provider 显式设置已经实测有效的 header.User-Agent。
   # 不要把机场订阅 provider 的 proxy 改成“🚀 节点选择”，否则订阅链接可能经由代理节点暴露，也可能让订阅更新依赖代理本身造成循环。
   # GitHub 规则集更新是另一条链路；rule-providers 可以继续按需要使用 proxy: "🚀 节点选择"。
   # health-check.interval: 300 = 每 5 分钟做一次测速，只影响延迟显示和自动组选路。
@@ -618,15 +619,6 @@ rule-providers:
     interval: 86400
     proxy: "🚀 节点选择"
 
-  multi_chain_socks5_ipcidr:
-    type: http
-    behavior: classical
-    format: yaml
-    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/multi/chain_socks5_ipcidr.yaml"
-    path: ./ruleset/region/multi/chain_socks5_ipcidr.yaml
-    interval: 86400
-    proxy: "🚀 节点选择"
-
 rules:
   - RULE-SET,reject_adblock,REJECT
   - RULE-SET,reject_os_update,REJECT
@@ -713,9 +705,6 @@ rules:
   - RULE-SET,jp_osaka_aws_ipv4,🇯🇵 日本-自动选择,no-resolve
   - RULE-SET,kr_seoul_aws_ipv4,🇰🇷 韩国-自动选择,no-resolve
   - RULE-SET,tw_taipei_aws_ipv4,🇨🇳 台湾-自动选择,no-resolve
-  # 多地区链式 SOCKS5 端点不再固定到日本组，统一交给自动选择。
-  - RULE-SET,multi_chain_socks5_ipcidr,♻️ 自动选择,no-resolve
-
   # 12) 最终兜底
   # 极致体验默认回到总开关，不再把所有漏网流量固定锁在某个单一区域。
   - MATCH,🚀 节点选择

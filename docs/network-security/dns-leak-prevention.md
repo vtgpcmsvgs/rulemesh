@@ -101,7 +101,7 @@ Mihomo 的 provider 更新也要分清两条链路：
 
 - `proxy-providers` 拉机场订阅节点清单，默认应在每个机场 provider 上显式写 `proxy: DIRECT`，让后台订阅 URL 更新直连。
 - `rule-providers` 拉本仓库 GitHub 规则集产物，可以按当前网络环境使用 `proxy: "🚀 节点选择"`，避免规则更新被 GitHub 访问质量影响。
-- 浏览器打开机场官网 / 面板不走 provider 下载逻辑，应由 `rules` 里的 `PROCESS-NAME + 域名` 规则控制；不要用 `proxy-providers.*.proxy` 去推断浏览器访问路径。
+- 普通流量访问机场官网、面板或订阅端点不走 provider 下载逻辑，应由客户端自己的 `rules` 控制：Surge 私有配置可使用 `PROCESS-NAME + 端点` 逻辑规则，Mihomo 私有配置使用精确 `DOMAIN` / `IP-CIDR` 规则且不附加进程条件。不要用 `proxy-providers.*.proxy` 去推断普通访问路径。
 
 ## Sub-Store proxy-node-domains 要求
 
