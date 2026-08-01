@@ -180,6 +180,7 @@ IP-CIDR,3.36.245.204/30,no-resolve
 IP-CIDR,43.202.108.242/31,no-resolve
 IP-CIDR,43.202.213.128/30,no-resolve
 IP-CIDR,54.116.148.128/25,no-resolve
+IP-CIDR,54.117.16.0/22,no-resolve
 IP-CIDR,13.209.1.56/29,no-resolve
 IP-CIDR,43.202.213.132/31,no-resolve
 IP-CIDR,43.202.213.136/30,no-resolve

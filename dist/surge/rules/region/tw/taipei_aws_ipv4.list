@@ -51,3 +51,4 @@ IP-CIDR,43.212.135.0/28,no-resolve
 IP-CIDR,43.212.135.16/28,no-resolve
 IP-CIDR,43.212.16.0/24,no-resolve
 IP-CIDR,54.54.30.0/25,no-resolve
+IP-CIDR,54.54.36.0/22,no-resolve
