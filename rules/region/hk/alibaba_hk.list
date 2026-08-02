@@ -1,0 +1,28 @@
+# 阿里系香港区域策略规则：覆盖淘宝、支付宝、闲鱼及阿里系共享域名与网络入口。
+# 维护边界：本规则不代表阿里业务的地理归属，只用于需要固定香港出口的客户端或设备；默认公开模板不启用。
+# 客户端顺序必须放在 direct/ai_cn_direct、direct/cn_direct 与阿里云 SSH 指定直连入口前，设备限定应在调用层完成。
+# Surge 若同时使用 cn_dns_domains，必须在 [Host] 中先复用本规则集绑定海外 DoH；Mihomo 继续使用单一海外 nameserver。
+
+# Blackmatrix7 Alibaba 主体覆盖阿里巴巴域名族、共享基础设施、应用进程与阿里网络 IP 段。
+INCLUDE,upstream/blackmatrix7/alibaba.list
+
+# 闲鱼独立上游补齐应用使用的非品牌域名；本地显式域名与关键词用于防止品牌入口漏网。
+INCLUDE,upstream/blackmatrix7/xianyu.list
+DOMAIN-SUFFIX,goofish.com
+DOMAIN-SUFFIX,goofish.pro
+DOMAIN-SUFFIX,xianyu.mobi
+DOMAIN-KEYWORD,goofish
+DOMAIN-KEYWORD,xianyu
+DOMAIN-KEYWORD,idlefish
+
+# 阿里核心品牌关键词兜底：接受少量误伤，优先保证已登记设备的阿里系流量全部固定到香港出口。
+DOMAIN-KEYWORD,alibaba
+DOMAIN-KEYWORD,alipay
+DOMAIN-KEYWORD,alicdn
+DOMAIN-KEYWORD,aliyun
+DOMAIN-KEYWORD,taobao
+DOMAIN-KEYWORD,tmall
+DOMAIN-KEYWORD,1688
+DOMAIN-KEYWORD,cainiao
+DOMAIN-KEYWORD,eleme
+DOMAIN-KEYWORD,autonavi

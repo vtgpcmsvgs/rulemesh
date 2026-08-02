@@ -2,10 +2,10 @@
   "summary": {
     "domain-only": 7,
     "ipcidr-only": 7,
-    "classical/mixed": 21,
+    "classical/mixed": 22,
     "dns-domain-set": 1,
     "empty": 0,
-    "total_sources": 36,
+    "total_sources": 37,
     "total_warnings": 0
   },
   "sources": [
@@ -215,6 +215,19 @@
       "dist": {
         "surge_rules": "dist/surge/rules/proxy/polygon_rpc_proxy.list",
         "mihomo_classical": "dist/mihomo/classical/proxy/polygon_rpc_proxy.yaml"
+      }
+    },
+    {
+      "source": "rules/region/hk/alibaba_hk.list",
+      "category": "region",
+      "classification": "classical/mixed",
+      "counts": {
+        "surge_rules": 1352,
+        "mihomo_classical": 1352
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/region/hk/alibaba_hk.list",
+        "mihomo_classical": "dist/mihomo/classical/region/hk/alibaba_hk.yaml"
       }
     },
     {

@@ -232,6 +232,10 @@ UPSTREAM_FILES = (
         "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/BiliBili/BiliBili.list",
     ),
     UpstreamFile(
+        Path("blackmatrix7/alibaba.list"),
+        "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Alibaba/Alibaba.list",
+    ),
+    UpstreamFile(
         Path("blackmatrix7/bytedance.list"),
         "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/ByteDance/ByteDance.list",
     ),
@@ -282,6 +286,10 @@ UPSTREAM_FILES = (
     UpstreamFile(
         Path("blackmatrix7/youtube.list"),
         "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/YouTube/YouTube.list",
+    ),
+    UpstreamFile(
+        Path("blackmatrix7/xianyu.list"),
+        "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/XianYu/XianYu.list",
     ),
     UpstreamFile(
         Path("skywalkerji/cursor.list"),

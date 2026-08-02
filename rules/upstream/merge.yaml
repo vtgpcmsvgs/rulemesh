@@ -145,6 +145,20 @@ merge_plan:
       - 香港节点通常更稳定、速度更快，适合 Telegram 大流量场景
       - 香港地区内容生态与支付方式也更友好
 
+  - id: hk-alibaba
+    target: rules/region/hk/alibaba_hk.list
+    purpose: 阿里系业务按设备固定走香港区域策略
+    strategy:
+      - include_blackmatrix7_alibaba_and_xianyu
+      - retain_aggressive_brand_keyword_fallback
+      - bind_to_hk_auto_only_in_opt_in_client_rules
+      - reuse_same_ruleset_for_surge_overseas_dns_override
+    notes:
+      - 默认公开模板不启用，客户端应在调用层限定设备或明确的专用配置，避免改变其他终端的国内业务路径
+      - 客户端顺序必须放在 direct/ai_cn_direct、direct/cn_direct 与阿里云 SSH 指定直连入口前
+      - Surge 的 [Host] 应在 cn_dns_domains 前复用本规则集并绑定海外 DoH；Mihomo 保持单一海外 nameserver
+      - 闲鱼除 XianYu 上游外继续保留 goofish、xianyu 与 idlefish 关键词兜底，优先避免漏网
+
   - id: hk-wps-kdocs
     target: rules/region/hk/wps_kdocs.list
     purpose: WPS Office 与金山文档相关连接统一走香港策略

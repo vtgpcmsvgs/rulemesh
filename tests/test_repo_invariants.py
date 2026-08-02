@@ -403,6 +403,30 @@ class RepoInvariantTests(unittest.TestCase):
 
         self.assertNotIn("\nDOMAIN-KEYWORD,wps\n", f"\n{content}\n")
 
+    def test_alibaba_hk_rule_keeps_xianyu_coverage_and_stays_opt_in(self) -> None:
+        content = (ROOT / "rules" / "region" / "hk" / "alibaba_hk.list").read_text(
+            encoding="utf-8"
+        )
+        required = {
+            "INCLUDE,upstream/blackmatrix7/alibaba.list",
+            "INCLUDE,upstream/blackmatrix7/xianyu.list",
+            "DOMAIN-SUFFIX,goofish.com",
+            "DOMAIN-SUFFIX,xianyu.mobi",
+            "DOMAIN-KEYWORD,goofish",
+            "DOMAIN-KEYWORD,xianyu",
+            "DOMAIN-KEYWORD,idlefish",
+        }
+        self.assertTrue(required <= set(content.splitlines()))
+
+        surge = (ROOT / "docs" / "examples" / "surge-public.conf").read_text(
+            encoding="utf-8"
+        )
+        mihomo = (ROOT / "docs" / "examples" / "mihomo-public.yaml").read_text(
+            encoding="utf-8"
+        )
+        self.assertNotIn("alibaba_hk", surge)
+        self.assertNotIn("alibaba_hk", mihomo)
+
     def test_all_scheduled_workflows_keep_webhook_guardrails(self) -> None:
         workflow_root = ROOT / ".github" / "workflows"
         offenders: list[str] = []

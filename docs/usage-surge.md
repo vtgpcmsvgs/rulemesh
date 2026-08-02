@@ -47,6 +47,7 @@
 - `reject`、`direct`、`proxy`、`region` 四类 RuleMesh 产物接入
 - `github_ssh_direct` 后先保留 `DOMAIN,raw.githubusercontent.com,"🚀 节点选择"` 自举入口，再显式接入 `proxy/github_core_proxy.list`，承接 GitHub 网页、`api.github.com`、Gist、Raw、静态资源与附件；同时继续保留 `raw.githubusercontent.com = server:https://cloudflare-dns.com/dns-query` 这一条规则产物解析例外，但它不是代理节点 bootstrap，不能替代 `proxy-node-domains` 的 AliDNS 解析
 - `region/hk/hk_brokers.list` 专门承接复星证券/复星财富、致富证券、辉立证券与富途，默认用激进品牌关键词兜底并绑定 `🇭🇰 香港-自动选择`
+- `region/hk/alibaba_hk.list` 是可选的阿里系香港入口；默认公开模板不启用。需要按局域网设备启用时，应使用 `AND,((SRC-IP,<设备地址>),(RULE-SET,<规则 URL>)),<香港策略>`，并放在国内直连与阿里云 SSH 指定直连前
 - `region/hk/global_media.list` 额外承接 X / Twitter 网页、短链与静态资源，以及 Polymarket 显式域名与激进关键词兜底，并默认绑定 `🇭🇰 香港-自动选择`
 - `region/us/ai_us.list` 统一承接 OpenAI / Claude / Gemini / Copilot / Cursor / Grok / Windsurf / Augment 等海外 AI 平台，并保留更激进的关键词兜底；客户端默认绑定 `🇺🇸 美国-自动选择`
 - `direct/ai_cn_direct.list` 显式承接 Kimi / DeepSeek / 豆包 / 即梦 / Trae 中国大陆 / 元宝 / 混元 / 通义 / 千问 / 智谱 / MiniMax / 文心等国内 AI 入口，并与 `direct/bytedance_direct.list` 一起放在 `region/hk/global_media.list` 前；三者固定为 `ai_cn_direct < bytedance_direct < hk_global_media`
@@ -132,6 +133,8 @@
 - `DeepSeek`、`Trae` 中国大陆入口与其他国内 AI 不应并入 `region/us/ai_us.list`；它们应优先由 `direct/ai_cn_direct.list` 承接，字节共享基础设施与中国大陆通用兜底再继续落到 `direct/bytedance_direct.list`、`direct/cn_direct.list`。
 - `direct/ai_cn_direct.list` 属于显式国内 AI 直连入口，顺序上固定为 `direct/ai_cn_direct < direct/bytedance_direct < region/hk/global_media < direct/cn_direct`；静态交集审计确认这只会把 `snssdk.com` 从香港媒体策略纠正为直连。
 - `region/hk/wps_kdocs.list` 统一承接 WPS Office、金山文档、开放平台、云文档与资源分发连接，必须放在 `direct/cn_direct.list` 与 `FINAL` 前并绑定 `🇭🇰 香港-自动选择`；它不是 reject 规则，历史上的失败主要来自通用直连抢先命中或工作白名单最终拒绝。
+- `region/hk/alibaba_hk.list` 启用后必须先于 `direct/ai_cn_direct.list`、`direct/cn_direct.list` 与阿里云 SSH 指定直连入口；其 Alibaba 主体覆盖域名和 IP 规则，XianYu 专项清单与 `goofish / xianyu / idlefish` 关键词用于补强闲鱼。共享 Surge 网关应在调用层用 `SRC-IP + RULE-SET` 限定设备，不能把整份阿里规则无条件扩散到其他终端。
+- Surge 的 `[Host]` 还应在 `cn_dns_domains` 前复用已启用的 `region/hk/alibaba_hk.list` 并绑定海外 DoH；`[Host]` 不支持按源地址区分，因此这只会统一该域名族的解析出口，实际流量策略仍由前述设备条件规则限定。
 - Surge 的 `[Host]` 还应在 `cn_dns_domains` 前复用 `region/hk/wps_kdocs.list` 并绑定海外 DoH；这是为了覆盖 `cn_dns_domains` 中宽泛的 `.cn`，不能只删除几条 WPS 显式域名来假装完成 DNS 隔离。
 - `region/hk/hk_brokers.list` 当前只承接复星证券/复星财富、致富证券、辉立证券与富途，应放在 `region/hk/global_media.list` 与 `proxy/gfw.list` 前，并绑定 `🇭🇰 香港-自动选择`。
 - `region/hk/global_media.list` 当前还承接 `x.com`、`t.co`、`twimg.com` 与 `twitter.com` 等 X / Twitter 网页域名，以及 `polymarket.com` 与 `DOMAIN-KEYWORD,polymarket` 这组 Polymarket 香港兜底；默认应继续绑定 `🇭🇰 香港-自动选择`，不要再让它们回落到 `proxy/gfw.list` 或误挂到日本区域。

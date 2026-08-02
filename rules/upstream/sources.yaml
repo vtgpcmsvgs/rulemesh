@@ -119,6 +119,12 @@ sources:
           note: 负责 gfw.txt 与 tld-not-cn.txt 主体
 
   region:
+    hk/alibaba_hk.list:
+      preferred:
+        - repo: self
+          note: 阿里系固定香港出口的可选入口，默认公开模板不启用；通过 Alibaba 主体、XianYu 专项清单与品牌关键词兜底优先保证闲鱼等业务完整命中
+        - repo: blackmatrix7/ios_rule_script
+          note: Alibaba.list 负责阿里巴巴域名族、共享基础设施、应用进程与网络 IP 段，XianYu.list 补充闲鱼非品牌域名
     hk/wps_kdocs.list:
       preferred:
         - repo: self

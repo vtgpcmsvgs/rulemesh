@@ -159,6 +159,7 @@ python tools/build_rules.py
 - Surge 的 `internet-test-url`、`proxy-test-url`、代理 `test-url=` 与 `smart / fallback / load-balance` 的 `url=` 统一保持 `http://`；不要因为 `policy-path`、GeoIP 或其他下载入口使用 `https://` 就顺手改成 `https://`。
 - 当前公开模板与本地私有 Surge 配置默认采用 `http://www.baidu.com`、`http://www.google.com/generate_204` 与 `http://www.gstatic.com/generate_204` 这组三段式测速 URL；它们不是唯一答案，但继续作为本仓库的轻量稳定基线。
 - `rules/region/hk/hk_brokers.list` 专门承接复星证券/复星财富、致富证券、辉立证券与富途，默认使用品牌关键词激进兜底并绑定 `🇭🇰 香港-自动选择`，顺序应放在 `region/hk/global_media` 与 `proxy/gfw` 前
+- `rules/region/hk/alibaba_hk.list` 是按设备选择启用的阿里系香港入口，聚合 Alibaba 主体与 XianYu 专项上游，并用 `goofish / xianyu / idlefish` 等关键词补强闲鱼；默认公开模板不启用，调用层必须限定专用设备或专用配置，并放在国内直连与阿里云 SSH 指定直连前
 - `rules/region/hk/wps_kdocs.list` 专门承接 WPS Office、金山文档、开放平台、云文档与资源分发连接，默认绑定 `🇭🇰 香港-自动选择`，并必须放在 `direct/cn_direct` 与工作白名单 `FINAL,REJECT` 前
 - `rules/region/hk/global_media.list` 额外承接 `x.com`、`t.co`、`twimg.com` 与 `twitter.com` 等 X / Twitter 网页域名，以及 `polymarket.com` 与 `DOMAIN-KEYWORD,polymarket` 这组 Polymarket 香港兜底，默认绑定 `🇭🇰 香港-自动选择`；客户端必须先放 `direct/ai_cn_direct` 与 `direct/bytedance_direct`，避免唯一交集 `snssdk.com` 被香港媒体规则抢先命中
 - 1Password 核心连接专项规则统一维护在 `rules/proxy/onepassword_proxy.list`
@@ -168,7 +169,7 @@ python tools/build_rules.py
 - 客户端应显式接入 `direct/os_time_direct`，并放在其他普通 `direct/*` 前，默认保持 `DIRECT`
 - 如果你采用“默认禁更，升级时手动临时放行”的习惯，建议同时接入 `direct/os_time_direct`、`reject/os_update_reject`、`region/us/microsoft_us` 与 `region/us/macos_update_us`；其中 `os_time_direct` 负责系统时间同步直连，其余入口必须放在 `reject` 之后并绑定美国策略
 - 国内业务域名 DNS 白名单统一维护在 `rules/dns/cn_dns_domains.list`，并生成 `dist/surge/dns/cn_dns_domains.list`；该清单只放明确国内业务域名 / 国内域名后缀，不放代理节点 server 域名、订阅入口域名、IP 或复杂规则。小米 / MIUI、国内天气、微信小程序、抖音专项、拼多多与小红书 CDN 等明确依赖在此按服务族维护，避免局域网接管时因海外 DNS 调度异常造成局部数据加载失败；共享风控或统计第三方域名没有专项证据时不自动纳入
-- 因 `cn_dns_domains` 包含宽泛 `.cn`，Surge 必须在它前面用 `[Host] + RULE-SET,region/hk/wps_kdocs` 将 WPS / 金山文档域名覆盖到海外 DoH；Mihomo 两份私有配置继续保持单一海外 `nameserver`，不恢复复杂 DNS 分层
+- 因 `cn_dns_domains` 包含宽泛 `.cn` 及阿里系国内域名，Surge 必须在它前面用 `[Host] + RULE-SET` 将已启用的 `region/hk/wps_kdocs` 与按设备启用的 `region/hk/alibaba_hk` 覆盖到海外 DoH；Mihomo 两份私有配置继续保持单一海外 `nameserver`，不恢复复杂 DNS 分层
 
 其中 Surge 当前建议明确区分两种使用版本：
 
@@ -177,7 +178,7 @@ python tools/build_rules.py
   - 允许包含按局域网源 IP 的设备分流、私有 `policy-path`、`[MITM]` 与证书参数。
 - 其中私有 `rulemesh-substore-surge-work-whitelist.conf` 当前采用工作电脑白名单模式：只保留明确列出的放行入口，未列入白名单的流量统一 `REJECT`。
 - 这份工作白名单默认不额外开放局域网代理入口；旁路由已接管流量，工作文件不承担 LAN 代理服务。
-- 其中只有设备分流继续按局域网源 IP 约束，并按指定 AWS 区域 / 多地区链式 SOCKS5 IP 段定向到对应工作机亚洲出口组；区域精确、GitHub SSH、GitHub Raw 自举入口、GitHub Core 代理入口、GitHub 观察兜底、私有订阅域名同步块、1Password 核心连接、AdsPower、Polygon 主网 RPC、BSC 主网 RPC、海外 DNS 主 IPv4 端点、代理节点 bootstrap DNS 直连例外、海外加密 DNS 显式入口与指定直连不再额外限制源 IP。
+- 其中设备分流继续按局域网源 IP 约束：既包括原有“源 IP + AWS 区域 / 多地区链式 SOCKS5 IP 段”工作机入口，也允许用“源 IP + `region/hk/alibaba_hk`”只给已登记个人终端开放阿里系香港出口；区域精确、GitHub SSH、GitHub Raw 自举入口、GitHub Core 代理入口、GitHub 观察兜底、私有订阅域名同步块、1Password 核心连接、AdsPower、Polygon 主网 RPC、BSC 主网 RPC、海外 DNS 主 IPv4 端点、代理节点 bootstrap DNS 直连例外、海外加密 DNS 显式入口与指定直连不再额外限制源 IP。
 - 工作白名单的区域精确入口显式包含 `region/hk/wps_kdocs`，用于让 WPS / 金山文档先走香港策略，避免落入最终拒绝。
 - 在该白名单里，`direct/os_time_direct` 属于系统时间同步直连入口，`region/us/microsoft_us` 与 `region/us/macos_update_us` 属于允许保留的系统类美国分流入口。
 - 白名单专属的单个直连域名例外（例如 `smtp.163.com`）默认直接维护在“指定直连”入口，不为单条规则额外拆分公开 `rules/` 文件。
