@@ -55,6 +55,8 @@ payload:
   - "DOMAIN-WILDCARD,*.polygon.rpc.subquery.network"
   - "DOMAIN,polygon.therpc.io"
   - "DOMAIN-WILDCARD,*.polygon.therpc.io"
+  - "DOMAIN,public.1rpc.io"
+  - "DOMAIN-WILDCARD,*.public.1rpc.io"
   - "DOMAIN,public.stackup.sh"
   - "DOMAIN-WILDCARD,*.public.stackup.sh"
   - "DOMAIN,rpc-mainnet.matic.quiknode.pro"

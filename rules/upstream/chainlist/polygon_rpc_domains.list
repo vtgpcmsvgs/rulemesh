@@ -5,8 +5,8 @@
 # 维护策略: 只增不减；保留历史已收录主机名，避免上游日常波动导致覆盖面回撤。
 # 规则展开: 每个主机名同时生成 DOMAIN 与 DOMAIN-WILDCARD，统一收敛为节点选择入口。
 # 本次抓取主机数: 33
-# 累计主机数: 37
-# 同步时间: 2026-08-03T05:05:00+00:00
+# 累计主机数: 38
+# 同步时间: 2026-08-04T04:44:10+00:00
 
 DOMAIN,1rpc.io
 DOMAIN-WILDCARD,*.1rpc.io
@@ -62,6 +62,8 @@ DOMAIN,polygon.rpc.subquery.network
 DOMAIN-WILDCARD,*.polygon.rpc.subquery.network
 DOMAIN,polygon.therpc.io
 DOMAIN-WILDCARD,*.polygon.therpc.io
+DOMAIN,public.1rpc.io
+DOMAIN-WILDCARD,*.public.1rpc.io
 DOMAIN,public.stackup.sh
 DOMAIN-WILDCARD,*.public.stackup.sh
 DOMAIN,rpc-mainnet.matic.quiknode.pro

@@ -101,6 +101,8 @@ payload:
   - "DOMAIN-WILDCARD,*.public-bsc-mainnet.fastnode.io"
   - "DOMAIN,public-bsc.nownodes.io"
   - "DOMAIN-WILDCARD,*.public-bsc.nownodes.io"
+  - "DOMAIN,public.1rpc.io"
+  - "DOMAIN-WILDCARD,*.public.1rpc.io"
   - "DOMAIN,public.stackup.sh"
   - "DOMAIN-WILDCARD,*.public.stackup.sh"
   - "DOMAIN,rpc-bsc.48.club"
