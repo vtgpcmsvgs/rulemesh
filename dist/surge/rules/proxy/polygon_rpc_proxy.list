@@ -16,6 +16,8 @@ DOMAIN,go.getblock.io
 DOMAIN-WILDCARD,*.go.getblock.io
 DOMAIN,lb.drpc.live
 DOMAIN-WILDCARD,*.lb.drpc.live
+DOMAIN,lb.routeme.sh
+DOMAIN-WILDCARD,*.lb.routeme.sh
 DOMAIN,matic.rpc.sentio.xyz
 DOMAIN-WILDCARD,*.matic.rpc.sentio.xyz
 DOMAIN,poly.api.pocket.network
@@ -64,6 +66,8 @@ DOMAIN,rpc-mainnet.matic.quiknode.pro
 DOMAIN-WILDCARD,*.rpc-mainnet.matic.quiknode.pro
 DOMAIN,rpc.ankr.com
 DOMAIN-WILDCARD,*.rpc.ankr.com
+DOMAIN,rpc.nodeflare.app
+DOMAIN-WILDCARD,*.rpc.nodeflare.app
 DOMAIN,rpc.owlracle.info
 DOMAIN-WILDCARD,*.rpc.owlracle.info
 DOMAIN,rpc.poolz.finance

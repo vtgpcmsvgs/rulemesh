@@ -95,6 +95,8 @@ payload:
   - "DOMAIN-WILDCARD,*.go.getblock.io"
   - "DOMAIN,gw-aql.tomo.services"
   - "DOMAIN-WILDCARD,*.gw-aql.tomo.services"
+  - "DOMAIN,lb.routeme.sh"
+  - "DOMAIN-WILDCARD,*.lb.routeme.sh"
   - "DOMAIN,nodes.vefinetwork.org"
   - "DOMAIN-WILDCARD,*.nodes.vefinetwork.org"
   - "DOMAIN,public-bsc-mainnet.fastnode.io"
