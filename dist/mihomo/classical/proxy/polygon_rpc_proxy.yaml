@@ -63,6 +63,8 @@ payload:
   - "DOMAIN-WILDCARD,*.public.stackup.sh"
   - "DOMAIN,rpc-mainnet.matic.quiknode.pro"
   - "DOMAIN-WILDCARD,*.rpc-mainnet.matic.quiknode.pro"
+  - "DOMAIN,rpc-polygon.blockmachine.io"
+  - "DOMAIN-WILDCARD,*.rpc-polygon.blockmachine.io"
   - "DOMAIN,rpc.ankr.com"
   - "DOMAIN-WILDCARD,*.rpc.ankr.com"
   - "DOMAIN,rpc.nodeflare.app"

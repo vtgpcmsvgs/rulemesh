@@ -1,6 +1,7 @@
 # 生成来源：rules/region/jp/tokyo_aws_ipv4.list
 # 行为：classical
 payload:
+  - "IP-CIDR,66.36.6.0/24,no-resolve"
   - "IP-CIDR,69.107.12.24/29,no-resolve"
   - "IP-CIDR,15.221.34.0/24,no-resolve"
   - "IP-CIDR,52.144.229.64/26,no-resolve"
