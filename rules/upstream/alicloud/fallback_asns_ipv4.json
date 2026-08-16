@@ -1,5 +1,5 @@
 {
-  "syncToken": "2026-08-15T02:34:24+00:00",
+  "syncToken": "2026-08-16T02:43:59+00:00",
   "source": {
     "api": "RIPEstat announced-prefixes",
     "docUrl": "https://stat.ripe.net/docs/data-api/api-endpoints/announced-prefixes",
@@ -13,8 +13,8 @@
   "perAsn": [
     {
       "asn": 45102,
-      "queryStartTime": "2026-07-31T16:00:00",
-      "queryEndTime": "2026-08-14T16:00:00",
+      "queryStartTime": "2026-08-01T16:00:00",
+      "queryEndTime": "2026-08-15T16:00:00",
       "reportedPrefixCount": 1362,
       "reportedIpv4PrefixCount": 1249,
       "uniqueIpv4PrefixCount": 1249,
@@ -22,8 +22,8 @@
     },
     {
       "asn": 134963,
-      "queryStartTime": "2026-07-31T16:00:00",
-      "queryEndTime": "2026-08-14T16:00:00",
+      "queryStartTime": "2026-08-01T16:00:00",
+      "queryEndTime": "2026-08-15T16:00:00",
       "reportedPrefixCount": 305,
       "reportedIpv4PrefixCount": 300,
       "uniqueIpv4PrefixCount": 300,
@@ -31,17 +31,17 @@
     },
     {
       "asn": 24429,
-      "queryStartTime": "2026-07-31T16:00:00",
-      "queryEndTime": "2026-08-14T16:00:00",
-      "reportedPrefixCount": 1080,
-      "reportedIpv4PrefixCount": 650,
-      "uniqueIpv4PrefixCount": 650,
-      "collapsedIpv4PrefixCount": 255
+      "queryStartTime": "2026-08-01T16:00:00",
+      "queryEndTime": "2026-08-15T16:00:00",
+      "reportedPrefixCount": 1081,
+      "reportedIpv4PrefixCount": 651,
+      "uniqueIpv4PrefixCount": 651,
+      "collapsedIpv4PrefixCount": 254
     }
   ],
-  "collapsedIpv4PrefixCount": 466,
-  "uniqueIpv4AddressCount": 5730564,
-  "syncedAt": "2026-08-15T02:34:24+00:00",
+  "collapsedIpv4PrefixCount": 465,
+  "uniqueIpv4AddressCount": 5730052,
+  "syncedAt": "2026-08-16T02:43:59+00:00",
   "ipv4Prefix": [
     "5.181.224.0/23",
     "8.25.82.0/24",
@@ -494,8 +494,7 @@
     "170.33.200.0/22",
     "170.33.216.0/22",
     "179.109.172.0/24",
-    "193.169.182.0/23",
-    "195.210.14.0/24",
+    "185.73.23.0/24",
     "198.11.128.0/18",
     "202.144.199.0/24",
     "203.107.2.0/23",
