@@ -53,6 +53,7 @@ payload:
   - "AND,((IP-CIDR,43.96.86.0/24,no-resolve),(NETWORK,tcp),(DST-PORT,22))"
   - "AND,((IP-CIDR,43.96.88.0/23,no-resolve),(NETWORK,tcp),(DST-PORT,22))"
   - "AND,((IP-CIDR,43.96.90.0/24,no-resolve),(NETWORK,tcp),(DST-PORT,22))"
+  - "AND,((IP-CIDR,43.96.92.0/24,no-resolve),(NETWORK,tcp),(DST-PORT,22))"
   - "AND,((IP-CIDR,43.96.96.0/23,no-resolve),(NETWORK,tcp),(DST-PORT,22))"
   - "AND,((IP-CIDR,43.96.98.0/24,no-resolve),(NETWORK,tcp),(DST-PORT,22))"
   - "AND,((IP-CIDR,43.96.100.0/22,no-resolve),(NETWORK,tcp),(DST-PORT,22))"
