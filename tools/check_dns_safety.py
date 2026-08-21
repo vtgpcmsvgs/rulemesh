@@ -371,6 +371,19 @@ def validate_mihomo(path: Path, lines: list[str]) -> list[DnsSafetyFinding]:
             if current_key == "nameserver":
                 seen_business_nameserver = True
 
+            if current_key == "nameserver-policy":
+                needles = domestic_needles_in(current_value)
+                if needles:
+                    findings.append(
+                        DnsSafetyFinding(
+                            "error",
+                            path,
+                            index,
+                            f"Mihomo dns.nameserver-policy 包含国内 DNS ({', '.join(needles)})，普通目标网站域名可能被泄漏给国内解析方。",
+                            "nameserver-policy 使用列表或标量块语法；国内 DNS 只能用于 rule-set:cn-dns-domains / rule-set:cn-performance-dns-domains。",
+                        )
+                    )
+
             if single_dns_truth:
                 if current_key in MIHOMO_SINGLE_DNS_TRUTH_FORBIDDEN_KEYS:
                     findings.append(
@@ -415,10 +428,16 @@ def validate_mihomo(path: Path, lines: list[str]) -> list[DnsSafetyFinding]:
             continue
 
         if current_key == "nameserver-policy":
-            policy_key_match = re.match(r"^    [\"']?([^\"']+?)[\"']?:\s*(?:#.*)?$", line)
+            policy_key_match = re.match(
+                r"^    (?:(['\"])(.+?)\1|([^:\s]+)):\s*(.*?)\s*$", line
+            )
             if policy_key_match:
-                current_nameserver_policy_key = policy_key_match.group(1).strip()
-                continue
+                current_nameserver_policy_key = (
+                    policy_key_match.group(2) or policy_key_match.group(3)
+                ).strip()
+                policy_value = policy_key_match.group(4).split("#", 1)[0].strip()
+                if not policy_value:
+                    continue
 
         needles = domestic_needles_in(line)
         if not needles:

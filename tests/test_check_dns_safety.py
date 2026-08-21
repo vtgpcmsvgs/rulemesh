@@ -270,6 +270,59 @@ proxy-providers: {}
 
         self.assertEqual(check_dns_safety.validate_path(path), [])
 
+    def test_mihomo_private_accepts_allowed_domestic_dns_policy_scalar(self) -> None:
+        path = self.write_temp(
+            "rulemesh-substore-mihomo-clash-verge.yaml",
+            """dns:
+  default-nameserver:
+    - 223.5.5.5
+  nameserver:
+    - https://cloudflare-dns.com/dns-query
+  nameserver-policy:
+    "rule-set:cn-dns-domains": https://dns.alidns.com/dns-query
+proxy-providers: {}
+""",
+        )
+
+        self.assertEqual(check_dns_safety.validate_path(path), [])
+
+    def test_mihomo_private_rejects_domestic_dns_for_overseas_rule_set_scalar(self) -> None:
+        path = self.write_temp(
+            "rulemesh-substore-mihomo-clash-meta.yaml",
+            """dns:
+  default-nameserver:
+    - 223.5.5.5
+  nameserver:
+    - https://cloudflare-dns.com/dns-query
+  nameserver-policy:
+    "rule-set:us-ai": https://dns.alidns.com/dns-query
+proxy-providers: {}
+""",
+        )
+
+        findings = check_dns_safety.validate_path(path)
+
+        self.assertTrue(any("nameserver-policy" in item.message for item in findings))
+        self.assertTrue(any("国内 DNS" in item.message for item in findings))
+
+    def test_mihomo_private_rejects_domestic_dns_policy_flow_mapping(self) -> None:
+        path = self.write_temp(
+            "rulemesh-substore-mihomo-clash-meta.yaml",
+            """dns:
+  default-nameserver:
+    - 223.5.5.5
+  nameserver:
+    - https://cloudflare-dns.com/dns-query
+  nameserver-policy: {"rule-set:cn-dns-domains": https://dns.alidns.com/dns-query}
+proxy-providers: {}
+""",
+        )
+
+        findings = check_dns_safety.validate_path(path)
+
+        self.assertTrue(any("nameserver-policy" in item.message for item in findings))
+        self.assertTrue(any("国内 DNS" in item.message for item in findings))
+
     def test_mihomo_private_accepts_overseas_rule_set_policy(self) -> None:
         path = self.write_temp(
             "rulemesh-substore-mihomo-clash-meta.yaml",
