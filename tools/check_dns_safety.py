@@ -36,7 +36,6 @@ MIHOMO_SINGLE_DNS_TRUTH_CONFIG_NAMES = (
     "rulemesh-substore-mihomo-clash-meta.yaml",
 )
 MIHOMO_SINGLE_DNS_TRUTH_FORBIDDEN_KEYS = {
-    "nameserver-policy",
     "proxy-server-nameserver",
     "proxy-server-nameserver-policy",
     "direct-nameserver",
@@ -418,6 +417,20 @@ def validate_mihomo(path: Path, lines: list[str]) -> list[DnsSafetyFinding]:
             policy_key_match = re.match(r"^    [\"']?([^\"']+?)[\"']?:\s*(?:#.*)?$", line)
             if policy_key_match:
                 current_nameserver_policy_key = policy_key_match.group(1).strip()
+                if (
+                    single_dns_truth
+                    and current_nameserver_policy_key
+                    not in ALLOWED_DOMESTIC_NAMESERVER_POLICY_KEYS
+                ):
+                    findings.append(
+                        DnsSafetyFinding(
+                            "error",
+                            path,
+                            index,
+                            "两份 Mihomo 私有配置的 nameserver-policy 仅允许 cn-dns-domains 国内业务白名单。",
+                            "删除其他 policy key；普通目标域名继续使用海外 nameserver。",
+                        )
+                    )
                 continue
 
         needles = domestic_needles_in(line)
