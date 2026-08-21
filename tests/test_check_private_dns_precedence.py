@@ -9,6 +9,7 @@ TOOLS_DIR = ROOT / "tools"
 if str(TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(TOOLS_DIR))
 
+import check_private_dns_precedence as precedence_checker  # noqa: E402
 from check_private_dns_precedence import (  # noqa: E402
     required_mihomo_exceptions,
     required_surge_exceptions,
@@ -44,6 +45,26 @@ class PrivateDnsPrecedenceTests(unittest.TestCase):
         path = self.root / name
         path.write_text(content, encoding="utf-8")
         return path
+
+    def test_safe_nameserver_summary_never_exposes_raw_values(self) -> None:
+        raw_values = (
+            "https://private-dns.invalid/dns-query/private-token",
+            "https://backup-dns.invalid/dns-query/backup-token",
+        )
+
+        self.assertTrue(
+            hasattr(precedence_checker, "safe_nameserver_summary"),
+            "检查器必须提供不会回显私有 DNS 值的安全摘要接口",
+        )
+        summary = precedence_checker.safe_nameserver_summary(raw_values)
+        rendered = repr(summary)
+
+        self.assertEqual(summary["count"], 2)
+        self.assertNotIn("://", rendered)
+        for raw_value in raw_values:
+            self.assertNotIn(raw_value, rendered)
+            self.assertNotIn(raw_value.split("/", 3)[2], rendered)
+            self.assertNotIn(raw_value.rsplit("/", 1)[1], rendered)
 
     def surge_profile(self, host_lines: list[str]) -> Path:
         host = "\n".join(host_lines)

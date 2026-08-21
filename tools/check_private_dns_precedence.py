@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import re
 import sys
 from dataclasses import dataclass
@@ -33,6 +34,16 @@ OVERSEAS_DNS_HOSTS = {
     "dns.google",
     "dns.quad9.net",
 }
+
+
+def safe_nameserver_summary(values: tuple[str, ...]) -> dict[str, object]:
+    """返回可安全记录的计数与不可逆摘要，不回显私有 DNS 值。"""
+    digest = hashlib.sha256()
+    for value in values:
+        encoded = value.encode("utf-8")
+        digest.update(len(encoded).to_bytes(8, "big"))
+        digest.update(encoded)
+    return {"count": len(values), "sha256": digest.hexdigest()}
 
 
 @dataclass(frozen=True)
