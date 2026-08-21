@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import ipaddress
 import re
 import sys
 from collections import Counter
@@ -94,6 +95,9 @@ class _ProxyGroup:
     filter_text: str = ""
     members: list[str] = field(default_factory=list)
     has_external_source: bool = False
+    has_invalid_external_source: bool = False
+    source_references: list[str] = field(default_factory=list)
+    declares_source_references: bool = False
 
 
 def _dns_endpoint_hostname(value: str) -> str | None:
@@ -155,6 +159,46 @@ def _approved_public_path(value: str) -> str | None:
 
 def _scalar(value: str) -> str:
     return value.strip().strip('"\'')
+
+
+def _is_valid_url_hostname(value: str) -> bool:
+    hostname = value.rstrip(".")
+    if not hostname:
+        return False
+    try:
+        ipaddress.ip_address(hostname)
+        return True
+    except ValueError:
+        pass
+    try:
+        ascii_hostname = hostname.encode("idna").decode("ascii")
+    except UnicodeError:
+        return False
+    if len(ascii_hostname) > 253:
+        return False
+    labels = ascii_hostname.split(".")
+    return all(
+        1 <= len(label) <= 63
+        and re.fullmatch(r"[A-Za-z0-9-]+", label) is not None
+        and not label.startswith("-")
+        and not label.endswith("-")
+        for label in labels
+    )
+
+
+def _is_supported_surge_policy_path(value: str) -> bool:
+    try:
+        parsed = urlsplit(_scalar(value))
+        parsed.port
+    except ValueError:
+        return False
+    return (
+        parsed.scheme.lower() == "https"
+        and parsed.hostname is not None
+        and _is_valid_url_hostname(parsed.hostname)
+        and parsed.username is None
+        and parsed.password is None
+    )
 
 
 def _active_surge_section(
@@ -299,7 +343,10 @@ def _parse_surge_groups(lines: list[str]) -> dict[str, _ProxyGroup]:
             if normalized_key == "policy-regex-filter":
                 group.filter_text = _scalar(value)
             elif normalized_key == "policy-path":
-                group.has_external_source |= bool(_scalar(value))
+                if _is_supported_surge_policy_path(value):
+                    group.has_external_source = True
+                else:
+                    group.has_invalid_external_source = True
             elif normalized_key == "include-all-proxies":
                 group.has_external_source |= _scalar(value).lower() in {
                     "1",
@@ -358,8 +405,39 @@ def _parse_mihomo_rules(lines: list[str]) -> list[tuple[int, list[str]]]:
     return rules
 
 
+def _parse_mihomo_proxy_provider_names(lines: list[str]) -> frozenset[str]:
+    section = ""
+    providers: set[str] = set()
+    for line in lines:
+        top_level = re.match(r"^([A-Za-z0-9_-]+):\s*(?:#.*)?$", line)
+        if top_level:
+            section = top_level.group(1)
+            continue
+        if section != "proxy-providers":
+            continue
+        provider = re.match(r"^  ([^\s#][^:]*):(?:\s*.*?)?$", line)
+        if provider:
+            provider_name = _scalar(provider.group(1))
+            if provider_name:
+                providers.add(provider_name)
+    return frozenset(providers)
+
+
+def _parse_mihomo_source_references(value: str) -> tuple[list[str], bool]:
+    value = value.strip()
+    if not value:
+        return [], False
+    if value.startswith("[") and value.endswith("]"):
+        raw_items = value[1:-1].split(",")
+        references = [_scalar(item) for item in raw_items]
+        return references, any(not item for item in references)
+    reference = _scalar(value)
+    return ([reference] if reference else []), not reference
+
+
 def _parse_mihomo_groups(lines: list[str]) -> dict[str, _ProxyGroup]:
     section = ""
+    provider_names = _parse_mihomo_proxy_provider_names(lines)
     groups: dict[str, _ProxyGroup] = {}
     group: _ProxyGroup | None = None
     list_key = ""
@@ -393,7 +471,12 @@ def _parse_mihomo_groups(lines: list[str]) -> dict[str, _ProxyGroup]:
             elif key == "proxies":
                 group.members.extend(_parse_inline_or_scalar(value))
             elif key == "use":
-                group.has_external_source |= bool(_parse_inline_or_scalar(value))
+                group.declares_source_references = True
+                references, has_empty_item = _parse_mihomo_source_references(
+                    value
+                )
+                group.source_references.extend(references)
+                group.has_invalid_external_source |= has_empty_item
             elif key == "include-all":
                 group.has_external_source |= _scalar(value).lower() in {
                     "1",
@@ -401,11 +484,31 @@ def _parse_mihomo_groups(lines: list[str]) -> dict[str, _ProxyGroup]:
                     "yes",
                 }
             continue
-        item = re.match(r"^      -\s*(.+?)\s*$", line)
-        if item and list_key == "proxies":
-            group.members.append(_scalar(item.group(1).split(" #", 1)[0]))
-        elif item and list_key == "use":
-            group.has_external_source = True
+        item = re.match(r"^      -(?:\s*(.*?))?\s*$", line)
+        if not item:
+            continue
+        item_value = _scalar((item.group(1) or "").split(" #", 1)[0])
+        if list_key == "proxies" and item_value:
+            group.members.append(item_value)
+        elif list_key == "use":
+            group.declares_source_references = True
+            if item_value:
+                group.source_references.append(item_value)
+            else:
+                group.has_invalid_external_source = True
+    for parsed_group in groups.values():
+        if not parsed_group.declares_source_references:
+            continue
+        references_are_valid = (
+            bool(parsed_group.source_references)
+            and not parsed_group.has_invalid_external_source
+            and all(
+                reference in provider_names
+                for reference in parsed_group.source_references
+            )
+        )
+        parsed_group.has_external_source |= references_are_valid
+        parsed_group.has_invalid_external_source |= not references_are_valid
     return groups
 
 
@@ -580,6 +683,7 @@ def _group_has_us_semantics(
     if group.group_type in FILTERING_GROUP_TYPES:
         return (
             group.filter_text in approved_filters
+            and not group.has_invalid_external_source
             and (group.has_external_source or bool(group.members))
             and (not group.members or members_are_us)
         )

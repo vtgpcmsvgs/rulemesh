@@ -330,6 +330,53 @@ FINAL,AUTO
 
         self.assertTrue(any("美国" in item.message for item in findings))
 
+    def test_surge_personal_rejects_invalid_policy_path_sources(self) -> None:
+        invalid_sources = (
+            "not-a-url",
+            "subscriptions.invalid/all",
+            "http://subscriptions.invalid/all",
+            "https:///all",
+            "https://[not-an-ip]/all",
+            "https://private-user:private-pass@private-source-canary.invalid/"
+            "private-token",
+        )
+        for source in invalid_sources:
+            with self.subTest(source_type=source.split(":", 1)[0]):
+                path = self.surge_profile(
+                    [self.overseas_host_line(), self.performance_host_line()],
+                    group_lines=[
+                        f"US-AUTO = smart, policy-path={source}, "
+                        f"policy-regex-filter={SURGE_APPROVED_US_FILTER}"
+                    ],
+                )
+
+                findings = validate_profile(path, self.root)
+                rendered = " ".join(
+                    f"{item.message} {item.remediation}" for item in findings
+                )
+
+                self.assertTrue(any("美国" in item.message for item in findings))
+                self.assertNotIn(source, rendered)
+                for sensitive_part in (
+                    "private-user",
+                    "private-pass",
+                    "private-source-canary.invalid",
+                    "private-token",
+                ):
+                    self.assertNotIn(sensitive_part, rendered)
+
+    def test_surge_personal_accepts_https_policy_path_with_query(self) -> None:
+        path = self.surge_profile(
+            [self.overseas_host_line(), self.performance_host_line()],
+            group_lines=[
+                "US-AUTO = smart, "
+                "policy-path=https://subscriptions.invalid/api/sub?target=Surge&all=1, "
+                f"policy-regex-filter={SURGE_APPROVED_US_FILTER}"
+            ],
+        )
+
+        self.assertEqual(validate_profile(path, self.root), [])
+
     def test_surge_personal_rejects_false_include_all_source(self) -> None:
         path = self.surge_profile(
             [self.overseas_host_line(), self.performance_host_line()],
@@ -519,6 +566,9 @@ FINAL,AUTO
 {policy}
 proxy-groups:
 {group_block}
+proxy-providers:
+  provider_a:
+    type: http
 rule-providers:
   us_google:
     type: http
@@ -829,6 +879,62 @@ rules:
         findings = validate_profile(path, self.root)
 
         self.assertTrue(any("美国" in item.message for item in findings))
+
+    def test_mihomo_rejects_use_of_undeclared_provider(self) -> None:
+        private_provider = "private-provider-canary"
+        path = self.mihomo_profile(
+            self.overseas_policy_lines() + self.performance_policy_lines(),
+            group_block=f'''  - name: US-AUTO
+    type: url-test
+    use: [{private_provider}]
+    filter: "{MIHOMO_APPROVED_US_FILTER}"''',
+        )
+
+        findings = validate_profile(path, self.root)
+        rendered = " ".join(
+            f"{item.message} {item.remediation}" for item in findings
+        )
+
+        self.assertTrue(any("美国" in item.message for item in findings))
+        self.assertNotIn(private_provider, rendered)
+
+    def test_mihomo_rejects_empty_item_in_use_block(self) -> None:
+        path = self.mihomo_profile(
+            self.overseas_policy_lines() + self.performance_policy_lines(),
+            group_block=f'''  - name: US-AUTO
+    type: url-test
+    use:
+      - provider_a
+      -
+    filter: "{MIHOMO_APPROVED_US_FILTER}"''',
+        )
+
+        findings = validate_profile(path, self.root)
+
+        self.assertTrue(any("美国" in item.message for item in findings))
+
+    def test_mihomo_accepts_declared_provider_in_use_block(self) -> None:
+        path = self.mihomo_profile(
+            self.overseas_policy_lines() + self.performance_policy_lines(),
+            group_block=f'''  - name: US-AUTO
+    type: url-test
+    use:
+      - provider_a
+    filter: "{MIHOMO_APPROVED_US_FILTER}"''',
+        )
+
+        self.assertEqual(validate_profile(path, self.root), [])
+
+    def test_mihomo_accepts_truthy_include_all_as_source(self) -> None:
+        path = self.mihomo_profile(
+            self.overseas_policy_lines() + self.performance_policy_lines(),
+            group_block=f'''  - name: US-AUTO
+    type: url-test
+    include-all: true
+    filter: "{MIHOMO_APPROVED_US_FILTER}"''',
+        )
+
+        self.assertEqual(validate_profile(path, self.root), [])
 
     def test_mihomo_rejects_false_include_all_source(self) -> None:
         path = self.mihomo_profile(
