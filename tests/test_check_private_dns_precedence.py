@@ -24,6 +24,19 @@ MIHOMO_APPROVED_US_FILTER = r"(?i)🇺🇸|美国|united states|\\bus\\b"
 
 
 class PrivateDnsPrecedenceTests(unittest.TestCase):
+    def test_both_surge_personal_profiles_are_registered(self) -> None:
+        self.assertEqual(
+            precedence_checker.SURGE_PERSONAL_NAMES,
+            {
+                "rulemesh-substore-surge-personal.conf",
+                "rulemesh-substore-surge-personal-company.conf",
+            },
+        )
+        self.assertTrue(
+            precedence_checker.SURGE_PERSONAL_NAMES
+            <= precedence_checker.PRIVATE_PROFILE_NAMES
+        )
+
     def setUp(self) -> None:
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)

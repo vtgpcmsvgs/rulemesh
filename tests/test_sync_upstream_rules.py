@@ -448,6 +448,109 @@ class GeodataSnapshotTests(unittest.TestCase):
             sync_upstream_rules.validate_meta_rules_dat_readme("missing markers")
 
 
+class HkexParticipantHelpersTests(unittest.TestCase):
+    PAGE_ONE = """
+    <html><body>
+      <div>You have <strong>2</strong> record(s) in this search.</div>
+      <div>Page <b>1</b> of <b>2</b></div>
+      <table>
+        <tr><td>Participant ID :</td><td>01841</td></tr>
+        <tr><td>Website Address :</td><td><a href='http://www.laglobal.com.hk/path'>site</a></td></tr>
+        <tr><td>Participant ID :</td><td>01564</td></tr>
+        <tr><td>Website Address :</td><td><a href='https://sec.abci.com.hk'>site</a></td></tr>
+      </table>
+    </body></html>
+    """
+
+    PAGE_TWO = """
+    <html><body>
+      <div>You have 2 record(s) in this search.</div>
+      <div>Page 2 of 2</div>
+      <table>
+        <tr><td>Website Address :</td><td>Nil</td></tr>
+      </table>
+    </body></html>
+    """
+
+    def test_normalize_hkex_website_host_accepts_only_public_http_hosts(self) -> None:
+        self.assertEqual(
+            sync_upstream_rules.normalize_hkex_website_host(
+                " HTTPS://WWW.Example.COM.HK:443/path?q=1 "
+            ),
+            "example.com.hk",
+        )
+        for value in (
+            "ftp://example.com/file",
+            "https://user:pass@example.com/",
+            "http://127.0.0.1/",
+            "http://[::1]/",
+            "http://localhost/",
+            "javascript:alert(1)",
+        ):
+            self.assertIsNone(sync_upstream_rules.normalize_hkex_website_host(value))
+
+    def test_hkex_page_parser_extracts_page_metadata_and_hosts(self) -> None:
+        page = sync_upstream_rules.extract_hkex_participant_page(self.PAGE_ONE)
+
+        self.assertEqual(page.page_number, 1)
+        self.assertEqual(page.total_pages, 2)
+        self.assertEqual(page.total_records, 2)
+        self.assertEqual(page.page_records, 2)
+        self.assertEqual(page.hosts, ("laglobal.com.hk", "sec.abci.com.hk"))
+
+    def test_hkex_page_fetch_retries_transient_disconnect(self) -> None:
+        with mock.patch(
+            "sync_upstream_rules.fetch_text",
+            side_effect=[OSError("remote end closed connection"), self.PAGE_ONE],
+        ) as fetcher:
+            text = sync_upstream_rules.fetch_hkex_participant_page_text(1)
+
+        self.assertEqual(text, self.PAGE_ONE)
+        self.assertEqual(fetcher.call_count, 2)
+
+    def test_hkex_snapshot_builder_dedupes_and_emits_domain_suffix_rules(self) -> None:
+        first = sync_upstream_rules.extract_hkex_participant_page(self.PAGE_ONE)
+        second = sync_upstream_rules.extract_hkex_participant_page(self.PAGE_TWO)
+
+        with mock.patch.object(sync_upstream_rules, "HKEX_MIN_PARTICIPANT_RECORDS", 2), mock.patch.object(
+            sync_upstream_rules,
+            "HKEX_MIN_WEBSITE_HOSTS",
+            2,
+        ):
+            text = sync_upstream_rules.build_hkex_participant_snapshot_text(
+                [second, first]
+            )
+
+        self.assertIn(
+            sync_upstream_rules.HKEX_SEHK_PARTICIPANTS_URL.format(page=1),
+            text,
+        )
+        self.assertEqual(text.count("DOMAIN-SUFFIX,laglobal.com.hk"), 1)
+        self.assertEqual(text.count("DOMAIN-SUFFIX,sec.abci.com.hk"), 1)
+
+    def test_hkex_snapshot_rejects_truncated_results(self) -> None:
+        first = sync_upstream_rules.extract_hkex_participant_page(self.PAGE_ONE)
+
+        with self.assertRaisesRegex(ValueError, "页面不完整"):
+            sync_upstream_rules.build_hkex_participant_snapshot_text([first])
+
+    def test_hkex_sync_records_failure_without_overwriting_snapshot(self) -> None:
+        failures: list[sync_upstream_rules.UpstreamFailure] = []
+
+        with mock.patch(
+            "sync_upstream_rules.fetch_hkex_participant_pages",
+            side_effect=ValueError("参与者记录数异常"),
+        ), mock.patch("sync_upstream_rules.write_if_changed") as writer:
+            changed, failed = sync_upstream_rules.sync_hkex_participant_websites(
+                failures
+            )
+
+        self.assertEqual((changed, failed), (0, 1))
+        self.assertEqual(len(failures), 1)
+        self.assertIn("参与者记录数异常", failures[0].detail)
+        writer.assert_not_called()
+
+
 class ChainlistRpcHelpersTests(unittest.TestCase):
     def test_normalize_chainlist_rpc_host_strips_path_query_and_port(self) -> None:
         self.assertEqual(

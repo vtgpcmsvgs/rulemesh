@@ -56,6 +56,28 @@ merge_plan:
       - Apple 官方示例与企业网络文档包含 time.apple.com 与 time-macos.apple.com；两者统一保留
       - 时间同步更依赖原生链路对称性，默认保持 DIRECT，不并入节点选择
 
+  - id: apple-direct
+    target: rules/direct/apple_direct.list
+    purpose: Personal 激进配置的 Apple 全域名直连入口
+    strategy:
+      - manual_only
+      - explicit_official_domain_families
+      - no_apple_keyword_or_ip_bypass
+    notes:
+      - Personal 调用层必须放在 Apple 更新拒绝与 macOS 美国更新前，因此 Apple 更新也会直连
+      - 不使用 17.0.0.0/8、Surge skip-proxy 或 DOMAIN-KEYWORD,apple，避免绕过规则层与误伤第三方同名站点
+
+  - id: outlook-direct
+    target: rules/direct/outlook_direct.list
+    purpose: Personal 激进配置的 Outlook 邮箱数据面直连入口
+    strategy:
+      - manual_only
+      - official_outlook_and_hotmail_domains
+      - keep_shared_microsoft_auth_in_us_rules
+    notes:
+      - 放在 Microsoft Store 美国专项之后、通用 Microsoft 美国规则之前
+      - 不把 live.com 与 microsoftonline.com 根域整体直连，避免共享登录链路改变 Store 出口
+
   - id: bilibili-direct
     target: rules/direct/bilibili_direct.list
     purpose: Bilibili 直连
@@ -125,6 +147,16 @@ merge_plan:
       - Windows 更新禁用仍由 reject/os_update_reject 先拦截；放开拒绝入口后再由本文件接到美国策略
       - 不再放在 direct/ 下，避免 Microsoft 流量回落直连或被 cn_direct 宽泛兜底吞掉
 
+  - id: us-microsoft-store
+    target: rules/region/us/microsoft_store_us.list
+    purpose: Personal 激进配置的 Microsoft Store 与下载基础设施统一走美国策略
+    strategy:
+      - manual_only
+      - official_windows_store_and_delivery_optimization_endpoints
+    notes:
+      - Personal 调用层必须先于 outlook_direct 与 microsoft_us
+      - 第三方发行商自托管安装包域名不属于 Microsoft 官方静态端点，不能承诺由本规则全集覆盖
+
   - id: us-macos-update
     target: rules/region/us/macos_update_us.list
     purpose: macOS 系统更新统一走美国策略
@@ -144,6 +176,25 @@ merge_plan:
     notes:
       - 香港节点通常更稳定、速度更快，适合 Telegram 大流量场景
       - 香港地区内容生态与支付方式也更友好
+
+  - id: hk-personal-priority
+    target: rules/region/hk/personal_priority_hk.list
+    purpose: Surge Personal 少量站点香港优先覆盖
+    strategy:
+      - manual_only
+      - personal_profiles_only
+    notes:
+      - 必须放在广告拒绝与中国直连前
+      - 不得接入 rulemesh-substore-surge-work-whitelist.conf
+
+  - id: hk-notion
+    target: rules/region/hk/notion_hk.list
+    purpose: Notion 全域名统一走香港策略
+    strategy:
+      - official_domains_first
+      - legacy_domain_then_brand_keyword_fallback
+    notes:
+      - notion 品牌关键词是用户批准的激进兜底
 
   - id: hk-alibaba
     target: rules/region/hk/alibaba_hk.list
@@ -183,6 +234,17 @@ merge_plan:
       - 只围绕这四家香港券商维护，不扩展到其他券商、交易所或通用金融站点
       - 客户端顺序应放在 region/hk/global_media 与 proxy/gfw 前，避免登录、开户、行情与交易接口被后续规则吞掉
       - 允许品牌词级别误伤，优先保证相关域名全部命中香港自动选择
+
+  - id: hk-securities-aggressive
+    target: rules/region/hk/hk_securities_aggressive.list
+    purpose: Personal 激进配置的香港证券公司与老虎证券香港出口
+    strategy:
+      - include_hkex_sehk_participant_website_snapshot
+      - explicit_tiger_brokers_domains_and_low_collision_keywords
+      - reject_truncated_snapshot_updates
+    notes:
+      - 现有 hk_brokers 保持不变，避免间接扩张工作白名单
+      - 不使用 tiger、broker、securities、capital 或 finance 等通用关键词
 
   - id: gfw-proxy
     target: rules/proxy/gfw.list

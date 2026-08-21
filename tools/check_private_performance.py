@@ -11,9 +11,14 @@ from check_dns_safety import default_paths
 ROOT = Path(__file__).resolve().parents[1]
 PRIVATE_PROFILE_NAMES = {
     "rulemesh-substore-surge-personal.conf",
+    "rulemesh-substore-surge-personal-company.conf",
     "rulemesh-substore-surge-work-whitelist.conf",
     "rulemesh-substore-mihomo-clash-verge.yaml",
     "rulemesh-substore-mihomo-clash-meta.yaml",
+}
+SURGE_PERSONAL_NAMES = {
+    "rulemesh-substore-surge-personal.conf",
+    "rulemesh-substore-surge-personal-company.conf",
 }
 
 
@@ -91,6 +96,102 @@ def parse_surge_groups(lines: list[str]) -> dict[str, tuple[int, str, str]]:
 def validate_surge_personal(path: Path, lines: list[str]) -> list[PerformanceFinding]:
     findings: list[PerformanceFinding] = []
     groups = parse_surge_groups(lines)
+    active_rules = [
+        (index, line.strip())
+        for index, line in section_lines(lines, "Rule")
+        if line.strip() and not line.lstrip().startswith(("#", ";"))
+    ]
+
+    required_identifiers = (
+        "direct/apple_direct",
+        "region/hk/personal_priority_hk",
+        "region/hk/notion_hk",
+        "region/hk/hk_securities_aggressive",
+        "region/us/microsoft_store_us",
+        "direct/outlook_direct",
+    )
+    positions: dict[str, tuple[int, int]] = {}
+    for identifier in required_identifiers:
+        match = next(
+            (
+                (position, line_number)
+                for position, (line_number, line) in enumerate(active_rules)
+                if f"/{identifier}.list," in line
+            ),
+            None,
+        )
+        if match is None:
+            findings.append(
+                PerformanceFinding(
+                    path,
+                    1,
+                    f"Surge personal 缺少 {identifier} 激进分流入口。",
+                    f"按已批准顺序加入 {identifier} RULE-SET。",
+                )
+            )
+        else:
+            positions[identifier] = match
+
+    yikaiying = next(
+        (
+            (position, line_number)
+            for position, (line_number, line) in enumerate(active_rules)
+            if line == "DOMAIN-SUFFIX,yikaiying.com,DIRECT"
+        ),
+        None,
+    )
+    if yikaiying is None:
+        findings.append(
+            PerformanceFinding(
+                path,
+                1,
+                "Surge personal 缺少 yikaiying.com 显式 DIRECT 入口。",
+                "在中国大陆通用规则前加入 DOMAIN-SUFFIX,yikaiying.com,DIRECT。",
+            )
+        )
+    else:
+        positions["yikaiying.com"] = yikaiying
+
+    anchor_identifiers = (
+        "reject/adblock_reject",
+        "reject/os_update_reject",
+        "region/us/microsoft_us",
+        "direct/cn_direct",
+    )
+    for identifier in anchor_identifiers:
+        match = next(
+            (
+                (position, line_number)
+                for position, (line_number, line) in enumerate(active_rules)
+                if f"/{identifier}.list," in line
+            ),
+            None,
+        )
+        if match is not None:
+            positions[identifier] = match
+
+    precedence_pairs = (
+        ("direct/apple_direct", "reject/os_update_reject"),
+        ("region/hk/personal_priority_hk", "reject/adblock_reject"),
+        ("region/hk/notion_hk", "direct/cn_direct"),
+        ("region/hk/hk_securities_aggressive", "direct/cn_direct"),
+        ("region/us/microsoft_store_us", "direct/outlook_direct"),
+        ("direct/outlook_direct", "region/us/microsoft_us"),
+        ("yikaiying.com", "direct/cn_direct"),
+    )
+    for earlier, later in precedence_pairs:
+        if earlier not in positions or later not in positions:
+            continue
+        if positions[earlier][0] >= positions[later][0]:
+            findings.append(
+                PerformanceFinding(
+                    path,
+                    positions[earlier][1],
+                    f"Surge personal 的 {earlier} 必须早于 {later}。",
+                    f"把 {earlier} 移到 {later} 前。",
+                )
+            )
+
     final = next(
         (
             (index, [scalar(part) for part in line.split(",")])
@@ -317,7 +418,7 @@ def validate_mihomo(path: Path, lines: list[str]) -> list[PerformanceFinding]:
 
 def validate_profile(path: Path) -> list[PerformanceFinding]:
     lines = read_lines(path)
-    if path.name == "rulemesh-substore-surge-personal.conf":
+    if path.name in SURGE_PERSONAL_NAMES:
         return validate_surge_personal(path, lines)
     if path.name == "rulemesh-substore-surge-work-whitelist.conf":
         return validate_surge_work(path, lines)

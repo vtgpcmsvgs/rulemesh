@@ -51,7 +51,7 @@
 
    PowerShell 会把未加引号的 `@{...}` 当作哈希表语法，因此包含 `@{upstream}` 的 revision 必须整体使用单引号。只应把实际登记的私人仓库路径传给 `safe.directory`，不得用 `*` 或写入全局配置。
 
-5. 解析当前配置目录时以实际布局为准：优先使用 `rulemesh-local/current`；若没有 `current`，但主配置与同步脚本直接位于仓库根目录，则使用根目录。不得为适配旧说明凭空创建 `current`。
+5. 解析当前配置目录时以实际布局为准：优先使用 `rulemesh-local/current`；若没有 `current`，但主配置与同步脚本直接位于仓库根目录，则使用根目录。不得为适配旧说明凭空创建 `current`。当前根目录包含家庭与公司两份 Surge Personal：`rulemesh-substore-surge-personal.conf` 和 `rulemesh-substore-surge-personal-company.conf`；两者除用途标识与 MITM 外应保持同构。
 
 ## Codex 行为边界
 

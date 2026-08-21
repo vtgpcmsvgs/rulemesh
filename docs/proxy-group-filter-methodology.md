@@ -57,7 +57,7 @@ policy-regex-filter=^(?!.*剩余流量)(?!.*直接连接)(?!.*供应商名)...
 
 - 解析后的私人当前配置目录中的 `rulemesh-substore-mihomo-clash-verge.yaml`
 - 解析后的私人当前配置目录中的 `rulemesh-substore-mihomo-clash-meta.yaml`
-- 解析后的私人当前配置目录中的 `rulemesh-substore-surge-personal.conf`
+- 解析后的私人当前配置目录中的家庭与公司两份 Surge Personal：`rulemesh-substore-surge-personal.conf`、`rulemesh-substore-surge-personal-company.conf`
 - 解析后的私人当前配置目录中的 `rulemesh-substore-surge-work-whitelist.conf`
 - `docs/examples/mihomo-public.yaml`
 - `docs/examples/surge-public.conf`

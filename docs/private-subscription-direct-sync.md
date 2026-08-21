@@ -9,6 +9,7 @@
 - `<私有当前配置目录>\private_subscription_direct.list`
 - `<私有当前配置目录>\sync_private_subscription_direct.ps1`
 - `<私有当前配置目录>\rulemesh-substore-surge-personal.conf`
+- `<私有当前配置目录>\rulemesh-substore-surge-personal-company.conf`
 - `<私有当前配置目录>\rulemesh-substore-surge-work-whitelist.conf`
 - `<私有当前配置目录>\rulemesh-substore-mihomo-clash-verge.yaml`
 - `<私有当前配置目录>\rulemesh-substore-mihomo-clash-meta.yaml`

@@ -13,6 +13,19 @@ import check_private_performance  # noqa: E402
 
 
 class PrivatePerformanceTests(unittest.TestCase):
+    def test_both_surge_personal_profiles_are_registered(self) -> None:
+        self.assertEqual(
+            check_private_performance.SURGE_PERSONAL_NAMES,
+            {
+                "rulemesh-substore-surge-personal.conf",
+                "rulemesh-substore-surge-personal-company.conf",
+            },
+        )
+        self.assertTrue(
+            check_private_performance.SURGE_PERSONAL_NAMES
+            <= check_private_performance.PRIVATE_PROFILE_NAMES
+        )
+
     def write_temp(self, name: str, content: str) -> Path:
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
@@ -35,6 +48,56 @@ FINAL,美国自动选择,dns-failed
         findings = check_private_performance.validate_profile(path)
 
         self.assertTrue(any("通用 FINAL" in item.message for item in findings))
+
+    def test_surge_personal_requires_aggressive_rule_entries(self) -> None:
+        path = self.write_temp(
+            "rulemesh-substore-surge-personal-company.conf",
+            """[Proxy Group]
+自动选择 = smart, policy-path=a
+
+[Rule]
+FINAL,自动选择,dns-failed
+""",
+        )
+
+        messages = [
+            item.message for item in check_private_performance.validate_profile(path)
+        ]
+
+        for identifier in (
+            "apple_direct",
+            "personal_priority_hk",
+            "notion_hk",
+            "hk_securities_aggressive",
+            "microsoft_store_us",
+            "outlook_direct",
+            "yikaiying.com",
+        ):
+            self.assertTrue(any(identifier in message for message in messages), identifier)
+
+    def test_surge_personal_accepts_aggressive_rule_order(self) -> None:
+        path = self.write_temp(
+            "rulemesh-substore-surge-personal-company.conf",
+            """[Proxy Group]
+自动选择 = smart, policy-path=a
+
+[Rule]
+RULE-SET,https://example.com/direct/apple_direct.list,DIRECT
+RULE-SET,https://example.com/region/hk/personal_priority_hk.list,HK-AUTO
+RULE-SET,https://example.com/region/hk/notion_hk.list,HK-AUTO
+RULE-SET,https://example.com/region/hk/hk_securities_aggressive.list,HK-AUTO
+RULE-SET,https://example.com/region/us/microsoft_store_us.list,US-AUTO
+RULE-SET,https://example.com/direct/outlook_direct.list,DIRECT
+DOMAIN-SUFFIX,yikaiying.com,DIRECT
+RULE-SET,https://example.com/reject/adblock_reject.list,REJECT
+RULE-SET,https://example.com/reject/os_update_reject.list,REJECT
+RULE-SET,https://example.com/region/us/microsoft_us.list,US-AUTO
+RULE-SET,https://example.com/direct/cn_direct.list,DIRECT
+FINAL,自动选择,dns-failed
+""",
+        )
+
+        self.assertEqual(check_private_performance.validate_profile(path), [])
 
     def test_surge_work_requires_exact_domestic_entries(self) -> None:
         path = self.write_temp(
@@ -74,6 +137,17 @@ FINAL,REJECT
 美国自动选择 = smart, policy-path=b, policy-regex-filter=美国|US
 
 [Rule]
+RULE-SET,https://example.com/direct/apple_direct.list,DIRECT
+RULE-SET,https://example.com/region/hk/personal_priority_hk.list,HK-AUTO
+RULE-SET,https://example.com/region/hk/notion_hk.list,HK-AUTO
+RULE-SET,https://example.com/region/hk/hk_securities_aggressive.list,HK-AUTO
+RULE-SET,https://example.com/region/us/microsoft_store_us.list,US-AUTO
+RULE-SET,https://example.com/direct/outlook_direct.list,DIRECT
+DOMAIN-SUFFIX,yikaiying.com,DIRECT
+RULE-SET,https://example.com/reject/adblock_reject.list,REJECT
+RULE-SET,https://example.com/reject/os_update_reject.list,REJECT
+RULE-SET,https://example.com/region/us/microsoft_us.list,US-AUTO
+RULE-SET,https://example.com/direct/cn_direct.list,DIRECT
 FINAL,自动选择,dns-failed
 """,
         )

@@ -29,6 +29,7 @@
 - 使用 `rg` 搜索以连字符开头的模式（例如 `-Target`）时，必须在模式前加 `--`，避免被解析成命令行选项
 - `rg` 未命中时会以退出码 `1` 结束；把“确认不存在”作为预期结果的审计命令应单独处理该退出码，避免让后续已完成的检查被误报为失败
 - 重跑任务临时验证脚本前先检查其 `param` 块或 `Get-Help`，显式传入全部必需参数，不要假设临时脚本可以无参数运行
+- 对包含多个重复 `[Rule]`、`dns:` 或同型多行字符串的测试 / 配置使用 `apply_patch` 时，补丁上下文必须带唯一函数名、节名或文件级锚点；应用后先检查实际命中区块，再运行测试，避免修改到更早的相似夹具
 - 当前机器已确认存在的解释器路径是：
   - `%LocalAppData%\Programs\Python\Python314\python.exe`
 - 如果直接执行该解释器出现 `Access is denied`（访问被拒绝），这是沙箱限制，不是仓库问题；需要申请提升权限后再运行
@@ -69,12 +70,13 @@
 - 动手前先按“源规则、上游登记、公开文档/模板、构建与检查脚本、私有同步项”给本次任务分类；高风险联动没分清前，不要直接编辑
 - 对本仓库的任何实际修改，默认同时同步更新解析后的私人当前配置目录中对应文件；除非用户明确说明不要同步
 - 修改前后都要在解析后的私人当前配置目录中判断是否存在对应文件；只有存在对应关系时才同步；若本次没有对应同步项，最终回复中必须明确写出“本次无对应同步项”
-- 私有配置目录解析必须以实际仓库布局为准：优先使用 `%USERPROFILE%\Desktop\rulemesh-local\current`；若该目录不存在、但 `rulemesh-local` 根目录直接存在四份主配置与同步脚本，则使用仓库根目录作为当前配置目录，不要凭空创建 `current` 或因此跳过同步，并在最终回复说明实际路径
+- 私有配置目录解析必须以实际仓库布局为准：优先使用 `%USERPROFILE%\Desktop\rulemesh-local\current`；若该目录不存在、但 `rulemesh-local` 根目录直接存在五份主配置与同步脚本，则使用仓库根目录作为当前配置目录，不要凭空创建 `current` 或因此跳过同步，并在最终回复说明实际路径
 - `%USERPROFILE%\Desktop\rulemesh-local` 是独立的私有 Git 仓库，远程默认分支是私有配置的最终数据源，本地目录仅作为工作副本；不要把它嵌入或合并到公开 `rulemesh` 仓库
 - 根目录 `private-repository.json` 是私人仓库远程地址、本地默认路径与布局候选的机器可读单一登记；当前登记仓库为 `vtgpcmsvgs/rulemesh-local`，恢复流程见 `docs/private-repository-bootstrap.md`
 - 同一 GitHub 账号的登录状态不会自动建立本地目录映射；当 `rulemesh-local` 在本机不存在时，必须先读取登记文件、通过 GitHub 查询登记仓库并按文档恢复，不能直接声称私人配置不存在，也不能新建同名空仓库
 - Codex 沙箱若把已登记私人仓库报为 `dubious ownership`，只对当前命令使用 `git -c "safe.directory=<已确认的私人仓库绝对路径>" ...`，不要修改全局 `safe.directory`；PowerShell 中包含 `@{upstream}` 的 Git revision 必须整体加引号，避免被解释为哈希表语法
 - Codex 当前工作区若只允许写公开仓库，私有同步脚本可能在 `WriteAllText` 阶段报 `Access denied`；这是独立私人仓库的沙箱写权限限制，应在确认目标绝对路径后申请提升权限重跑，不要误改脚本或配置来绕过
+- Windows PowerShell 5.1 的一次性诊断命令也禁止使用 `$HOME` / `$home` 作为临时变量；变量名大小写不敏感，会与只读系统变量冲突。哈希计算不要依赖较新 .NET 的 `SHA256.HashData` 或 `Convert.ToHexString`，统一使用 `SHA256.Create()` 与 `BitConverter`
 - Codex 沙箱若不允许写 `.git/FETCH_HEAD`、索引或对象库，`git fetch` / `add` / `commit` 应在确认仓库路径后申请提升权限；不要把后续只读命令的成功退出码误当成前一个 Git 写操作也已成功
 - 修改 `rulemesh-local` 前先确认工作区、当前分支和远程同步状态；修改完成后必须提交并推送，且只有远程推送成功并确认本地未领先远程时才算私有配置同步完成
 - 私有仓库可以完整纳管配置内容，但检查、提交和验证过程中仍不得在回复或日志中回显真实订阅地址、密钥、签名、证书参数或其他敏感值
@@ -91,7 +93,8 @@
 - 新增或调整默认对外使用的规则入口、规则顺序、策略含义或公开模板行为时，必须同步更新 `README.md`、`docs/usage-surge.md`、`docs/usage-mihomo.md`、`docs/examples/surge-public.conf`、`docs/examples/mihomo-public.yaml`
 - 若本次修改影响使用方式、规则组织、构建方式、产物结构或维护约定，必须同步更新相关文档
 - 2026-05-07 下线的两类激进 `reject` 入口不再恢复到源规则、公开模板或私有配置，除非用户明确要求重新启用
-- 私有 `rulemesh-substore-surge-work-whitelist.conf` 属于长期特化的工作路由白名单配置；它与 `rulemesh-substore-surge-personal.conf`、`rulemesh-substore-mihomo-clash-verge.yaml`、`rulemesh-substore-mihomo-clash-meta.yaml` 从现在起允许永久不一致，不得因为“统一模板”或“对齐 personal 配置”而回滚
+- 私有 `rulemesh-substore-surge-work-whitelist.conf` 属于长期特化的工作路由白名单配置；它与两份 Surge Personal、`rulemesh-substore-mihomo-clash-verge.yaml`、`rulemesh-substore-mihomo-clash-meta.yaml` 从现在起允许永久不一致，不得因为“统一模板”或“对齐 personal 配置”而回滚
+- Surge Personal 固定维护家庭版 `rulemesh-substore-surge-personal.conf` 与公司版 `rulemesh-substore-surge-personal-company.conf`；两者只允许用途标识和 MITM 不同，路由与 DNS 结构必须同步。Personal 专用的 `personal_priority_hk`、`notion_hk`、`hk_securities_aggressive`、`apple_direct`、`outlook_direct` 与 `microsoft_store_us` 不得同步进工作白名单
 - 工作白名单的国内 DNS 继续且只能引用小型精选 `cn_dns_domains`；不得引用性能型 `cn_performance_dns_domains`，也不得为了提高覆盖率改变其严格白名单边界。
 - 维护 `rulemesh-substore-surge-work-whitelist.conf` 时，默认应维持“仅放行明确白名单入口，其余流量对工作电脑统一 REJECT”的原则；若要恢复广谱放行（如 `proxy/gfw`、广谱 `direct`、`FINAL` 兜底放行），必须得到用户明确确认
 - 当前该工作路由白名单默认允许入口包括：设备分流、区域精确规则、GitHub SSH、GitHub Raw 下载入口、GitHub 广覆盖观察兜底、私有订阅域名同步块、1Password、AdsPower、Polygon RPC、BSC RPC、海外 DNS 主 IPv4 端点、代理节点 bootstrap DNS 直连例外（dns.alidns.com / doh.pub）、海外加密 DNS 显式入口（DoH / DoH3 / DoQ 与 cloudflare-dns.com / dns.google / dns.quad9.net）、`LAN,DIRECT`、`direct/os_time_direct`、`region/us/microsoft_us`、`region/us/macos_update_us`、阿里云指定直连与 `direct/bytedance_direct`；`[Host]` 中的 `cn_dns_domains` 只用于国内业务域名解析调度，不新增流量放行，但工作规则层显式允许 `zsxq.com` 与 `yikaiying.com` 两个精确 DIRECT 入口；2.1 设备分流既允许原有 `SRC-IP + AWS 区域 / 多地区链式 SOCKS5 IP 段` 约束，也允许已登记个人终端使用 `SRC-IP + region/hk/alibaba_hk` 只把阿里系流量交给香港自动选择，后者不得扩成全流量入口；2.2-2.10 不再额外限制 `SRC-IP`，原独立 IP 规则段已删除；未命中上述入口的流量最终 `FINAL,REJECT`

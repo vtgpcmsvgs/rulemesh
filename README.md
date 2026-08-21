@@ -159,6 +159,9 @@ python tools/build_rules.py
 - Surge 的 `internet-test-url`、`proxy-test-url`、代理 `test-url=` 与 `smart / fallback / load-balance` 的 `url=` 统一保持 `http://`；不要因为 `policy-path`、GeoIP 或其他下载入口使用 `https://` 就顺手改成 `https://`。
 - 当前公开模板与本地私有 Surge 配置默认采用 `http://www.baidu.com`、`http://www.google.com/generate_204` 与 `http://www.gstatic.com/generate_204` 这组三段式测速 URL；它们不是唯一答案，但继续作为本仓库的轻量稳定基线。
 - `rules/region/hk/hk_brokers.list` 专门承接复星证券/复星财富、致富证券、辉立证券与富途，默认使用品牌关键词激进兜底并绑定 `🇭🇰 香港-自动选择`，顺序应放在 `region/hk/global_media` 与 `proxy/gfw` 前
+- Personal 激进规则拆成独立入口：`region/hk/personal_priority_hk` 承接截图中指定的 `doubleclick.net`、`xygj.pro` 与 `h3c.com`；`region/hk/notion_hk` 覆盖 Notion 官方域名族；`region/hk/hk_securities_aggressive` 聚合老虎证券显式域名与港交所参与者网站快照。三者均绑定香港自动选择并先于广告拒绝、国内直连和广谱代理，但不得扩散进工作白名单
+- 港交所参与者网站由 `tools/sync_upstream_rules.py` 从官方参与者名录逐页同步；当前快照覆盖 588 个参与者页面中的 464 个唯一网站主机。它是可审计的高覆盖快照，不宣称等于所有香港持牌机构或其全部第三方域名
+- `direct/apple_direct` 将 Apple 官方域名族统一直连，`direct/outlook_direct` 将 Outlook / Hotmail / Exchange Online 邮件数据面直连；`region/us/microsoft_store_us` 单独承接 Microsoft Store、许可、目录和下载交付端点并绑定美国自动选择。激进 Personal 调用层还显式让 `yikaiying.com` 直连
 - `rules/region/hk/alibaba_hk.list` 是按设备选择启用的阿里系香港入口，聚合 Alibaba 主体与 XianYu 专项上游，并用 `goofish / xianyu / idlefish` 等关键词补强闲鱼；默认公开模板不启用，调用层必须限定专用设备或专用配置，并放在国内直连与阿里云 SSH 指定直连前
 - `rules/region/hk/wps_kdocs.list` 专门承接 WPS Office、金山文档、开放平台、云文档与资源分发连接，默认绑定 `🇭🇰 香港-自动选择`，并必须放在 `direct/cn_direct` 与工作白名单 `FINAL,REJECT` 前
 - `rules/region/hk/global_media.list` 额外承接 `x.com`、`t.co`、`twimg.com` 与 `twitter.com` 等 X / Twitter 网页域名，以及 `polymarket.com` 与 `DOMAIN-KEYWORD,polymarket` 这组 Polymarket 香港兜底，默认绑定 `🇭🇰 香港-自动选择`；客户端必须先放 `direct/ai_cn_direct` 与 `direct/bytedance_direct`，避免唯一交集 `snssdk.com` 被香港媒体规则抢先命中
@@ -167,7 +170,7 @@ python tools/build_rules.py
 - 如需启用，请显式接入 `proxy/onepassword_proxy` 并放在 `proxy/gfw` 前；公开模板默认不内置这条重度用户特化入口
 - 操作系统时间同步专项规则统一维护在 `rules/direct/os_time_direct.list`
 - 客户端应显式接入 `direct/os_time_direct`，并放在其他普通 `direct/*` 前，默认保持 `DIRECT`
-- 如果你采用“默认禁更，升级时手动临时放行”的习惯，建议同时接入 `direct/os_time_direct`、`reject/os_update_reject`、`region/us/microsoft_us` 与 `region/us/macos_update_us`；其中 `os_time_direct` 负责系统时间同步直连，其余入口必须放在 `reject` 之后并绑定美国策略
+- 保守模板仍可采用“默认禁更，升级时手动临时放行”；激进 Personal 则把 `direct/apple_direct` 与 `region/us/microsoft_store_us` 放在 `reject/os_update_reject` 前，明确优先保障 Apple 全域直连与 Microsoft Store 美国下载。其余系统更新仍可由拒绝规则控制
 - 国内 DNS 清单分两层维护：小型精选 `rules/dns/cn_dns_domains.list` 生成 `dist/surge/dns/cn_dns_domains.list`，只放明确国内业务域名 / 国内域名后缀，不放代理节点 server 域名、订阅入口域名、IP 或复杂规则，专供工作白名单与公开保守示例；性能型 `rules/dns/cn_performance_dns_domains.list` 自动合并中国直连域名主体与小型精选清单，生成 `dist/surge/dns/cn_performance_dns_domains.list`，只供 Surge Personal 与两份 Mihomo 性能配置。小米 / MIUI、国内天气、微信小程序、抖音专项、拼多多、小红书 CDN、知识星球与已确认国内落地的 `yikaiying.com` 等明确依赖在小型清单中按服务族维护；共享风控或统计第三方域名没有专项证据时不自动纳入。
 - 性能配置必须先让实际启用且位于中国大陆通用兜底前的 `reject/`、`proxy/`、`region/` 规则集使用海外 DNS，再匹配性能型国内清单；OpenAI / ChatGPT 所在的 `region/us/ai_us` 同时固定美国出口与海外解析。公开示例继续使用保守小型清单，不把性能型产物当成默认安全配置。
 
@@ -188,7 +191,7 @@ python tools/build_rules.py
   - 其中 GitHub SSH 后先进入 GitHub Raw 自举入口，再显式放行 `proxy/github_core_proxy`，并保留一条 `DOMAIN-KEYWORD,github,REJECT` 广覆盖观察兜底，用于发现 SSH / GitHub Core 之外的漏网之鱼；AdsPower 细分规则后也保留一条 `DOMAIN-KEYWORD,adspower,REJECT` 广覆盖观察兜底。
   - 阿里云香港 SSH、`aliyuncs.com` 与 `check.myclientip.com` 统一收敛到“指定直连”段显式放行；其后额外保留一条阿里云广覆盖 `REJECT` 观察兜底，用于发现上游阿里云规则的漏网之鱼。
 - 私有订阅端点统一在解析后的私人当前配置目录中的 `private_subscription_direct.list` 维护；同步脚本必须显式指定 `-Target surge`、`-Target mihomo` 或 `-Target all`。Surge 目标生成“Chrome 节点选择例外 + 普通订阅更新直连”，Mihomo 目标则让这些精确域名 / IP 的普通流量直接命中节点选择；真实端点不回写公开模板。
-- 私有仓库若没有 `current` 子目录、而四份主配置直接位于 `rulemesh-local` 根目录，则以实际仓库根目录为当前配置目录；不要为满足旧路径说明凭空创建 `current`。
+- 私有仓库若没有 `current` 子目录、而五份主配置直接位于 `rulemesh-local` 根目录，则以实际仓库根目录为当前配置目录；不要为满足旧路径说明凭空创建 `current`。两份 Surge Personal 分别为家庭版 `rulemesh-substore-surge-personal.conf` 与公司版 `rulemesh-substore-surge-personal-company.conf`，除用途标识和 MITM 外保持同构
   - 其中 `raw.githubusercontent.com` 作为规则产物下载自举入口，但不再使用 `server:system`；普通目标网站的全局 DNS 仍保持海外 DNS，不再回退到 `system + 国内 DNS`。
   - 工作白名单模式下，广覆盖观察规则统一只允许使用 `REJECT`；不要对 `DIRECT` 或 `PROXY` 规则使用 `extended-matching`，否则会把可伪造的 Host / SNI 纳入放行判断，扩大绕过白名单的攻击面。
   - 原单独 `IP 规则` 段已删除，避免与设备分流重复。

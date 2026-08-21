@@ -1,0 +1,9 @@
+# Surge Personal 香港优先规则：承接用户明确要求覆盖现有拒绝或中国直连的少量站点。
+# 维护边界：
+# 1) 本文件只供 Personal 激进配置调用，不得接入工作白名单。
+# 2) 客户端必须把本入口放在 reject/adblock_reject 与 direct/cn_direct 前，并绑定香港自动选择。
+# 3) Notion 与香港证券公司分别由相邻专项规则维护，不在这里重复。
+
+DOMAIN-SUFFIX,doubleclick.net
+DOMAIN-SUFFIX,xygj.pro
+DOMAIN-SUFFIX,h3c.com

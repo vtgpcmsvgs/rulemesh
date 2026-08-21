@@ -52,6 +52,18 @@ sources:
           note: 参考 Windows Time 文档，保留独立 Windows 设备默认的 time.windows.com
         - repo: Apple Support
           note: 参考 Apple 官方网络说明与 systemsetup 示例，保留 time.apple.com 与 time-macos.apple.com
+    apple_direct.list:
+      preferred:
+        - repo: self
+          note: Personal 激进配置的 Apple 全域名直连入口；规则层优先于 Apple 更新拒绝，不使用 17.0.0.0/8 或 skip-proxy 绕过
+        - repo: Apple Support
+          note: 参考 Use Apple products on enterprise networks，覆盖 Apple、iCloud、CloudKit、内容分发与商店官方域名族
+    outlook_direct.list:
+      preferred:
+        - repo: self
+          note: Personal 激进配置的 Outlook / Hotmail / Exchange Online 邮箱数据面直连入口，不扩大到共享 Microsoft 登录根域
+        - repo: Microsoft Learn
+          note: 参考 Microsoft 365 URLs and IP address ranges 及官方端点服务，覆盖 Outlook 当前品牌与邮件服务域名
     bytedance_direct.list:
       preferred:
         - repo: self
@@ -139,6 +151,24 @@ sources:
           note: 专门承接复星证券/复星财富、致富证券、辉立证券与富途，默认用品牌关键词激进匹配并固定绑定香港自动选择
         - repo: official broker websites
           note: 参考 fotechwealth / fosunwealth / chiefgroup / chieftrade / poems / phillip / futuhk / futunn / futuholdings 等官方入口与交易平台域名
+    hk/personal_priority_hk.list:
+      preferred:
+        - repo: self
+          note: 只供 Surge Personal 激进配置使用，承接 doubleclick.net、xygj.pro 与 h3c.com 的香港优先覆盖，不接入工作白名单
+    hk/notion_hk.list:
+      preferred:
+        - repo: self
+          note: Notion 官方域名族、历史 notion.so 与 notion 品牌关键词兜底统一绑定香港自动选择
+        - repo: Notion Help
+          note: 参考 Notion IP addresses & domains to allowlist 的当前官方域名清单
+    hk/hk_securities_aggressive.list:
+      preferred:
+        - repo: self
+          note: 只供 Personal 激进配置使用，承接港交所参与者网站快照、老虎证券与 UP Fintech 品牌补强，不替换 hk_brokers
+        - repo: HKEX
+          note: 每次完整抓取当前 SEHK Participants 查询页的全部页面与公开 Website Address，并以记录数和唯一主机阈值防止截断覆盖
+        - repo: Tiger Brokers / UP Fintech official websites
+          note: 补充 itiger、itigerup、tigerbrokers、tigerfintech、tigersecurities 与 upfintech 的明确域名和低误伤品牌兜底
     hk/global_media.list:
       preferred:
         - repo: self
@@ -179,6 +209,12 @@ sources:
           note: Microsoft / OneDrive 统一绑定美国策略，Windows 更新禁用仍由 reject/os_update_reject 先拦截
         - repo: blackmatrix7/ios_rule_script
           note: 负责 Microsoft.list 与 OneDrive.list 主体
+    us/microsoft_store_us.list:
+      preferred:
+        - repo: self
+          note: Personal 激进配置的 Microsoft Store 美国专项入口，先于 Outlook 直连与通用 Microsoft 美国规则
+        - repo: Microsoft Learn
+          note: 参考 Windows connection endpoints、Intune Store API 与 Delivery Optimization 官方端点清单
     us/macos_update_us.list:
       preferred:
         - repo: self

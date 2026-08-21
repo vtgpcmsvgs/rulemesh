@@ -4,9 +4,11 @@
 from __future__ import annotations
 
 import base64
+import concurrent.futures
 import datetime as dt
 import hashlib
 import hmac
+import html
 import ipaddress
 import json
 import os
@@ -91,6 +93,21 @@ ONEPASSWORD_DOMAIN_PATTERN = DOMAIN_HOST_PATTERN
 CHAINLIST_RPCS_URL = "https://chainlist.org/rpcs.json"
 CHAINLIST_REPO_URL = "https://github.com/DefiLlama/chainlist"
 CHAINLIST_RESOURCE_PATH = Path("chainlist/rpcs.json")
+HKEX_SEHK_PARTICIPANTS_URL = (
+    "https://www.hkex.com.hk/eng/plw/searchparticipant.aspx?"
+    "SEARCH=VIW&SEL_TYPE=SE&BROK_NUM=&PR_NAME=&PR_NAME1=&PR_ID=&page={page}"
+)
+HKEX_SEHK_PARTICIPANT_WEBSITES_PATH = Path(
+    "hkex/sehk_participant_websites.list"
+)
+HKEX_MIN_PARTICIPANT_RECORDS = 500
+HKEX_MIN_WEBSITE_HOSTS = 200
+HKEX_MAX_WORKERS = 8
+HKEX_FETCH_ATTEMPTS = 3
+HKEX_HOST_PATTERN = re.compile(
+    r"(?i)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+"
+    r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?"
+)
 META_RULES_DAT_REPO = "MetaCubeX/meta-rules-dat"
 META_RULES_DAT_REPO_URL = f"https://github.com/{META_RULES_DAT_REPO}"
 META_RULES_DAT_README_URL = (
@@ -183,6 +200,15 @@ class ChainlistRpcSnapshot:
     chain_id: int
     title: str
     preserve_hosts: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class HkexParticipantPage:
+    page_number: int
+    total_pages: int
+    total_records: int
+    page_records: int
+    hosts: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -672,6 +698,211 @@ def sync_generic_upstreams(failures: list[UpstreamFailure]) -> tuple[int, int]:
         changed += int(updated)
         failed += int(fetch_failed)
     return changed, failed
+
+
+def normalize_hkex_website_host(value: str) -> str | None:
+    candidate = html.unescape(value).strip()
+    try:
+        parsed = urllib.parse.urlsplit(candidate)
+    except ValueError:
+        return None
+
+    if parsed.scheme.lower() not in {"http", "https"}:
+        return None
+    if parsed.username is not None or parsed.password is not None:
+        return None
+
+    hostname = parsed.hostname
+    if not hostname:
+        return None
+    try:
+        hostname = hostname.encode("idna").decode("ascii").lower().rstrip(".")
+    except UnicodeError:
+        return None
+
+    try:
+        ipaddress.ip_address(hostname)
+    except ValueError:
+        pass
+    else:
+        return None
+
+    if hostname.startswith("www."):
+        hostname = hostname[4:]
+    if hostname == "localhost" or not HKEX_HOST_PATTERN.fullmatch(hostname):
+        return None
+    return hostname
+
+
+def extract_hkex_participant_page(html_text: str) -> HkexParticipantPage:
+    plain_text = html.unescape(re.sub(r"<[^>]+>", " ", html_text))
+    plain_text = re.sub(r"\s+", " ", plain_text)
+    records_match = re.search(
+        r"You\s+have\s+([\d,]+)\s+record\(s\)",
+        plain_text,
+        re.IGNORECASE,
+    )
+    page_match = re.search(
+        r"Page\s+(\d+)\s+of\s+(\d+)",
+        plain_text,
+        re.IGNORECASE,
+    )
+    if not records_match or not page_match:
+        raise ValueError("港交所参与者页面缺少记录数或分页信息")
+
+    website_cells = re.findall(
+        r"Website\s+Address\s*:\s*</td>\s*<td[^>]*>(.*?)</td>",
+        html_text,
+        re.IGNORECASE | re.DOTALL,
+    )
+    hosts: list[str] = []
+    for cell in website_cells:
+        href_match = re.search(
+            r"href\s*=\s*['\"]([^'\"]+)['\"]",
+            cell,
+            re.IGNORECASE | re.DOTALL,
+        )
+        if not href_match:
+            continue
+        host = normalize_hkex_website_host(href_match.group(1))
+        if host:
+            hosts.append(host)
+
+    return HkexParticipantPage(
+        page_number=int(page_match.group(1)),
+        total_pages=int(page_match.group(2)),
+        total_records=int(records_match.group(1).replace(",", "")),
+        page_records=len(
+            re.findall(r"Participant\s+ID\s*:", html_text, re.IGNORECASE)
+        ),
+        hosts=tuple(ordered_unique(hosts)),
+    )
+
+
+def fetch_hkex_participant_page_text(page_number: int) -> str:
+    url = HKEX_SEHK_PARTICIPANTS_URL.format(page=page_number)
+    last_error: BaseException | None = None
+    for _ in range(HKEX_FETCH_ATTEMPTS):
+        try:
+            return fetch_text(url)
+        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+            last_error = exc
+    assert last_error is not None
+    raise last_error
+
+
+def fetch_hkex_participant_pages() -> list[HkexParticipantPage]:
+    first = extract_hkex_participant_page(
+        fetch_hkex_participant_page_text(1)
+    )
+    if first.page_number != 1 or first.total_pages < 1:
+        raise ValueError("港交所参与者首页分页信息异常")
+
+    pages = [first]
+    if first.total_pages == 1:
+        return pages
+
+    def fetch_page(page_number: int) -> HkexParticipantPage:
+        parsed = extract_hkex_participant_page(
+            fetch_hkex_participant_page_text(page_number)
+        )
+        if parsed.page_number != page_number:
+            raise ValueError(
+                f"港交所参与者页面编号异常：请求 {page_number}，返回 {parsed.page_number}"
+            )
+        return parsed
+
+    with concurrent.futures.ThreadPoolExecutor(
+        max_workers=min(HKEX_MAX_WORKERS, first.total_pages - 1)
+    ) as executor:
+        futures = [
+            executor.submit(fetch_page, page_number)
+            for page_number in range(2, first.total_pages + 1)
+        ]
+        for future in concurrent.futures.as_completed(futures):
+            pages.append(future.result())
+
+    return sorted(pages, key=lambda page: page.page_number)
+
+
+def build_hkex_participant_snapshot_text(
+    pages: list[HkexParticipantPage],
+) -> str:
+    if not pages:
+        raise ValueError("港交所参与者页面为空")
+
+    ordered_pages = sorted(pages, key=lambda page: page.page_number)
+    first = ordered_pages[0]
+    expected_numbers = list(range(1, first.total_pages + 1))
+    actual_numbers = [page.page_number for page in ordered_pages]
+    if actual_numbers != expected_numbers:
+        raise ValueError(
+            f"港交所参与者页面不完整：预期 {expected_numbers[-1]} 页，实际 {len(actual_numbers)} 页"
+        )
+    if any(
+        page.total_pages != first.total_pages
+        or page.total_records != first.total_records
+        for page in ordered_pages
+    ):
+        raise ValueError("港交所参与者分页统计不一致")
+    if first.total_records < HKEX_MIN_PARTICIPANT_RECORDS:
+        raise ValueError(
+            f"港交所参与者记录数异常：{first.total_records} < {HKEX_MIN_PARTICIPANT_RECORDS}"
+        )
+
+    parsed_records = sum(page.page_records for page in ordered_pages)
+    if parsed_records != first.total_records:
+        raise ValueError(
+            f"港交所参与者记录数不完整：登记 {first.total_records}，解析 {parsed_records}"
+        )
+
+    hosts = sorted({host for page in ordered_pages for host in page.hosts})
+    if len(hosts) < HKEX_MIN_WEBSITE_HOSTS:
+        raise ValueError(
+            f"港交所参与者网站数异常：{len(hosts)} < {HKEX_MIN_WEBSITE_HOSTS}"
+        )
+
+    header = [
+        f"# 上游来源：{HKEX_SEHK_PARTICIPANTS_URL.format(page=1)}",
+        "# 说明：港交所当前 SEHK 参与者公开 Website Address 的完整分页快照。",
+        "# 维护：同步器只接受 HTTP/HTTPS 公网主机名；异常或截断响应不会覆盖旧快照。",
+        f"# 统计：参与者 {first.total_records} 条，分页 {first.total_pages} 页，唯一网站主机 {len(hosts)} 个。",
+        "# 请勿直接编辑，更新请重新执行上游同步。",
+        "",
+    ]
+    rules = [f"DOMAIN-SUFFIX,{host}" for host in hosts]
+    return "\n".join([*header, *rules, ""])
+
+
+def sync_hkex_participant_websites(
+    failures: list[UpstreamFailure],
+) -> tuple[int, int]:
+    try:
+        pages = fetch_hkex_participant_pages()
+        snapshot_text = build_hkex_participant_snapshot_text(pages)
+    except (urllib.error.URLError, TimeoutError, OSError, ValueError) as exc:
+        detail = format_exception_message(exc)
+        print(f"[WARN] {HKEX_SEHK_PARTICIPANT_WEBSITES_PATH.as_posix()} sync failed: {detail}")
+        record_failure(
+            failures,
+            source="港交所 SEHK 参与者名录",
+            resource=HKEX_SEHK_PARTICIPANT_WEBSITES_PATH.as_posix(),
+            url=HKEX_SEHK_PARTICIPANTS_URL.format(page=1),
+            category="上游内容不完整" if isinstance(exc, ValueError) else classify_fetch_failure(exc),
+            detail=detail,
+        )
+        return 0, 1
+
+    destination = UPSTREAM_ROOT / HKEX_SEHK_PARTICIPANT_WEBSITES_PATH
+    if write_if_changed(destination, snapshot_text):
+        print(
+            f"[UPDATE] {HKEX_SEHK_PARTICIPANT_WEBSITES_PATH.as_posix()} "
+            f"({len(pages)} pages)"
+        )
+        return 1, 0
+
+    print(f"[SKIP] {HKEX_SEHK_PARTICIPANT_WEBSITES_PATH.as_posix()}")
+    return 0, 0
 
 
 def extract_domain_candidates(text: str) -> list[str]:
@@ -2478,6 +2709,7 @@ SYNC_TASKS = (
     SyncTask(name="geodata", runner=sync_geodata_snapshot),
     SyncTask(name="onepassword", runner=sync_onepassword_snapshot),
     SyncTask(name="chainlist", runner=sync_chainlist_rpc_snapshots),
+    SyncTask(name="hkex_participants", runner=sync_hkex_participant_websites),
     SyncTask(name="aws", runner=sync_aws_snapshots),
     SyncTask(name="alicloud", runner=sync_alicloud_snapshots),
 )

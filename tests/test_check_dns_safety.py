@@ -14,6 +14,12 @@ import check_dns_safety  # noqa: E402
 
 
 class DnsSafetyTests(unittest.TestCase):
+    def test_company_surge_personal_is_registered(self) -> None:
+        self.assertIn(
+            "rulemesh-substore-surge-personal-company.conf",
+            check_dns_safety.SURGE_CONFIG_NAMES,
+        )
+
     def write_temp(self, name: str, content: str) -> Path:
         temp_dir = tempfile.TemporaryDirectory()
         self.addCleanup(temp_dir.cleanup)

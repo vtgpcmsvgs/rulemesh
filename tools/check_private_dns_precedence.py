@@ -16,11 +16,15 @@ from check_dns_safety import default_paths
 ROOT = Path(__file__).resolve().parents[1]
 PRIVATE_PROFILE_NAMES = {
     "rulemesh-substore-surge-personal.conf",
+    "rulemesh-substore-surge-personal-company.conf",
     "rulemesh-substore-surge-work-whitelist.conf",
     "rulemesh-substore-mihomo-clash-verge.yaml",
     "rulemesh-substore-mihomo-clash-meta.yaml",
 }
-SURGE_PERSONAL = "rulemesh-substore-surge-personal.conf"
+SURGE_PERSONAL_NAMES = {
+    "rulemesh-substore-surge-personal.conf",
+    "rulemesh-substore-surge-personal-company.conf",
+}
 SURGE_WORK = "rulemesh-substore-surge-work-whitelist.conf"
 MIHOMO_PROFILES = {
     "rulemesh-substore-mihomo-clash-verge.yaml",
@@ -1036,7 +1040,7 @@ def validate_profile(
                     )
                 ]
         return []
-    if path.name == SURGE_PERSONAL:
+    if path.name in SURGE_PERSONAL_NAMES:
         return _validate_surge_personal(path, lines, public_root)
     if path.name in MIHOMO_PROFILES:
         return _validate_mihomo(path, lines, public_root)

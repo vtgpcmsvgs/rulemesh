@@ -101,6 +101,93 @@ def collect_merge_yaml_targets() -> list[str]:
     return sorted(targets)
 
 
+class AggressivePersonalSourceTests(unittest.TestCase):
+    def test_aggressive_personal_rule_sources_keep_required_boundaries(self) -> None:
+        def source(path: str) -> str:
+            return (ROOT / path).read_text(encoding="utf-8")
+
+        priority = source("rules/region/hk/personal_priority_hk.list")
+        notion = source("rules/region/hk/notion_hk.list")
+        brokers = source("rules/region/hk/hk_securities_aggressive.list")
+        apple = source("rules/direct/apple_direct.list")
+        outlook = source("rules/direct/outlook_direct.list")
+        store = source("rules/region/us/microsoft_store_us.list")
+
+        for domain in ("doubleclick.net", "xygj.pro", "h3c.com"):
+            self.assertIn(f"DOMAIN-SUFFIX,{domain}", priority)
+
+        for domain in (
+            "notion.com",
+            "notion.site",
+            "notionusercontent.com",
+            "notion-static.com",
+            "notion.so",
+        ):
+            self.assertIn(f"DOMAIN-SUFFIX,{domain}", notion)
+        self.assertIn("DOMAIN-KEYWORD,notion", notion)
+
+        self.assertIn(
+            "INCLUDE,upstream/hkex/sehk_participant_websites.list", brokers
+        )
+        for domain in (
+            "itiger.com",
+            "itigerup.com",
+            "tigerbrokers.com.sg",
+            "tigerfintech.com",
+            "tigersecurities.com",
+        ):
+            self.assertIn(f"DOMAIN-SUFFIX,{domain}", brokers)
+        for keyword in (
+            "itiger",
+            "itigerup",
+            "tigerbrokers",
+            "tigerfintech",
+            "tigersecurities",
+            "upfintech",
+        ):
+            self.assertIn(f"DOMAIN-KEYWORD,{keyword}", brokers)
+        for generic_keyword in ("tiger", "broker", "securities", "capital", "finance"):
+            self.assertNotIn(f"DOMAIN-KEYWORD,{generic_keyword}\n", brokers)
+
+        for domain in (
+            "apple.com",
+            "apple.com.cn",
+            "cdn-apple.com",
+            "apple-cloudkit.com",
+            "apple-livephotoskit.com",
+            "icloud.com",
+            "icloud.com.cn",
+            "icloud-content.com",
+            "mzstatic.com",
+        ):
+            self.assertIn(f"DOMAIN-SUFFIX,{domain}", apple)
+
+        for domain in (
+            "outlook.com",
+            "outlook.office.com",
+            "outlook.office365.com",
+            "outlook.cloud.microsoft",
+            "hotmail.com",
+        ):
+            self.assertIn(f"DOMAIN-SUFFIX,{domain}", outlook)
+        self.assertIn("DOMAIN-KEYWORD,outlook", outlook)
+        self.assertIn("DOMAIN-KEYWORD,hotmail", outlook)
+        self.assertNotIn("DOMAIN-SUFFIX,live.com", outlook)
+        self.assertNotIn("DOMAIN-SUFFIX,microsoftonline.com", outlook)
+
+        for domain in (
+            "displaycatalog.mp.microsoft.com",
+            "purchase.md.mp.microsoft.com",
+            "licensing.mp.microsoft.com",
+            "storeedgefd.dsx.mp.microsoft.com",
+            "delivery.mp.microsoft.com",
+            "do.dsp.mp.microsoft.com",
+            "windowsupdate.com",
+            "update.microsoft.com",
+        ):
+            self.assertIn(f"DOMAIN-SUFFIX,{domain}", store)
+
+
 class RepoInvariantTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:

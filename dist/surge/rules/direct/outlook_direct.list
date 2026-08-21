@@ -1,0 +1,17 @@
+# 生成来源：rules/direct/outlook_direct.list
+# 类型：rules
+# 请勿直接编辑 dist。
+
+DOMAIN-SUFFIX,outlook.com
+DOMAIN-SUFFIX,outlook.cn
+DOMAIN-SUFFIX,outlook.office.com
+DOMAIN-SUFFIX,outlook.office365.com
+DOMAIN-SUFFIX,outlook.cloud.microsoft
+DOMAIN-SUFFIX,outlookgroups.ms
+DOMAIN-SUFFIX,outlookmobile.com
+DOMAIN-SUFFIX,hotmail.com
+DOMAIN-SUFFIX,hotmail.co.uk
+DOMAIN,outlook.live.com
+DOMAIN,mail.live.com
+DOMAIN-KEYWORD,outlook
+DOMAIN-KEYWORD,hotmail

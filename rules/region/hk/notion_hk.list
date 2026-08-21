@@ -1,0 +1,15 @@
+# Notion 香港区域策略规则：官方域名优先，旧入口与品牌关键词兜底。
+# 维护边界：
+# 1) 本文件覆盖 Notion 网页、API、公开站点、静态资源与用户内容域名，不承接其他协作软件。
+# 2) 客户端请绑定香港自动选择，并放在 proxy/gfw 与通用国际兜底前。
+# 3) DOMAIN-KEYWORD,notion 是用户批准的激进兜底，允许少量非官方同名域名一并走香港。
+
+# Notion 当前官方网络白名单与公开站点域名族。
+DOMAIN-SUFFIX,notion.com
+DOMAIN-SUFFIX,notion.site
+DOMAIN-SUFFIX,notionusercontent.com
+DOMAIN-SUFFIX,notion-static.com
+
+# Notion 历史入口与品牌兜底。
+DOMAIN-SUFFIX,notion.so
+DOMAIN-KEYWORD,notion

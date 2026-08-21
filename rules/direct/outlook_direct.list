@@ -1,0 +1,24 @@
+# Outlook 邮箱直连规则：覆盖 Outlook、Hotmail 与 Exchange Online 邮箱数据面。
+# 维护边界：
+# 1) 本文件只承接邮箱品牌与邮件服务域名，不把 live.com、microsoftonline.com 等共享认证根域整体直连。
+# 2) Personal 客户端必须把本入口放在 region/us/microsoft_us 前，Microsoft Store 专项美国规则仍应更早。
+# 3) 共享登录、通知与 Microsoft 基础设施继续由 Microsoft 美国规则承接，避免 Store 登录链路被邮箱规则吞掉。
+
+# Outlook / Exchange Online 当前官方端点族。
+DOMAIN-SUFFIX,outlook.com
+DOMAIN-SUFFIX,outlook.cn
+DOMAIN-SUFFIX,outlook.office.com
+DOMAIN-SUFFIX,outlook.office365.com
+DOMAIN-SUFFIX,outlook.cloud.microsoft
+DOMAIN-SUFFIX,outlookgroups.ms
+DOMAIN-SUFFIX,outlookmobile.com
+
+# Hotmail 与网页邮箱精确入口。
+DOMAIN-SUFFIX,hotmail.com
+DOMAIN-SUFFIX,hotmail.co.uk
+DOMAIN,outlook.live.com
+DOMAIN,mail.live.com
+
+# 用户批准的品牌兜底。
+DOMAIN-KEYWORD,outlook
+DOMAIN-KEYWORD,hotmail

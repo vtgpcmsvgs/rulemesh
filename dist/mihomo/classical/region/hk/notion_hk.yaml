@@ -1,0 +1,9 @@
+# 生成来源：rules/region/hk/notion_hk.list
+# 行为：classical
+payload:
+  - "DOMAIN-SUFFIX,notion.com"
+  - "DOMAIN-SUFFIX,notion.site"
+  - "DOMAIN-SUFFIX,notionusercontent.com"
+  - "DOMAIN-SUFFIX,notion-static.com"
+  - "DOMAIN-SUFFIX,notion.so"
+  - "DOMAIN-KEYWORD,notion"

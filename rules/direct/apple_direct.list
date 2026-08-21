@@ -1,0 +1,30 @@
+# Apple 全域名直连规则：按官方企业网络清单覆盖 Apple、iCloud、CloudKit 与内容分发域名族。
+# 维护边界：
+# 1) 本文件是用户批准的 Personal 激进直连入口，不使用 17.0.0.0/8，也不通过 Surge skip-proxy 绕过规则层。
+# 2) Personal 客户端必须把本入口放在 Apple 更新拒绝与 macOS 美国更新前，因此 Apple 更新也会直连。
+# 3) 只纳入 Apple 官方服务域名族，不使用 DOMAIN-KEYWORD,apple，避免误伤第三方同名站点。
+# 4) DNS 继续使用客户端既有海外解析与已批准性能型中国域名清单，不新增国内 DNS 泛化。
+
+# Apple 核心、账户、设备管理、商店与更新。
+DOMAIN-SUFFIX,apple
+DOMAIN-SUFFIX,apple.com
+DOMAIN-SUFFIX,apple.com.cn
+DOMAIN-SUFFIX,apple-dns.net
+DOMAIN-SUFFIX,apple-dns.cn
+DOMAIN-SUFFIX,cdn-apple.com
+DOMAIN-SUFFIX,itunes.com
+DOMAIN-SUFFIX,mzstatic.com
+DOMAIN-SUFFIX,appleschoolcontent.com
+
+# iCloud、CloudKit、iWork、地图与内容服务。
+DOMAIN-SUFFIX,icloud.com
+DOMAIN-SUFFIX,icloud.com.cn
+DOMAIN-SUFFIX,icloud-content.com
+DOMAIN-SUFFIX,apple-cloudkit.com
+DOMAIN-SUFFIX,apple-livephotoskit.com
+DOMAIN-SUFFIX,apple-mapkit.com
+DOMAIN-SUFFIX,iwork.com
+DOMAIN-SUFFIX,me.com
+DOMAIN-SUFFIX,apzones.com
+DOMAIN-SUFFIX,apple.news
+DOMAIN-SUFFIX,networking.apple

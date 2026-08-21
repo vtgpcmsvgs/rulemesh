@@ -1,0 +1,7 @@
+# 生成来源：rules/region/hk/personal_priority_hk.list
+# 类型：rules
+# 请勿直接编辑 dist。
+
+DOMAIN-SUFFIX,doubleclick.net
+DOMAIN-SUFFIX,xygj.pro
+DOMAIN-SUFFIX,h3c.com

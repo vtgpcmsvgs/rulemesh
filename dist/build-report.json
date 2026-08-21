@@ -1,11 +1,11 @@
 {
   "summary": {
-    "domain-only": 7,
+    "domain-only": 10,
     "ipcidr-only": 7,
-    "classical/mixed": 22,
+    "classical/mixed": 25,
     "dns-domain-set": 2,
     "empty": 0,
-    "total_sources": 38,
+    "total_sources": 44,
     "total_warnings": 0
   },
   "sources": [
@@ -46,6 +46,19 @@
       "dist": {
         "surge_rules": "dist/surge/rules/direct/alicloud_hk_ipv4_ssh22_direct.list",
         "mihomo_classical": "dist/mihomo/classical/direct/alicloud_hk_ipv4_ssh22_direct.yaml"
+      }
+    },
+    {
+      "source": "rules/direct/apple_direct.list",
+      "category": "direct",
+      "classification": "domain-only",
+      "counts": {
+        "surge_rules": 20,
+        "mihomo_classical": 20
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/direct/apple_direct.list",
+        "mihomo_classical": "dist/mihomo/classical/direct/apple_direct.yaml"
       }
     },
     {
@@ -124,6 +137,19 @@
       "dist": {
         "surge_rules": "dist/surge/rules/direct/os_time_direct.list",
         "mihomo_classical": "dist/mihomo/classical/direct/os_time_direct.yaml"
+      }
+    },
+    {
+      "source": "rules/direct/outlook_direct.list",
+      "category": "direct",
+      "classification": "classical/mixed",
+      "counts": {
+        "surge_rules": 13,
+        "mihomo_classical": 13
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/direct/outlook_direct.list",
+        "mihomo_classical": "dist/mihomo/classical/direct/outlook_direct.yaml"
       }
     },
     {
@@ -267,6 +293,45 @@
       "dist": {
         "surge_rules": "dist/surge/rules/region/hk/hk_brokers.list",
         "mihomo_classical": "dist/mihomo/classical/region/hk/hk_brokers.yaml"
+      }
+    },
+    {
+      "source": "rules/region/hk/hk_securities_aggressive.list",
+      "category": "region",
+      "classification": "classical/mixed",
+      "counts": {
+        "surge_rules": 478,
+        "mihomo_classical": 478
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/region/hk/hk_securities_aggressive.list",
+        "mihomo_classical": "dist/mihomo/classical/region/hk/hk_securities_aggressive.yaml"
+      }
+    },
+    {
+      "source": "rules/region/hk/notion_hk.list",
+      "category": "region",
+      "classification": "classical/mixed",
+      "counts": {
+        "surge_rules": 6,
+        "mihomo_classical": 6
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/region/hk/notion_hk.list",
+        "mihomo_classical": "dist/mihomo/classical/region/hk/notion_hk.yaml"
+      }
+    },
+    {
+      "source": "rules/region/hk/personal_priority_hk.list",
+      "category": "region",
+      "classification": "domain-only",
+      "counts": {
+        "surge_rules": 3,
+        "mihomo_classical": 3
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/region/hk/personal_priority_hk.list",
+        "mihomo_classical": "dist/mihomo/classical/region/hk/personal_priority_hk.yaml"
       }
     },
     {
@@ -423,6 +488,19 @@
       "dist": {
         "surge_rules": "dist/surge/rules/region/us/macos_update_us.list",
         "mihomo_classical": "dist/mihomo/classical/region/us/macos_update_us.yaml"
+      }
+    },
+    {
+      "source": "rules/region/us/microsoft_store_us.list",
+      "category": "region",
+      "classification": "domain-only",
+      "counts": {
+        "surge_rules": 16,
+        "mihomo_classical": 16
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/region/us/microsoft_store_us.list",
+        "mihomo_classical": "dist/mihomo/classical/region/us/microsoft_store_us.yaml"
       }
     },
     {

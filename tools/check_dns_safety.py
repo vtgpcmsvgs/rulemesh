@@ -25,6 +25,7 @@ ALLOWED_DOMESTIC_NAMESERVER_POLICY_KEYS = {
 SURGE_CONFIG_NAMES = (
     "surge-public.conf",
     "rulemesh-substore-surge-personal.conf",
+    "rulemesh-substore-surge-personal-company.conf",
     "rulemesh-substore-surge-work-whitelist.conf",
 )
 MIHOMO_CONFIG_NAMES = (
@@ -531,6 +532,8 @@ def default_paths(repo_root: Path) -> list[Path]:
         paths.extend(
             [
                 private_config_root / "rulemesh-substore-surge-personal.conf",
+                private_config_root
+                / "rulemesh-substore-surge-personal-company.conf",
                 private_config_root / "rulemesh-substore-surge-work-whitelist.conf",
                 private_config_root / "rulemesh-substore-mihomo-clash-verge.yaml",
                 private_config_root / "rulemesh-substore-mihomo-clash-meta.yaml",
