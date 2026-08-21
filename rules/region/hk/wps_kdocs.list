@@ -4,7 +4,7 @@
 # 2) 官方云文档存储网关会使用 wps.cn、kdocs.cn、wps365.com 与 wps.com；本地同时补齐现有上游中的 WPS 专用域名族。
 # 3) ksyun.com 属于金山云共享基础设施，纳入后可能覆盖非 WPS 的金山云业务；这里接受该边界以优先保证旧文件与对象存储连接完整。
 # 4) 不使用 DOMAIN-KEYWORD,wps，避免误伤 jwpsrv.com 等仅包含 wps 字符串的无关服务。
-# 5) Surge 应在 [Host] 中复用本 RULE-SET 并优先绑定海外 DoH，避免 .cn 国内 DNS 白名单抢先解析；Mihomo 继续使用单一海外 nameserver。
+# 5) Surge 必须在所用的 cn_dns_domains 或 cn_performance_dns_domains 前，通过 [Host] 复用本 RULE-SET 并优先绑定海外 DoH；Mihomo 使用已批准的对应 rule-set nameserver-policy 镜像默认海外 nameserver，并保持单一业务 DNS 真相。
 
 # 金山文档、WPS 365 与国际 WPS 云文档入口。
 DOMAIN-SUFFIX,kdocs.cn

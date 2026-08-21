@@ -531,3 +531,69 @@ class RepoInvariantTests(unittest.TestCase):
             "id: commit_changes",
         ):
             self.assertIn(needle, workflow)
+
+
+class MaintenanceDocumentationTests(unittest.TestCase):
+    def test_hk_dns_notes_keep_surge_and_mihomo_exception_contract(self) -> None:
+        merge = (ROOT / "rules" / "upstream" / "merge.yaml").read_text(
+            encoding="utf-8"
+        )
+        cases = (
+            ("hk-alibaba", ROOT / "rules" / "region" / "hk" / "alibaba_hk.list"),
+            ("hk-wps-kdocs", ROOT / "rules" / "region" / "hk" / "wps_kdocs.list"),
+        )
+        required = (
+            "[Host]",
+            "cn_dns_domains",
+            "cn_performance_dns_domains",
+            "优先",
+            "海外",
+            "Mihomo",
+            "已批准",
+            "nameserver-policy",
+            "默认海外 nameserver",
+        )
+
+        for merge_id, rule_path in cases:
+            with self.subTest(source=rule_path.name):
+                rule = rule_path.read_text(encoding="utf-8")
+                missing = [needle for needle in required if needle not in rule]
+                self.assertEqual(missing, [])
+
+            with self.subTest(source=f"merge:{merge_id}"):
+                section_match = re.search(
+                    rf"(?ms)^  - id: {re.escape(merge_id)}\n.*?(?=^  - id:|\Z)",
+                    merge,
+                )
+                self.assertIsNotNone(section_match, merge_id)
+                section = section_match.group(0)
+                missing = [needle for needle in required if needle not in section]
+                self.assertEqual(missing, [])
+
+    def test_current_dns_docs_state_runtime_validation_limit(self) -> None:
+        paths = (
+            ROOT / "AGENTS.md",
+            ROOT / "README.md",
+            ROOT / "docs" / "network-security" / "dns-leak-prevention.md",
+            ROOT / "docs" / "mihomo-tun-dns-methodology.md",
+        )
+        required = (
+            "用户已批准",
+            "静态检查已通过",
+            "v1.19.25",
+            "模拟 resolver",
+            "DNS 路由运行时仍未确认",
+        )
+        forbidden = (
+            "经用户明确批准并完成运行时复测",
+            "实测验证过的稳定基线",
+            "已批准并复测的高优先级海外例外",
+        )
+
+        for path in paths:
+            with self.subTest(path=path.relative_to(ROOT).as_posix()):
+                content = path.read_text(encoding="utf-8")
+                missing = [needle for needle in required if needle not in content]
+                stale = [needle for needle in forbidden if needle in content]
+                self.assertEqual(missing, [])
+                self.assertEqual(stale, [])

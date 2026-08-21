@@ -342,8 +342,8 @@ python tools/build_rules.py
 - 详细背景、禁止事项与改动前检查清单见 [docs/proxy-group-filter-methodology.md](docs/proxy-group-filter-methodology.md)
 - 如果本地同时维护 Clash Verge Rev 与 Clash Meta for Android，建议分别维护 `rulemesh-substore-mihomo-clash-verge.yaml` 与 `rulemesh-substore-mihomo-clash-meta.yaml`
 - 四份私有配置不是同一套 DNS 方法论：两份 Surge 私有配置允许继续保留 Surge 自己可用的复杂 DNS 版本；两份 Mihomo 私有配置默认不允许照搬这套结构
-- 对 `rulemesh-substore-mihomo-clash-verge.yaml` 与 `rulemesh-substore-mihomo-clash-meta.yaml`，默认保持“单一业务 DNS 真相”版本：`ipv6: false`、`use-hosts: false`、`use-system-hosts: false`、`respect-rules: false`；普通目标网站域名只走海外 `nameserver`
-- 2026-08-21 经用户明确批准并完成运行时复测后，两份私有文件仅允许“高优先级已启用 `reject/`、`proxy/`、`region/` 规则集映射海外 DNS，再由 `rule-set:cn-performance-dns-domains` 映射国内 DNS”的分层例外；其他 policy key 与 `proxy-server-nameserver`、`proxy-server-nameserver-policy`、`direct-nameserver`、`fallback` 继续禁止
+- 对 `rulemesh-substore-mihomo-clash-verge.yaml` 与 `rulemesh-substore-mihomo-clash-meta.yaml`，默认保持“单一业务 DNS 真相”版本：`ipv6: false`、`use-hosts: false`、`use-system-hosts: false`、`respect-rules: false`；普通目标网站域名默认使用海外 `nameserver`，高优先级已启用 rule-set 的 `nameserver-policy` 镜像同一海外 DNS。
+- 2026-08-21 用户已批准两份私有文件采用“高优先级已启用 `reject/`、`proxy/`、`region/` 规则集映射海外 DNS，再由 `rule-set:cn-performance-dns-domains` 映射国内 DNS”的分层例外。静态检查已通过，两份真实配置的 Mihomo `v1.19.25` 原生语法检查也已通过；DNS 查询未命中模拟 resolver，因此 DNS 路由运行时仍未确认。不要回滚新架构，但其他 policy key 与 `proxy-server-nameserver`、`proxy-server-nameserver-policy`、`direct-nameserver`、`fallback` 继续禁止。
 - Mihomo 私有文件里的 provider `health-check.url` 与 `url-test` 组测速 URL 统一使用 HTTPS `https://www.google.com/generate_204`，不要改回 HTTP
 - 如果把 `rulemesh-substore-mihomo-clash-verge.yaml` 当成 Clash Verge Rev 的日常主配置，建议在客户端“订阅”页对这份本地配置右键“编辑信息”，把 `更新时间隔` 设为 `720` 分钟，作为默认维护基线
 - 这项 `720` 分钟设置不写回 YAML，而是保存在每台设备自己的 Clash Verge Rev profile 元数据里；换设备后需要重新设置一次

@@ -21,6 +21,7 @@
 - 上游精细规则优先，本地只做高价值兜底
 - 文件头先写清“它负责什么、不负责什么、顺序上放在哪里”
 - 涉及代理节点端点或链式拨号时，文件头还要写清客户端能力边界；Surge 的端点规则分流不能被描述成 Mihomo `dialer-proxy` 的等价实现
+- 区域特化规则若可能与小型或性能型国内 DNS 清单重叠，文件头还要写清两端边界：Surge 在所用国内清单前设置海外 `[Host]` 例外；Mihomo 用已批准的对应 rule-set `nameserver-policy` 镜像默认海外 `nameserver`，这不等于恢复 `fallback`、`direct-nameserver` 或 `proxy-server-nameserver`
 - 自写注释统一用中文，不混入英文占位说明
 
 ## 先分类，再编辑

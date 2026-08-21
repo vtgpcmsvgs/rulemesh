@@ -156,7 +156,7 @@ merge_plan:
     notes:
       - 默认公开模板不启用，客户端应在调用层限定设备或明确的专用配置，避免改变其他终端的国内业务路径
       - 客户端顺序必须放在 direct/ai_cn_direct、direct/cn_direct 与阿里云 SSH 指定直连入口前
-      - Surge 的 [Host] 应在 cn_dns_domains 前复用本规则集并绑定海外 DoH；Mihomo 保持单一海外 nameserver
+      - Surge 的 [Host] 应在所用的 cn_dns_domains 或 cn_performance_dns_domains 前复用本规则集并优先绑定海外 DoH；Mihomo 使用已批准的对应 rule-set nameserver-policy 镜像默认海外 nameserver，并保持单一业务 DNS 真相
       - 闲鱼除 XianYu 上游外继续保留 goofish、xianyu 与 idlefish 关键词兜底，优先避免漏网
 
   - id: hk-wps-kdocs
@@ -169,7 +169,7 @@ merge_plan:
       - reuse_same_ruleset_for_surge_overseas_dns_override
     notes:
       - 客户端顺序必须放在 direct/cn_direct 与工作白名单 FINAL,REJECT 前，避免 WPS 专用域名被通用大陆直连或最终拒绝抢先命中
-      - Surge 的 [Host] 应在 cn_dns_domains 前复用本 RULE-SET 并绑定海外 DoH；Mihomo 保持单一海外 nameserver，不恢复 nameserver-policy
+      - Surge 的 [Host] 应在所用的 cn_dns_domains 或 cn_performance_dns_domains 前复用本 RULE-SET 并优先绑定海外 DoH；Mihomo 使用已批准的对应 rule-set nameserver-policy 镜像默认海外 nameserver，并保持单一业务 DNS 真相
       - 不使用 DOMAIN-KEYWORD,wps，避免误伤 jwpsrv.com 等无关域名；ksyun.com 是为旧文件和对象存储完整性接受的共享基础设施边界
 
   - id: hk-brokers

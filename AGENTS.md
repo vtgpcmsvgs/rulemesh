@@ -46,8 +46,8 @@
 - Surge 的 `skip-proxy` 不要再放行 Apple `17.0.0.0/8`；macOS 更新入口已收敛到 `region/us/macos_update_us`，必须让前置拒绝规则和后续美国分流规则有机会命中
 - 给 Surge / Mihomo 新增 DNS、fake-ip、Tun 或透明代理字段前，必须先按目标客户端自己的 profile 语义确认；不要用“另一个客户端有同名或近似字段”来推断可用性
 - Surge 私有配置允许继续维护自己的复杂 DNS 版本；不要因为 Surge 正常，就反推 Mihomo 私有文件也应保持同样结构
-- 维护 `rulemesh-substore-mihomo-clash-verge.yaml` 与 `rulemesh-substore-mihomo-clash-meta.yaml` 时，默认保持“单一业务 DNS 真相”：`ipv6: false`、`dns.ipv6: false`（若字段存在）、`use-hosts: false`、`use-system-hosts: false`、`respect-rules: false`；普通目标网站继续只走海外 `nameserver`
-- 两份 Mihomo 私有文件只允许经 2026-08-21 用户明确批准并完成运行时复测的分层 `nameserver-policy`：实际启用且位于中国大陆通用兜底前的 `reject/`、`proxy/`、`region/` 规则集必须优先使用海外 DNS，`rule-set:cn-performance-dns-domains` 才使用国内 DNS；OpenAI / ChatGPT 所在的 `region/us/ai_us` 必须同时固定美国出口与海外解析。其他 `nameserver-policy` key 与 `respect-rules: true`、`proxy-server-nameserver`、`proxy-server-nameserver-policy`、`direct-nameserver`、`fallback` 继续禁止，也不得把 Surge 的复杂 DNS 结构照搬到 Mihomo。
+- 维护 `rulemesh-substore-mihomo-clash-verge.yaml` 与 `rulemesh-substore-mihomo-clash-meta.yaml` 时，默认保持“单一业务 DNS 真相”：`ipv6: false`、`dns.ipv6: false`（若字段存在）、`use-hosts: false`、`use-system-hosts: false`、`respect-rules: false`；普通目标网站默认使用海外 `nameserver`，已批准的高优先级 rule-set `nameserver-policy` 镜像同一海外 DNS。
+- 2026-08-21 用户已批准两份 Mihomo 私有文件采用分层 `nameserver-policy`：实际启用且位于中国大陆通用兜底前的 `reject/`、`proxy/`、`region/` 规则集必须优先使用海外 DNS，`rule-set:cn-performance-dns-domains` 才使用国内 DNS；OpenAI / ChatGPT 所在的 `region/us/ai_us` 必须同时固定美国出口与海外解析。静态检查已通过，两份真实配置的 Mihomo `v1.19.25` 原生语法检查也已通过；DNS 查询未命中模拟 resolver，因此 DNS 路由运行时仍未确认。不要回滚已批准架构，但其他 `nameserver-policy` key 与 `respect-rules: true`、`proxy-server-nameserver`、`proxy-server-nameserver-policy`、`direct-nameserver`、`fallback` 继续禁止，也不得把 Surge 的复杂 DNS 结构照搬到 Mihomo。
 - 三份通用私有配置默认以性能优先：普通国际 `FINAL` / `MATCH` 使用现有全地区自动选择组，`region/us/ai_us` 继续固定美国组；两份 Mihomo 的 provider 与 `url-test` 统一使用 `interval: 300`、`lazy: false`，美国组 `tolerance: 100`
 - Mihomo 私有文件里的机场 provider `health-check.url` 与 `url-test` 组测速 URL 统一使用 HTTPS `https://www.google.com/generate_204`；不要改回 HTTP
 - `proxy-node-domains` 必须是从 Sub-Store 聚合订阅提取的节点 `server` 域名清单，且必须过滤 IP 并按一行一个域名输出；不得包含订阅链接域名、机场面板域名或普通目标网站域名，也不得输出逗号分隔清单

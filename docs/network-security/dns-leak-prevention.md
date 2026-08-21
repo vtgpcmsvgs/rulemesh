@@ -48,7 +48,7 @@ DOMAIN-SET:https://example.com/share/file/proxy-node-domains = server:https://dn
 
 `raw.githubusercontent.com = server:https://cloudflare-dns.com/dns-query` 是规则产物下载解析例外，不得被扩展成普通目标网站解析方案，也不是代理节点 bootstrap。
 
-`region/hk/wps_kdocs` 是明确的区域特化例外：它必须排在 `cn_dns_domains` 前并绑定海外 DoH，因为后者包含宽泛 `.cn`，否则 `kdocs.cn`、`wps.cn` 即使流量走香港，DNS 仍会先交给国内解析。Mihomo 私有配置不照搬这条 `[Host]`；WPS 不进入 `cn-dns-domains`，继续使用海外 `nameserver`。
+`region/hk/wps_kdocs` 是明确的区域特化例外：Surge 必须在所用的小型 `cn_dns_domains` 或性能型 `cn_performance_dns_domains` 前，通过 `[Host]` 复用该规则集并优先绑定海外 DoH，否则 `kdocs.cn`、`wps.cn` 即使流量走香港，DNS 仍可能先交给国内解析。Mihomo 不照搬 `[Host]`，而是用已批准的对应 rule-set `nameserver-policy` 镜像默认海外 `nameserver`；这仍属于单一业务 DNS 真相，不授权恢复 `fallback`、`direct-nameserver` 或 `proxy-server-nameserver`。
 
 `cn_dns_domains` 是国内业务域名 DNS 例外，只能包含明确国内业务域名 / 国内域名后缀，不包含代理节点 server 域名、订阅入口域名、IP 或复杂规则。它的职责是减少海外 DNS 导致的国内 CDN 调度偏差，不是把所有 `DIRECT` 流量交给国内 DNS。小米 / MIUI、国内天气、微信小程序、抖音专项、拼多多、小红书 CDN、知识星球与已确认国内落地的 `yikaiying.com` 等依赖可以按服务族加入；精确 host 不扩成无关宽后缀，共享风控或统计第三方域名没有专项证据时不纳入。
 
@@ -63,9 +63,9 @@ DOMAIN-SET:https://example.com/share/file/proxy-node-domains = server:https://dn
 RuleMesh 里的 Mihomo DNS 维护边界分两层：
 
 - 公开参考模板 `docs/examples/mihomo-public.yaml` 仍可表达通用的分层 DNS 思路。
-- 解析后的私人当前配置目录中的 `rulemesh-substore-mihomo-clash-verge.yaml` 与 `rulemesh-substore-mihomo-clash-meta.yaml` 这两份私有 provider 配置，默认必须保持“单一业务 DNS 真相”：`ipv6: false`、`dns.ipv6: false`、`use-hosts: false`、`use-system-hosts: false`、`respect-rules: false`；普通目标网站域名只走海外 `nameserver`。
-- 2026-08-21 经用户明确批准并完成运行时复测后，两份私有配置只允许“实际启用的高优先级 `reject/`、`proxy/`、`region/` 规则集映射海外 DNS，再由 `rule-set:cn-performance-dns-domains` 映射国内 DNS”的分层 policy。其他 policy key 与 `proxy-server-nameserver`、`proxy-server-nameserver-policy`、`direct-nameserver`、`fallback` 或 `respect-rules: true` 继续禁止。
-- 这不是“所有 Mihomo 都应该更简单”的泛化结论，而是已经在当前私有 provider 链路中实测验证过的稳定基线。
+- 解析后的私人当前配置目录中的 `rulemesh-substore-mihomo-clash-verge.yaml` 与 `rulemesh-substore-mihomo-clash-meta.yaml` 这两份私有 provider 配置，默认必须保持“单一业务 DNS 真相”：`ipv6: false`、`dns.ipv6: false`、`use-hosts: false`、`use-system-hosts: false`、`respect-rules: false`；普通目标网站域名默认使用海外 `nameserver`，高优先级 rule-set 的海外 `nameserver-policy` 镜像同一默认 DNS。
+- 2026-08-21 用户已批准两份私有配置采用“实际启用的高优先级 `reject/`、`proxy/`、`region/` 规则集映射海外 DNS，再由 `rule-set:cn-performance-dns-domains` 映射国内 DNS”的分层 policy。静态检查已通过，两份真实配置的 Mihomo `v1.19.25` 原生语法检查也已通过；DNS 查询未命中模拟 resolver，因此 DNS 路由运行时仍未确认。不要回滚已批准架构，但其他 policy key 与 `proxy-server-nameserver`、`proxy-server-nameserver-policy`、`direct-nameserver`、`fallback` 或 `respect-rules: true` 继续禁止。
+- 这不是“所有 Mihomo 都应该更简单”的泛化结论，也不是运行时稳定性声明；在真实 DNS 路由复测完成前，只能把它视为当前已批准且通过静态与语法检查的维护基线。
 
 Mihomo 必须使用原生 DNS 机制，不套用 Surge 的 `[Host]`。
 

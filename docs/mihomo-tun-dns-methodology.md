@@ -44,14 +44,16 @@
 - 因为某条规则最终走 `DIRECT`，就把普通目标网站域名重新送回国内 DNS
 - 把 Mihomo 私有文件里的 provider `health-check.url` 或 `url-test.url` 改回 HTTP `generate_204`
 
-## 当前稳定基线
+## 当前维护基线
 
-对两份 Mihomo 私有文件，当前默认稳定基线是：
+对两份 Mihomo 私有文件，当前默认维护基线是：
 
 - 普通目标网站域名默认走海外 `nameserver`；实际启用且位于中国大陆通用兜底前的 `reject/`、`proxy/`、`region/` 规则集必须优先使用海外 DNS，随后才允许 `rule-set:cn-performance-dns-domains` 使用国内 DNS
 - `default-nameserver` 只承担 DNS 服务器域名 bootstrap
 - `fake-ip-filter` 只承担局域网、本地主机名、系统网络探测与确有必要的真实 IP 例外
 - Clash Verge Rev 与 Clash Meta for Android 可以保留不同的 `fake-ip-range`、`listen` 等客户端细节，但不要因此重新引入多层 DNS 分流
+
+2026-08-21 用户已批准上述分层架构，静态检查已通过，两份真实配置的 Mihomo `v1.19.25` 原生语法检查也已通过；DNS 查询未命中模拟 resolver，因此 DNS 路由运行时仍未确认。当前结论不授权回滚新架构，也不能写成已完成运行时稳定性验证。
 
 如果后续必须引入客户端特化例外，必须同时满足：
 
@@ -66,7 +68,7 @@
 - 因此只要 `DNS 覆写` 处于开启状态，`rulemesh-substore-mihomo-clash-verge.yaml` 里的 `dns:` 默认就不再是实际生效的单一真相。
 - 如果目标是“把私有 Mihomo 文件当成唯一权威配置”，Clash Verge Rev 侧默认应关闭 `DNS 覆写`。
 - 如果用户明确要保留 `DNS 覆写`，那就要把 `%APPDATA%/io.github.clash-verge-rev.clash-verge-rev/dns_config.yaml` 视为 `dns` 的单一真相，而不要继续假设源文件里的 `dns:` 会原样生效。
-- 对当前本地长期维护来说，Clash Verge Rev 私有文件关闭 `DNS 覆写` 后，必须保持“单一业务 DNS 真相”：普通目标域名默认走海外 `nameserver`，仅保留已批准并复测的高优先级海外例外与 `rule-set:cn-performance-dns-domains` policy；不得继续叠 `proxy-server-nameserver`、其他 policy 或 `fallback`。
+- 对当前本地长期维护来说，Clash Verge Rev 私有文件关闭 `DNS 覆写` 后，必须保持“单一业务 DNS 真相”：普通目标域名默认走海外 `nameserver`，仅保留已批准的高优先级海外例外与 `rule-set:cn-performance-dns-domains` policy；不得继续叠 `proxy-server-nameserver`、其他 policy 或 `fallback`。
 
 ## provider 全部测速失败但直导正常时的排障方法论
 
