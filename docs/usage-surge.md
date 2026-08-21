@@ -159,7 +159,7 @@
 
 ## 使用原则
 
-- 客户端规则只引用 `dist/surge/rules/`；DNS 专用域名清单只引用 `dist/surge/dns/cn_dns_domains.list`
+- 客户端规则只引用 `dist/surge/rules/`；公开示例与工作白名单使用小型精选 `dist/surge/dns/cn_dns_domains.list`，Surge Personal 与两份 Mihomo 私有性能配置使用 `dist/surge/dns/cn_performance_dns_domains.list`
 - `rules/` 是源规则层，不建议在 Surge 配置中直接引用
 - 不要在客户端继续引用第三方原始规则 URL
 - GeoIP 数据库是当前例外：公开模板默认显式固定到本仓库的 Release 镜像地址

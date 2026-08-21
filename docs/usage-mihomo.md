@@ -154,7 +154,7 @@
 
 ## 使用原则
 
-- 客户端规则只引用 `dist/mihomo/classical/`；DNS 专用域名清单复用 `dist/surge/dns/cn_dns_domains.list`
+- 客户端规则只引用 `dist/mihomo/classical/`；公开示例与工作白名单使用小型精选 `dist/surge/dns/cn_dns_domains.list`，Surge Personal 与两份 Mihomo 私有性能配置使用 `dist/surge/dns/cn_performance_dns_domains.list`
 - `rules/` 是源规则层，不建议客户端直接引用
 - 不要把 `classical` 产物误配成别的 `behavior`
 - 不要再找旧的纯域名或纯 CIDR 产物目录；仓库已经统一走 `classical`
