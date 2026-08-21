@@ -315,8 +315,11 @@ def _parse_mihomo_dns(
 
 
 def _is_overseas_surge_dns(value: str) -> bool:
-    lowered = value.lower()
-    return any(host in lowered for host in OVERSEAS_DNS_HOSTS)
+    server = re.fullmatch(r"server:\s*(\S+)", value.strip(), re.IGNORECASE)
+    if not server:
+        return False
+    hostname = urlsplit(server.group(1)).hostname
+    return bool(hostname and hostname.lower() in OVERSEAS_DNS_HOSTS)
 
 
 def _surge_host_entries(
@@ -391,8 +394,7 @@ def _performance_provider_name(lines: list[str]) -> tuple[int, str] | None:
 
 
 def _is_ai_us_provider(name: str) -> bool:
-    tokens = {token for token in re.split(r"[-_]", name.lower()) if token}
-    return "ai" in tokens and "us" in tokens
+    return name.strip().lower() in {"ai-us", "us_ai"}
 
 
 def _validate_mihomo(

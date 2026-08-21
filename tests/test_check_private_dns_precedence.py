@@ -68,10 +68,12 @@ FINAL,AUTO
         )
 
     @staticmethod
-    def overseas_host_line() -> str:
+    def overseas_host_line(
+        server: str = "https://cloudflare-dns.com/dns-query",
+    ) -> str:
         return (
             "RULE-SET:https://example.invalid/dist/surge/rules/region/us/"
-            "ai_us.list = server:https://cloudflare-dns.com/dns-query"
+            f"ai_us.list = server:{server}"
         )
 
     def test_surge_personal_rejects_missing_required_exception(self) -> None:
@@ -98,6 +100,29 @@ FINAL,AUTO
         )
 
         self.assertEqual(validate_profile(path, self.root), [])
+
+    def test_surge_personal_rejects_overseas_hostname_in_query_parameter(
+        self,
+    ) -> None:
+        disguised = self.overseas_host_line(
+            "https://dns.alidns.com/dns-query?next="
+            "https://cloudflare-dns.com/dns-query"
+        )
+        path = self.surge_profile([disguised, self.performance_host_line()])
+
+        findings = validate_profile(path, self.root)
+
+        self.assertTrue(any("缺少海外 DNS 例外" in item.message for item in findings))
+
+    def test_surge_personal_rejects_overseas_hostname_as_suffix(self) -> None:
+        disguised = self.overseas_host_line(
+            "https://cloudflare-dns.com.evil.invalid/dns-query"
+        )
+        path = self.surge_profile([disguised, self.performance_host_line()])
+
+        findings = validate_profile(path, self.root)
+
+        self.assertTrue(any("缺少海外 DNS 例外" in item.message for item in findings))
 
     def mihomo_profile(self, policy_lines: list[str]) -> Path:
         policy = "\n".join(policy_lines)
@@ -185,6 +210,33 @@ rules:
         )
 
         self.assertEqual(validate_profile(path, self.root), [])
+
+    def mihomo_profile_with_ai_provider(self, provider_name: str) -> Path:
+        path = self.mihomo_profile(
+            self.overseas_policy_lines() + self.performance_policy_lines()
+        )
+        content = path.read_text(encoding="utf-8").replace("us_ai", provider_name)
+        path.write_text(content, encoding="utf-8")
+        return path
+
+    def test_mihomo_accepts_exact_ai_us_provider_alias(self) -> None:
+        path = self.mihomo_profile_with_ai_provider("ai-us")
+
+        self.assertEqual(validate_profile(path, self.root), [])
+
+    def test_mihomo_rejects_not_ai_us_as_required_provider(self) -> None:
+        path = self.mihomo_profile_with_ai_provider("not-ai-us")
+
+        findings = validate_profile(path, self.root)
+
+        self.assertTrue(any("ai-us/us_ai" in item.message for item in findings))
+
+    def test_mihomo_rejects_us_ai_backup_as_required_provider(self) -> None:
+        path = self.mihomo_profile_with_ai_provider("us_ai_backup")
+
+        findings = validate_profile(path, self.root)
+
+        self.assertTrue(any("ai-us/us_ai" in item.message for item in findings))
 
     def test_required_sets_are_derived_from_active_order_and_skip_pure_ip(
         self,
