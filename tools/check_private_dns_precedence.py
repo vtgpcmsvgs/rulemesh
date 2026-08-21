@@ -34,6 +34,7 @@ OVERSEAS_DNS_HOSTS = {
     "dns.google",
     "dns.quad9.net",
 }
+SAFE_NAMESERVER_DIGEST_HEX_LENGTH = 16
 
 
 def safe_nameserver_summary(values: tuple[str, ...]) -> dict[str, object]:
@@ -43,7 +44,10 @@ def safe_nameserver_summary(values: tuple[str, ...]) -> dict[str, object]:
         encoded = value.encode("utf-8")
         digest.update(len(encoded).to_bytes(8, "big"))
         digest.update(encoded)
-    return {"count": len(values), "sha256": digest.hexdigest()}
+    return {
+        "count": len(values),
+        "sha256": digest.hexdigest()[:SAFE_NAMESERVER_DIGEST_HEX_LENGTH],
+    }
 
 
 @dataclass(frozen=True)

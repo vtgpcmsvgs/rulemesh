@@ -59,7 +59,11 @@ class PrivateDnsPrecedenceTests(unittest.TestCase):
         summary = precedence_checker.safe_nameserver_summary(raw_values)
         rendered = repr(summary)
 
+        self.assertEqual(set(summary), {"count", "sha256"})
         self.assertEqual(summary["count"], 2)
+        self.assertIsInstance(summary["sha256"], str)
+        self.assertEqual(len(summary["sha256"]), 16)
+        self.assertRegex(summary["sha256"], r"^[0-9a-f]{16}$")
         self.assertNotIn("://", rendered)
         for raw_value in raw_values:
             self.assertNotIn(raw_value, rendered)
