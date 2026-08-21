@@ -131,7 +131,7 @@
 - Google Play 下载 CDN 与重定向域应继续由 `region/us/google_us.yaml` 显式承接，不要依赖后面的 `direct_cn` 或 `proxy_gfw` 兜底。
 - `region/us/ai_us.yaml` 当前聚合海外 AI 平台，且对 Gemini / AI Studio / NotebookLM 保留 AI 视角交叉兜底；它也应继续放在广谱区域规则前，并统一绑定 `🇺🇸 美国-自动选择`。
 - `DeepSeek`、`Trae` 中国大陆入口与其他国内 AI 不应并入 `region/us/ai_us.yaml`；它们应优先由 `direct_ai_cn` 承接，字节共享基础设施与中国大陆通用兜底再继续落到 `direct_bytedance`、`direct_cn`。
-- `direct_ai_cn` 属于显式国内 AI 直连入口，顺序固定为 `direct_ai_cn < direct_bytedance < hk_global_media < direct_cn`；静态交集审计确认只纠正 `snssdk.com`，路由动作不直接推导 DNS 出口，两份 Mihomo 私有配置继续遵守“普通目标走海外 `nameserver`、仅 `cn-dns-domains` 例外”的基线。
+- `direct_ai_cn` 属于显式国内 AI 直连入口，顺序固定为 `direct_ai_cn < direct_bytedance < hk_global_media < direct_cn`；静态交集审计确认只纠正 `snssdk.com`，路由动作不直接推导 DNS 出口，两份 Mihomo 私有配置继续遵守“普通目标默认走海外 `nameserver`、高优先级已启用规则集先走海外 DNS、性能型国内清单后置”的分层基线。
 - `region/hk/wps_kdocs.yaml` 必须放在 `direct_cn` 与 `MATCH` 前并绑定 `🇭🇰 香港-自动选择`；它不加入 `cn-dns-domains`，因此继续使用海外 `nameserver`，也不需要 `proxy-server-nameserver`。
 - `region/hk/alibaba_hk.yaml` 启用后必须先于 `direct_ai_cn`、`direct_cn` 与阿里云 SSH 指定直连入口；Alibaba 主体覆盖域名和 IP 规则，XianYu 专项清单及 `goofish / xianyu / idlefish` 关键词补强闲鱼。设备专用配置可直接调用，通用共享配置则应额外评估源地址匹配是否能保留真实客户端地址。
 - `region/hk/hk_brokers.yaml` 当前只承接复星证券/复星财富、致富证券、辉立证券与富途，应放在 `region/hk/global_media.yaml` 与 `proxy/gfw.yaml` 前，并绑定 `🇭🇰 香港-自动选择`。

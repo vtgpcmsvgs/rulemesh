@@ -133,7 +133,7 @@
 - 默认不要把私有文件内容或敏感值写回公开仓库，也不要在回复中完整回显真实密钥、签名、订阅 URL 或其他敏感参数
 - 即使需要在公开仓库里记录工作路由白名单维护约定，也只允许写“固定工作电脑”“白名单模式”“与 personal 永久不一致”这类抽象说明；不要把真实 `SRC-IP` 范围、私有设备标识、订阅地址或本地策略分组细节写回公开仓库
 - 若 `rulemesh-substore-mihomo-clash-verge.yaml` 出现“某个 provider 全部测速失败，但同一订阅直导 Clash Verge Rev 正常”的现象，默认先对比运行时 `dns:`，并通过 Mihomo API / 命名管道与日志确认实际生效配置；不要先把问题归因到节点失效，也不要只停留在更换测速 URL 这一层
-- 若两份 Mihomo 私有文件中任意一份再次出现 `respect-rules: true`、白名单外 `nameserver-policy`、`proxy-server-nameserver` 或 `fallback`，默认按配置回滚事故处理；先恢复到“单一业务 DNS 真相 + cn-dns-domains 受限例外”，再讨论是否存在必须保留的客户端特化例外
+- 若两份 Mihomo 私有文件中任意一份再次出现 `respect-rules: true`、已批准高优先级海外例外与 `rule-set:cn-performance-dns-domains` 之外的 `nameserver-policy`、`proxy-server-nameserver` 或 `fallback`，默认按配置回滚事故处理；先恢复到“单一业务 DNS 真相 + 高优先级海外 DNS 例外 + 性能型国内 DNS 清单”的当前分层基线，保留已批准例外，并继续禁止 `direct-nameserver`、`proxy-server-nameserver-policy` 等复杂字段，再讨论是否存在必须保留的客户端特化例外。
 - 若本地私有配置结构发生变化，必须同步更新 `.rulemesh.local.example.json` 与相关文档，但只允许写入脱敏占位值
 - 若任务需要参考私有配置，默认只说明字段名、用途与是否生效，不直接暴露真实值
 
