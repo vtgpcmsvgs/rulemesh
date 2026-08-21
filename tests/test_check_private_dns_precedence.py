@@ -19,6 +19,8 @@ from check_private_dns_precedence import (  # noqa: E402
 
 
 PUBLIC_RAW_ROOT = "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main"
+SURGE_APPROVED_US_FILTER = "((🇺🇸)|(美国)|(United States)|(US))"
+MIHOMO_APPROVED_US_FILTER = r"(?i)🇺🇸|美国|united states|\\bus\\b"
 
 
 class PrivateDnsPrecedenceTests(unittest.TestCase):
@@ -131,7 +133,7 @@ class PrivateDnsPrecedenceTests(unittest.TestCase):
         if group_lines is None:
             group_lines = [
                 "US-AUTO = smart, policy-path=https://subscriptions.invalid/all, "
-                "policy-regex-filter=^.*((🇺🇸)|(美国)|(United States)|(US)).*$",
+                f"policy-regex-filter={SURGE_APPROVED_US_FILTER}",
                 "AUTO = smart, policy-path=https://subscriptions.invalid/all, "
                 "policy-regex-filter=^.*((香港)|(HK)|(美国)|(US)).*$",
             ]
@@ -293,6 +295,68 @@ FINAL,AUTO
 
         self.assertTrue(any("美国" in item.message for item in findings))
 
+    def test_surge_personal_rejects_unapproved_us_filter_shapes(self) -> None:
+        invalid_filters = (
+            "not-us",
+            "(?i).*|US",
+            "(?i)(?!US).*",
+            "(?i)US|CA",
+        )
+        for filter_text in invalid_filters:
+            with self.subTest(filter_text=filter_text):
+                path = self.surge_profile(
+                    [self.overseas_host_line(), self.performance_host_line()],
+                    group_lines=[
+                        "US-AUTO = smart, "
+                        "policy-path=https://subscriptions.invalid/all, "
+                        f"policy-regex-filter={filter_text}"
+                    ],
+                )
+
+                findings = validate_profile(path, self.root)
+
+                self.assertTrue(any("美国" in item.message for item in findings))
+
+    def test_surge_personal_rejects_us_group_without_node_source(self) -> None:
+        path = self.surge_profile(
+            [self.overseas_host_line(), self.performance_host_line()],
+            group_lines=[
+                "US-AUTO = smart, policy-path=, "
+                f"policy-regex-filter={SURGE_APPROVED_US_FILTER}"
+            ],
+        )
+
+        findings = validate_profile(path, self.root)
+
+        self.assertTrue(any("美国" in item.message for item in findings))
+
+    def test_surge_personal_rejects_false_include_all_source(self) -> None:
+        path = self.surge_profile(
+            [self.overseas_host_line(), self.performance_host_line()],
+            group_lines=[
+                "US-AUTO = smart, include-all-proxies=0, "
+                f"policy-regex-filter={SURGE_APPROVED_US_FILTER}"
+            ],
+        )
+
+        findings = validate_profile(path, self.root)
+
+        self.assertTrue(any("美国" in item.message for item in findings))
+
+    def test_surge_personal_rejects_explicit_non_us_group_member(self) -> None:
+        path = self.surge_profile(
+            [self.overseas_host_line(), self.performance_host_line()],
+            group_lines=[
+                "US-AUTO = smart, CA-NODE, "
+                "policy-path=https://subscriptions.invalid/all, "
+                f"policy-regex-filter={SURGE_APPROVED_US_FILTER}"
+            ],
+        )
+
+        findings = validate_profile(path, self.root)
+
+        self.assertTrue(any("美国" in item.message for item in findings))
+
     def test_surge_personal_accepts_defined_us_group(self) -> None:
         path = self.surge_profile(
             [self.overseas_host_line(), self.performance_host_line()]
@@ -307,7 +371,7 @@ FINAL,AUTO
             group_lines=[
                 "US-WRAPPER = select, US-LEAF",
                 "US-LEAF = smart, policy-path=https://subscriptions.invalid/all, "
-                "policy-regex-filter=^.*((🇺🇸)|(美国)|(United States)|(US)).*$",
+                f"policy-regex-filter={SURGE_APPROVED_US_FILTER}",
             ],
         )
 
@@ -331,7 +395,7 @@ FINAL,AUTO
         group_lines = [f"US-WRAPPER-{index} = select, US-WRAPPER-{index + 1}" for index in range(40)]
         group_lines.append(
             "US-WRAPPER-40 = smart, policy-path=https://subscriptions.invalid/all, "
-            "policy-regex-filter=^.*((🇺🇸)|(美国)|(United States)|(US)).*$"
+            f"policy-regex-filter={SURGE_APPROVED_US_FILTER}"
         )
         path = self.surge_profile(
             [self.overseas_host_line(), self.performance_host_line()],
@@ -352,6 +416,8 @@ FINAL,AUTO
             "wrong-ref": f"https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/dev{valid_path}",
             "query": f"{PUBLIC_RAW_ROOT}{valid_path}?mirror=1",
             "fragment": f"{PUBLIC_RAW_ROOT}{valid_path}#mirror",
+            "empty-query": f"{PUBLIC_RAW_ROOT}{valid_path}?",
+            "empty-fragment": f"{PUBLIC_RAW_ROOT}{valid_path}#",
         }
         for label, ai_url in invalid_urls.items():
             with self.subTest(label=label):
@@ -398,9 +464,9 @@ FINAL,AUTO
             other_us_target="OTHER-US",
             group_lines=[
                 "US-AUTO = smart, policy-path=https://subscriptions.invalid/all, "
-                "policy-regex-filter=^.*((🇺🇸)|(美国)|(United States)|(US)).*$",
+                f"policy-regex-filter={SURGE_APPROVED_US_FILTER}",
                 "OTHER-US = smart, policy-path=https://subscriptions.invalid/all, "
-                "policy-regex-filter=^.*((🇺🇸)|(美国)|(United States)|(US)).*$",
+                f"policy-regex-filter={SURGE_APPROVED_US_FILTER}",
                 "AUTO = smart, policy-path=https://subscriptions.invalid/all, "
                 "policy-regex-filter=^.*((香港)|(HK)|(美国)|(US)).*$",
             ],
@@ -435,10 +501,10 @@ FINAL,AUTO
         if other_us_target is None:
             other_us_target = ai_target
         if group_block is None:
-            group_block = """  - name: US-AUTO
+            group_block = f"""  - name: US-AUTO
     type: url-test
     use: [provider_a]
-    filter: "(?i)🇺🇸|美国|united states|\\bus\\b"
+    filter: "{MIHOMO_APPROVED_US_FILTER}"
   - name: AUTO
     type: url-test
     use: [provider_a]
@@ -730,6 +796,67 @@ rules:
 
         self.assertTrue(any("美国" in item.message for item in findings))
 
+    def test_mihomo_rejects_unapproved_us_filter_shapes(self) -> None:
+        invalid_filters = (
+            "not-us",
+            "(?i).*|US",
+            "(?i)(?!US).*",
+            "(?i)US|CA",
+        )
+        for filter_text in invalid_filters:
+            with self.subTest(filter_text=filter_text):
+                path = self.mihomo_profile(
+                    self.overseas_policy_lines() + self.performance_policy_lines(),
+                    group_block=f'''  - name: US-AUTO
+    type: url-test
+    use: [provider_a]
+    filter: "{filter_text}"''',
+                )
+
+                findings = validate_profile(path, self.root)
+
+                self.assertTrue(any("美国" in item.message for item in findings))
+
+    def test_mihomo_rejects_us_group_without_node_source(self) -> None:
+        path = self.mihomo_profile(
+            self.overseas_policy_lines() + self.performance_policy_lines(),
+            group_block=f'''  - name: US-AUTO
+    type: url-test
+    use: []
+    filter: "{MIHOMO_APPROVED_US_FILTER}"''',
+        )
+
+        findings = validate_profile(path, self.root)
+
+        self.assertTrue(any("美国" in item.message for item in findings))
+
+    def test_mihomo_rejects_false_include_all_source(self) -> None:
+        path = self.mihomo_profile(
+            self.overseas_policy_lines() + self.performance_policy_lines(),
+            group_block=f'''  - name: US-AUTO
+    type: url-test
+    include-all: false
+    filter: "{MIHOMO_APPROVED_US_FILTER}"''',
+        )
+
+        findings = validate_profile(path, self.root)
+
+        self.assertTrue(any("美国" in item.message for item in findings))
+
+    def test_mihomo_rejects_explicit_non_us_group_member(self) -> None:
+        path = self.mihomo_profile(
+            self.overseas_policy_lines() + self.performance_policy_lines(),
+            group_block=f'''  - name: US-AUTO
+    type: url-test
+    use: [provider_a]
+    proxies: [CA-NODE]
+    filter: "{MIHOMO_APPROVED_US_FILTER}"''',
+        )
+
+        findings = validate_profile(path, self.root)
+
+        self.assertTrue(any("美国" in item.message for item in findings))
+
     def test_mihomo_accepts_defined_us_group(self) -> None:
         path = self.mihomo_profile(
             self.overseas_policy_lines() + self.performance_policy_lines()
@@ -741,14 +868,14 @@ rules:
         path = self.mihomo_profile(
             self.overseas_policy_lines() + self.performance_policy_lines(),
             ai_target="US-WRAPPER",
-            group_block="""  - name: US-WRAPPER
+            group_block=f'''  - name: US-WRAPPER
     type: select
     proxies:
       - US-LEAF
   - name: US-LEAF
     type: url-test
     use: [provider_a]
-    filter: "(?i)🇺🇸|美国|united states|\\bus\\b""",
+    filter: "{MIHOMO_APPROVED_US_FILTER}"''',
         )
 
         self.assertEqual(validate_profile(path, self.root), [])
@@ -806,6 +933,11 @@ rules:
             "wrong-ref": f"https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/dev{valid_path}",
             "query": f"{PUBLIC_RAW_ROOT}{valid_path}?mirror=1",
             "fragment": f"{PUBLIC_RAW_ROOT}{valid_path}#mirror",
+            "empty-query": f"{PUBLIC_RAW_ROOT}{valid_path}?",
+            "empty-fragment": f"{PUBLIC_RAW_ROOT}{valid_path}#",
+            "yml-suffix": (
+                f"{PUBLIC_RAW_ROOT}/dist/mihomo/classical/region/us/ai_us.yml"
+            ),
         }
         for label, ai_url in invalid_urls.items():
             with self.subTest(label=label):

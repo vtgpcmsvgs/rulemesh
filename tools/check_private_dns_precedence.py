@@ -42,6 +42,12 @@ PUBLIC_RULE_PATH_PREFIX = "/vtgpcmsvgs/rulemesh/main"
 US_GROUP_MAX_DEPTH = 32
 FILTERING_GROUP_TYPES = {"smart", "url-test", "fallback", "load-balance"}
 WRAPPER_GROUP_TYPES = {"select"}
+APPROVED_SURGE_US_FILTERS = frozenset(
+    {"((🇺🇸)|(美国)|(United States)|(US))"}
+)
+APPROVED_MIHOMO_US_FILTERS = frozenset(
+    {r"(?i)🇺🇸|美国|united states|\\bus\\b"}
+)
 SAFE_NAMESERVER_DIGEST_HEX_LENGTH = 16
 
 
@@ -87,6 +93,7 @@ class _ProxyGroup:
     group_type: str = ""
     filter_text: str = ""
     members: list[str] = field(default_factory=list)
+    has_external_source: bool = False
 
 
 def _dns_endpoint_hostname(value: str) -> str | None:
@@ -123,7 +130,10 @@ def _contains_yaml_reference(values: tuple[str, ...]) -> bool:
 
 
 def _approved_public_path(value: str) -> str | None:
-    parsed = urlsplit(_scalar(value))
+    raw_value = _scalar(value)
+    if "?" in raw_value or "#" in raw_value:
+        return None
+    parsed = urlsplit(raw_value)
     try:
         port = parsed.port
     except ValueError:
@@ -178,7 +188,7 @@ def _public_rule_from_url(
         suffix = ".list"
     else:
         match = re.fullmatch(
-            r"/dist/mihomo/classical/(reject|proxy|region|direct)/(.+)\.ya?ml",
+            r"/dist/mihomo/classical/(reject|proxy|region|direct)/(.+)\.yaml",
             path,
         )
         output_root = public_root / "dist/mihomo/classical"
@@ -285,8 +295,17 @@ def _parse_surge_groups(lines: list[str]) -> dict[str, _ProxyGroup]:
                 group.members.append(_scalar(part))
                 continue
             key, value = part.split("=", 1)
-            if key.strip().lower() == "policy-regex-filter":
+            normalized_key = key.strip().lower()
+            if normalized_key == "policy-regex-filter":
                 group.filter_text = _scalar(value)
+            elif normalized_key == "policy-path":
+                group.has_external_source |= bool(_scalar(value))
+            elif normalized_key == "include-all-proxies":
+                group.has_external_source |= _scalar(value).lower() in {
+                    "1",
+                    "true",
+                    "yes",
+                }
         groups[group_name] = group
     return groups
 
@@ -373,10 +392,20 @@ def _parse_mihomo_groups(lines: list[str]) -> dict[str, _ProxyGroup]:
                 group.filter_text = _scalar(value)
             elif key == "proxies":
                 group.members.extend(_parse_inline_or_scalar(value))
+            elif key == "use":
+                group.has_external_source |= bool(_parse_inline_or_scalar(value))
+            elif key == "include-all":
+                group.has_external_source |= _scalar(value).lower() in {
+                    "1",
+                    "true",
+                    "yes",
+                }
             continue
         item = re.match(r"^      -\s*(.+?)\s*$", line)
         if item and list_key == "proxies":
             group.members.append(_scalar(item.group(1).split(" #", 1)[0]))
+        elif item and list_key == "use":
+            group.has_external_source = True
     return groups
 
 
@@ -524,52 +553,10 @@ def _is_overseas_surge_dns(value: str) -> bool:
     return _is_approved_overseas_dns(server.group(1))
 
 
-def _has_ascii_token(value: str, token: str) -> bool:
-    return bool(
-        re.search(
-            rf"(?<![a-z]){re.escape(token.lower())}(?![a-z])",
-            value.lower(),
-        )
-    )
-
-
-def _is_us_only_filter(value: str) -> bool:
-    lowered = value.lower()
-    has_us = (
-        "🇺🇸" in value
-        or "美国" in value
-        or "united states" in lowered
-        or _has_ascii_token(value, "us")
-    )
-    if not has_us:
-        return False
-    non_us_markers = (
-        "🇭🇰",
-        "香港",
-        "hong kong",
-        "🇨🇳",
-        "台湾",
-        "taiwan",
-        "🇯🇵",
-        "日本",
-        "japan",
-        "🇸🇬",
-        "新加坡",
-        "singapore",
-        "🇰🇷",
-        "韩国",
-        "korea",
-    )
-    if any(marker in lowered or marker in value for marker in non_us_markers):
-        return False
-    return not any(
-        _has_ascii_token(value, token) for token in ("hk", "tw", "jp", "sg", "kr")
-    )
-
-
 def _group_has_us_semantics(
     name: str,
     groups: dict[str, _ProxyGroup],
+    approved_filters: frozenset[str],
     *,
     seen: frozenset[str] = frozenset(),
     depth: int = 0,
@@ -579,23 +566,24 @@ def _group_has_us_semantics(
     group = groups.get(name)
     if group is None:
         return False
-    if (
-        group.group_type in FILTERING_GROUP_TYPES
-        and _is_us_only_filter(group.filter_text)
-    ):
-        return True
-    if group.group_type not in WRAPPER_GROUP_TYPES or not group.members:
-        return False
     next_seen = seen | {name}
-    return all(
+    members_are_us = bool(group.members) and all(
         _group_has_us_semantics(
             member,
             groups,
+            approved_filters,
             seen=next_seen,
             depth=depth + 1,
         )
         for member in group.members
     )
+    if group.group_type in FILTERING_GROUP_TYPES:
+        return (
+            group.filter_text in approved_filters
+            and (group.has_external_source or bool(group.members))
+            and (not group.members or members_are_us)
+        )
+    return group.group_type in WRAPPER_GROUP_TYPES and members_are_us
 
 
 def _surge_host_entries(
@@ -641,7 +629,9 @@ def _validate_surge_personal(
             )
         )
     elif (
-        not _group_has_us_semantics(ai_route[1], groups)
+        not _group_has_us_semantics(
+            ai_route[1], groups, APPROVED_SURGE_US_FILTERS
+        )
         or not other_us_targets
         or any(target != ai_route[1] for target in other_us_targets)
     ):
@@ -867,7 +857,9 @@ def _validate_mihomo(
             )
         )
     elif (
-        not _group_has_us_semantics(ai_route[1], groups)
+        not _group_has_us_semantics(
+            ai_route[1], groups, APPROVED_MIHOMO_US_FILTERS
+        )
         or not other_us_targets
         or any(target != ai_route[1] for target in other_us_targets)
     ):
