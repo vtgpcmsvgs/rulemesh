@@ -5,7 +5,7 @@ import hashlib
 import re
 import sys
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -37,6 +37,11 @@ OVERSEAS_DNS_HOSTS = {
     "dns.quad9.net",
 }
 DOMESTIC_DNS_HOSTS = {"dns.alidns.com", "doh.pub"}
+PUBLIC_RULE_HOST = "raw.githubusercontent.com"
+PUBLIC_RULE_PATH_PREFIX = "/vtgpcmsvgs/rulemesh/main"
+US_GROUP_MAX_DEPTH = 32
+FILTERING_GROUP_TYPES = {"smart", "url-test", "fallback", "load-balance"}
+WRAPPER_GROUP_TYPES = {"select"}
 SAFE_NAMESERVER_DIGEST_HEX_LENGTH = 16
 
 
@@ -76,6 +81,14 @@ class _PolicyEntry:
     is_rule_set: bool = True
 
 
+@dataclass
+class _ProxyGroup:
+    line: int
+    group_type: str = ""
+    filter_text: str = ""
+    members: list[str] = field(default_factory=list)
+
+
 def _dns_endpoint_hostname(value: str) -> str | None:
     if value.strip().startswith(("&", "*")):
         return None
@@ -109,6 +122,27 @@ def _contains_yaml_reference(values: tuple[str, ...]) -> bool:
     return any(value.strip().startswith(("&", "*")) for value in values)
 
 
+def _approved_public_path(value: str) -> str | None:
+    parsed = urlsplit(_scalar(value))
+    try:
+        port = parsed.port
+    except ValueError:
+        return None
+    if (
+        parsed.scheme.lower() != "https"
+        or not parsed.hostname
+        or parsed.hostname.lower() != PUBLIC_RULE_HOST
+        or parsed.username is not None
+        or parsed.password is not None
+        or port not in {None, 443}
+        or parsed.query
+        or parsed.fragment
+        or not parsed.path.startswith(f"{PUBLIC_RULE_PATH_PREFIX}/")
+    ):
+        return None
+    return parsed.path[len(PUBLIC_RULE_PATH_PREFIX) :]
+
+
 def _scalar(value: str) -> str:
     return value.strip().strip('"\'')
 
@@ -132,20 +166,20 @@ def _active_surge_section(
 def _public_rule_from_url(
     value: str, public_root: Path, client: str
 ) -> _PublicRule | None:
-    path = urlsplit(_scalar(value)).path.replace("\\", "/")
+    path = _approved_public_path(value)
+    if path is None or "\\" in path:
+        return None
     if client == "surge":
-        match = re.search(
-            r"(?:^|/)dist/surge/rules/(reject|proxy|region|direct)/(.+)\.list$",
+        match = re.fullmatch(
+            r"/dist/surge/rules/(reject|proxy|region|direct)/(.+)\.list",
             path,
-            re.IGNORECASE,
         )
         output_root = public_root / "dist/surge/rules"
         suffix = ".list"
     else:
-        match = re.search(
-            r"(?:^|/)dist/mihomo/classical/(reject|proxy|region|direct)/(.+)\.ya?ml$",
+        match = re.fullmatch(
+            r"/dist/mihomo/classical/(reject|proxy|region|direct)/(.+)\.ya?ml",
             path,
-            re.IGNORECASE,
         )
         output_root = public_root / "dist/mihomo/classical"
         suffix = ".yaml"
@@ -215,6 +249,48 @@ def _surge_ai_route(
     return None
 
 
+def _surge_other_us_targets(lines: list[str], public_root: Path) -> list[str]:
+    targets: list[str] = []
+    for _, line in _active_surge_section(lines, "Rule"):
+        parts = [part.strip() for part in line.split(",", 2)]
+        if len(parts) < 3 or parts[0].upper() != "RULE-SET":
+            continue
+        rule = _public_rule_from_url(parts[1], public_root, "surge")
+        if not rule:
+            continue
+        if rule.category == "direct" and rule.identifier.endswith("/cn_direct"):
+            break
+        if (
+            rule.identifier != AI_US_RULE_IDENTIFIER
+            and rule.identifier.startswith("region/us/")
+            and rule.local_path.is_file()
+        ):
+            targets.append(_scalar(parts[2]))
+    return targets
+
+
+def _parse_surge_groups(lines: list[str]) -> dict[str, _ProxyGroup]:
+    groups: dict[str, _ProxyGroup] = {}
+    for line_number, line in _active_surge_section(lines, "Proxy Group"):
+        if "=" not in line:
+            continue
+        name, definition = line.split("=", 1)
+        group_name = _scalar(name)
+        parts = [_scalar(part) for part in definition.split(",")]
+        if not group_name or not parts:
+            continue
+        group = _ProxyGroup(line=line_number, group_type=parts[0].lower())
+        for part in parts[1:]:
+            if "=" not in part:
+                group.members.append(_scalar(part))
+                continue
+            key, value = part.split("=", 1)
+            if key.strip().lower() == "policy-regex-filter":
+                group.filter_text = _scalar(value)
+        groups[group_name] = group
+    return groups
+
+
 def _parse_mihomo_providers(lines: list[str]) -> dict[str, tuple[int, str]]:
     section = ""
     current_provider: str | None = None
@@ -261,6 +337,47 @@ def _parse_mihomo_rules(lines: list[str]) -> list[tuple[int, list[str]]]:
                 (line_number, [_scalar(part) for part in value.split(",")])
             )
     return rules
+
+
+def _parse_mihomo_groups(lines: list[str]) -> dict[str, _ProxyGroup]:
+    section = ""
+    groups: dict[str, _ProxyGroup] = {}
+    group: _ProxyGroup | None = None
+    list_key = ""
+    for line_number, line in enumerate(lines, start=1):
+        top_level = re.match(r"^([A-Za-z0-9_-]+):\s*(?:#.*)?$", line)
+        if top_level:
+            section = top_level.group(1)
+            group = None
+            list_key = ""
+            continue
+        if section != "proxy-groups":
+            continue
+        name = re.match(r"^  - name:\s*(.+?)\s*$", line)
+        if name:
+            group_name = _scalar(name.group(1).split(" #", 1)[0])
+            group = _ProxyGroup(line=line_number)
+            groups[group_name] = group
+            list_key = ""
+            continue
+        if group is None:
+            continue
+        field = re.match(r"^    ([A-Za-z0-9_-]+):\s*(.*?)\s*$", line)
+        if field:
+            key = field.group(1)
+            value = field.group(2).split(" #", 1)[0].strip()
+            list_key = key if not value else ""
+            if key == "type":
+                group.group_type = _scalar(value).lower()
+            elif key == "filter":
+                group.filter_text = _scalar(value)
+            elif key == "proxies":
+                group.members.extend(_parse_inline_or_scalar(value))
+            continue
+        item = re.match(r"^      -\s*(.+?)\s*$", line)
+        if item and list_key == "proxies":
+            group.members.append(_scalar(item.group(1).split(" #", 1)[0]))
+    return groups
 
 
 def required_mihomo_exceptions(
@@ -407,10 +524,77 @@ def _is_overseas_surge_dns(value: str) -> bool:
     return _is_approved_overseas_dns(server.group(1))
 
 
-def _is_us_target(value: str) -> bool:
+def _has_ascii_token(value: str, token: str) -> bool:
+    return bool(
+        re.search(
+            rf"(?<![a-z]){re.escape(token.lower())}(?![a-z])",
+            value.lower(),
+        )
+    )
+
+
+def _is_us_only_filter(value: str) -> bool:
     lowered = value.lower()
-    return "美国" in value or bool(
-        re.search(r"(^|[^a-z])us([^a-z]|$)", lowered)
+    has_us = (
+        "🇺🇸" in value
+        or "美国" in value
+        or "united states" in lowered
+        or _has_ascii_token(value, "us")
+    )
+    if not has_us:
+        return False
+    non_us_markers = (
+        "🇭🇰",
+        "香港",
+        "hong kong",
+        "🇨🇳",
+        "台湾",
+        "taiwan",
+        "🇯🇵",
+        "日本",
+        "japan",
+        "🇸🇬",
+        "新加坡",
+        "singapore",
+        "🇰🇷",
+        "韩国",
+        "korea",
+    )
+    if any(marker in lowered or marker in value for marker in non_us_markers):
+        return False
+    return not any(
+        _has_ascii_token(value, token) for token in ("hk", "tw", "jp", "sg", "kr")
+    )
+
+
+def _group_has_us_semantics(
+    name: str,
+    groups: dict[str, _ProxyGroup],
+    *,
+    seen: frozenset[str] = frozenset(),
+    depth: int = 0,
+) -> bool:
+    if depth >= US_GROUP_MAX_DEPTH or name in seen:
+        return False
+    group = groups.get(name)
+    if group is None:
+        return False
+    if (
+        group.group_type in FILTERING_GROUP_TYPES
+        and _is_us_only_filter(group.filter_text)
+    ):
+        return True
+    if group.group_type not in WRAPPER_GROUP_TYPES or not group.members:
+        return False
+    next_seen = seen | {name}
+    return all(
+        _group_has_us_semantics(
+            member,
+            groups,
+            seen=next_seen,
+            depth=depth + 1,
+        )
+        for member in group.members
     )
 
 
@@ -423,13 +607,16 @@ def _surge_host_entries(
         if "=" not in line:
             continue
         key, value = (part.strip() for part in line.split("=", 1))
-        if "cn_performance_dns_domains.list" in key.lower():
-            performance_line = line_number
-            continue
         key_match = re.match(r"^(?:RULE-SET|DOMAIN-SET):(.+)$", key, re.IGNORECASE)
         if not key_match:
             continue
-        rule = _public_rule_from_url(key_match.group(1), public_root, "surge")
+        artifact_url = key_match.group(1)
+        if _approved_public_path(artifact_url) == (
+            "/dist/surge/dns/cn_performance_dns_domains.list"
+        ):
+            performance_line = line_number
+            continue
+        rule = _public_rule_from_url(artifact_url, public_root, "surge")
         if rule:
             exceptions.append((line_number, rule.identifier, value))
     return exceptions, performance_line
@@ -442,6 +629,8 @@ def _validate_surge_personal(
     required = required_surge_exceptions(lines, public_root)
     exceptions, performance_line = _surge_host_entries(lines, public_root)
     ai_route = _surge_ai_route(lines, public_root)
+    groups = _parse_surge_groups(lines)
+    other_us_targets = _surge_other_us_targets(lines, public_root)
     if ai_route is None:
         findings.append(
             DnsPrecedenceFinding(
@@ -451,7 +640,11 @@ def _validate_surge_personal(
                 "恢复规范公开 AI RULE-SET，并保持美国出口与海外 DNS 例外。",
             )
         )
-    elif not _is_us_target(ai_route[1]):
+    elif (
+        not _group_has_us_semantics(ai_route[1], groups)
+        or not other_us_targets
+        or any(target != ai_route[1] for target in other_us_targets)
+    ):
         findings.append(
             DnsPrecedenceFinding(
                 path,
@@ -500,8 +693,7 @@ def _validate_surge_personal(
 def _performance_providers(lines: list[str]) -> list[tuple[int, str]]:
     result: list[tuple[int, str]] = []
     for name, (line_number, url) in _parse_mihomo_providers(lines).items():
-        parsed = urlsplit(url)
-        if parsed.path.replace("\\", "/").lower().endswith(
+        if _approved_public_path(url) == (
             "/dist/surge/dns/cn_performance_dns_domains.list"
         ):
             result.append((line_number, name))
@@ -527,6 +719,32 @@ def _mihomo_ai_route(
         if rule.identifier == AI_US_RULE_IDENTIFIER:
             return line_number, parts[2] if len(parts) >= 3 else ""
     return None
+
+
+def _mihomo_other_us_targets(
+    lines: list[str], public_root: Path
+) -> list[str]:
+    providers = _parse_mihomo_providers(lines)
+    public_rules = {
+        name: _public_rule_from_url(url, public_root, "mihomo")
+        for name, (_, url) in providers.items()
+    }
+    targets: list[str] = []
+    for _, parts in _parse_mihomo_rules(lines):
+        if len(parts) < 3 or parts[0].upper() != "RULE-SET":
+            continue
+        rule = public_rules.get(parts[1])
+        if not rule:
+            continue
+        if rule.category == "direct" and rule.identifier.endswith("/cn_direct"):
+            break
+        if (
+            rule.identifier != AI_US_RULE_IDENTIFIER
+            and rule.identifier.startswith("region/us/")
+            and rule.local_path.is_file()
+        ):
+            targets.append(parts[2])
+    return targets
 
 
 def _validate_mihomo(
@@ -637,6 +855,8 @@ def _validate_mihomo(
         )
 
     ai_route = _mihomo_ai_route(lines, public_root)
+    groups = _parse_mihomo_groups(lines)
+    other_us_targets = _mihomo_other_us_targets(lines, public_root)
     if ai_route is None:
         findings.append(
             DnsPrecedenceFinding(
@@ -646,7 +866,11 @@ def _validate_mihomo(
                 "恢复规范公开 AI provider、美国出口与海外 DNS policy。",
             )
         )
-    elif not _is_us_target(ai_route[1]):
+    elif (
+        not _group_has_us_semantics(ai_route[1], groups)
+        or not other_us_targets
+        or any(target != ai_route[1] for target in other_us_targets)
+    ):
         findings.append(
             DnsPrecedenceFinding(
                 path,
