@@ -140,6 +140,26 @@ function Invoke-DnsSafetyValidation {
     }
 }
 
+function Invoke-PrivateDnsPrecedenceValidation {
+    $python = Resolve-PythonCommand
+    $precedenceScript = Join-Path $PSScriptRoot "check_private_dns_precedence.py"
+    $env:PYTHONUTF8 = "1"
+    $env:PYTHONDONTWRITEBYTECODE = "1"
+
+    Write-Host ("[check] validate private DNS precedence with {0}: {1}" -f $python.Label, $python.Value)
+
+    if ($python.Kind -eq "Launcher") {
+        & $python.Value -3 -B -X utf8 $precedenceScript
+    }
+    else {
+        & $python.Value -B -X utf8 $precedenceScript
+    }
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "Private DNS precedence validation failed."
+    }
+}
+
 function Invoke-PrivatePerformanceValidation {
     $python = Resolve-PythonCommand
     $performanceScript = Join-Path $PSScriptRoot "check_private_performance.py"
@@ -272,6 +292,9 @@ Invoke-PrivateRepositoryRegistrationValidation
 
 Write-Host "[check] validate DNS safety"
 Invoke-DnsSafetyValidation
+
+Write-Host "[check] validate private DNS precedence"
+Invoke-PrivateDnsPrecedenceValidation
 
 Write-Host "[check] validate private performance"
 Invoke-PrivatePerformanceValidation
