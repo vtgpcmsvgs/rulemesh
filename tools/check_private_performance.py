@@ -107,7 +107,13 @@ def validate_surge_personal(path: Path, lines: list[str]) -> list[PerformanceFin
 
     line_number, parts = final
     target = groups.get(parts[1])
-    if not target or target[1] != "smart" or target[2] != "global_auto":
+    smart_groups = [name for name, group in groups.items() if group[1] == "smart"]
+    if (
+        not target
+        or target[1] != "smart"
+        or not smart_groups
+        or parts[1] != smart_groups[0]
+    ):
         findings.append(
             PerformanceFinding(
                 path,
@@ -288,11 +294,15 @@ def validate_mihomo(path: Path, lines: list[str]) -> list[PerformanceFinding]:
         None,
     )
     target = groups.get(match[1][1]) if match and len(match[1]) >= 2 else None
+    url_test_groups = [
+        name for name, group in groups.items() if group.group_type == "url-test"
+    ]
     if (
         not match
         or target is None
         or target.group_type != "url-test"
-        or role(f"{target.name} {target.filter_text}") != "global_auto"
+        or not url_test_groups
+        or match[1][1] != url_test_groups[0]
     ):
         findings.append(
             PerformanceFinding(

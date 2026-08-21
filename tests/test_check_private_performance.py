@@ -70,11 +70,11 @@ FINAL,REJECT
         personal = self.write_temp(
             "rulemesh-substore-surge-personal.conf",
             """[Proxy Group]
-全地区自动选择 = smart, policy-path=a
+自动选择 = smart, policy-path=a
 美国自动选择 = smart, policy-path=b, policy-regex-filter=美国|US
 
 [Rule]
-FINAL,全地区自动选择,dns-failed
+FINAL,自动选择,dns-failed
 """,
         )
         work = self.write_temp(
@@ -87,7 +87,7 @@ FINAL,REJECT
         )
         mihomo = self.write_temp(
             "rulemesh-substore-mihomo-clash-meta.yaml",
-            self.mihomo_fixture(interval=300, lazy="false", match="全地区自动选择", tolerance=100),
+            self.mihomo_fixture(interval=300, lazy="false", match="自动选择", tolerance=100),
         )
 
         for path in (personal, work, mihomo):
@@ -108,7 +108,7 @@ FINAL,REJECT
       timeout: 5000
       lazy: {lazy}
 proxy-groups:
-  - name: 全地区自动选择
+  - name: 自动选择
     type: url-test
     use:
       - provider-a
