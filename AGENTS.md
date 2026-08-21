@@ -40,14 +40,14 @@
 - 对会按请求头协商响应格式的私有机场 provider，先实际探测返回内容；若通用 Mihomo 标识不能稳定返回 Clash YAML，可在该 provider 上显式使用已验证的 `header.User-Agent`，并让两份 Mihomo 配置保持一致
 - 用 Mihomo 原生 `-t -d` 做临时语法检查时，`-d` 必须指向已确认位于任务临时目录下的专用目录；PowerShell 变量不得使用大小写不敏感的 `$home` / `$HOME`，避免把缓存或数据库误写到用户主目录
 - 私有机场 provider 若发生重命名（例如机场别名变更），除同步更新 `current` 下的 Mihomo / Surge 配置外，还要检查 Clash Verge 运行目录中的旧 provider 缓存、辅助 profile、remote profile 注册项与历史当前项；避免新旧 provider id 并存，导致 UI 继续读取旧缓存或把问题误判成“节点被过滤”
-- DNS 泄漏按安全事故级别处理：普通目标网站域名默认不得交给国内 DNS；国内 DNS 只能作为“DNS 服务器域名 bootstrap”、“代理节点 server 域名 bootstrap”以及 `cn_dns_domains` 国内业务域名白名单的专用例外
+- DNS 泄漏按安全事故级别处理：普通目标网站域名默认不得交给国内 DNS；国内 DNS 只能作为“DNS 服务器域名 bootstrap”、“代理节点 server 域名 bootstrap”以及两层明确国内业务清单的专用例外。小型精选 `cn_dns_domains` 只服务工作白名单等严格范围；自动合并中国直连域名主体的性能型 `cn_performance_dns_domains` 只服务 Surge Personal 与两份 Mihomo 性能配置，绝不因模板统一或工作白名单维护而互换。
 - 维护 Surge DNS 时只能使用 `[Host] + DOMAIN-SET` 隔离节点 server 域名；`use-local-host-item-for-proxy` 默认保持 `false`，不要在 Surge 里伪造 Mihomo 的 `proxy-server-nameserver`
 - Surge profile 不要写 `dns-mode = fake-ip`；Fake IP 由 Surge Enhanced Mode / VIF 运行时提供，Mac 端在 Surge 里启用 Enhanced Mode，不要把 Mihomo / Stash 的 `dns-mode` 搬进 Surge
 - Surge 的 `skip-proxy` 不要再放行 Apple `17.0.0.0/8`；macOS 更新入口已收敛到 `region/us/macos_update_us`，必须让前置拒绝规则和后续美国分流规则有机会命中
 - 给 Surge / Mihomo 新增 DNS、fake-ip、Tun 或透明代理字段前，必须先按目标客户端自己的 profile 语义确认；不要用“另一个客户端有同名或近似字段”来推断可用性
 - Surge 私有配置允许继续维护自己的复杂 DNS 版本；不要因为 Surge 正常，就反推 Mihomo 私有文件也应保持同样结构
 - 维护 `rulemesh-substore-mihomo-clash-verge.yaml` 与 `rulemesh-substore-mihomo-clash-meta.yaml` 时，默认保持“单一业务 DNS 真相”：`ipv6: false`、`dns.ipv6: false`（若字段存在）、`use-hosts: false`、`use-system-hosts: false`、`respect-rules: false`；普通目标网站继续只走海外 `nameserver`
-- 两份 Mihomo 私有文件只允许经 2026-08-21 用户明确批准并完成运行时复测的 `nameserver-policy."rule-set:cn-dns-domains"` 例外，把显式国内业务白名单交给国内 DNS；其他 `nameserver-policy` key 与 `respect-rules: true`、`proxy-server-nameserver`、`proxy-server-nameserver-policy`、`direct-nameserver`、`fallback` 继续禁止，也不得把 Surge 的复杂 DNS 结构照搬到 Mihomo
+- 两份 Mihomo 私有文件只允许经 2026-08-21 用户明确批准并完成运行时复测的分层 `nameserver-policy`：实际启用且位于中国大陆通用兜底前的 `reject/`、`proxy/`、`region/` 规则集必须优先使用海外 DNS，`rule-set:cn-performance-dns-domains` 才使用国内 DNS；OpenAI / ChatGPT 所在的 `region/us/ai_us` 必须同时固定美国出口与海外解析。其他 `nameserver-policy` key 与 `respect-rules: true`、`proxy-server-nameserver`、`proxy-server-nameserver-policy`、`direct-nameserver`、`fallback` 继续禁止，也不得把 Surge 的复杂 DNS 结构照搬到 Mihomo。
 - 三份通用私有配置默认以性能优先：普通国际 `FINAL` / `MATCH` 使用现有全地区自动选择组，`region/us/ai_us` 继续固定美国组；两份 Mihomo 的 provider 与 `url-test` 统一使用 `interval: 300`、`lazy: false`，美国组 `tolerance: 100`
 - Mihomo 私有文件里的机场 provider `health-check.url` 与 `url-test` 组测速 URL 统一使用 HTTPS `https://www.google.com/generate_204`；不要改回 HTTP
 - `proxy-node-domains` 必须是从 Sub-Store 聚合订阅提取的节点 `server` 域名清单，且必须过滤 IP 并按一行一个域名输出；不得包含订阅链接域名、机场面板域名或普通目标网站域名，也不得输出逗号分隔清单
@@ -92,6 +92,7 @@
 - 若本次修改影响使用方式、规则组织、构建方式、产物结构或维护约定，必须同步更新相关文档
 - 2026-05-07 下线的两类激进 `reject` 入口不再恢复到源规则、公开模板或私有配置，除非用户明确要求重新启用
 - 私有 `rulemesh-substore-surge-work-whitelist.conf` 属于长期特化的工作路由白名单配置；它与 `rulemesh-substore-surge-personal.conf`、`rulemesh-substore-mihomo-clash-verge.yaml`、`rulemesh-substore-mihomo-clash-meta.yaml` 从现在起允许永久不一致，不得因为“统一模板”或“对齐 personal 配置”而回滚
+- 工作白名单的国内 DNS 继续且只能引用小型精选 `cn_dns_domains`；不得引用性能型 `cn_performance_dns_domains`，也不得为了提高覆盖率改变其严格白名单边界。
 - 维护 `rulemesh-substore-surge-work-whitelist.conf` 时，默认应维持“仅放行明确白名单入口，其余流量对工作电脑统一 REJECT”的原则；若要恢复广谱放行（如 `proxy/gfw`、广谱 `direct`、`FINAL` 兜底放行），必须得到用户明确确认
 - 当前该工作路由白名单默认允许入口包括：设备分流、区域精确规则、GitHub SSH、GitHub Raw 下载入口、GitHub 广覆盖观察兜底、私有订阅域名同步块、1Password、AdsPower、Polygon RPC、BSC RPC、海外 DNS 主 IPv4 端点、代理节点 bootstrap DNS 直连例外（dns.alidns.com / doh.pub）、海外加密 DNS 显式入口（DoH / DoH3 / DoQ 与 cloudflare-dns.com / dns.google / dns.quad9.net）、`LAN,DIRECT`、`direct/os_time_direct`、`region/us/microsoft_us`、`region/us/macos_update_us`、阿里云指定直连与 `direct/bytedance_direct`；`[Host]` 中的 `cn_dns_domains` 只用于国内业务域名解析调度，不新增流量放行，但工作规则层显式允许 `zsxq.com` 与 `yikaiying.com` 两个精确 DIRECT 入口；2.1 设备分流既允许原有 `SRC-IP + AWS 区域 / 多地区链式 SOCKS5 IP 段` 约束，也允许已登记个人终端使用 `SRC-IP + region/hk/alibaba_hk` 只把阿里系流量交给香港自动选择，后者不得扩成全流量入口；2.2-2.10 不再额外限制 `SRC-IP`，原独立 IP 规则段已删除；未命中上述入口的流量最终 `FINAL,REJECT`
 - `region/hk/wps_kdocs` 是工作白名单的区域精确显式放行入口，统一绑定香港自动选择并放在 `FINAL,REJECT` 前；Surge `[Host]` 必须在 `cn_dns_domains` 前复用该规则集绑定海外 DoH，避免 `.cn` 国内解析覆盖 WPS / 金山文档

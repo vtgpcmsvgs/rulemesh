@@ -15,7 +15,7 @@
 ## 默认安全姿态
 
 - 普通目标网站域名默认不得交给国内 DNS。
-- 国内 DNS 只能作为 DNS 服务器域名 bootstrap、代理节点 server 域名 bootstrap，以及 `cn_dns_domains` 专用国内业务域名白名单的受限例外。
+- 国内 DNS 只能作为 DNS 服务器域名 bootstrap、代理节点 server 域名 bootstrap，以及两层专用国内业务清单的受限例外：小型精选 `cn_dns_domains` 供工作白名单与公开保守示例，性能型 `cn_performance_dns_domains` 只供三份明确启用的性能配置。
 - 不要为了让节点更容易首连，就把 Surge 的 `dns-server`、`encrypted-dns-server` 或 Mihomo 的业务 `nameserver` 全局改成国内 DNS。
 - 任何把业务 DNS 改成 `system`、阿里云 DNS、腾讯云 DNS、`114.114.114.114` 或其他国内解析入口的操作，都必须按高风险变更处理；`default-nameserver` / `proxy-server-nameserver` 例外只能服务 bootstrap。
 - 不能只用“网页能打开”“节点能测速”作为验收结论；DNS 出口也必须被验证。
@@ -52,6 +52,8 @@ DOMAIN-SET:https://example.com/share/file/proxy-node-domains = server:https://dn
 
 `cn_dns_domains` 是国内业务域名 DNS 例外，只能包含明确国内业务域名 / 国内域名后缀，不包含代理节点 server 域名、订阅入口域名、IP 或复杂规则。它的职责是减少海外 DNS 导致的国内 CDN 调度偏差，不是把所有 `DIRECT` 流量交给国内 DNS。小米 / MIUI、国内天气、微信小程序、抖音专项、拼多多、小红书 CDN、知识星球与已确认国内落地的 `yikaiying.com` 等依赖可以按服务族加入；精确 host 不扩成无关宽后缀，共享风控或统计第三方域名没有专项证据时不纳入。
 
+`cn_performance_dns_domains` 是性能型国内 DNS 例外，自动合并中国直连域名主体与小型精选清单，只供 Surge Personal 与两份 Mihomo 性能配置。它不是公开模板或工作白名单的默认替代品；工作白名单必须长期保持小型清单。三份性能配置必须先让实际启用且位于中国大陆通用兜底前的 `reject/`、`proxy/`、`region/` 规则集使用海外 DNS，再匹配性能型清单，不能通过删减宽泛国内集合取代海外例外。OpenAI / ChatGPT 所在的美国 AI 规则集必须同时保持美国出口与海外解析。
+
 上述海外 `dns-server` 的明文 IPv4 端点应先命中 `proxy/overseas_dns_ipv4_proxy` 并统一走美国地区策略，避免 1.1.1.1 / 8.8.8.8 / 9.9.9.9 的出口与普通代理出口错位。
 
 `DOMAIN-SET` 引用的 `proxy-node-domains` 必须只包含代理节点的 `server` 域名。一行一个域名，不写 `DOMAIN-SUFFIX,` 前缀，不写 IP，不写订阅 URL，不写机场面板域名，不写普通目标网站域名，也不要输出逗号分隔的一整行。
@@ -62,7 +64,7 @@ RuleMesh 里的 Mihomo DNS 维护边界分两层：
 
 - 公开参考模板 `docs/examples/mihomo-public.yaml` 仍可表达通用的分层 DNS 思路。
 - 解析后的私人当前配置目录中的 `rulemesh-substore-mihomo-clash-verge.yaml` 与 `rulemesh-substore-mihomo-clash-meta.yaml` 这两份私有 provider 配置，默认必须保持“单一业务 DNS 真相”：`ipv6: false`、`dns.ipv6: false`、`use-hosts: false`、`use-system-hosts: false`、`respect-rules: false`；普通目标网站域名只走海外 `nameserver`。
-- 2026-08-21 经用户明确批准并完成运行时复测后，两份私有配置只允许 `nameserver-policy."rule-set:cn-dns-domains"` 把显式国内业务白名单交给国内 DNS。其他 policy key 与 `proxy-server-nameserver`、`proxy-server-nameserver-policy`、`direct-nameserver`、`fallback` 或 `respect-rules: true` 继续禁止。
+- 2026-08-21 经用户明确批准并完成运行时复测后，两份私有配置只允许“实际启用的高优先级 `reject/`、`proxy/`、`region/` 规则集映射海外 DNS，再由 `rule-set:cn-performance-dns-domains` 映射国内 DNS”的分层 policy。其他 policy key 与 `proxy-server-nameserver`、`proxy-server-nameserver-policy`、`direct-nameserver`、`fallback` 或 `respect-rules: true` 继续禁止。
 - 这不是“所有 Mihomo 都应该更简单”的泛化结论，而是已经在当前私有 provider 链路中实测验证过的稳定基线。
 
 Mihomo 必须使用原生 DNS 机制，不套用 Surge 的 `[Host]`。
@@ -92,12 +94,12 @@ dns:
 
 - `default-nameserver` 只负责 DNS 服务器域名 bootstrap，可以使用国内可直连 DNS。
 - `nameserver` 负责普通目标网站域名，默认使用海外 DNS。
-- `nameserver-policy` 只允许把 `rule-set:cn-dns-domains` 这类专用国内业务域名白名单交给国内 DNS；不要按 `DIRECT` / `PROXY` 动作泛化。
+- `nameserver-policy` 只允许先把实际启用的高优先级 `reject/`、`proxy/`、`region/` 规则集交给海外 DNS，再把 `rule-set:cn-performance-dns-domains` 这类专用性能型国内业务域名清单交给国内 DNS；不要按 `DIRECT` / `PROXY` 动作泛化。
 - `proxy-server-nameserver` 负责代理节点 server 域名，可以使用国内可直连 DoH 提高节点首连稳定性。
 
 两份私有配置只采用前三项中的受限 policy，不采用上例的 `proxy-server-nameserver`；机场 provider 自身继续显式 `proxy: DIRECT`。
 
-禁止把国内 DNS 写进业务 `nameserver`、非 `cn-dns-domains` 的 `nameserver-policy` 或 `direct-nameserver` 来处理普通目标网站域名。即使某条规则最终是 `DIRECT`，它也仍然可能是账号平台、海外服务或敏感业务域名，不能因此默认回到国内解析链。
+禁止把国内 DNS 写进业务 `nameserver`、已批准性能型清单之外的国内 `nameserver-policy` 或 `direct-nameserver` 来处理普通目标网站域名。即使某条规则最终是 `DIRECT`，它也仍然可能是账号平台、海外服务或敏感业务域名，不能因此默认回到国内解析链。
 
 Mihomo 的 provider 更新也要分清两条链路：
 

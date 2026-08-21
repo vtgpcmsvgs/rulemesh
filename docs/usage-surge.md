@@ -4,7 +4,7 @@
 
 - 个人终端版公开参考模板：[`docs/examples/surge-public.conf`](examples/surge-public.conf)
 - 规则产物入口：`dist/surge/rules/`
-- 国内业务域名 DNS 清单入口：`dist/surge/dns/cn_dns_domains.list`
+- 国内业务 DNS 清单有两层：公开示例与工作白名单使用小型精选 `dist/surge/dns/cn_dns_domains.list`；Surge Personal 性能配置使用 `dist/surge/dns/cn_performance_dns_domains.list`
 - 代理组过滤方法论：[`docs/proxy-group-filter-methodology.md`](proxy-group-filter-methodology.md)
 - DNS 防泄漏方法论：[`docs/network-security/dns-leak-prevention.md`](network-security/dns-leak-prevention.md)
 - 7×24 本地监控与审批闭环：[`docs/surge-local-monitoring.md`](surge-local-monitoring.md)
@@ -60,7 +60,7 @@
 - BSC 主网 RPC 专项 `proxy/bsc_rpc_proxy.list` 与 `proxy/gfw.list` 的顺序关系
 - 海外 DNS 主 IPv4 端点专项 `proxy/overseas_dns_ipv4_proxy.list` 与 `proxy/gfw.list` 的顺序关系
 - `direct/os_time_direct.list` 与其他普通直连规则的顺序关系
-- `dist/surge/dns/cn_dns_domains.list` 作为国内业务域名 DNS 白名单，可在 `[Host]` 中映射到 AliDNS / DNSPod；它与 `proxy-node-domains` 分离维护，不能混入代理节点 server 域名。小米 / MIUI、和风天气、微信小程序、抖音专项、拼多多、小红书 CDN、知识星球与 `yikaiying.com` 等明确国内依赖应在该清单中按服务族维护，流量仍由规则顺序独立判定
+- `dist/surge/dns/cn_dns_domains.list` 是小型精选国内业务 DNS 白名单，可在 `[Host]` 中映射到国内 DoH；它与 `proxy-node-domains` 分离维护，不能混入代理节点 server 域名。公开示例和工作白名单只使用这一清单。`dist/surge/dns/cn_performance_dns_domains.list` 自动合并中国直连域名主体与小型清单，只供 Surge Personal 性能配置；小米 / MIUI、和风天气、微信小程序、抖音专项、拼多多、小红书 CDN、知识星球与 `yikaiying.com` 等明确国内依赖仍在小型清单中按服务族维护，流量仍由规则顺序独立判定。
 - `allow-wifi-access = false`、`test-timeout = 3`、`use-local-host-item-for-proxy = false`、`hijack-dns = *:53` 与 `encrypted-dns-follow-outbound-mode = true` 这组运行时默认值
 - 默认关闭 `ipv6 = false`，并注释 `ipv6-vif = auto`；如需 IPv6，应先完成 DNS 泄漏、WebRTC 与出口一致性测试
 - Surge profile 不写 `dns-mode = fake-ip`；Fake IP 由 Surge Enhanced Mode / VIF 运行时提供，Mac 端加载 profile 后需要在 Surge 里启用 Enhanced Mode
@@ -134,8 +134,8 @@
 - `direct/ai_cn_direct.list` 属于显式国内 AI 直连入口，顺序上固定为 `direct/ai_cn_direct < direct/bytedance_direct < region/hk/global_media < direct/cn_direct`；静态交集审计确认这只会把 `snssdk.com` 从香港媒体策略纠正为直连。
 - `region/hk/wps_kdocs.list` 统一承接 WPS Office、金山文档、开放平台、云文档与资源分发连接，必须放在 `direct/cn_direct.list` 与 `FINAL` 前并绑定 `🇭🇰 香港-自动选择`；它不是 reject 规则，历史上的失败主要来自通用直连抢先命中或工作白名单最终拒绝。
 - `region/hk/alibaba_hk.list` 启用后必须先于 `direct/ai_cn_direct.list`、`direct/cn_direct.list` 与阿里云 SSH 指定直连入口；其 Alibaba 主体覆盖域名和 IP 规则，XianYu 专项清单与 `goofish / xianyu / idlefish` 关键词用于补强闲鱼。共享 Surge 网关应在调用层用 `SRC-IP + RULE-SET` 限定设备，不能把整份阿里规则无条件扩散到其他终端。
-- Surge 的 `[Host]` 还应在 `cn_dns_domains` 前复用已启用的 `region/hk/alibaba_hk.list` 并绑定海外 DoH；`[Host]` 不支持按源地址区分，因此这只会统一该域名族的解析出口，实际流量策略仍由前述设备条件规则限定。
-- Surge 的 `[Host]` 还应在 `cn_dns_domains` 前复用 `region/hk/wps_kdocs.list` 并绑定海外 DoH；这是为了覆盖 `cn_dns_domains` 中宽泛的 `.cn`，不能只删除几条 WPS 显式域名来假装完成 DNS 隔离。
+- Surge Personal 的 `[Host]` 必须先为实际启用且位于中国大陆通用兜底前的 `reject/`、`proxy/`、`region/` 规则集绑定海外 DoH，再引用性能型国内 DNS 清单；OpenAI / ChatGPT 所在的 `region/us/ai_us` 必须保留美国出口与海外解析。不得通过缩小性能型清单来替代这些优先级例外。
+- Surge 的 `[Host]` 还应在国内 DNS 清单前复用已启用的 `region/hk/alibaba_hk.list` 与 `region/hk/wps_kdocs.list` 并绑定海外 DoH；`[Host]` 不支持按源地址区分，因此前者只统一该域名族的解析出口，实际流量策略仍由前述设备条件规则限定。公开示例和工作白名单仍引用小型清单；工作白名单绝不引用性能型清单。
 - `region/hk/hk_brokers.list` 当前只承接复星证券/复星财富、致富证券、辉立证券与富途，应放在 `region/hk/global_media.list` 与 `proxy/gfw.list` 前，并绑定 `🇭🇰 香港-自动选择`。
 - `region/hk/global_media.list` 当前还承接 `x.com`、`t.co`、`twimg.com` 与 `twitter.com` 等 X / Twitter 网页域名，以及 `polymarket.com` 与 `DOMAIN-KEYWORD,polymarket` 这组 Polymarket 香港兜底；默认应继续绑定 `🇭🇰 香港-自动选择`，不要再让它们回落到 `proxy/gfw.list` 或误挂到日本区域。
 - 公开 `surge-public.conf` 默认接入 `region/jp/domains_to_jp.list`；当前用于让 `opinion.trade` 走 `🇯🇵 日本-自动选择`。
