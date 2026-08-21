@@ -376,6 +376,16 @@ merge_plan:
       - keep_small_and_readable
       - manual_only
 
+  - id: cn-dns-domains
+    target: rules/dns/cn_dns_domains.list
+    purpose: 工作白名单等受控范围配置使用的小型中国 DNS 域名集合
+    strategy:
+      - manual_only
+      - keep_small_and_curated
+    notes:
+      - 仅维护明确国内业务域名，不扩展为中国直连上游主体
+      - 工作白名单继续使用本清单；性能配置另行使用 cn_performance_dns_domains
+
   - id: cn-performance-dns-domains
     target: rules/dns/cn_performance_dns_domains.list
     purpose: 性能配置使用的中国 DNS 域名集合

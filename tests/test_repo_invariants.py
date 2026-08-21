@@ -33,6 +33,7 @@ TEXT_FILE_PATHS = (
     ROOT / ".rulemesh.local.example.json",
 )
 SOURCE_RULE_GROUPS = ("reject", "direct", "proxy", "region")
+SOURCE_REGISTRATION_GROUPS = (*SOURCE_RULE_GROUPS, "dns")
 
 
 def iter_text_files() -> list[Path]:
@@ -56,7 +57,7 @@ def iter_text_files() -> list[Path]:
 def collect_source_rule_paths() -> list[str]:
     files: list[str] = []
     rules_root = ROOT / "rules"
-    for group in SOURCE_RULE_GROUPS:
+    for group in SOURCE_REGISTRATION_GROUPS:
         root = rules_root / group
         if not root.exists():
             continue
@@ -74,7 +75,7 @@ def collect_sources_yaml_entries() -> list[str]:
         header = re.match(r"^\s{2}([a-z]+):\s*$", raw)
         if header:
             candidate = header.group(1)
-            category = candidate if candidate in SOURCE_RULE_GROUPS else None
+            category = candidate if candidate in SOURCE_REGISTRATION_GROUPS else None
             continue
         match = pattern.match(raw)
         if not match or not category:
@@ -89,7 +90,7 @@ def collect_sources_yaml_entries() -> list[str]:
 
 def collect_merge_yaml_targets() -> list[str]:
     pattern = re.compile(
-        r"^\s*target:\s+rules/((?:reject|direct|proxy|region)/[A-Za-z0-9_./-]+\.list)\s*$"
+        r"^\s*target:\s+rules/((?:reject|direct|proxy|region|dns)/[A-Za-z0-9_./-]+\.list)\s*$"
     )
     path = ROOT / "rules" / "upstream" / "merge.yaml"
     targets = [
@@ -396,6 +397,32 @@ class RepoInvariantTests(unittest.TestCase):
 
     def test_merge_yaml_covers_all_rule_sources(self) -> None:
         self.assertEqual(collect_merge_yaml_targets(), collect_source_rule_paths())
+
+    def test_sources_yaml_covers_all_dns_source_files(self) -> None:
+        expected = sorted(
+            path.relative_to(ROOT / "rules").as_posix()
+            for path in (ROOT / "rules" / "dns").rglob("*.list")
+        )
+        actual = [
+            entry
+            for entry in collect_sources_yaml_entries()
+            if entry.startswith("dns/")
+        ]
+
+        self.assertEqual(actual, expected)
+
+    def test_merge_yaml_covers_all_dns_source_files(self) -> None:
+        expected = sorted(
+            path.relative_to(ROOT / "rules").as_posix()
+            for path in (ROOT / "rules" / "dns").rglob("*.list")
+        )
+        actual = [
+            entry
+            for entry in collect_merge_yaml_targets()
+            if entry.startswith("dns/")
+        ]
+
+        self.assertEqual(actual, expected)
 
     def test_public_surge_template_keeps_http_testing_urls(self) -> None:
         findings = validate_surge_test_urls.validate_surge_profile(
