@@ -46,8 +46,9 @@
 - Surge 的 `skip-proxy` 不要再放行 Apple `17.0.0.0/8`；macOS 更新入口已收敛到 `region/us/macos_update_us`，必须让前置拒绝规则和后续美国分流规则有机会命中
 - 给 Surge / Mihomo 新增 DNS、fake-ip、Tun 或透明代理字段前，必须先按目标客户端自己的 profile 语义确认；不要用“另一个客户端有同名或近似字段”来推断可用性
 - Surge 私有配置允许继续维护自己的复杂 DNS 版本；不要因为 Surge 正常，就反推 Mihomo 私有文件也应保持同样结构
-- 维护 `rulemesh-substore-mihomo-clash-verge.yaml` 与 `rulemesh-substore-mihomo-clash-meta.yaml` 时，默认只允许“单一 DNS 真相”版本：`ipv6: false`、`dns.ipv6: false`（若字段存在）、`use-hosts: false`、`use-system-hosts: false`，且 `dns:` 里只保留 `default-nameserver`、`nameserver`、`fake-ip-filter` 等最小必需字段
-- 未经用户明确确认并完成运行时复测，不得在两份 Mihomo 私有文件里恢复 `respect-rules: true`、`nameserver-policy`、`proxy-server-nameserver`、`proxy-server-nameserver-policy`、`direct-nameserver`、`fallback`，也不得把 Surge 的复杂 DNS 结构照搬到 Mihomo
+- 维护 `rulemesh-substore-mihomo-clash-verge.yaml` 与 `rulemesh-substore-mihomo-clash-meta.yaml` 时，默认保持“单一业务 DNS 真相”：`ipv6: false`、`dns.ipv6: false`（若字段存在）、`use-hosts: false`、`use-system-hosts: false`、`respect-rules: false`；普通目标网站继续只走海外 `nameserver`
+- 两份 Mihomo 私有文件只允许经 2026-08-21 用户明确批准并完成运行时复测的 `nameserver-policy."rule-set:cn-dns-domains"` 例外，把显式国内业务白名单交给国内 DNS；其他 `nameserver-policy` key 与 `respect-rules: true`、`proxy-server-nameserver`、`proxy-server-nameserver-policy`、`direct-nameserver`、`fallback` 继续禁止，也不得把 Surge 的复杂 DNS 结构照搬到 Mihomo
+- 三份通用私有配置默认以性能优先：普通国际 `FINAL` / `MATCH` 使用现有全地区自动选择组，`region/us/ai_us` 继续固定美国组；两份 Mihomo 的 provider 与 `url-test` 统一使用 `interval: 300`、`lazy: false`，美国组 `tolerance: 100`
 - Mihomo 私有文件里的机场 provider `health-check.url` 与 `url-test` 组测速 URL 统一使用 HTTPS `https://www.google.com/generate_204`；不要改回 HTTP
 - `proxy-node-domains` 必须是从 Sub-Store 聚合订阅提取的节点 `server` 域名清单，且必须过滤 IP 并按一行一个域名输出；不得包含订阅链接域名、机场面板域名或普通目标网站域名，也不得输出逗号分隔清单
 - Surge `[Host]` 引用 `proxy-node-domains` 时，必须使用 Surge 生产设备可直接访问的 Sub-Store 分享文件 URL；不要把未经同网络验证的 `https://sub.store/api/file/proxy-node-domains` 写进生产配置
@@ -92,7 +93,7 @@
 - 2026-05-07 下线的两类激进 `reject` 入口不再恢复到源规则、公开模板或私有配置，除非用户明确要求重新启用
 - 私有 `rulemesh-substore-surge-work-whitelist.conf` 属于长期特化的工作路由白名单配置；它与 `rulemesh-substore-surge-personal.conf`、`rulemesh-substore-mihomo-clash-verge.yaml`、`rulemesh-substore-mihomo-clash-meta.yaml` 从现在起允许永久不一致，不得因为“统一模板”或“对齐 personal 配置”而回滚
 - 维护 `rulemesh-substore-surge-work-whitelist.conf` 时，默认应维持“仅放行明确白名单入口，其余流量对工作电脑统一 REJECT”的原则；若要恢复广谱放行（如 `proxy/gfw`、广谱 `direct`、`FINAL` 兜底放行），必须得到用户明确确认
-- 当前该工作路由白名单默认允许入口包括：设备分流、区域精确规则、GitHub SSH、GitHub Raw 下载入口、GitHub 广覆盖观察兜底、私有订阅域名同步块、1Password、AdsPower、Polygon RPC、BSC RPC、海外 DNS 主 IPv4 端点、代理节点 bootstrap DNS 直连例外（dns.alidns.com / doh.pub）、海外加密 DNS 显式入口（DoH / DoH3 / DoQ 与 cloudflare-dns.com / dns.google / dns.quad9.net）、`LAN,DIRECT`、`direct/os_time_direct`、`region/us/microsoft_us`、`region/us/macos_update_us`、阿里云指定直连与 `direct/bytedance_direct`；`[Host]` 中的 `cn_dns_domains` 只用于国内业务域名解析调度，不新增流量放行；2.1 设备分流既允许原有 `SRC-IP + AWS 区域 / 多地区链式 SOCKS5 IP 段` 约束，也允许已登记个人终端使用 `SRC-IP + region/hk/alibaba_hk` 只把阿里系流量交给香港自动选择，后者不得扩成全流量入口；2.2-2.10 不再额外限制 `SRC-IP`，原独立 IP 规则段已删除；未命中上述入口的流量最终 `FINAL,REJECT`
+- 当前该工作路由白名单默认允许入口包括：设备分流、区域精确规则、GitHub SSH、GitHub Raw 下载入口、GitHub 广覆盖观察兜底、私有订阅域名同步块、1Password、AdsPower、Polygon RPC、BSC RPC、海外 DNS 主 IPv4 端点、代理节点 bootstrap DNS 直连例外（dns.alidns.com / doh.pub）、海外加密 DNS 显式入口（DoH / DoH3 / DoQ 与 cloudflare-dns.com / dns.google / dns.quad9.net）、`LAN,DIRECT`、`direct/os_time_direct`、`region/us/microsoft_us`、`region/us/macos_update_us`、阿里云指定直连与 `direct/bytedance_direct`；`[Host]` 中的 `cn_dns_domains` 只用于国内业务域名解析调度，不新增流量放行，但工作规则层显式允许 `zsxq.com` 与 `yikaiying.com` 两个精确 DIRECT 入口；2.1 设备分流既允许原有 `SRC-IP + AWS 区域 / 多地区链式 SOCKS5 IP 段` 约束，也允许已登记个人终端使用 `SRC-IP + region/hk/alibaba_hk` 只把阿里系流量交给香港自动选择，后者不得扩成全流量入口；2.2-2.10 不再额外限制 `SRC-IP`，原独立 IP 规则段已删除；未命中上述入口的流量最终 `FINAL,REJECT`
 - `region/hk/wps_kdocs` 是工作白名单的区域精确显式放行入口，统一绑定香港自动选择并放在 `FINAL,REJECT` 前；Surge `[Host]` 必须在 `cn_dns_domains` 前复用该规则集绑定海外 DoH，避免 `.cn` 国内解析覆盖 WPS / 金山文档
 - GitHub 在该工作路由文件中除 `github_ssh_direct` 外，还允许紧随其后保留 `DOMAIN,raw.githubusercontent.com` 下载入口与一条广覆盖 `DOMAIN-KEYWORD,github` 观察兜底；它们用于显式放行 GitHub Raw 规则产物下载，并发现 SSH / Raw 之外的漏网之鱼，不得被“去重”或“收敛”掉
 - GitHub Raw 下载链路默认还应保留独立 `[Host]` 解析例外；当前私有配置使用 `raw.githubusercontent.com = server:https://cloudflare-dns.com/dns-query`，避免规则产物下载回落到本地/国内系统 DNS；但这不是代理节点 bootstrap，不能影响 `proxy-node-domains` 继续使用 AliDNS DoH
@@ -131,7 +132,7 @@
 - 默认不要把私有文件内容或敏感值写回公开仓库，也不要在回复中完整回显真实密钥、签名、订阅 URL 或其他敏感参数
 - 即使需要在公开仓库里记录工作路由白名单维护约定，也只允许写“固定工作电脑”“白名单模式”“与 personal 永久不一致”这类抽象说明；不要把真实 `SRC-IP` 范围、私有设备标识、订阅地址或本地策略分组细节写回公开仓库
 - 若 `rulemesh-substore-mihomo-clash-verge.yaml` 出现“某个 provider 全部测速失败，但同一订阅直导 Clash Verge Rev 正常”的现象，默认先对比运行时 `dns:`，并通过 Mihomo API / 命名管道与日志确认实际生效配置；不要先把问题归因到节点失效，也不要只停留在更换测速 URL 这一层
-- 若两份 Mihomo 私有文件中任意一份再次出现 `respect-rules: true`、`nameserver-policy`、`proxy-server-nameserver` 或 `fallback` 回流，默认按配置回滚事故处理；先恢复到“单一 DNS 真相”版本，再讨论是否存在必须保留的客户端特化例外
+- 若两份 Mihomo 私有文件中任意一份再次出现 `respect-rules: true`、白名单外 `nameserver-policy`、`proxy-server-nameserver` 或 `fallback`，默认按配置回滚事故处理；先恢复到“单一业务 DNS 真相 + cn-dns-domains 受限例外”，再讨论是否存在必须保留的客户端特化例外
 - 若本地私有配置结构发生变化，必须同步更新 `.rulemesh.local.example.json` 与相关文档，但只允许写入脱敏占位值
 - 若任务需要参考私有配置，默认只说明字段名、用途与是否生效，不直接暴露真实值
 

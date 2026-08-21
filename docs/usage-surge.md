@@ -60,7 +60,7 @@
 - BSC 主网 RPC 专项 `proxy/bsc_rpc_proxy.list` 与 `proxy/gfw.list` 的顺序关系
 - 海外 DNS 主 IPv4 端点专项 `proxy/overseas_dns_ipv4_proxy.list` 与 `proxy/gfw.list` 的顺序关系
 - `direct/os_time_direct.list` 与其他普通直连规则的顺序关系
-- `dist/surge/dns/cn_dns_domains.list` 作为国内业务域名 DNS 白名单，可在 `[Host]` 中映射到 AliDNS / DNSPod；它与 `proxy-node-domains` 分离维护，不能混入代理节点 server 域名。小米 / MIUI、和风天气、微信小程序、抖音专项、拼多多与小红书 CDN 等明确国内依赖应在该清单中按服务族维护，流量仍由规则顺序独立判定
+- `dist/surge/dns/cn_dns_domains.list` 作为国内业务域名 DNS 白名单，可在 `[Host]` 中映射到 AliDNS / DNSPod；它与 `proxy-node-domains` 分离维护，不能混入代理节点 server 域名。小米 / MIUI、和风天气、微信小程序、抖音专项、拼多多、小红书 CDN、知识星球与 `yikaiying.com` 等明确国内依赖应在该清单中按服务族维护，流量仍由规则顺序独立判定
 - `allow-wifi-access = false`、`test-timeout = 3`、`use-local-host-item-for-proxy = false`、`hijack-dns = *:53` 与 `encrypted-dns-follow-outbound-mode = true` 这组运行时默认值
 - 默认关闭 `ipv6 = false`，并注释 `ipv6-vif = auto`；如需 IPv6，应先完成 DNS 泄漏、WebRTC 与出口一致性测试
 - Surge profile 不写 `dns-mode = fake-ip`；Fake IP 由 Surge Enhanced Mode / VIF 运行时提供，Mac 端加载 profile 后需要在 Surge 里启用 Enhanced Mode
@@ -79,7 +79,7 @@
 
 1. 把模板里所有 `https://example.com/subs/surge/all?target=Surge` 替换成你自己的 Surge 聚合订阅入口。
 2. 把 `[Host]` 里的 `https://example.com/share/file/proxy-node-domains` 替换成 Surge 所在设备能直接访问的 Sub-Store 分享文件真实 URL。
-3. 如果你不希望最终兜底走总开关，可以把 `FINAL,🚀 节点选择,dns-failed` 改成你想固定兜底的区域组。
+3. 公开模板默认让最终兜底走总开关；私有 personal 性能优先配置把 `FINAL` 指向现有全地区 smart 自动组，OpenAI / ChatGPT 仍由前置 `region/us/ai_us` 固定美国。
 
 `proxy-node-domains` 只能包含订阅节点的 `server` 域名，不得填订阅入口、机场面板域名、IP 或普通目标网站域名。替换前先在同一网络环境里打开 URL，确认返回一行一个域名；如果返回 HTML、404、超时或逗号分隔的一整行，就不要加载到生产 Surge。
 

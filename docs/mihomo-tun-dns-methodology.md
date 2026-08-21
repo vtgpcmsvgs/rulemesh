@@ -66,7 +66,7 @@
 - 因此只要 `DNS 覆写` 处于开启状态，`rulemesh-substore-mihomo-clash-verge.yaml` 里的 `dns:` 默认就不再是实际生效的单一真相。
 - 如果目标是“把私有 Mihomo 文件当成唯一权威配置”，Clash Verge Rev 侧默认应关闭 `DNS 覆写`。
 - 如果用户明确要保留 `DNS 覆写`，那就要把 `%APPDATA%/io.github.clash-verge-rev.clash-verge-rev/dns_config.yaml` 视为 `dns` 的单一真相，而不要继续假设源文件里的 `dns:` 会原样生效。
-- 对当前本地长期维护来说，Clash Verge Rev 私有文件关闭 `DNS 覆写` 后，默认仍应回到“单一 DNS 真相”版本，而不是继续叠 `nameserver-policy`、`proxy-server-nameserver`、`fallback`。
+- 对当前本地长期维护来说，Clash Verge Rev 私有文件关闭 `DNS 覆写` 后，必须保持“单一业务 DNS 真相”：普通目标域名只走海外 `nameserver`，仅保留已批准并复测的 `rule-set:cn-dns-domains` policy；不得继续叠 `proxy-server-nameserver`、其他 policy 或 `fallback`。
 
 ## provider 全部测速失败但直导正常时的排障方法论
 
@@ -91,7 +91,7 @@
 
 - 先把失败配置的运行时 DNS 收敛到“与直导正常配置同一套逻辑”，优先恢复单一真相。
 - 如果直导正常而 provider 路径整批失败，优先回到更简单、更接近直导行为的 DNS 链，不要一开始就在复杂分层上继续叠补丁。
-- 如果两份 Mihomo 私有文件里再次出现 `respect-rules: true`、`nameserver-policy`、`proxy-server-nameserver` 或 `fallback` 回流，默认按 DNS 回归处理。
+- 如果两份 Mihomo 私有文件里出现 `respect-rules: true`、白名单外 `nameserver-policy`、`proxy-server-nameserver` 或 `fallback`，默认按 DNS 回归处理；不要误删已批准的 `rule-set:cn-dns-domains` 例外。
 
 ## Surge 例外边界
 
@@ -110,13 +110,13 @@
 ## 安全与隐私边界
 
 - 不要把真实机场地址、Token、控制器密钥、私有设备分流信息写回公开仓库。
-- 方法论可以写“国内 DNS 仅限 bootstrap”“Mihomo 采用单一 DNS 真相”“Surge 可保留复杂 DNS 版本”这类抽象约束，但不要写入真实私有域名或订阅地址。
+- 方法论可以写“国内 DNS 仅限 bootstrap 与明确业务白名单”“Mihomo 采用单一业务 DNS 真相”“Surge 可保留复杂 DNS 版本”这类抽象约束，但不要写入订阅地址或私有基础设施域名。
 - 私有订阅域名同步块继续只在本地私有目录维护，不回写公开模板。
 
 ## 防回滚提醒
 
 - 不要把 Surge 可用的复杂 DNS 版本回灌到任何 Mihomo 私有文件。
-- 不要把 Mihomo 私有文件重新改成 `respect-rules: true + nameserver-policy + proxy-server-nameserver + fallback` 这套多层叠加结构。
+- 不要把 Mihomo 私有文件改成 `respect-rules: true + 多个 nameserver-policy + proxy-server-nameserver + fallback` 这套多层叠加结构；唯一允许的 policy 是 `rule-set:cn-dns-domains`。
 - 不要把 provider `health-check.url` 或 `url-test.url` 改回 HTTP `generate_204`。
 - 不要因为某条规则最终是 `DIRECT`，就把普通目标网站域名重新交给国内 DNS。
 - 如果必须做 DNS 例外，必须把原因、适用客户端、验证结果与回滚条件写清楚。

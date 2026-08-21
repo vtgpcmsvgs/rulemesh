@@ -26,6 +26,7 @@
 - 区域精确规则继续保留，且 `Google US` 与 `AI US` 都必须先于广谱区域规则
 - `AI US` 入口继续作为白名单显式放行项，但当前只承接海外 AI 平台并统一走美国节点；国内 AI 不应借这条入口放行
 - `region/hk/wps_kdocs` 继续作为 WPS Office 与金山文档显式白名单入口，统一走香港自动选择，并必须先于最终拒绝；`[Host]` 同时在 `cn_dns_domains` 前复用该规则集绑定海外 DoH
+- `zsxq.com` 与 `yikaiying.com` 作为本次明确批准的国内性能入口，以两条精确 `DOMAIN-SUFFIX,...,DIRECT` 放在最终拒绝前；不得据此恢复宽泛 `cn_direct`
 - `region/hk/alibaba_hk` 只在已登记个人终端的条件规则中作为香港入口；`[Host]` 在 `cn_dns_domains` 前复用它绑定海外 DoH，以免阿里系域名仍交给国内 DNS，但实际流量放行继续由源地址条件约束
 - `region/hk/hk_brokers` 继续作为香港券商显式放行项，只承接复星证券/复星财富、致富证券、辉立证券与富途，并统一走香港自动选择
 - GitHub 仓库 SSH 定向直连继续保留独立 carve-out
@@ -36,7 +37,7 @@
 - `skip-proxy` 不再包含 Apple `17.0.0.0/8`，避免 macOS 更新流量绕过白名单里的拒绝规则和美国分流入口
 - IPv6 默认关闭，等完成 IPv6 DNS 泄露、WebRTC 与出口测试后再重新评估
 - `hijack-dns = *:53` 负责接管传统 UDP/TCP 53 DNS；加密 DNS 流量只能作为显式白名单入口放行，不能靠 `FINAL` 兜底
-- 海外 `encrypted-dns-server`、`encrypted-dns-follow-outbound-mode = true` 与 `use-local-host-item-for-proxy = false` 继续保留，配合 `[Host]` 中的 GitHub Raw 规则产物解析、`cn_dns_domains` 国内业务域名 DNS 清单与 `proxy-node-domains` 节点 server 域名专用 bootstrap 解析；新增的抖音专项、拼多多与小红书 CDN 域仍只影响 DNS 解析，不新增白名单流量放行
+- 海外 `encrypted-dns-server`、`encrypted-dns-follow-outbound-mode = true` 与 `use-local-host-item-for-proxy = false` 继续保留，配合 `[Host]` 中的 GitHub Raw 规则产物解析、`cn_dns_domains` 国内业务域名 DNS 清单与 `proxy-node-domains` 节点 server 域名专用 bootstrap 解析；除本次明确增加的 `zsxq.com` 与 `yikaiying.com` 两条精确 DIRECT 外，DNS 清单扩充不自动新增白名单流量放行
 - 私有订阅域名同步块继续保留独立显式放行入口，顺序位于 GitHub 观察兜底之后、1Password 之前；端点清单统一在解析后的私人当前配置目录中的 `private_subscription_direct.list` 维护，并以 `-Target surge` 运行同步脚本，先插入 Chrome 访问这些端点时改走 `🚀 节点选择` 的例外，再保留订阅更新直连
 - `proxy/onepassword_proxy.list` 继续保留 `🚀 节点选择`，用于白名单模式下显式放行 1Password 核心连接；其上游快照由仓库每天自动抓取官方支持页生成，但默认只覆盖官方自有核心域名与更新/基础设施端点
 - AdsPower 继续维持 `adspower_reject`、`adspower_direct`、`adspower_proxy` 三段细分

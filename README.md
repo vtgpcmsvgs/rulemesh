@@ -168,8 +168,8 @@ python tools/build_rules.py
 - 操作系统时间同步专项规则统一维护在 `rules/direct/os_time_direct.list`
 - 客户端应显式接入 `direct/os_time_direct`，并放在其他普通 `direct/*` 前，默认保持 `DIRECT`
 - 如果你采用“默认禁更，升级时手动临时放行”的习惯，建议同时接入 `direct/os_time_direct`、`reject/os_update_reject`、`region/us/microsoft_us` 与 `region/us/macos_update_us`；其中 `os_time_direct` 负责系统时间同步直连，其余入口必须放在 `reject` 之后并绑定美国策略
-- 国内业务域名 DNS 白名单统一维护在 `rules/dns/cn_dns_domains.list`，并生成 `dist/surge/dns/cn_dns_domains.list`；该清单只放明确国内业务域名 / 国内域名后缀，不放代理节点 server 域名、订阅入口域名、IP 或复杂规则。小米 / MIUI、国内天气、微信小程序、抖音专项、拼多多与小红书 CDN 等明确依赖在此按服务族维护，避免局域网接管时因海外 DNS 调度异常造成局部数据加载失败；共享风控或统计第三方域名没有专项证据时不自动纳入
-- 因 `cn_dns_domains` 包含宽泛 `.cn` 及阿里系国内域名，Surge 必须在它前面用 `[Host] + RULE-SET` 将已启用的 `region/hk/wps_kdocs` 与按设备启用的 `region/hk/alibaba_hk` 覆盖到海外 DoH；Mihomo 两份私有配置继续保持单一海外 `nameserver`，不恢复复杂 DNS 分层
+- 国内业务域名 DNS 白名单统一维护在 `rules/dns/cn_dns_domains.list`，并生成 `dist/surge/dns/cn_dns_domains.list`；该清单只放明确国内业务域名 / 国内域名后缀，不放代理节点 server 域名、订阅入口域名、IP 或复杂规则。小米 / MIUI、国内天气、微信小程序、抖音专项、拼多多、小红书 CDN、知识星球与已确认国内落地的 `yikaiying.com` 等明确依赖在此按服务族维护，避免海外 DNS 导致国内 CDN 调度偏差；共享风控或统计第三方域名没有专项证据时不自动纳入
+- 因 `cn_dns_domains` 包含宽泛 `.cn` 及阿里系国内域名，Surge 必须在它前面用 `[Host] + RULE-SET` 将已启用的 `region/hk/wps_kdocs` 与按设备启用的 `region/hk/alibaba_hk` 覆盖到海外 DoH；两份 Mihomo 私有配置仅通过 `nameserver-policy."rule-set:cn-dns-domains"` 消费同一白名单，普通目标网站仍只走海外 `nameserver`
 
 其中 Surge 当前建议明确区分两种使用版本：
 
@@ -239,7 +239,8 @@ python tools/build_rules.py
 - 默认让 X / Twitter 网页、短链与静态资源，以及 Polymarket 相关域名优先命中 `region/hk/global_media`，避免落回通用 `proxy/gfw`
 - 默认接入 `jp_domains` 规则提供器；当前用于让 `opinion.trade` 走 `🇯🇵 日本-自动选择`
   - 对两份 Mihomo 私有 provider 配置，当前默认保持 `ipv6: false` 与 `dns.ipv6: false`，优先先把 IPv4、fake-ip 与 DNS 链路做稳；不要因为 Surge 或某次临时实验可用，就把双栈重新开成默认基线
-  - 默认采用 Tun 全量接管、域名嗅探与 DNS 隔离；两份 Mihomo 私有文件当前保持“单一 DNS 真相”版本，普通目标网站域名只走 `nameserver`，不要再默认引入 `proxy-server-nameserver`、`nameserver-policy`、`fallback` 这类多层 DNS 叠加
+  - 默认采用 Tun 全量接管、域名嗅探与 DNS 隔离；两份 Mihomo 私有文件保持“单一业务 DNS 真相”，普通目标网站域名只走海外 `nameserver`，仅允许 `rule-set:cn-dns-domains` 使用国内 DNS；不要引入 `proxy-server-nameserver`、其他 `nameserver-policy` key 或 `fallback`
+  - 普通国际 `MATCH` 使用现有全地区自动选择组，`region/us/ai_us` 继续固定美国组；provider 与 `url-test` 统一 300 秒主动检测
   - 同样不承载私有 Surge 工作路由白名单特化
 
 ## 当前设计原则
@@ -340,8 +341,8 @@ python tools/build_rules.py
 - 详细背景、禁止事项与改动前检查清单见 [docs/proxy-group-filter-methodology.md](docs/proxy-group-filter-methodology.md)
 - 如果本地同时维护 Clash Verge Rev 与 Clash Meta for Android，建议分别维护 `rulemesh-substore-mihomo-clash-verge.yaml` 与 `rulemesh-substore-mihomo-clash-meta.yaml`
 - 四份私有配置不是同一套 DNS 方法论：两份 Surge 私有配置允许继续保留 Surge 自己可用的复杂 DNS 版本；两份 Mihomo 私有配置默认不允许照搬这套结构
-- 对 `rulemesh-substore-mihomo-clash-verge.yaml` 与 `rulemesh-substore-mihomo-clash-meta.yaml`，默认保持“单一 DNS 真相”版本：`ipv6: false`、`use-hosts: false`、`use-system-hosts: false`，`dns:` 里只保留 `default-nameserver`、`nameserver`、`fake-ip-filter` 等最小必需字段
-- 未经用户明确确认与运行时复测，不要在两份 Mihomo 私有文件里恢复 `respect-rules: true`、`nameserver-policy`、`proxy-server-nameserver`、`proxy-server-nameserver-policy`、`direct-nameserver`、`fallback`
+- 对 `rulemesh-substore-mihomo-clash-verge.yaml` 与 `rulemesh-substore-mihomo-clash-meta.yaml`，默认保持“单一业务 DNS 真相”版本：`ipv6: false`、`use-hosts: false`、`use-system-hosts: false`、`respect-rules: false`；普通目标网站域名只走海外 `nameserver`
+- 2026-08-21 经用户明确批准并完成运行时复测后，两份私有文件只允许 `nameserver-policy."rule-set:cn-dns-domains"` 作为国内业务白名单例外；其他 policy key 与 `proxy-server-nameserver`、`proxy-server-nameserver-policy`、`direct-nameserver`、`fallback` 继续禁止
 - Mihomo 私有文件里的 provider `health-check.url` 与 `url-test` 组测速 URL 统一使用 HTTPS `https://www.google.com/generate_204`，不要改回 HTTP
 - 如果把 `rulemesh-substore-mihomo-clash-verge.yaml` 当成 Clash Verge Rev 的日常主配置，建议在客户端“订阅”页对这份本地配置右键“编辑信息”，把 `更新时间隔` 设为 `720` 分钟，作为默认维护基线
 - 这项 `720` 分钟设置不写回 YAML，而是保存在每台设备自己的 Clash Verge Rev profile 元数据里；换设备后需要重新设置一次
@@ -350,7 +351,7 @@ python tools/build_rules.py
 - 如果明确保留 Clash Verge Rev 的 `DNS 覆写`，则应把 `dns_config.yaml` 视为实际生效的 `dns` 单一真相，而不是继续假设源文件里的 `dns:` 会原样生效
 - 如果关闭 Clash Verge Rev 的 `DNS 覆写` 后出现“国内可访问、国外代理不通”，默认先确认桌面端私有文件是否被改离了“单一 DNS 真相”版本，而不是先回滚规则顺序或怀疑节点本身
 - 如果某个 provider 在 Clash Verge Rev 私有链路里整批测速失败，但把同一订阅直接导入客户端又正常，默认先按 [docs/mihomo-tun-dns-methodology.md](docs/mihomo-tun-dns-methodology.md) 对比运行时 `dns:`，优先排查 DNS 链差异，不要先把问题归因到节点本身
-- 如果两份 Mihomo 私有文件里再次出现 `nameserver-policy`、`proxy-server-nameserver`、`fallback` 或 `respect-rules: true` 回流，默认按 DNS 回归处理，优先恢复到“单一 DNS 真相”版本，而不是继续在复杂分层上叠补丁
+- 如果两份 Mihomo 私有文件里出现白名单外 `nameserver-policy`、`proxy-server-nameserver`、`fallback` 或 `respect-rules: true`，默认按 DNS 回归处理；已批准的 `rule-set:cn-dns-domains` 例外不应被误删
 - 对 Clash Meta for Android 的兼容性调整，默认也先保持“单一 DNS 真相”版本；只有在用户明确确认且 Android 运行时复测证明必须特化时，才允许为 Android 单独增加例外
 - 这组私有订阅域名同步规则只记录在本地目录与私有文档约定中，不回写公开 `rules/`、`dist/` 或公开模板
 - 详细维护方式见 [docs/private-subscription-direct-sync.md](docs/private-subscription-direct-sync.md)
