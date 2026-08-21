@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import re
 import sys
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -25,8 +26,9 @@ MIHOMO_PROFILES = {
     "rulemesh-substore-mihomo-clash-meta.yaml",
 }
 ROUTING_CATEGORIES = {"reject", "proxy", "region"}
+AI_US_RULE_IDENTIFIER = "region/us/ai_us"
 DOMAIN_RULE = re.compile(
-    r"(?:^|[(,])DOMAIN(?:-SUFFIX|-KEYWORD|-WILDCARD)?\s*,",
+    r"(?:^|[(,])DOMAIN(?:-SUFFIX|-KEYWORD|-WILDCARD|-REGEX)?\s*,",
     re.IGNORECASE,
 )
 OVERSEAS_DNS_HOSTS = {
@@ -34,6 +36,7 @@ OVERSEAS_DNS_HOSTS = {
     "dns.google",
     "dns.quad9.net",
 }
+DOMESTIC_DNS_HOSTS = {"dns.alidns.com", "doh.pub"}
 SAFE_NAMESERVER_DIGEST_HEX_LENGTH = 16
 
 
@@ -70,6 +73,40 @@ class _PolicyEntry:
     line: int
     providers: tuple[str, ...]
     nameservers: tuple[str, ...]
+    is_rule_set: bool = True
+
+
+def _dns_endpoint_hostname(value: str) -> str | None:
+    if value.strip().startswith(("&", "*")):
+        return None
+    parsed = urlsplit(value.strip())
+    try:
+        port = parsed.port
+    except ValueError:
+        return None
+    if (
+        parsed.scheme.lower() != "https"
+        or not parsed.hostname
+        or parsed.username is not None
+        or parsed.password is not None
+        or port not in {None, 443}
+        or parsed.path != "/dns-query"
+        or parsed.query
+    ):
+        return None
+    return parsed.hostname.lower()
+
+
+def _is_approved_overseas_dns(value: str) -> bool:
+    return _dns_endpoint_hostname(value) in OVERSEAS_DNS_HOSTS
+
+
+def _is_approved_domestic_dns(value: str) -> bool:
+    return _dns_endpoint_hostname(value) in DOMESTIC_DNS_HOSTS
+
+
+def _contains_yaml_reference(values: tuple[str, ...]) -> bool:
+    return any(value.strip().startswith(("&", "*")) for value in values)
 
 
 def _scalar(value: str) -> str:
@@ -159,6 +196,23 @@ def required_surge_exceptions(
         ):
             required.append(rule.identifier)
     return required
+
+
+def _surge_ai_route(
+    lines: list[str], public_root: Path
+) -> tuple[int, str] | None:
+    for line_number, line in _active_surge_section(lines, "Rule"):
+        parts = [part.strip() for part in line.split(",", 2)]
+        if len(parts) < 3 or parts[0].upper() != "RULE-SET":
+            continue
+        rule = _public_rule_from_url(parts[1], public_root, "surge")
+        if not rule:
+            continue
+        if rule.category == "direct" and rule.identifier.endswith("/cn_direct"):
+            break
+        if rule.identifier == AI_US_RULE_IDENTIFIER:
+            return line_number, _scalar(parts[2])
+    return None
 
 
 def _parse_mihomo_providers(lines: list[str]) -> dict[str, tuple[int, str]]:
@@ -257,20 +311,24 @@ def _parse_mihomo_dns(
     current_policy_line = 0
     current_policy_providers: tuple[str, ...] = ()
     current_policy_nameservers: list[str] = []
+    current_policy_is_rule_set = True
 
     def finish_policy() -> None:
         nonlocal current_policy_line, current_policy_providers
+        nonlocal current_policy_is_rule_set
         if current_policy_line:
             policies.append(
                 _PolicyEntry(
                     current_policy_line,
                     current_policy_providers,
                     tuple(current_policy_nameservers),
+                    current_policy_is_rule_set,
                 )
             )
         current_policy_line = 0
         current_policy_providers = ()
         current_policy_nameservers.clear()
+        current_policy_is_rule_set = True
 
     for line_number, line in enumerate(lines, start=1):
         top_level = re.match(r"^([A-Za-z0-9_-]+):\s*(?:#.*)?$", line)
@@ -287,8 +345,18 @@ def _parse_mihomo_dns(
         if key:
             finish_policy()
             dns_key = key.group(1)
+            inline_value = key.group(2).split(" #", 1)[0].strip()
             if dns_key == "nameserver":
-                nameservers.extend(_parse_inline_or_scalar(key.group(2)))
+                nameservers.extend(_parse_inline_or_scalar(inline_value))
+            elif dns_key == "nameserver-policy" and inline_value:
+                policies.append(
+                    _PolicyEntry(
+                        line_number,
+                        (),
+                        _parse_inline_or_scalar(inline_value),
+                        False,
+                    )
+                )
             continue
 
         if dns_key == "nameserver":
@@ -304,16 +372,19 @@ def _parse_mihomo_dns(
             finish_policy()
             parts = re.split(r":(?=\s|$)", line.strip(), maxsplit=1)
             if len(parts) != 2:
+                policies.append(_PolicyEntry(line_number, (), (), False))
                 continue
             policy_key = _scalar(parts[0])
-            if not policy_key.lower().startswith("rule-set:"):
-                continue
-            provider_text = policy_key[len("rule-set:") :]
-            current_policy_providers = tuple(
-                item.removeprefix("rule-set:").strip()
-                for item in provider_text.split(",")
-                if item.strip()
-            )
+            current_policy_is_rule_set = policy_key.lower().startswith("rule-set:")
+            if current_policy_is_rule_set:
+                provider_text = policy_key[len("rule-set:") :]
+                current_policy_providers = tuple(
+                    item.removeprefix("rule-set:").strip()
+                    for item in provider_text.split(",")
+                    if item.strip()
+                )
+            else:
+                current_policy_providers = ()
             current_policy_line = line_number
             current_policy_nameservers.extend(_parse_inline_or_scalar(parts[1]))
             continue
@@ -333,8 +404,14 @@ def _is_overseas_surge_dns(value: str) -> bool:
     server = re.fullmatch(r"server:\s*(\S+)", value.strip(), re.IGNORECASE)
     if not server:
         return False
-    hostname = urlsplit(server.group(1)).hostname
-    return bool(hostname and hostname.lower() in OVERSEAS_DNS_HOSTS)
+    return _is_approved_overseas_dns(server.group(1))
+
+
+def _is_us_target(value: str) -> bool:
+    lowered = value.lower()
+    return "美国" in value or bool(
+        re.search(r"(^|[^a-z])us([^a-z]|$)", lowered)
+    )
 
 
 def _surge_host_entries(
@@ -364,6 +441,25 @@ def _validate_surge_personal(
     findings: list[DnsPrecedenceFinding] = []
     required = required_surge_exceptions(lines, public_root)
     exceptions, performance_line = _surge_host_entries(lines, public_root)
+    ai_route = _surge_ai_route(lines, public_root)
+    if ai_route is None:
+        findings.append(
+            DnsPrecedenceFinding(
+                path,
+                1,
+                f"Surge Personal 缺少位于中国兜底前的规范 {AI_US_RULE_IDENTIFIER} 路由。",
+                "恢复规范公开 AI RULE-SET，并保持美国出口与海外 DNS 例外。",
+            )
+        )
+    elif not _is_us_target(ai_route[1]):
+        findings.append(
+            DnsPrecedenceFinding(
+                path,
+                ai_route[0],
+                f"规范 {AI_US_RULE_IDENTIFIER} 必须路由到美国策略组。",
+                "恢复 OpenAI / ChatGPT 的固定美国出口。",
+            )
+        )
     if performance_line is None:
         findings.append(
             DnsPrecedenceFinding(
@@ -401,21 +497,47 @@ def _validate_surge_personal(
     return findings
 
 
-def _performance_provider_name(lines: list[str]) -> tuple[int, str] | None:
+def _performance_providers(lines: list[str]) -> list[tuple[int, str]]:
+    result: list[tuple[int, str]] = []
     for name, (line_number, url) in _parse_mihomo_providers(lines).items():
-        if "cn_performance_dns_domains.list" in url.lower():
-            return line_number, name
+        parsed = urlsplit(url)
+        if parsed.path.replace("\\", "/").lower().endswith(
+            "/dist/surge/dns/cn_performance_dns_domains.list"
+        ):
+            result.append((line_number, name))
+    return result
+
+
+def _mihomo_ai_route(
+    lines: list[str], public_root: Path
+) -> tuple[int, str] | None:
+    providers = _parse_mihomo_providers(lines)
+    public_rules = {
+        name: _public_rule_from_url(url, public_root, "mihomo")
+        for name, (_, url) in providers.items()
+    }
+    for line_number, parts in _parse_mihomo_rules(lines):
+        if len(parts) < 2 or parts[0].upper() != "RULE-SET":
+            continue
+        rule = public_rules.get(parts[1])
+        if not rule:
+            continue
+        if rule.category == "direct" and rule.identifier.endswith("/cn_direct"):
+            break
+        if rule.identifier == AI_US_RULE_IDENTIFIER:
+            return line_number, parts[2] if len(parts) >= 3 else ""
     return None
-
-
-def _is_ai_us_provider(name: str) -> bool:
-    return name.strip().lower() in {"ai-us", "us_ai"}
 
 
 def _validate_mihomo(
     path: Path, lines: list[str], public_root: Path
 ) -> list[DnsPrecedenceFinding]:
     findings: list[DnsPrecedenceFinding] = []
+    providers = _parse_mihomo_providers(lines)
+    public_rules = {
+        name: _public_rule_from_url(url, public_root, "mihomo")
+        for name, (_, url) in providers.items()
+    }
     required = required_mihomo_exceptions(lines, public_root)
     nameservers, policies = _parse_mihomo_dns(lines)
     if not nameservers:
@@ -427,7 +549,32 @@ def _validate_mihomo(
                 "恢复默认海外 dns.nameserver 数组，再让高优先级 policy 与其完全相同。",
             )
         )
-    performance_provider = _performance_provider_name(lines)
+    elif not all(_is_approved_overseas_dns(value) for value in nameservers):
+        findings.append(
+            DnsPrecedenceFinding(
+                path,
+                1,
+                "Mihomo dns.nameserver 必须逐项使用已批准的默认海外端点。",
+                "仅使用 Cloudflare、Google 或 Quad9 的官方 HTTPS /dns-query endpoint。",
+            )
+        )
+
+    if _contains_yaml_reference(nameservers) or any(
+        _contains_yaml_reference(policy.nameservers) for policy in policies
+    ):
+        findings.append(
+            DnsPrecedenceFinding(
+                path,
+                1,
+                "Mihomo DNS 子集不接受未解析的 YAML anchor/alias。",
+                "展开为显式 nameserver 与 nameserver-policy 数组后再校验。",
+            )
+        )
+
+    performance_providers = _performance_providers(lines)
+    performance_provider = (
+        performance_providers[0] if len(performance_providers) == 1 else None
+    )
     performance_policy: _PolicyEntry | None = None
     if performance_provider:
         performance_policy = next(
@@ -448,17 +595,72 @@ def _validate_mihomo(
             )
         )
 
-    if not any(_is_ai_us_provider(name) for name in required):
+    expected_policy_providers = Counter(required)
+    if performance_provider:
+        expected_policy_providers[performance_provider[1]] += 1
+    actual_policy_providers = Counter(
+        provider
+        for policy in policies
+        if policy.is_rule_set
+        for provider in policy.providers
+    )
+    if (
+        any(
+            not policy.is_rule_set or not policy.providers
+            for policy in policies
+        )
+        or actual_policy_providers != expected_policy_providers
+    ):
         findings.append(
             DnsPrecedenceFinding(
                 path,
                 1,
-                "Mihomo 缺少位于中国兜底前的 ai-us/us_ai 高优先级域名规则。",
-                "保留 OpenAI / ChatGPT 的美国路由，并把该 rule-set 加入海外 DNS 例外。",
+                "Mihomo nameserver-policy 包含未登记、缺失或重复项。",
+                "精确保留真实 required 海外 policy 与唯一性能型中国 DNS policy。",
+            )
+        )
+
+    if performance_policy and (
+        not performance_policy.nameservers
+        or not all(
+            _is_approved_domestic_dns(value)
+            for value in performance_policy.nameservers
+        )
+    ):
+        findings.append(
+            DnsPrecedenceFinding(
+                path,
+                performance_policy.line,
+                "性能型中国 DNS policy 必须逐项使用已批准的国内 DNS endpoint。",
+                "使用 AliDNS 或 DNSPod 的官方 HTTPS /dns-query endpoint。",
+            )
+        )
+
+    ai_route = _mihomo_ai_route(lines, public_root)
+    if ai_route is None:
+        findings.append(
+            DnsPrecedenceFinding(
+                path,
+                1,
+                f"Mihomo 缺少位于中国兜底前的规范 {AI_US_RULE_IDENTIFIER} 路由。",
+                "恢复规范公开 AI provider、美国出口与海外 DNS policy。",
+            )
+        )
+    elif not _is_us_target(ai_route[1]):
+        findings.append(
+            DnsPrecedenceFinding(
+                path,
+                ai_route[0],
+                f"规范 {AI_US_RULE_IDENTIFIER} 必须路由到美国策略组。",
+                "恢复 OpenAI / ChatGPT 的固定美国出口。",
             )
         )
 
     for provider_name in required:
+        public_rule = public_rules.get(provider_name)
+        identifier = (
+            public_rule.identifier if public_rule else "公开高优先级规则集"
+        )
         matching = [
             policy for policy in policies if provider_name in policy.providers
         ]
@@ -469,9 +671,9 @@ def _validate_mihomo(
         ]
         if not overseas:
             message = (
-                f"高优先级域名规则集 {provider_name} 缺少海外 DNS policy。"
+                f"高优先级域名规则集 {identifier} 缺少海外 DNS policy。"
                 if not matching
-                else f"高优先级域名规则集 {provider_name} 的 policy 必须与 dns.nameserver 完全相同。"
+                else f"高优先级域名规则集 {identifier} 的 policy 必须与 dns.nameserver 完全相同。"
             )
             findings.append(
                 DnsPrecedenceFinding(
@@ -489,7 +691,7 @@ def _validate_mihomo(
                 DnsPrecedenceFinding(
                     path,
                     overseas[0].line,
-                    f"高优先级域名规则集 {provider_name} 的海外 policy 位于性能型中国 DNS 之后。",
+                    f"高优先级域名规则集 {identifier} 的海外 policy 位于性能型中国 DNS 之后。",
                     "把该 rule-set 的海外 policy 移到性能型中国 DNS policy 之前。",
                 )
             )
