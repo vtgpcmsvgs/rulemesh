@@ -261,13 +261,22 @@ class RepoInvariantTests(unittest.TestCase):
             ".xhscdn.net",
             ".xiaohongshu.com",
             ".xiaomi.net",
+            ".yikaiying.com",
             ".yangkeduo.com",
+            ".zsxq.com",
             "lf3-static.bytednsdoc.com",
             "v5-dy-o-abtest.zjcdn.com",
         }
         self.assertEqual(len(entries), len(unique_entries), "国内 DNS 清单仍有重复项")
-        self.assertEqual(len(entries), 239)
+        self.assertEqual(len(entries), 241)
         self.assertTrue(expected <= unique_entries, sorted(expected - unique_entries))
+
+    def test_yikaiying_keeps_explicit_cn_direct_fallback(self) -> None:
+        source = (ROOT / "rules" / "direct" / "cn_direct.list").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertEqual(source.count("DOMAIN-SUFFIX,yikaiying.com"), 1)
 
     def test_domestic_direct_rules_precede_hk_global_media(self) -> None:
         surge = (ROOT / "docs" / "examples" / "surge-public.conf").read_text(

@@ -116878,4 +116878,5 @@ IP-CIDR6,2c0f:f7a8:8211::/48,no-resolve
 IP-CIDR6,2c0f:f7a8:9020::/48,no-resolve
 IP-CIDR6,2c0f:f7a8:9041::/48,no-resolve
 IP-CIDR6,2c0f:f7a8:9220::/48,no-resolve
+DOMAIN-SUFFIX,yikaiying.com
 GEOIP,CN,no-resolve

@@ -8,6 +8,9 @@
 INCLUDE,upstream/loyalsoldier/direct.txt
 INCLUDE,upstream/loyalsoldier/cncidr.txt
 
+# 中国大陆明确站点兜底：补充尚未稳定进入上游的国内落地域名。
+DOMAIN-SUFFIX,yikaiying.com
+
 # 中国大陆最高优先级兜底：保留 .cn 与 GEOIP,CN 两条最宽泛的基础兜底。
 DOMAIN-SUFFIX,cn
 GEOIP,CN
