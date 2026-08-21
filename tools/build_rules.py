@@ -724,17 +724,27 @@ def normalize_dns_domain_set_entry(raw: str) -> str:
     return normalize_domain_exact(text)
 
 
+def normalize_dns_source_entry(source_line: SourceLine) -> str:
+    entry = normalize_dns_domain_set_entry(source_line.raw)
+    relative = source_line.path.resolve().relative_to(RULES_ROOT.resolve())
+    if relative.parts and relative.parts[0] == "upstream" and not entry.startswith("."):
+        return normalize_domain_suffix(entry)
+    return entry
+
+
 def build_dns_domain_set_source(path: Path) -> SourceBuildResult:
     relative = path.relative_to(RULES_ROOT)
     entries: list[str] = []
 
-    for line_no, raw in enumerate(read_text(path).splitlines(), start=1):
-        if is_comment_or_blank(raw):
+    for source_line in expand_source_lines(path):
+        if is_comment_or_blank(source_line.raw):
             continue
         try:
-            entries.append(normalize_dns_domain_set_entry(raw))
+            entries.append(normalize_dns_source_entry(source_line))
         except ValueError as exc:
-            raise BuildError(f"{repo_relative_path(path)}:{line_no} {exc}") from exc
+            raise BuildError(
+                f"{repo_relative_path(source_line.path)}:{source_line.line_no} {exc}"
+            ) from exc
 
     return SourceBuildResult(
         relative_path=relative,

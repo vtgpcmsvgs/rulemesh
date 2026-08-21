@@ -225,6 +225,18 @@ sources:
         - repo: AWS ip-ranges.json
           note: 每日同步全部 ap-east-2 IPv4 前缀到 rules/upstream/aws/taipei_ipv4.txt
 
+  dns:
+    cn_dns_domains.list:
+      preferred:
+        - repo: self
+          note: 小型人工国内业务 DNS 白名单，供工作白名单等需要严格控制国内 DNS 范围的配置使用
+    cn_performance_dns_domains.list:
+      preferred:
+        - repo: self
+          note: 性能型中国 DNS 清单，只供性能配置使用；合并上游中国直连域名主体与小型人工 DNS 白名单，不替代工作白名单清单
+        - repo: Loyalsoldier/surge-rules
+          note: 负责 direct.txt 中国直连域名主体；构建时普通域名统一转换为 DNS 域名后缀语义
+
 runtime:
   shared_geoip_mmdb:
     preferred:

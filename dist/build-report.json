@@ -3,9 +3,9 @@
     "domain-only": 7,
     "ipcidr-only": 7,
     "classical/mixed": 22,
-    "dns-domain-set": 1,
+    "dns-domain-set": 2,
     "empty": 0,
-    "total_sources": 37,
+    "total_sources": 38,
     "total_warnings": 0
   },
   "sources": [
@@ -486,6 +486,17 @@
       },
       "dist": {
         "surge_dns_domains": "dist/surge/dns/cn_dns_domains.list"
+      }
+    },
+    {
+      "source": "rules/dns/cn_performance_dns_domains.list",
+      "category": "dns",
+      "classification": "dns-domain-set",
+      "counts": {
+        "surge_dns_domains": 111484
+      },
+      "dist": {
+        "surge_dns_domains": "dist/surge/dns/cn_performance_dns_domains.list"
       }
     }
   ],

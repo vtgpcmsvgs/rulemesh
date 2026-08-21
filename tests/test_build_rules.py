@@ -228,6 +228,46 @@ class TempRepoBuildRulesTests(unittest.TestCase):
             [".qq.com", ".baidu.com", "jd.com"],
         )
 
+    def test_dns_domain_set_include_promotes_upstream_domains_to_suffix(self) -> None:
+        upstream = self.rules_root / "upstream" / "loyalsoldier" / "direct.txt"
+        upstream.parent.mkdir(parents=True, exist_ok=True)
+        upstream.write_text("Example.COM\n", encoding="utf-8")
+        curated = self.rules_root / "dns" / "cn_dns_domains.list"
+        curated.parent.mkdir(parents=True, exist_ok=True)
+        curated.write_text("exact.example\n.example.cn\n", encoding="utf-8")
+        performance = self.rules_root / "dns" / "cn_performance_dns_domains.list"
+        performance.write_text(
+            "INCLUDE,upstream/loyalsoldier/direct.txt\n"
+            "INCLUDE,dns/cn_dns_domains.list\n"
+            ".example.com\n",
+            encoding="utf-8",
+        )
+
+        with self.patch_repo_paths():
+            result = build_rules.build_dns_domain_set_source(performance)
+
+        self.assertEqual(
+            result.outputs["surge_dns_domains"],
+            [".example.com", "exact.example", ".example.cn"],
+        )
+
+    def test_dns_domain_set_include_reports_included_ip_source_location(self) -> None:
+        upstream = self.rules_root / "upstream" / "loyalsoldier" / "direct.txt"
+        upstream.parent.mkdir(parents=True, exist_ok=True)
+        upstream.write_text("203.0.113.1\n", encoding="utf-8")
+        performance = self.rules_root / "dns" / "cn_performance_dns_domains.list"
+        performance.parent.mkdir(parents=True, exist_ok=True)
+        performance.write_text(
+            "INCLUDE,upstream/loyalsoldier/direct.txt\n",
+            encoding="utf-8",
+        )
+
+        with self.patch_repo_paths():
+            with self.assertRaises(build_rules.BuildError) as context:
+                build_rules.build_dns_domain_set_source(performance)
+
+        self.assertIn("rules/upstream/loyalsoldier/direct.txt:1", str(context.exception))
+
 
 if __name__ == "__main__":
     unittest.main()

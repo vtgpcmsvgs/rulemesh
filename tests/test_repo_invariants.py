@@ -1,5 +1,6 @@
 import contextlib
 import io
+import ipaddress
 import json
 import re
 import sys
@@ -70,9 +71,10 @@ def collect_sources_yaml_entries() -> list[str]:
     pattern = re.compile(r"^\s{4}([A-Za-z0-9_./-]+\.list):\s*$")
     path = ROOT / "rules" / "upstream" / "sources.yaml"
     for raw in path.read_text(encoding="utf-8").splitlines():
-        header = re.match(r"^\s{2}(reject|direct|proxy|region):\s*$", raw)
+        header = re.match(r"^\s{2}([a-z]+):\s*$", raw)
         if header:
-            category = header.group(1)
+            candidate = header.group(1)
+            category = candidate if candidate in SOURCE_RULE_GROUPS else None
             continue
         match = pattern.match(raw)
         if not match or not category:
@@ -86,7 +88,9 @@ def collect_sources_yaml_entries() -> list[str]:
 
 
 def collect_merge_yaml_targets() -> list[str]:
-    pattern = re.compile(r"^\s*target:\s+rules/([A-Za-z0-9_./-]+\.list)\s*$")
+    pattern = re.compile(
+        r"^\s*target:\s+rules/((?:reject|direct|proxy|region)/[A-Za-z0-9_./-]+\.list)\s*$"
+    )
     path = ROOT / "rules" / "upstream" / "merge.yaml"
     targets = [
         match.group(1)
@@ -270,6 +274,25 @@ class RepoInvariantTests(unittest.TestCase):
         self.assertEqual(len(entries), len(unique_entries), "国内 DNS 清单仍有重复项")
         self.assertEqual(len(entries), 241)
         self.assertTrue(expected <= unique_entries, sorted(expected - unique_entries))
+
+    def test_cn_performance_dns_domains_cover_curated_and_upstream_domains(self) -> None:
+        path = ROOT / "dist" / "surge" / "dns" / "cn_performance_dns_domains.list"
+        domains = [
+            line.strip().lower()
+            for line in path.read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.lstrip().startswith("#")
+        ]
+
+        self.assertGreaterEqual(len(domains), 100_000)
+        self.assertIn(".2mdn-cn.net", domains)
+        self.assertIn(".yikaiying.com", domains)
+        self.assertIn(".zsxq.com", domains)
+        for domain in domains:
+            self.assertNotIn(",", domain, f"性能型 DNS 清单不能包含逗号分隔规则：{domain}"
+            )
+            self.assertNotIn("/", domain, f"性能型 DNS 清单不能包含路径或 IP-CIDR：{domain}")
+            with self.assertRaises(ValueError):
+                ipaddress.ip_address(domain.lstrip("."))
 
     def test_yikaiying_keeps_explicit_cn_direct_fallback(self) -> None:
         source = (ROOT / "rules" / "direct" / "cn_direct.list").read_text(

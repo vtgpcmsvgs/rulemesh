@@ -376,6 +376,17 @@ merge_plan:
       - keep_small_and_readable
       - manual_only
 
+  - id: cn-performance-dns-domains
+    target: rules/dns/cn_performance_dns_domains.list
+    purpose: 性能配置使用的中国 DNS 域名集合
+    strategy:
+      - include_loyalsoldier_direct_then_curated_dns_domains
+      - promote_upstream_plain_domains_to_dns_suffix
+      - performance_config_only
+    notes:
+      - 合并 Loyalsoldier 中国直连域名主体与 cn_dns_domains 小型人工白名单，并保持首次出现顺序去重
+      - 只供性能配置引用，不替代工作白名单继续使用的小型 cn_dns_domains 清单
+
 runtime_plan:
   - id: shared-geoip-mmdb
     target: runtime/geodata/shared_country_mmdb

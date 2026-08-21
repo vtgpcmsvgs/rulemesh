@@ -1,0 +1,6 @@
+# 性能型中国 DNS 域名清单：供 Personal Surge 与 Mihomo 性能配置使用。
+# 用途：合并中国直连上游主体和人工国内业务白名单，减少国内 CDN 因海外 DNS 解析产生的调度偏差。
+# 边界：不替代 cn_dns_domains 的小型白名单语义；工作白名单继续只引用小型清单。
+
+INCLUDE,upstream/loyalsoldier/direct.txt
+INCLUDE,dns/cn_dns_domains.list
