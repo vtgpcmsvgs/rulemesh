@@ -1,0 +1,135 @@
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+TOOLS_DIR = ROOT / "tools"
+if str(TOOLS_DIR) not in sys.path:
+    sys.path.insert(0, str(TOOLS_DIR))
+
+import check_private_performance  # noqa: E402
+
+
+class PrivatePerformanceTests(unittest.TestCase):
+    def write_temp(self, name: str, content: str) -> Path:
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        path = Path(temporary.name) / name
+        path.write_text(content, encoding="utf-8")
+        return path
+
+    def test_surge_personal_rejects_us_final(self) -> None:
+        path = self.write_temp(
+            "rulemesh-substore-surge-personal.conf",
+            """[Proxy Group]
+全地区自动选择 = smart, policy-path=a
+美国自动选择 = smart, policy-path=b, policy-regex-filter=美国|US
+
+[Rule]
+FINAL,美国自动选择,dns-failed
+""",
+        )
+
+        findings = check_private_performance.validate_profile(path)
+
+        self.assertTrue(any("通用 FINAL" in item.message for item in findings))
+
+    def test_surge_work_requires_exact_domestic_entries(self) -> None:
+        path = self.write_temp(
+            "rulemesh-substore-surge-work-whitelist.conf",
+            """[Rule]
+RULE-SET,allowed,DIRECT
+FINAL,REJECT
+""",
+        )
+
+        messages = [
+            item.message for item in check_private_performance.validate_profile(path)
+        ]
+
+        self.assertTrue(any("zsxq.com" in message for message in messages))
+        self.assertTrue(any("yikaiying.com" in message for message in messages))
+
+    def test_mihomo_rejects_stale_health_and_us_match(self) -> None:
+        path = self.write_temp(
+            "rulemesh-substore-mihomo-clash-verge.yaml",
+            self.mihomo_fixture(interval=900, lazy="true", match="美国自动选择", tolerance=150),
+        )
+
+        messages = [
+            item.message for item in check_private_performance.validate_profile(path)
+        ]
+
+        self.assertTrue(any("300" in message for message in messages))
+        self.assertTrue(any("MATCH" in message for message in messages))
+        self.assertTrue(any("tolerance" in message for message in messages))
+
+    def test_accepts_performance_first_profiles(self) -> None:
+        personal = self.write_temp(
+            "rulemesh-substore-surge-personal.conf",
+            """[Proxy Group]
+全地区自动选择 = smart, policy-path=a
+美国自动选择 = smart, policy-path=b, policy-regex-filter=美国|US
+
+[Rule]
+FINAL,全地区自动选择,dns-failed
+""",
+        )
+        work = self.write_temp(
+            "rulemesh-substore-surge-work-whitelist.conf",
+            """[Rule]
+DOMAIN-SUFFIX,zsxq.com,DIRECT
+DOMAIN-SUFFIX,yikaiying.com,DIRECT
+FINAL,REJECT
+""",
+        )
+        mihomo = self.write_temp(
+            "rulemesh-substore-mihomo-clash-meta.yaml",
+            self.mihomo_fixture(interval=300, lazy="false", match="全地区自动选择", tolerance=100),
+        )
+
+        for path in (personal, work, mihomo):
+            self.assertEqual(check_private_performance.validate_profile(path), [])
+
+    @staticmethod
+    def mihomo_fixture(
+        *, interval: int, lazy: str, match: str, tolerance: int
+    ) -> str:
+        return f"""proxy-providers:
+  provider-a:
+    type: http
+    proxy: DIRECT
+    health-check:
+      enable: true
+      url: https://www.google.com/generate_204
+      interval: {interval}
+      timeout: 5000
+      lazy: {lazy}
+proxy-groups:
+  - name: 全地区自动选择
+    type: url-test
+    use:
+      - provider-a
+    url: https://www.google.com/generate_204
+    interval: {interval}
+    tolerance: 50
+    lazy: {lazy}
+  - name: 美国自动选择
+    type: url-test
+    use:
+      - provider-a
+    filter: 美国|US
+    url: https://www.google.com/generate_204
+    interval: {interval}
+    tolerance: {tolerance}
+    lazy: {lazy}
+rules:
+  - RULE-SET,region-us-ai,美国自动选择
+  - MATCH,{match}
+"""
+
+
+if __name__ == "__main__":
+    unittest.main()

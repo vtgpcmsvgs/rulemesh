@@ -140,6 +140,26 @@ function Invoke-DnsSafetyValidation {
     }
 }
 
+function Invoke-PrivatePerformanceValidation {
+    $python = Resolve-PythonCommand
+    $performanceScript = Join-Path $PSScriptRoot "check_private_performance.py"
+    $env:PYTHONUTF8 = "1"
+    $env:PYTHONDONTWRITEBYTECODE = "1"
+
+    Write-Host ("[check] validate private performance with {0}: {1}" -f $python.Label, $python.Value)
+
+    if ($python.Kind -eq "Launcher") {
+        & $python.Value -3 -B -X utf8 $performanceScript
+    }
+    else {
+        & $python.Value -B -X utf8 $performanceScript
+    }
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "Private performance validation failed."
+    }
+}
+
 function Invoke-ChangeGuardrailValidation {
     $python = Resolve-PythonCommand
     $guardrailScript = Join-Path $PSScriptRoot "check_change_guardrails.py"
@@ -252,6 +272,9 @@ Invoke-PrivateRepositoryRegistrationValidation
 
 Write-Host "[check] validate DNS safety"
 Invoke-DnsSafetyValidation
+
+Write-Host "[check] validate private performance"
+Invoke-PrivatePerformanceValidation
 
 Invoke-UnitTests
 
