@@ -270,7 +270,24 @@ proxy-providers: {}
 
         self.assertEqual(check_dns_safety.validate_path(path), [])
 
-    def test_private_mihomo_rejects_unapproved_nameserver_policy_key(self) -> None:
+    def test_mihomo_private_accepts_overseas_rule_set_policy(self) -> None:
+        path = self.write_temp(
+            "rulemesh-substore-mihomo-clash-meta.yaml",
+            """dns:
+  default-nameserver:
+    - 223.5.5.5
+  nameserver:
+    - https://cloudflare-dns.com/dns-query
+  nameserver-policy:
+    "rule-set:us-ai":
+      - https://dns.google/dns-query
+proxy-providers: {}
+""",
+        )
+
+        self.assertEqual(check_dns_safety.validate_path(path), [])
+
+    def test_mihomo_private_rejects_domestic_dns_for_overseas_rule_set(self) -> None:
         path = self.write_temp(
             "rulemesh-substore-mihomo-clash-meta.yaml",
             """ipv6: false
@@ -294,7 +311,24 @@ proxy-providers: {}
         findings = check_dns_safety.validate_path(path)
 
         self.assertTrue(any("nameserver-policy" in item.message for item in findings))
-        self.assertTrue(any("仅允许" in item.message for item in findings))
+        self.assertTrue(any("国内 DNS" in item.message for item in findings))
+
+    def test_mihomo_private_accepts_performance_cn_dns_policy(self) -> None:
+        path = self.write_temp(
+            "rulemesh-substore-mihomo-clash-verge.yaml",
+            """dns:
+  default-nameserver:
+    - 223.5.5.5
+  nameserver:
+    - https://cloudflare-dns.com/dns-query
+  nameserver-policy:
+    "rule-set:cn-performance-dns-domains":
+      - https://dns.alidns.com/dns-query
+proxy-providers: {}
+""",
+        )
+
+        self.assertEqual(check_dns_safety.validate_path(path), [])
 
     def test_private_mihomo_rejects_layered_dns_fields(self) -> None:
         path = self.write_temp(

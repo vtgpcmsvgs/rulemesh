@@ -19,6 +19,7 @@ DOMESTIC_DNS_NEEDLES = (
 )
 ALLOWED_DOMESTIC_NAMESERVER_POLICY_KEYS = {
     "rule-set:cn-dns-domains",
+    "rule-set:cn-performance-dns-domains",
 }
 
 SURGE_CONFIG_NAMES = (
@@ -417,20 +418,6 @@ def validate_mihomo(path: Path, lines: list[str]) -> list[DnsSafetyFinding]:
             policy_key_match = re.match(r"^    [\"']?([^\"']+?)[\"']?:\s*(?:#.*)?$", line)
             if policy_key_match:
                 current_nameserver_policy_key = policy_key_match.group(1).strip()
-                if (
-                    single_dns_truth
-                    and current_nameserver_policy_key
-                    not in ALLOWED_DOMESTIC_NAMESERVER_POLICY_KEYS
-                ):
-                    findings.append(
-                        DnsSafetyFinding(
-                            "error",
-                            path,
-                            index,
-                            "两份 Mihomo 私有配置的 nameserver-policy 仅允许 cn-dns-domains 国内业务白名单。",
-                            "删除其他 policy key；普通目标域名继续使用海外 nameserver。",
-                        )
-                    )
                 continue
 
         needles = domestic_needles_in(line)
@@ -456,7 +443,7 @@ def validate_mihomo(path: Path, lines: list[str]) -> list[DnsSafetyFinding]:
                 path,
                 index,
                 f"Mihomo dns.{current_key or '未知字段'} 包含国内 DNS ({', '.join(needles)})，普通目标网站域名可能被泄漏给国内解析方。",
-                "国内 DNS 只能用于 default-nameserver bootstrap、proxy-server-nameserver 节点 bootstrap，或 rule-set:cn-dns-domains 白名单；其他业务 nameserver / nameserver-policy / direct-nameserver 应使用海外 DNS 或移除。",
+                "国内 DNS 只能用于 default-nameserver bootstrap、proxy-server-nameserver 节点 bootstrap，或 rule-set:cn-dns-domains / rule-set:cn-performance-dns-domains 白名单；其他业务 nameserver / nameserver-policy / direct-nameserver 应使用海外 DNS 或移除。",
             )
         )
 
