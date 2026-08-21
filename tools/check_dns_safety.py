@@ -428,14 +428,10 @@ def validate_mihomo(path: Path, lines: list[str]) -> list[DnsSafetyFinding]:
             continue
 
         if current_key == "nameserver-policy":
-            policy_key_match = re.match(
-                r"^    (?:(['\"])(.+?)\1|([^:\s]+)):\s*(.*?)\s*$", line
-            )
-            if policy_key_match:
-                current_nameserver_policy_key = (
-                    policy_key_match.group(2) or policy_key_match.group(3)
-                ).strip()
-                policy_value = policy_key_match.group(4).split("#", 1)[0].strip()
+            policy_entry = re.split(r":(?=\s|$)", line.strip(), maxsplit=1)
+            if len(policy_entry) == 2:
+                current_nameserver_policy_key = policy_entry[0].strip().strip("\"'")
+                policy_value = policy_entry[1].split("#", 1)[0].strip()
                 if not policy_value:
                     continue
 

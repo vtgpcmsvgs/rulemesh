@@ -286,6 +286,39 @@ proxy-providers: {}
 
         self.assertEqual(check_dns_safety.validate_path(path), [])
 
+    def test_mihomo_private_accepts_unquoted_cn_dns_policy_list(self) -> None:
+        path = self.write_temp(
+            "rulemesh-substore-mihomo-clash-verge.yaml",
+            """dns:
+  default-nameserver:
+    - 223.5.5.5
+  nameserver:
+    - https://cloudflare-dns.com/dns-query
+  nameserver-policy:
+    rule-set:cn-dns-domains:
+      - https://dns.alidns.com/dns-query
+proxy-providers: {}
+""",
+        )
+
+        self.assertEqual(check_dns_safety.validate_path(path), [])
+
+    def test_mihomo_private_accepts_unquoted_performance_cn_dns_policy_scalar(self) -> None:
+        path = self.write_temp(
+            "rulemesh-substore-mihomo-clash-meta.yaml",
+            """dns:
+  default-nameserver:
+    - 223.5.5.5
+  nameserver:
+    - https://cloudflare-dns.com/dns-query
+  nameserver-policy:
+    rule-set:cn-performance-dns-domains: https://dns.alidns.com/dns-query
+proxy-providers: {}
+""",
+        )
+
+        self.assertEqual(check_dns_safety.validate_path(path), [])
+
     def test_mihomo_private_rejects_domestic_dns_for_overseas_rule_set_scalar(self) -> None:
         path = self.write_temp(
             "rulemesh-substore-mihomo-clash-meta.yaml",
