@@ -1,5 +1,5 @@
 {
-  "syncToken": "2026-08-22T02:37:14+00:00",
+  "syncToken": "2026-08-23T02:47:30+00:00",
   "source": {
     "api": "RIPEstat announced-prefixes",
     "docUrl": "https://stat.ripe.net/docs/data-api/api-endpoints/announced-prefixes",
@@ -13,17 +13,17 @@
   "perAsn": [
     {
       "asn": 45102,
-      "queryStartTime": "2026-08-07T16:00:00",
-      "queryEndTime": "2026-08-21T16:00:00",
-      "reportedPrefixCount": 1348,
-      "reportedIpv4PrefixCount": 1234,
-      "uniqueIpv4PrefixCount": 1234,
+      "queryStartTime": "2026-08-08T16:00:00",
+      "queryEndTime": "2026-08-22T16:00:00",
+      "reportedPrefixCount": 1353,
+      "reportedIpv4PrefixCount": 1239,
+      "uniqueIpv4PrefixCount": 1239,
       "collapsedIpv4PrefixCount": 194
     },
     {
       "asn": 134963,
-      "queryStartTime": "2026-08-07T16:00:00",
-      "queryEndTime": "2026-08-21T16:00:00",
+      "queryStartTime": "2026-08-08T16:00:00",
+      "queryEndTime": "2026-08-22T16:00:00",
       "reportedPrefixCount": 305,
       "reportedIpv4PrefixCount": 300,
       "uniqueIpv4PrefixCount": 300,
@@ -31,17 +31,17 @@
     },
     {
       "asn": 24429,
-      "queryStartTime": "2026-08-07T16:00:00",
-      "queryEndTime": "2026-08-21T16:00:00",
-      "reportedPrefixCount": 1089,
-      "reportedIpv4PrefixCount": 658,
-      "uniqueIpv4PrefixCount": 658,
-      "collapsedIpv4PrefixCount": 260
+      "queryStartTime": "2026-08-08T16:00:00",
+      "queryEndTime": "2026-08-22T16:00:00",
+      "reportedPrefixCount": 1096,
+      "reportedIpv4PrefixCount": 663,
+      "uniqueIpv4PrefixCount": 663,
+      "collapsedIpv4PrefixCount": 261
     }
   ],
-  "collapsedIpv4PrefixCount": 473,
-  "uniqueIpv4AddressCount": 5731844,
-  "syncedAt": "2026-08-22T02:37:14+00:00",
+  "collapsedIpv4PrefixCount": 474,
+  "uniqueIpv4AddressCount": 5732868,
+  "syncedAt": "2026-08-23T02:47:30+00:00",
   "ipv4Prefix": [
     "5.181.224.0/23",
     "8.25.82.0/24",
@@ -195,7 +195,8 @@
     "43.109.202.0/24",
     "43.109.206.0/23",
     "43.109.208.0/23",
-    "43.109.216.0/24",
+    "43.109.216.0/22",
+    "43.109.220.0/24",
     "43.109.223.0/24",
     "43.109.224.0/23",
     "43.109.226.0/24",

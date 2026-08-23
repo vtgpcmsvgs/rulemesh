@@ -109,6 +109,8 @@ payload:
   - "DOMAIN-WILDCARD,*.public.stackup.sh"
   - "DOMAIN,rpc-bsc.48.club"
   - "DOMAIN-WILDCARD,*.rpc-bsc.48.club"
+  - "DOMAIN,rpc-bsc.blockmachine.io"
+  - "DOMAIN-WILDCARD,*.rpc-bsc.blockmachine.io"
   - "DOMAIN,rpc.nodeflare.app"
   - "DOMAIN-WILDCARD,*.rpc.nodeflare.app"
   - "DOMAIN,rpc.owlracle.info"

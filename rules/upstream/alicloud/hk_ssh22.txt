@@ -8,15 +8,15 @@
 # 范围: 官方香港 VPC 与阿里兜底 ASN 的单调历史 IPv4 并集，只匹配 SSH TCP/22。
 # 运行时兜底 ASN: AS45102, AS134963, AS24429
 # 派生自: alicloud/ssh22_ipv4_history.txt
-# 同步时间: 2026-08-22T02:37:06+00:00
-# BGP 同步时间: 2026-08-22T02:37:14+00:00
+# 同步时间: 2026-08-23T02:47:22+00:00
+# BGP 同步时间: 2026-08-23T02:47:30+00:00
 # 抓取页数: 9
 # 上游总数: 850
 # 抓取条目数量: 850
 # 重复条目数量: 3
-# 静态 SSH CIDR 规则数量: 468
+# 静态 SSH CIDR 规则数量: 469
 # 运行时 ASN 规则数量: 3
-# 累计唯一 IPv4 地址数量: 5752323
+# 累计唯一 IPv4 地址数量: 5753347
 
 AND,((IP-CIDR,5.181.224.0/23,no-resolve),(PROTOCOL,TCP),(DST-PORT,22))
 AND,((IP-CIDR,8.25.82.0/24,no-resolve),(PROTOCOL,TCP),(DST-PORT,22))
@@ -159,7 +159,8 @@ AND,((IP-CIDR,43.109.200.0/23,no-resolve),(PROTOCOL,TCP),(DST-PORT,22))
 AND,((IP-CIDR,43.109.202.0/24,no-resolve),(PROTOCOL,TCP),(DST-PORT,22))
 AND,((IP-CIDR,43.109.206.0/23,no-resolve),(PROTOCOL,TCP),(DST-PORT,22))
 AND,((IP-CIDR,43.109.208.0/23,no-resolve),(PROTOCOL,TCP),(DST-PORT,22))
-AND,((IP-CIDR,43.109.216.0/24,no-resolve),(PROTOCOL,TCP),(DST-PORT,22))
+AND,((IP-CIDR,43.109.216.0/22,no-resolve),(PROTOCOL,TCP),(DST-PORT,22))
+AND,((IP-CIDR,43.109.220.0/24,no-resolve),(PROTOCOL,TCP),(DST-PORT,22))
 AND,((IP-CIDR,43.109.223.0/24,no-resolve),(PROTOCOL,TCP),(DST-PORT,22))
 AND,((IP-CIDR,43.109.224.0/23,no-resolve),(PROTOCOL,TCP),(DST-PORT,22))
 AND,((IP-CIDR,43.109.226.0/24,no-resolve),(PROTOCOL,TCP),(DST-PORT,22))
