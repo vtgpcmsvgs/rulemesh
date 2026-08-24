@@ -183,8 +183,8 @@
       "category": "proxy",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 5213,
-        "mihomo_classical": 5213
+        "surge_rules": 5215,
+        "mihomo_classical": 5215
       },
       "dist": {
         "surge_rules": "dist/surge/rules/proxy/gfw.list",
