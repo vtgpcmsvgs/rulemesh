@@ -684,6 +684,11 @@ def _group_has_us_semantics(
         )
         for member in group.members
     )
+    has_us_filtered_source = (
+        group.filter_text in approved_filters
+        and not group.has_invalid_external_source
+        and group.has_external_source
+    )
     if group.group_type in FILTERING_GROUP_TYPES:
         return (
             group.filter_text in approved_filters
@@ -691,7 +696,10 @@ def _group_has_us_semantics(
             and (group.has_external_source or bool(group.members))
             and (not group.members or members_are_us)
         )
-    return group.group_type in WRAPPER_GROUP_TYPES and members_are_us
+    return group.group_type in WRAPPER_GROUP_TYPES and (
+        members_are_us
+        or (has_us_filtered_source and (not group.members or members_are_us))
+    )
 
 
 def _surge_host_entries(
@@ -969,7 +977,12 @@ def _validate_mihomo(
             ai_route[1], groups, APPROVED_MIHOMO_US_FILTERS
         )
         or not other_us_targets
-        or any(target != ai_route[1] for target in other_us_targets)
+        or any(
+            not _group_has_us_semantics(
+                target, groups, APPROVED_MIHOMO_US_FILTERS
+            )
+            for target in other_us_targets
+        )
     ):
         findings.append(
             DnsPrecedenceFinding(

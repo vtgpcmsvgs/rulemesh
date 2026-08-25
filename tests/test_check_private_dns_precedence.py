@@ -938,6 +938,36 @@ rules:
 
         self.assertEqual(validate_profile(path, self.root), [])
 
+    def test_mihomo_accepts_manual_us_select_with_declared_provider(self) -> None:
+        path = self.mihomo_profile(
+            self.overseas_policy_lines() + self.performance_policy_lines(),
+            group_block=f'''  - name: US-MANUAL
+    type: select
+    use:
+      - provider_a
+    filter: "{MIHOMO_APPROVED_US_FILTER}"''',
+            ai_target="US-MANUAL",
+        )
+
+        self.assertEqual(validate_profile(path, self.root), [])
+
+    def test_mihomo_accepts_distinct_defined_us_targets(self) -> None:
+        path = self.mihomo_profile(
+            self.overseas_policy_lines() + self.performance_policy_lines(),
+            ai_target="US-MANUAL",
+            other_us_target="US-AUTO",
+            group_block=f'''  - name: US-MANUAL
+    type: select
+    use: [provider_a]
+    filter: "{MIHOMO_APPROVED_US_FILTER}"
+  - name: US-AUTO
+    type: url-test
+    use: [provider_a]
+    filter: "{MIHOMO_APPROVED_US_FILTER}"''',
+        )
+
+        self.assertEqual(validate_profile(path, self.root), [])
+
     def test_mihomo_accepts_truthy_include_all_as_source(self) -> None:
         path = self.mihomo_profile(
             self.overseas_policy_lines() + self.performance_policy_lines(),
