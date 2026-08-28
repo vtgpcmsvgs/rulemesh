@@ -168,7 +168,7 @@ sources:
         - repo: HKEX
           note: 每次完整抓取当前 SEHK Participants 查询页的全部页面与公开 Website Address，并以记录数和唯一主机阈值防止截断覆盖
         - repo: Tiger Brokers / UP Fintech official websites
-          note: 补充 itiger、itigerup、tigerbrokers、tigerfintech、tigersecurities 与 upfintech 的明确域名和低误伤品牌兜底
+          note: 补充公开门户、营销合规判区、活动脚本、静态资源、社区基础设施与低误伤品牌兜底，避免同页请求混合出口
     hk/global_media.list:
       preferred:
         - repo: self

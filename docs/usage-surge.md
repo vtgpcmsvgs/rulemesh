@@ -47,7 +47,7 @@
 - `reject`、`direct`、`proxy`、`region` 四类 RuleMesh 产物接入
 - `github_ssh_direct` 后先保留 `DOMAIN,raw.githubusercontent.com,"🚀 节点选择"` 自举入口，再显式接入 `proxy/github_core_proxy.list`，承接 GitHub 网页、`api.github.com`、Gist、Raw、静态资源与附件；同时继续保留 `raw.githubusercontent.com = server:https://cloudflare-dns.com/dns-query` 这一条规则产物解析例外，但它不是代理节点 bootstrap，不能替代 `proxy-node-domains` 的 AliDNS 解析
 - `region/hk/hk_brokers.list` 专门承接复星证券/复星财富、致富证券、辉立证券与富途，默认用激进品牌关键词兜底并绑定 `🇭🇰 香港-自动选择`
-- Personal 激进模式额外前置 `region/hk/personal_priority_hk.list`、`region/hk/notion_hk.list` 与 `region/hk/hk_securities_aggressive.list`：分别承接指定高优先级域名、Notion 官方域名族，以及老虎证券加港交所参与者网站快照。三者使用香港自动选择和海外 DoH，并且不得加入工作白名单
+- Personal 激进模式额外前置 `region/hk/personal_priority_hk.list`、`region/hk/notion_hk.list` 与 `region/hk/hk_securities_aggressive.list`：分别承接指定高优先级域名、Notion 官方域名族，以及老虎证券公开入口、营销合规判区、静态资源等官方基础设施和港交所参与者网站快照。三者使用香港自动选择和海外 DoH，并且不得加入工作白名单
 - `direct/apple_direct.list` 与 `direct/outlook_direct.list` 分别让 Apple 官方域名族及 Outlook 邮件数据面直连；`region/us/microsoft_store_us.list` 让 Microsoft Store、许可、目录与下载交付端点固定美国。激进模式将它们放在拒绝规则前，并显式让 `yikaiying.com` 直连
 - `region/hk/alibaba_hk.list` 是可选的阿里系香港入口；默认公开模板不启用。需要按局域网设备启用时，应使用 `AND,((SRC-IP,<设备地址>),(RULE-SET,<规则 URL>)),<香港策略>`，并放在国内直连与阿里云 SSH 指定直连前
 - `region/hk/global_media.list` 额外承接 X / Twitter 网页、短链与静态资源，以及 Polymarket 显式域名与激进关键词兜底，并默认绑定 `🇭🇰 香港-自动选择`

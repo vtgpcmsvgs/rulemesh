@@ -101,7 +101,49 @@ def collect_merge_yaml_targets() -> list[str]:
     return sorted(targets)
 
 
+def surge_rule_set_matches_domain(path: Path, domain: str) -> bool:
+    normalized = domain.lower().rstrip(".")
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith(("#", ";")) or "," not in line:
+            continue
+        rule_type, value, *_ = line.split(",")
+        candidate = value.lower().rstrip(".")
+        if rule_type == "DOMAIN" and normalized == candidate:
+            return True
+        if rule_type == "DOMAIN-SUFFIX" and (
+            normalized == candidate or normalized.endswith(f".{candidate}")
+        ):
+            return True
+        if rule_type == "DOMAIN-KEYWORD" and candidate in normalized:
+            return True
+    return False
+
+
 class AggressivePersonalSourceTests(unittest.TestCase):
+    def test_tiger_marketing_runtime_dependencies_use_hong_kong_rule(self) -> None:
+        rules = (
+            ROOT
+            / "dist"
+            / "surge"
+            / "rules"
+            / "region"
+            / "hk"
+            / "hk_securities_aggressive.list"
+        )
+
+        for domain in (
+            "marketing.skytigris.cn",
+            "static.tigerbbs.com",
+            "cms.laohu8.com",
+            "www.tigeresop.com",
+        ):
+            with self.subTest(domain=domain):
+                self.assertTrue(
+                    surge_rule_set_matches_domain(rules, domain),
+                    f"{domain} 未被香港证券专项规则覆盖",
+                )
+
     def test_aggressive_personal_rule_sources_keep_required_boundaries(self) -> None:
         def source(path: str) -> str:
             return (ROOT / path).read_text(encoding="utf-8")

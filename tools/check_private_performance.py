@@ -20,6 +20,15 @@ SURGE_PERSONAL_NAMES = {
     "rulemesh-substore-surge-personal.conf",
     "rulemesh-substore-surge-personal-company.conf",
 }
+MIHOMO_PROFILE_NAMES = {
+    "rulemesh-substore-mihomo-clash-verge.yaml",
+    "rulemesh-substore-mihomo-clash-meta.yaml",
+}
+HK_SECURITIES_RULE_PROVIDER = "hk_securities_aggressive"
+HK_SECURITIES_RULE_URL = (
+    "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/"
+    "dist/mihomo/classical/region/hk/hk_securities_aggressive.yaml"
+)
 
 
 @dataclass(frozen=True)
@@ -35,6 +44,13 @@ class MihomoProvider:
     line: int
     interval: str | None = None
     lazy: str | None = None
+
+
+@dataclass
+class MihomoRuleProvider:
+    line: int
+    name: str
+    url: str | None = None
 
 
 @dataclass
@@ -60,6 +76,12 @@ def role(value: str) -> str:
     lowered = value.lower()
     if "美国" in value or re.search(r"(^|[^a-z])us([^a-z]|$)", lowered):
         return "us"
+    if (
+        "香港" in value
+        or "hong kong" in lowered
+        or re.search(r"(^|[^a-z])hk([^a-z]|$)", lowered)
+    ):
+        return "hk"
     if "全地区" in value or "节点-自动" in value or "节点自动" in value:
         return "global_auto"
     if "global" in lowered and "auto" in lowered:
@@ -337,9 +359,39 @@ def parse_mihomo(
     return providers, groups, rules
 
 
+def parse_mihomo_rule_providers(lines: list[str]) -> dict[str, MihomoRuleProvider]:
+    section = ""
+    providers: dict[str, MihomoRuleProvider] = {}
+    provider: MihomoRuleProvider | None = None
+
+    for index, line in enumerate(lines, start=1):
+        top_level = re.match(r"^([A-Za-z0-9_-]+):\s*", line)
+        if top_level:
+            section = top_level.group(1)
+            provider = None
+            continue
+        if section != "rule-providers":
+            continue
+
+        name_match = re.match(r"^  ([^\s#][^:]*):\s*$", line)
+        if name_match:
+            name = scalar(name_match.group(1))
+            provider = MihomoRuleProvider(line=index, name=name)
+            providers[name] = provider
+            continue
+        if provider is None:
+            continue
+        url_match = re.match(r"^    url:\s*(.+?)\s*$", line)
+        if url_match:
+            provider.url = scalar(url_match.group(1))
+
+    return providers
+
+
 def validate_mihomo(path: Path, lines: list[str]) -> list[PerformanceFinding]:
     findings: list[PerformanceFinding] = []
     providers, groups, rules = parse_mihomo(lines)
+    rule_providers = parse_mihomo_rule_providers(lines)
 
     for provider in providers:
         if provider.interval != "300" or provider.lazy != "false":
@@ -390,6 +442,67 @@ def validate_mihomo(path: Path, lines: list[str]) -> list[PerformanceFinding]:
             PerformanceFinding(path, ai_us[0] if ai_us else 1, "Mihomo 的 ai-us 规则必须固定美国组。", "恢复 OpenAI / ChatGPT 美国出口。")
         )
 
+    hk_provider = rule_providers.get(HK_SECURITIES_RULE_PROVIDER)
+    if hk_provider is None or hk_provider.url != HK_SECURITIES_RULE_URL:
+        findings.append(
+            PerformanceFinding(
+                path,
+                hk_provider.line if hk_provider else 1,
+                "Mihomo 缺少规范的 hk_securities_aggressive provider。",
+                "注册规范的香港证券规则 URL，并保持两份 Mihomo 配置一致。",
+            )
+        )
+
+    hk_rule = next(
+        (
+            (position, line, parts)
+            for position, (line, parts) in enumerate(rules)
+            if len(parts) >= 3
+            and parts[0].upper() == "RULE-SET"
+            and parts[1] == HK_SECURITIES_RULE_PROVIDER
+        ),
+        None,
+    )
+    if hk_rule is None:
+        findings.append(
+            PerformanceFinding(
+                path,
+                1,
+                "Mihomo 缺少 hk_securities_aggressive 香港证券规则入口。",
+                "在广告拒绝、中国直连与 MATCH 前加入香港证券 RULE-SET。",
+            )
+        )
+    else:
+        hk_position, hk_line, hk_parts = hk_rule
+        target = groups.get(hk_parts[2])
+        if target is None or role(f"{target.name} {target.filter_text}") != "hk":
+            findings.append(
+                PerformanceFinding(
+                    path,
+                    hk_line,
+                    "Mihomo 的 hk_securities_aggressive 未绑定香港组。",
+                    "把香港证券 RULE-SET 恢复到香港自动选择组。",
+                )
+            )
+
+        anchors = {
+            parts[1]: position
+            for position, (_, parts) in enumerate(rules)
+            if len(parts) >= 2
+            and parts[0].upper() == "RULE-SET"
+            and parts[1] in {"reject_adblock", "direct_cn", "cn_direct"}
+        }
+        for anchor, anchor_position in anchors.items():
+            if hk_position >= anchor_position:
+                findings.append(
+                    PerformanceFinding(
+                        path,
+                        hk_line,
+                        f"Mihomo 的 hk_securities_aggressive 必须早于 {anchor}。",
+                        "前置香港证券规则，避免广告拒绝或中国直连抢先命中。",
+                    )
+                )
+
     match = next(
         ((line, parts) for line, parts in rules if parts and parts[0].upper() == "MATCH"),
         None,
@@ -422,10 +535,7 @@ def validate_profile(path: Path) -> list[PerformanceFinding]:
         return validate_surge_personal(path, lines)
     if path.name == "rulemesh-substore-surge-work-whitelist.conf":
         return validate_surge_work(path, lines)
-    if path.name in {
-        "rulemesh-substore-mihomo-clash-verge.yaml",
-        "rulemesh-substore-mihomo-clash-meta.yaml",
-    }:
+    if path.name in MIHOMO_PROFILE_NAMES:
         return validate_mihomo(path, lines)
     return []
 

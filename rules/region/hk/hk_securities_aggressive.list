@@ -1,23 +1,39 @@
-# Surge Personal 香港证券激进规则：港交所参与者网站主体 + 老虎证券品牌补强。
+# Personal 香港证券激进规则：港交所参与者网站主体 + 老虎证券品牌与官方基础设施补强。
 # 维护边界：
 # 1) 本文件只供 Personal 激进配置调用，不替换现有 region/hk/hk_brokers，也不得接入工作白名单。
-# 2) 港交所快照只覆盖公开登记网站；交易 API、无网站参与者与新域名通过高价值品牌条目补强。
+# 2) 港交所快照只覆盖公开登记网站；交易 API、营销合规判区、静态资源与新域名通过高价值品牌条目补强。
 # 3) 客户端请绑定香港自动选择，并放在 direct/cn_direct、proxy/gfw 与通用国际兜底前。
 # 4) 不使用 tiger、broker、securities、capital、finance 等通用关键词，避免把无关网站大面积误送香港。
 
 # 港交所当前 SEHK 参与者公开网站快照。
 INCLUDE,upstream/hkex/sehk_participant_websites.list
 
-# 老虎证券 / UP Fintech：覆盖集团、各地官方入口、投资者关系与常见交易基础设施命名。
+# 老虎证券 / UP Fintech 公开门户：覆盖集团、各地官方入口与投资者关系入口。
 DOMAIN-SUFFIX,itiger.com
+DOMAIN-SUFFIX,itiger-nz.com
 DOMAIN-SUFFIX,itigerup.com
 DOMAIN-SUFFIX,tigerbrokers.com
 DOMAIN-SUFFIX,tigerbrokers.com.au
 DOMAIN-SUFFIX,tigerbrokers.com.hk
 DOMAIN-SUFFIX,tigerbrokers.com.sg
+DOMAIN-SUFFIX,tigerbrokers.net
+DOMAIN-SUFFIX,tigerbrokers.nz
 DOMAIN-SUFFIX,tigerfintech.com
 DOMAIN-SUFFIX,tigersecurities.com
 DOMAIN-SUFFIX,upfintech.com
+
+# 营销合规判区、活动脚本、静态资源与社区基础设施；必须先于国内直连规则，避免同页请求混合出口。
+DOMAIN-SUFFIX,itigergrowth.com
+DOMAIN-SUFFIX,itigergrowtha.com
+DOMAIN-SUFFIX,laohu8.com
+DOMAIN-SUFFIX,skytigris.cn
+DOMAIN-SUFFIX,skytigris.com
+DOMAIN-SUFFIX,tigerbbs.cn
+DOMAIN-SUFFIX,tigerbbs.com
+DOMAIN-SUFFIX,tigeresop.com
+DOMAIN-SUFFIX,tigr.link
+
+# 低误伤品牌兜底。
 DOMAIN-KEYWORD,itiger
 DOMAIN-KEYWORD,itigerup
 DOMAIN-KEYWORD,tigerbrokers

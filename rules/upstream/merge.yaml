@@ -241,6 +241,7 @@ merge_plan:
     strategy:
       - include_hkex_sehk_participant_website_snapshot
       - explicit_tiger_brokers_domains_and_low_collision_keywords
+      - include_tiger_marketing_compliance_and_static_infrastructure
       - reject_truncated_snapshot_updates
     notes:
       - 现有 hk_brokers 保持不变，避免间接扩张工作白名单
