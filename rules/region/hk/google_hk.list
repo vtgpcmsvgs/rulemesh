@@ -1,0 +1,42 @@
+# Google 全业务香港分流规则：按“完整上游域名 + 产品专项 + 激进关键词 + 官方 IP 地址空间”维护。
+# 维护约束：
+# 1) Google、YouTube、Google Play、Workspace、FCM、Gemini、DeepMind 等 Google 相关流量统一由本文件承接，客户端必须绑定香港节点。
+# 2) 本文件必须位于广告拒绝、海外 AI 美国分流、国内直连、海外 DNS IP 美国分流和所有广谱兜底之前。
+# 3) Google AI 不再在 region/us/ai_us.list 保留美国交叉兜底，避免调用顺序变化后重新产生美国出口。
+# 4) 官方 goog.json 地址空间故意完整纳入，不扣除 Google Cloud 客户地址；允许第三方 GCP 服务被过度覆盖到香港。
+# 5) Google 目标域名继续使用海外加密 DNS，且 dns.google、8.8.8.8 等 Google DNS 连接本身也必须优先命中香港规则。
+
+# Google 通用服务：完整上游主体优先，覆盖搜索、账号、Gmail、Workspace、静态资源与公共接口。
+INCLUDE,upstream/blackmatrix7/google.list
+DOMAIN-SUFFIX,google.com
+DOMAIN-KEYWORD,google
+DOMAIN-KEYWORD,googleapis
+DOMAIN-KEYWORD,gstatic
+
+# Google FCM：承接推送及移动设备相关入口。
+INCLUDE,upstream/blackmatrix7/google_fcm.list
+
+# Google Play 与 Android：显式兜住应用、资源包和下载重定向。
+DOMAIN-SUFFIX,googleplay.com
+DOMAIN-SUFFIX,googleusercontent.com
+DOMAIN-SUFFIX,android.com
+DOMAIN-SUFFIX,gvt3.com
+DOMAIN-SUFFIX,xn--ngstr-lra8j.com
+
+# YouTube：完整上游主体加品牌与媒体分发关键词兜底。
+INCLUDE,upstream/blackmatrix7/youtube.list
+DOMAIN-KEYWORD,youtube
+DOMAIN-KEYWORD,googlevideo
+
+# Gemini / Google AI / DeepMind：从美国 AI 规则完整迁入香港入口。
+INCLUDE,upstream/blackmatrix7/gemini.list
+DOMAIN-SUFFIX,aistudio.google.com
+DOMAIN-SUFFIX,notebooklm.google.com
+DOMAIN-KEYWORD,gemini
+DOMAIN-KEYWORD,makersuite
+DOMAIN-KEYWORD,aistudio
+DOMAIN-KEYWORD,notebooklm
+DOMAIN-KEYWORD,deepmind
+
+# Google 官方公网地址空间：故意覆盖全部 IPv4 / IPv6，并保留 no-resolve 防止额外 DNS 查询。
+INCLUDE,upstream/google/goog_ip_ranges.list

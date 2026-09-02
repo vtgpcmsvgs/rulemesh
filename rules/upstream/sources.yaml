@@ -122,7 +122,7 @@ sources:
     overseas_dns_ipv4_proxy.list:
       preferred:
         - repo: self
-          note: 海外 DNS 主 IPv4 端点专项美国分流入口，当前精确匹配 1.1.1.1/32、8.8.8.8/32 与 9.9.9.9/32，不再绑定单一端口
+          note: 海外 DNS 主 IPv4 端点专项美国分流入口，当前精确匹配 1.1.1.1/32 与 9.9.9.9/32；Google 8.8.8.8 交给前置 google_hk
     gfw.list:
       preferred:
         - repo: self
@@ -197,12 +197,14 @@ sources:
           note: 保持单文件入口稳定，承接本地补充，如 g42.ai、预测市场与新增 DeFi/分析站点
         - repo: blackmatrix7/ios_rule_script
           note: 负责 Cryptocurrency.list 主体，通过 INCLUDE 并入该文件
-    us/google_us.list:
+    hk/google_hk.list:
       preferred:
         - repo: self
-          note: Google 通用服务美国出口主入口，含 Play、YouTube 与 FCM；Gemini 允许在 ai_us 做 AI 视角交叉兜底
+          note: Google 全业务香港出口主入口，含完整域名、Play、YouTube、FCM、Gemini 与官方完整公网地址空间
         - repo: blackmatrix7/ios_rule_script
-          note: 负责 GoogleFCM.list 与 YouTube.list 补充，通过 INCLUDE 并入该文件
+          note: 负责 Google.list、GoogleFCM.list、YouTube.list 与 Gemini.list，通过 INCLUDE 并入该文件
+        - repo: google/ipranges
+          note: 负责 goog.json 完整 IPv4 / IPv6 地址空间；故意不扣除 Google Cloud 客户地址
     us/microsoft_us.list:
       preferred:
         - repo: self

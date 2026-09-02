@@ -349,12 +349,12 @@ rule-providers:
     interval: 86400
     proxy: "🚀 节点选择"
 
-  us_google:
+  hk_google:
     type: http
     behavior: classical
     format: yaml
-    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/us/google_us.yaml"
-    path: ./ruleset/region/us/google_us.yaml
+    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/hk/google_hk.yaml"
+    path: ./ruleset/region/hk/google_hk.yaml
     interval: 86400
     proxy: "🚀 节点选择"
 
@@ -674,6 +674,9 @@ rule-providers:
     proxy: "🚀 节点选择"
 
 rules:
+  # Google 域名、Google AI、广告与官方完整 IP 地址空间统一优先走香港；必须位于全部拒绝、美国 AI 和 DNS IP 规则之前。
+  - RULE-SET,hk_google,🇭🇰 香港-自动选择
+
   # Personal 激进优先级必须先于广告和系统更新拒绝规则。
   - RULE-SET,direct_apple,DIRECT
   - RULE-SET,hk_personal_priority,🇭🇰 香港-自动选择
@@ -688,8 +691,7 @@ rules:
   # 需要临时升级 Windows / macOS 时，可注释上一条拒绝规则，让后面的系统升级美国分流规则接管；系统时间同步仍由 os_time_direct 保持直连。
   - RULE-SET,reject_adspower,REJECT
 
-  # `us_ai` 当前聚合海外 AI 平台并统一走美国节点；DeepSeek、Trae 中国大陆入口等国内 AI 不应并入这里，应优先交给 `direct_ai_cn`。
-  - RULE-SET,us_google,🇺🇸 美国-自动选择
+  # `us_ai` 当前只聚合非 Google 海外 AI 平台并统一走美国节点；Google AI 已由配置顶部的 `hk_google` 接管。
   - RULE-SET,us_ai,🇺🇸 美国-自动选择
   # Microsoft / macOS 更新放在 reject 之后、gfw 与普通 direct 之前；默认禁更时仍由上方拒绝规则先拦截。
   - RULE-SET,us_microsoft,🇺🇸 美国-自动选择

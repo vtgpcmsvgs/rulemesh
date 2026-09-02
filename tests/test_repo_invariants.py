@@ -120,6 +120,42 @@ def surge_rule_set_matches_domain(path: Path, domain: str) -> bool:
     return False
 
 
+class GoogleHongKongRoutingTests(unittest.TestCase):
+    def test_compiled_google_rule_covers_domains_and_official_ip_ranges(self) -> None:
+        source = ROOT / "rules" / "region" / "hk" / "google_hk.list"
+
+        result = build_rules.build_source(source)
+
+        surge_rules = set(result.outputs["surge_rules"])
+        mihomo_rules = set(result.outputs["mihomo_classical"])
+        for rules in (surge_rules, mihomo_rules):
+            self.assertIn("DOMAIN-KEYWORD,google", rules)
+            self.assertIn("DOMAIN-KEYWORD,youtube", rules)
+            self.assertIn("DOMAIN-KEYWORD,gemini", rules)
+            self.assertIn("IP-CIDR,8.8.8.0/24,no-resolve", rules)
+            self.assertTrue(any(rule.startswith("IP-CIDR6,") for rule in rules))
+
+    def test_public_templates_route_google_to_hong_kong_before_reject_and_us_ai(self) -> None:
+        surge = (ROOT / "docs" / "examples" / "surge-public.conf").read_text(encoding="utf-8")
+        mihomo = (ROOT / "docs" / "examples" / "mihomo-public.yaml").read_text(encoding="utf-8")
+
+        surge_google = 'region/hk/google_hk.list,"🇭🇰 香港-自动选择"'
+        mihomo_google = "RULE-SET,hk_google,🇭🇰 香港-自动选择"
+        self.assertEqual(surge.count(surge_google), 1)
+        self.assertEqual(mihomo.count(mihomo_google), 1)
+        self.assertLess(surge.index(surge_google), surge.index("reject/adblock_reject.list,REJECT"))
+        self.assertLess(surge.index(surge_google), surge.index('region/us/ai_us.list,"🇺🇸 美国-自动选择"'))
+        self.assertLess(mihomo.index(mihomo_google), mihomo.index("RULE-SET,reject_adblock,REJECT"))
+        self.assertLess(mihomo.index(mihomo_google), mihomo.index("RULE-SET,us_ai,🇺🇸 美国-自动选择"))
+
+    def test_us_ai_rule_no_longer_claims_google_products(self) -> None:
+        result = build_rules.build_source(ROOT / "rules" / "region" / "us" / "ai_us.list")
+        rules = "\n".join(result.outputs["surge_rules"]).lower()
+
+        for forbidden in ("google", "gemini", "aistudio", "notebooklm", "makersuite", "deepmind"):
+            self.assertNotIn(forbidden, rules)
+
+
 class AggressivePersonalSourceTests(unittest.TestCase):
     def test_tiger_marketing_runtime_dependencies_use_hong_kong_rule(self) -> None:
         rules = (

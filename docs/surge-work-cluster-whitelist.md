@@ -18,13 +18,13 @@
 ## 当前白名单原则
 
 - 工作路由仍以那 6 台固定工作电脑为核心维护对象，并继续采用白名单模式
-- 拒绝规则维持当前逻辑
+- Google 全业务香港白名单是最高优先级例外，必须位于全部拒绝规则之前；Google 广告与统计域名因此不再命中广告拒绝
 - 设备分流继续按“源 IP + AWS 区域 / 多地区链式 SOCKS5 IP 段”定向到对应设备组
 - 已登记个人终端允许在同一设备分流段使用“源 IP + `region/hk/alibaba_hk`”条件规则，只把阿里系流量交给香港自动选择；不得扩成这些终端的全流量入口，也不得移除源地址条件
 - 只有 2.1 设备分流继续保留“源 IP + AWS 区域 / 多地区链式 SOCKS5 IP 段”约束；2.2-2.10 不再额外限制源 IP
 - 多地区链式 SOCKS5 端点属于私有服务商导出后脱敏的链式代理入口，不再视为日本区域规则，也不应再挂到单一国家目录或固定日本组
-- 区域精确规则继续保留，且 `Google US` 与 `AI US` 都必须先于广谱区域规则
-- `AI US` 入口继续作为白名单显式放行项，但当前只承接海外 AI 平台并统一走美国节点；国内 AI 不应借这条入口放行
+- `region/hk/google_hk` 作为白名单显式放行项，完整承接 Google 域名、Google AI 与官方 `goog.json` 全部 IPv4 / IPv6 地址空间，并统一走香港节点；故意允许第三方 GCP 服务被过度覆盖
+- `AI US` 入口继续作为白名单显式放行项，但只承接非 Google 海外 AI 平台并统一走美国节点；国内 AI 与 Google AI 都不应借这条入口放行
 - `region/hk/wps_kdocs` 继续作为 WPS Office 与金山文档显式白名单入口，统一走香港自动选择，并必须先于最终拒绝；`[Host]` 同时在 `cn_dns_domains` 前复用该规则集绑定海外 DoH
 - `zsxq.com` 与 `yikaiying.com` 作为本次明确批准的国内性能入口，以两条精确 `DOMAIN-SUFFIX,...,DIRECT` 放在最终拒绝前；不得据此恢复宽泛 `cn_direct`
 - `region/hk/alibaba_hk` 只在已登记个人终端的条件规则中作为香港入口；`[Host]` 在 `cn_dns_domains` 前复用它绑定海外 DoH，以免阿里系域名仍交给国内 DNS，但实际流量放行继续由源地址条件约束
@@ -37,16 +37,16 @@
 - `skip-proxy` 不再包含 Apple `17.0.0.0/8`，避免 macOS 更新流量绕过白名单里的拒绝规则和美国分流入口
 - IPv6 默认关闭，等完成 IPv6 DNS 泄露、WebRTC 与出口测试后再重新评估
 - `hijack-dns = *:53` 负责接管传统 UDP/TCP 53 DNS；加密 DNS 流量只能作为显式白名单入口放行，不能靠 `FINAL` 兜底
-- 海外 `encrypted-dns-server`、`encrypted-dns-follow-outbound-mode = true` 与 `use-local-host-item-for-proxy = false` 继续保留，配合 `[Host]` 中的 GitHub Raw 规则产物解析、`cn_dns_domains` 国内业务域名 DNS 清单与 `proxy-node-domains` 节点 server 域名专用 bootstrap 解析；除本次明确增加的 `zsxq.com` 与 `yikaiying.com` 两条精确 DIRECT 外，DNS 清单扩充不自动新增白名单流量放行
+- 海外 `encrypted-dns-server`、`encrypted-dns-follow-outbound-mode = true` 与 `use-local-host-item-for-proxy = false` 继续保留；`[Host]` 必须在 `cn_dns_domains` 前为 `google_hk` 绑定海外 DoH。DNS 清单扩充本身不自动新增白名单流量放行，Google 放行来自已明确批准的独立规则入口
 - 私有订阅域名同步块继续保留独立显式放行入口，顺序位于 GitHub 观察兜底之后、1Password 之前；端点清单统一在解析后的私人当前配置目录中的 `private_subscription_direct.list` 维护，并以 `-Target surge` 运行同步脚本，先插入 Chrome 访问这些端点时改走 `🚀 节点选择` 的例外，再保留订阅更新直连
 - `proxy/onepassword_proxy.list` 继续保留 `🚀 节点选择`，用于白名单模式下显式放行 1Password 核心连接；其上游快照由仓库每天自动抓取官方支持页生成，但默认只覆盖官方自有核心域名与更新/基础设施端点
 - AdsPower 继续维持 `adspower_reject`、`adspower_direct`、`adspower_proxy` 三段细分
 - 在 `adspower_direct` 与 `adspower_proxy` 之后，额外保留一条广覆盖 `DOMAIN-KEYWORD,adspower,REJECT` 观察兜底，专门用于发现细分规则漏网之鱼
 - `proxy/polygon_rpc_proxy.list` 继续保留 `🚀 节点选择`，用于白名单模式下显式放行 Polygon 主网 RPC 域名
 - `proxy/bsc_rpc_proxy.list` 继续保留 `🚀 节点选择`，用于白名单模式下显式放行 BSC 主网 RPC 域名
-- `proxy/overseas_dns_ipv4_proxy.list` 继续保留，并在 Surge 配置里以 `RULE-SET,...,"🇺🇸 美国-自动选择",no-resolve` 接入，用于白名单模式下显式放行 `1.1.1.1/32`、`8.8.8.8/32` 与 `9.9.9.9/32`
+- `proxy/overseas_dns_ipv4_proxy.list` 继续保留，并在 Surge 配置里以 `RULE-SET,...,"🇺🇸 美国-自动选择",no-resolve` 接入，用于白名单模式下显式放行 `1.1.1.1/32` 与 `9.9.9.9/32`；Google `8.8.8.8` 由前置 `google_hk` 走香港
 - `DOMAIN,dns.alidns.com,DIRECT` 与 `DOMAIN,doh.pub,DIRECT` 继续作为代理节点 bootstrap DNS 直连例外，必须放在 DoH / DoH3 / DoQ 通用规则前，避免代理尚未建立时产生 DNS 走代理的循环依赖
-- DoH / DoH3 / DoQ 以及 `cloudflare-dns.com`、`dns.google`、`dns.quad9.net` 继续作为海外加密 DNS 显式白名单入口，并统一走 `🇺🇸 美国-自动选择`
+- DoH / DoH3 / DoQ 以及 `cloudflare-dns.com`、`dns.google`、`dns.quad9.net` 继续作为海外加密 DNS 显式白名单入口；`dns.google` 由前置 Google 规则固定香港，其余端点继续走美国
 - `LAN,DIRECT` 继续保留在白名单直连入口中
 - `direct/os_time_direct` 继续保留 `DIRECT`，用于 Windows / Apple 系统时间同步，不并入节点选择
 - 单个白名单专属直连域名（例如 `smtp.163.com`）优先直接维护在 2.10“指定直连”入口，不为单条规则额外新增公开 `rules/` 文件
@@ -68,25 +68,26 @@
 
 ## 维护时必须保留的顺序
 
-1. 拒绝规则
-2. 设备分流（含已登记个人终端的阿里系香港条件入口）
-3. 区域精确规则（含 WPS / 金山文档香港入口）
-4. 香港券商区域入口
-5. GitHub 仓库 SSH 定向直连
-6. GitHub Raw 自举入口
-7. GitHub Core 代理入口
-8. GitHub 广覆盖 REJECT 观察兜底
-9. 私有订阅域名同步块
-10. 1Password 核心连接节点选择入口
-11. AdsPower 细分规则
-12. AdsPower 广覆盖 REJECT 观察兜底
-13. Polygon 主网 RPC 节点选择入口
-14. BSC 主网 RPC 节点选择入口
-15. 海外 DNS 主 IPv4 端点美国分流入口
-16. 代理节点 bootstrap DNS 直连例外
-17. 海外加密 DNS 显式白名单入口
-18. 指定直连入口（含阿里云广覆盖 REJECT 观察兜底）
-19. 全局 `FINAL,REJECT` 兜底
+1. Google 全业务香港白名单
+2. 拒绝规则
+3. 设备分流（含已登记个人终端的阿里系香港条件入口）
+4. 其他区域精确规则（含 WPS / 金山文档香港入口）
+5. 香港券商区域入口
+6. GitHub 仓库 SSH 定向直连
+7. GitHub Raw 自举入口
+8. GitHub Core 代理入口
+9. GitHub 广覆盖 REJECT 观察兜底
+10. 私有订阅域名同步块
+11. 1Password 核心连接节点选择入口
+12. AdsPower 细分规则
+13. AdsPower 广覆盖 REJECT 观察兜底
+14. Polygon 主网 RPC 节点选择入口
+15. BSC 主网 RPC 节点选择入口
+16. 海外 DNS 主 IPv4 端点美国分流入口
+17. 代理节点 bootstrap DNS 直连例外
+18. 海外加密 DNS 显式白名单入口
+19. 指定直连入口（含阿里云广覆盖 REJECT 观察兜底）
+20. 全局 `FINAL,REJECT` 兜底
 
 ## 不要误恢复的广谱放行项
 

@@ -575,7 +575,7 @@ class MonitorSurgeTest(unittest.TestCase):
             "openai",
         )
         self.assertEqual(
-            monitor_surge.classify_host("service.example", {}, ("cn",), "RULE-SET,google_us"),
+            monitor_surge.classify_host("service.example", {}, ("cn",), "RULE-SET,google_hk"),
             "google",
         )
 

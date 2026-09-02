@@ -54,7 +54,7 @@ DOMAIN-SET:https://example.com/share/file/proxy-node-domains = server:https://dn
 
 `cn_performance_dns_domains` 是性能型国内 DNS 例外，自动合并中国直连域名主体与小型精选清单，只供 Surge Personal 与两份 Mihomo 性能配置。它不是公开模板或工作白名单的默认替代品；工作白名单必须长期保持小型清单。三份性能配置必须先让实际启用且位于中国大陆通用兜底前的 `reject/`、`proxy/`、`region/` 规则集使用海外 DNS，再匹配性能型清单，不能通过删减宽泛国内集合取代海外例外。OpenAI / ChatGPT 所在的美国 AI 规则集必须同时保持美国出口与海外解析。
 
-上述海外 `dns-server` 的明文 IPv4 端点应先命中 `proxy/overseas_dns_ipv4_proxy` 并统一走美国地区策略，避免 1.1.1.1 / 8.8.8.8 / 9.9.9.9 的出口与普通代理出口错位。
+上述海外 `dns-server` 的明文 IPv4 端点中，1.1.1.1 / 9.9.9.9 应命中 `proxy/overseas_dns_ipv4_proxy` 走美国；8.8.8.8 属于 Google 官方地址空间，必须由更早的 `region/hk/google_hk` 固定走香港。
 
 `DOMAIN-SET` 引用的 `proxy-node-domains` 必须只包含代理节点的 `server` 域名。一行一个域名，不写 `DOMAIN-SUFFIX,` 前缀，不写 IP，不写订阅 URL，不写机场面板域名，不写普通目标网站域名，也不要输出逗号分隔的一整行。
 

@@ -15,11 +15,11 @@
 
 ## 7×24 本地监控
 
-如果 Surge Mac 长期承担 DHCP、网关与全局流量接管，建议安装独立的本地只读监控，持续区分“中国大陆网站因 DNS / 规则遗漏误入美国 `FINAL`”与“Google / ChatGPT 所用美国策略短时不可用”这两类问题。安装、数据结构与日报格式见 [docs/surge-local-monitoring.md](surge-local-monitoring.md)。
+如果 Surge Mac 长期承担 DHCP、网关与全局流量接管，建议安装独立的本地只读监控，持续区分“中国大陆网站因 DNS / 规则遗漏误入国际 `FINAL`”与“Google 香港策略 / ChatGPT 美国策略短时不可用”这两类问题。安装、数据结构与日报格式见 [docs/surge-local-monitoring.md](surge-local-monitoring.md)。
 
 该机制使用 macOS `launchd`，与 Surge 的交互只调用自带 `surge-cli`，不开放 HTTP API，不启用 MITM。默认节奏为请求 20 秒、DNS / 配置摘要 5 分钟、轻量主动探测 15 分钟；HMAC 请求去重键约保留 1 小时，关注请求明细 36 小时，其他摘要与建议索引 14 天。独立的 Codex automation 每日 `09:00 Asia/Shanghai` 从已安装运行副本读取脱敏报告并把完整建议留在 Scheduled；可选飞书 Webhook 在 `09:05` 独立提醒采集质量和待查看项数量，不作为 Scheduled 成功回执。采集缺失、失败或过期时停止网络优化判断。
 
-隐私边界是只保存国内分类目标、Google / ChatGPT 受控依赖、配置中的主动探测主机及其子域、明确命中 `google_us` / `ai_us` 的美国平台目标与失败 `FINAL` 候选主机名，以及匿名客户端 / 策略 ID、规则类型、错误类别、计时和去重 / 关联所需的不可逆摘要；不得保存 URL 路径或查询、设备名或 IP、headers、body、原始 profile 或完整 CLI 输出。飞书消息不包含证据、域名、`RM-*` ID、配置或密钥，Webhook 失败也不影响 Scheduled 日报。监控绝不自动执行 `set`、`reload`、`flush dns`、`switch-profile`、配置编辑或策略切换。日报的 `RM-INV-*` 只允许在 Scheduled 中批准只读调查；调查后必须形成精确 `RM-EXEC-*`，经用户第二次明确批准才进入独立的执行与复测步骤。
+隐私边界是只保存国内分类目标、Google / ChatGPT 受控依赖、配置中的主动探测主机及其子域、明确命中 `google_hk` / `ai_us` 的受控平台目标与失败 `FINAL` 候选主机名，以及匿名客户端 / 策略 ID、规则类型、错误类别、计时和去重 / 关联所需的不可逆摘要；不得保存 URL 路径或查询、设备名或 IP、headers、body、原始 profile 或完整 CLI 输出。飞书消息不包含证据、域名、`RM-*` ID、配置或密钥，Webhook 失败也不影响 Scheduled 日报。监控绝不自动执行 `set`、`reload`、`flush dns`、`switch-profile`、配置编辑或策略切换。日报的 `RM-INV-*` 只允许在 Scheduled 中批准只读调查；调查后必须形成精确 `RM-EXEC-*`，经用户第二次明确批准才进入独立的执行与复测步骤。
 
 ## 版本划分
 
@@ -51,7 +51,8 @@
 - `direct/apple_direct.list` 与 `direct/outlook_direct.list` 分别让 Apple 官方域名族及 Outlook 邮件数据面直连；`region/us/microsoft_store_us.list` 让 Microsoft Store、许可、目录与下载交付端点固定美国。激进模式将它们放在拒绝规则前，并显式让 `yikaiying.com` 直连
 - `region/hk/alibaba_hk.list` 是可选的阿里系香港入口；默认公开模板不启用。需要按局域网设备启用时，应使用 `AND,((SRC-IP,<设备地址>),(RULE-SET,<规则 URL>)),<香港策略>`，并放在国内直连与阿里云 SSH 指定直连前
 - `region/hk/global_media.list` 额外承接 X / Twitter 网页、短链与静态资源，以及 Polymarket 显式域名与激进关键词兜底，并默认绑定 `🇭🇰 香港-自动选择`
-- `region/us/ai_us.list` 统一承接 OpenAI / Claude / Gemini / Copilot / Cursor / Grok / Windsurf / Augment 等海外 AI 平台，并保留更激进的关键词兜底；客户端默认绑定 `🇺🇸 美国-自动选择`
+- `region/hk/google_hk.list` 统一承接 Google 全业务、Google AI 与官方完整公网地址空间，绑定 `🇭🇰 香港-自动选择` 并位于全部拒绝规则之前
+- `region/us/ai_us.list` 统一承接 OpenAI / Claude / Copilot / Cursor / Grok / Windsurf / Augment 等非 Google 海外 AI 平台，并保留更激进的关键词兜底；客户端默认绑定 `🇺🇸 美国-自动选择`
 - `direct/ai_cn_direct.list` 显式承接 Kimi / DeepSeek / 豆包 / 即梦 / Trae 中国大陆 / 元宝 / 混元 / 通义 / 千问 / 智谱 / MiniMax / 文心等国内 AI 入口，并与 `direct/bytedance_direct.list` 一起放在 `region/hk/global_media.list` 前；三者固定为 `ai_cn_direct < bytedance_direct < hk_global_media`
 - 阿里云香港 SSH 继续走 `direct/alicloud_hk_ipv4_ssh22_direct.list`，调用层保留 `DIRECT,no-resolve`；远程规则前必须先放仅限 TCP/22 的阿里注册大块与 `AS45102/AS134963/AS24429` 内联兜底，避免客户端缓存残缺规则时落入 `FINAL`
 - AWS 香港区域入口已统一为 `region/hk/hk_aws_ipv4.list`
@@ -111,32 +112,33 @@
 
 ## 规则顺序建议
 
-1. 拒绝规则
-2. 区域精确规则；在 `region/hk/global_media` 前依次插入 `direct/ai_cn_direct`、`direct/bytedance_direct`
-3. GitHub 仓库 SSH 定向直连
-4. GitHub Raw 自举入口
-5. GitHub Core 节点选择规则
-6. AdsPower 细分直连规则
-7. AdsPower 细分节点选择规则
-8. Polygon 主网 RPC 节点选择规则
-9. BSC 主网 RPC 节点选择规则
-10. 海外 DNS 主 IPv4 端点美国分流规则
-11. 可选：1Password 核心连接节点选择规则
-12. 其余直连规则
-13. 代理优先规则
-14. IP 规则
-15. `FINAL`
+1. Google 全业务香港规则
+2. 拒绝规则
+3. 其他区域精确规则；在 `region/hk/global_media` 前依次插入 `direct/ai_cn_direct`、`direct/bytedance_direct`
+4. GitHub 仓库 SSH 定向直连
+5. GitHub Raw 自举入口
+6. GitHub Core 节点选择规则
+7. AdsPower 细分直连规则
+8. AdsPower 细分节点选择规则
+9. Polygon 主网 RPC 节点选择规则
+10. BSC 主网 RPC 节点选择规则
+11. 海外 DNS 主 IPv4 端点美国分流规则
+12. 可选：1Password 核心连接节点选择规则
+13. 其余直连规则
+14. 代理优先规则
+15. IP 规则
+16. `FINAL`
 
 注意：
 
-- `region/us/google_us.list` 必须放在 `region/us/ai_us.list` 与 `region/hk/global_media.list` 等广谱区域规则前。
-- Google Play 下载 CDN 与重定向域应继续由 `region/us/google_us.list` 显式承接，不要依赖后面的 `direct/cn_direct.list` 或 `proxy/gfw.list` 兜底。
-- `region/us/ai_us.list` 当前聚合海外 AI 平台，且对 Gemini / AI Studio / NotebookLM 保留 AI 视角交叉兜底；它也应继续放在广谱区域规则前，并统一绑定 `🇺🇸 美国-自动选择`。
+- `region/hk/google_hk.list` 必须放在全部拒绝、`region/us/ai_us.list`、`direct/cn_direct.list`、海外 DNS IP 美国分流与所有广谱规则前，并绑定 `🇭🇰 香港-自动选择`。
+- Google Play、YouTube、Workspace、FCM、Gemini、DeepMind、Google 广告/统计域名与官方 `goog.json` 全部 IPv4 / IPv6 地址空间均由 `google_hk` 承接；完整地址空间故意包含 Google Cloud 客户地址。
+- `region/us/ai_us.list` 只聚合非 Google 海外 AI 平台，不得重新加入 Gemini / AI Studio / NotebookLM / DeepMind；它继续绑定 `🇺🇸 美国-自动选择`。
 - `DeepSeek`、`Trae` 中国大陆入口与其他国内 AI 不应并入 `region/us/ai_us.list`；它们应优先由 `direct/ai_cn_direct.list` 承接，字节共享基础设施与中国大陆通用兜底再继续落到 `direct/bytedance_direct.list`、`direct/cn_direct.list`。
 - `direct/ai_cn_direct.list` 属于显式国内 AI 直连入口，顺序上固定为 `direct/ai_cn_direct < direct/bytedance_direct < region/hk/global_media < direct/cn_direct`；静态交集审计确认这只会把 `snssdk.com` 从香港媒体策略纠正为直连。
 - `region/hk/wps_kdocs.list` 统一承接 WPS Office、金山文档、开放平台、云文档与资源分发连接，必须放在 `direct/cn_direct.list` 与 `FINAL` 前并绑定 `🇭🇰 香港-自动选择`；它不是 reject 规则，历史上的失败主要来自通用直连抢先命中或工作白名单最终拒绝。
 - `region/hk/alibaba_hk.list` 启用后必须先于 `direct/ai_cn_direct.list`、`direct/cn_direct.list` 与阿里云 SSH 指定直连入口；其 Alibaba 主体覆盖域名和 IP 规则，XianYu 专项清单与 `goofish / xianyu / idlefish` 关键词用于补强闲鱼。共享 Surge 网关应在调用层用 `SRC-IP + RULE-SET` 限定设备，不能把整份阿里规则无条件扩散到其他终端。
-- Surge Personal 的 `[Host]` 必须先为实际启用且位于中国大陆通用兜底前的 `reject/`、`proxy/`、`region/` 规则集绑定海外 DoH，再引用性能型国内 DNS 清单；OpenAI / ChatGPT 所在的 `region/us/ai_us` 必须保留美国出口与海外解析。不得通过缩小性能型清单来替代这些优先级例外。
+- Surge Personal 与工作白名单的 `[Host]` 必须在国内 DNS 清单前为 `region/hk/google_hk` 绑定海外 DoH；OpenAI / ChatGPT 所在的 `region/us/ai_us` 继续保持美国出口与海外解析。不得通过缩小国内清单来替代这些优先级例外。
 - Surge 的 `[Host]` 还应在国内 DNS 清单前复用已启用的 `region/hk/alibaba_hk.list` 与 `region/hk/wps_kdocs.list` 并绑定海外 DoH；`[Host]` 不支持按源地址区分，因此前者只统一该域名族的解析出口，实际流量策略仍由前述设备条件规则限定。公开示例和工作白名单仍引用小型清单；工作白名单绝不引用性能型清单。
 - `region/hk/hk_brokers.list` 当前只承接复星证券/复星财富、致富证券、辉立证券与富途，应放在 `region/hk/global_media.list` 与 `proxy/gfw.list` 前，并绑定 `🇭🇰 香港-自动选择`。
 - `region/hk/global_media.list` 当前还承接 `x.com`、`t.co`、`twimg.com` 与 `twitter.com` 等 X / Twitter 网页域名，以及 `polymarket.com` 与 `DOMAIN-KEYWORD,polymarket` 这组 Polymarket 香港兜底；默认应继续绑定 `🇭🇰 香港-自动选择`，不要再让它们回落到 `proxy/gfw.list` 或误挂到日本区域。
@@ -148,14 +150,14 @@
 - `direct/adspower_direct.list` 与 `proxy/adspower_proxy.list` 都应放在 `proxy/gfw.list` 前，确保 AdsPower 的细分直连与节点选择优先命中。
 - `proxy/polygon_rpc_proxy.list` 应放在 `proxy/gfw.list` 前，确保 Polygon 主网 RPC 域名优先走 `🚀 节点选择`。
 - `proxy/bsc_rpc_proxy.list` 应放在 `proxy/gfw.list` 前，确保 BSC 主网 RPC 域名优先走 `🚀 节点选择`。
-- `proxy/overseas_dns_ipv4_proxy.list` 应放在 `proxy/gfw.list` 前，并在 Surge 配置中以 `RULE-SET,...,"🇺🇸 美国-自动选择",no-resolve` 方式接入，确保 `1.1.1.1/32`、`8.8.8.8/32` 与 `9.9.9.9/32` 优先走美国地区策略。
+- `proxy/overseas_dns_ipv4_proxy.list` 应放在 `proxy/gfw.list` 前，并在 Surge 配置中以 `RULE-SET,...,"🇺🇸 美国-自动选择",no-resolve` 方式接入，使 `1.1.1.1/32` 与 `9.9.9.9/32` 走美国；Google `8.8.8.8` 已由更早的 `google_hk` 固定香港。
 - `DOMAIN,dns.alidns.com,DIRECT` 与 `DOMAIN,doh.pub,DIRECT` 是代理节点 bootstrap DNS 直连例外，应紧跟海外 DNS 主 IPv4 端点规则，并放在 `PROTOCOL,DOH` / `DOH3` / `DOQ` 前，避免代理尚未建立时产生 DNS 走代理的循环依赖。
 - 如果你是 1Password 重度用户，可额外接入 `proxy/onepassword_proxy.list`，并同样放在 `proxy/gfw.list` 前；这条规则由仓库每日自动抓取 1Password 官方支持页生成，默认只覆盖官方自有核心域名与更新/基础设施端点，详情见 [docs/onepassword-proxy-rules.md](onepassword-proxy-rules.md)。
 - `reject/adspower_reject.list` 应和其他拒绝规则一起放在最前，先拦截隐私追踪与可安全阻断端点。
 - `direct/os_time_direct.list` 建议放在其他普通 `direct/*.list` 前，优先保障 `time.windows.com`、`time.apple.com` 与 `time-macos.apple.com` 直连。
 - 保守模式可继续让 `reject/os_update_reject.list` 先拦截升级流量；激进 Personal 则让 `direct/apple_direct.list` 与 `region/us/microsoft_store_us.list` 位于拒绝规则之前，Apple 官方域名优先直连、Microsoft Store 优先走美国，其余 Microsoft 与 macOS 更新仍按后续规则处理。
 - `proxy/gfw.list` 建议放在国内直连规则之后，至少晚于 `LAN`、`direct/os_time_direct`、`direct/ai_cn_direct`、`direct/bytedance_direct`、`direct/netease_direct`、`direct/bilibili_direct` 与 `direct/cn_direct`，避免国内域名被广谱代理规则提前抢走；GitHub、AdsPower、RPC、海外 DNS 端点等精确代理入口仍应放在 `proxy/gfw.list` 前。
-- 私有 `rulemesh-substore-surge-work-whitelist.conf` 是白名单例外：它保留设备分流、区域精确、香港券商、GitHub SSH、GitHub Raw 自举入口、GitHub Core 代理入口、GitHub 广覆盖 `REJECT` 观察兜底、私有订阅域名同步块、1Password 核心连接、AdsPower、Polygon 主网 RPC、BSC 主网 RPC、海外 DNS 主 IPv4 端点、代理节点 bootstrap DNS 直连例外、海外加密 DNS 显式入口、`LAN,DIRECT`、`direct/os_time_direct`、`region/us/microsoft_us`、`region/us/macos_update_us`、阿里云指定直连与 ByteDance；其中只有设备分流继续保留 `SRC-IP` 约束，并按指定 AWS 区域 / 多地区链式 SOCKS5 IP 段定向到对应工作机亚洲出口组，后续规则不再额外限制源 IP，原独立 `IP 规则` 段已移除；`github_ssh_direct` 后先保留 `DOMAIN,raw.githubusercontent.com` 自举入口，再显式放行 `proxy/github_core_proxy.list`，并额外用 `DOMAIN-KEYWORD,github,REJECT` 观察 GitHub 漏网之鱼；阿里云香港 SSH、`aliyuncs.com` 与 `check.myclientip.com` 统一收敛到“指定直连”段显式放行，其后额外保留一条阿里云广覆盖 `REJECT` 观察兜底；私有订阅域名统一从本地单一源文件以 `-Target surge` 同步到白名单显式放行段，并在订阅更新直连前额外插入 Chrome 访问这些域名时改走 `🚀 节点选择` 的例外；`proxy/onepassword_proxy.list` 也作为白名单显式放行入口放在 `proxy/gfw` 之前；AdsPower 细分规则后额外保留一条 `DOMAIN-KEYWORD,adspower,REJECT` 广覆盖观察兜底，用来发现细分规则漏网之鱼；海外 DNS 主 IPv4 端点统一走美国地区策略，`dns.alidns.com` / `doh.pub` 作为节点 bootstrap DNS 直连例外，DoH / DoH3 / DoQ 与 `cloudflare-dns.com`、`dns.google`、`dns.quad9.net` 也统一作为美国出口白名单入口；未命中上述入口的流量最终统一 `REJECT`。不要把公开模板里的广谱放行段机械同步回去。
+- 私有 `rulemesh-substore-surge-work-whitelist.conf` 是白名单例外：它最先放行 `region/hk/google_hk` 并固定香港，随后保留设备分流、其他区域精确、香港券商、GitHub、私有订阅、1Password、AdsPower、Polygon/BSC RPC、DNS、系统与指定直连入口；Google DNS 走香港，其余海外加密 DNS 端点走美国，未命中入口的流量最终统一 `REJECT`。不要把公开模板里的其他广谱放行段机械同步回去。
 - 工作白名单模式下，广覆盖观察规则统一只允许使用 `REJECT`；personal 配置即使当前风险可接受，也不应把 `DIRECT` / `PROXY + extended-matching` 这类写法继续扩散回白名单模板。
 - 若只新增某个白名单专属的单个拒绝域名，或只用于阻断浏览器扩展更新链路的拒绝规则，默认直接维护在这份私有白名单的拒绝段，不为单条规则额外新增公开 `rules/` 文件。
 

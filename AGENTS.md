@@ -27,6 +27,7 @@
 
 - 在 Codex Windows 沙箱里，`python` / `py -3` 可能不可用，即使 Python 已安装
 - 使用 `rg` 搜索以连字符开头的模式（例如 `-Target`）时，必须在模式前加 `--`，避免被解析成命令行选项
+- PowerShell 不会替 `rg` 展开 `tools/check*.py` 这类路径通配符；应改用 `rg <pattern> tools --glob 'check*.py'`，避免 Windows 将星号路径直接传给 `rg` 后报路径语法错误
 - `rg` 未命中时会以退出码 `1` 结束；把“确认不存在”作为预期结果的审计命令应单独处理该退出码，避免让后续已完成的检查被误报为失败
 - 重跑任务临时验证脚本前先检查其 `param` 块或 `Get-Help`，显式传入全部必需参数，不要假设临时脚本可以无参数运行
 - 对包含多个重复 `[Rule]`、`dns:` 或同型多行字符串的测试 / 配置使用 `apply_patch` 时，补丁上下文必须带唯一函数名、节名或文件级锚点；应用后先检查实际命中区块，再运行测试，避免修改到更早的相似夹具
@@ -50,6 +51,7 @@
 - 维护 `rulemesh-substore-mihomo-clash-verge.yaml` 与 `rulemesh-substore-mihomo-clash-meta.yaml` 时，默认保持“单一业务 DNS 真相”：`ipv6: false`、`dns.ipv6: false`（若字段存在）、`use-hosts: false`、`use-system-hosts: false`、`respect-rules: false`；普通目标网站默认使用海外 `nameserver`，已批准的高优先级 rule-set `nameserver-policy` 镜像同一海外 DNS。
 - 2026-08-21 用户已批准两份 Mihomo 私有文件采用分层 `nameserver-policy`：实际启用且位于中国大陆通用兜底前的 `reject/`、`proxy/`、`region/` 规则集必须优先使用海外 DNS，`rule-set:cn-performance-dns-domains` 才使用国内 DNS；OpenAI / ChatGPT 所在的 `region/us/ai_us` 必须同时固定美国出口与海外解析。静态检查已通过，两份真实配置的 Mihomo `v1.19.25` 原生语法检查也已通过；DNS 查询未命中模拟 resolver，因此 DNS 路由运行时仍未确认。不要回滚已批准架构，但其他 `nameserver-policy` key 与 `respect-rules: true`、`proxy-server-nameserver`、`proxy-server-nameserver-policy`、`direct-nameserver`、`fallback` 继续禁止，也不得把 Surge 的复杂 DNS 结构照搬到 Mihomo。
 - 三份通用私有配置默认以性能优先：普通国际 `FINAL` / `MATCH` 使用现有全地区自动选择组，`region/us/ai_us` 继续固定美国组；两份 Mihomo 的 provider 与 `url-test` 统一使用 `interval: 300`、`lazy: false`，美国组 `tolerance: 100`
+- 五份私有配置与公开模板必须将 `region/hk/google_hk` 放在全部拒绝、`region/us/ai_us`、国内直连、海外 DNS IP 美国分流与广谱兜底之前，并绑定香港自动选择组；Google AI 不得残留在 `ai_us`。Google 规则完整同步 `goog.json` 的 IPv4 / IPv6 地址空间且故意保留 Google Cloud 客户地址，`dns.google` 与 `8.8.8.8` 也应被前置规则送往香港
 - Mihomo 私有文件里的机场 provider `health-check.url` 与 `url-test` 组测速 URL 统一使用 HTTPS `https://www.google.com/generate_204`；不要改回 HTTP
 - `proxy-node-domains` 必须是从 Sub-Store 聚合订阅提取的节点 `server` 域名清单，且必须过滤 IP 并按一行一个域名输出；不得包含订阅链接域名、机场面板域名或普通目标网站域名，也不得输出逗号分隔清单
 - Surge `[Host]` 引用 `proxy-node-domains` 时，必须使用 Surge 生产设备可直接访问的 Sub-Store 分享文件 URL；不要把未经同网络验证的 `https://sub.store/api/file/proxy-node-domains` 写进生产配置
@@ -98,7 +100,7 @@
 - Surge Personal 固定维护家庭版 `rulemesh-substore-surge-personal.conf` 与公司版 `rulemesh-substore-surge-personal-company.conf`；两者只允许用途标识和 MITM 不同，路由与 DNS 结构必须同步。Personal 专用的 `personal_priority_hk`、`notion_hk`、`hk_securities_aggressive`、`apple_direct`、`outlook_direct` 与 `microsoft_store_us` 不得同步进工作白名单
 - 工作白名单的国内 DNS 继续且只能引用小型精选 `cn_dns_domains`；不得引用性能型 `cn_performance_dns_domains`，也不得为了提高覆盖率改变其严格白名单边界。
 - 维护 `rulemesh-substore-surge-work-whitelist.conf` 时，默认应维持“仅放行明确白名单入口，其余流量对工作电脑统一 REJECT”的原则；若要恢复广谱放行（如 `proxy/gfw`、广谱 `direct`、`FINAL` 兜底放行），必须得到用户明确确认
-- 当前该工作路由白名单默认允许入口包括：设备分流、区域精确规则、GitHub SSH、GitHub Raw 下载入口、GitHub 广覆盖观察兜底、私有订阅域名同步块、1Password、AdsPower、Polygon RPC、BSC RPC、海外 DNS 主 IPv4 端点、代理节点 bootstrap DNS 直连例外（dns.alidns.com / doh.pub）、海外加密 DNS 显式入口（DoH / DoH3 / DoQ 与 cloudflare-dns.com / dns.google / dns.quad9.net）、`LAN,DIRECT`、`direct/os_time_direct`、`region/us/microsoft_us`、`region/us/macos_update_us`、阿里云指定直连与 `direct/bytedance_direct`；`[Host]` 中的 `cn_dns_domains` 只用于国内业务域名解析调度，不新增流量放行，但工作规则层显式允许 `zsxq.com` 与 `yikaiying.com` 两个精确 DIRECT 入口；2.1 设备分流既允许原有 `SRC-IP + AWS 区域 / 多地区链式 SOCKS5 IP 段` 约束，也允许已登记个人终端使用 `SRC-IP + region/hk/alibaba_hk` 只把阿里系流量交给香港自动选择，后者不得扩成全流量入口；2.2-2.10 不再额外限制 `SRC-IP`，原独立 IP 规则段已删除；未命中上述入口的流量最终 `FINAL,REJECT`
+- 当前该工作路由白名单默认允许入口包括：最高优先级 `region/hk/google_hk` 全业务香港入口、设备分流、其他区域精确规则、GitHub SSH、GitHub Raw 下载入口、GitHub 广覆盖观察兜底、私有订阅域名同步块、1Password、AdsPower、Polygon RPC、BSC RPC、海外 DNS 主 IPv4 端点、代理节点 bootstrap DNS 直连例外（dns.alidns.com / doh.pub）、海外加密 DNS 显式入口、`LAN,DIRECT`、`direct/os_time_direct`、`region/us/microsoft_us`、`region/us/macos_update_us`、阿里云指定直连与 `direct/bytedance_direct`；Google DNS 走香港，其余海外加密 DNS 端点走美国；`[Host]` 中的 `cn_dns_domains` 只用于国内业务域名解析调度，不新增流量放行，但工作规则层显式允许 `zsxq.com` 与 `yikaiying.com` 两个精确 DIRECT 入口；2.1 设备分流继续保留既有源地址约束，未命中白名单入口的流量最终 `FINAL,REJECT`
 - `region/hk/wps_kdocs` 是工作白名单的区域精确显式放行入口，统一绑定香港自动选择并放在 `FINAL,REJECT` 前；Surge `[Host]` 必须在 `cn_dns_domains` 前复用该规则集绑定海外 DoH，避免 `.cn` 国内解析覆盖 WPS / 金山文档
 - GitHub 在该工作路由文件中除 `github_ssh_direct` 外，还允许紧随其后保留 `DOMAIN,raw.githubusercontent.com` 下载入口与一条广覆盖 `DOMAIN-KEYWORD,github` 观察兜底；它们用于显式放行 GitHub Raw 规则产物下载，并发现 SSH / Raw 之外的漏网之鱼，不得被“去重”或“收敛”掉
 - GitHub Raw 下载链路默认还应保留独立 `[Host]` 解析例外；当前私有配置使用 `raw.githubusercontent.com = server:https://cloudflare-dns.com/dns-query`，避免规则产物下载回落到本地/国内系统 DNS；但这不是代理节点 bootstrap，不能影响 `proxy-node-domains` 继续使用 AliDNS DoH
@@ -123,7 +125,7 @@
   - `INCLUDE,upstream/...`
   - 显式域名 / 网段 / IP 入口
   - `DOMAIN-KEYWORD` 或其他高价值兜底
-- `ai_us`、`ai_cn_direct`、`bytedance_direct`、`google_us`、`crypto_tw` 这类多平台或多服务混合文件，优先按平台或服务分组
+- `ai_us`、`ai_cn_direct`、`bytedance_direct`、`google_hk`、`crypto_tw` 这类多平台或多服务混合文件，优先按平台或服务分组
 - `wps_kdocs` 这类从大陆通用直连中切出的区域特化入口，客户端必须排在 `cn_direct` 前，并同时检查 DNS 清单是否存在更宽后缀覆盖
 - `region/hk/global_media` 继续承接 `blackmatrix7/global_media` 主体，并允许额外收敛 X / Twitter 网页域名与 Polymarket；若上游仍只有 `gfw` 通用条目，本地可保留 `DOMAIN-SUFFIX,polymarket.com` + `DOMAIN-KEYWORD,polymarket` 这类高价值香港兜底，不要再回挂到 `region/jp`
 - `cn_direct`、`telegram` 这类入口型或通用基础兜底文件，可以保持“上游主体 + 本地最高优先级兜底”的简单结构，但仍要把边界写清楚

@@ -45,7 +45,7 @@ private-repository.json # 私人配置仓库的机器可读发现登记
 - `rules/` 下参与构建的源规则文件统一使用 `.list` 命名
 - `rules/dns/` 用于维护 DNS 专用域名清单；`cn_dns_domains.list` 生成小型精选 `dist/surge/dns/cn_dns_domains.list`，`cn_performance_dns_domains.list` 自动合并中国直连域名主体与前者，生成性能型 `dist/surge/dns/cn_performance_dns_domains.list`
 - `rules/app/` 用于维护单一应用的主清单；例如 `rules/app/adspower.txt` 会在构建前自动派生到 `rules/reject/`、`rules/direct/` 与 `rules/proxy/`
-- 例如 `rules/region/us/google_us.list` 会生成 `dist/surge/rules/region/us/google_us.list` 与 `dist/mihomo/classical/region/us/google_us.yaml`
+- 例如 `rules/region/hk/google_hk.list` 会生成 `dist/surge/rules/region/hk/google_hk.list` 与 `dist/mihomo/classical/region/hk/google_hk.yaml`
 - `dist/build-report.json` 会记录每个源文件被识别为 `domain-only`、`ipcidr-only` 或 `classical/mixed`，以及构建警告
 - 这些分类结果只用于维护诊断，不再对应额外的 `domainset` / `domain` / `ipcidr` 产物目录
 
@@ -150,7 +150,7 @@ python tools/build_rules.py
 - 两者上游快照由 `tools/sync_upstream_rules.py` 每日从 Chainlist 的 `rpcs.json` 抓取并累计更新，避免日常波动导致既有覆盖面回撤
 - 客户端应显式接入 `proxy/polygon_rpc_proxy` 与 `proxy/bsc_rpc_proxy`，并放在 `proxy/gfw` 前，让 `🚀 节点选择` 先命中这些 RPC 域名
 - 海外 DNS 主 IPv4 端点专项规则统一维护在 `rules/proxy/overseas_dns_ipv4_proxy.list`
-- 客户端应显式接入 `proxy/overseas_dns_ipv4_proxy`，并放在 `proxy/gfw` 前；Surge 侧继续按 `RULE-SET,...,"🇺🇸 美国-自动选择",no-resolve` 接入，让美国地区策略先命中 `1.1.1.1/32`、`8.8.8.8/32` 与 `9.9.9.9/32`
+- 客户端应显式接入 `proxy/overseas_dns_ipv4_proxy`，并放在 `proxy/gfw` 前；Surge 侧继续按 `RULE-SET,...,"🇺🇸 美国-自动选择",no-resolve` 接入，让美国地区策略命中 `1.1.1.1/32` 与 `9.9.9.9/32`，Google `8.8.8.8` 则由更早的 `google_hk` 固定香港
 - AWS 香港区域规则入口已统一命名为 `region/hk/hk_aws_ipv4`，与东京、大阪、首尔、台北保持同类命名
 - 私有代理服务商导出的链式 SOCKS5 端点脱敏快照统一维护在 `region/multi/chain_socks5_ipcidr`；公开仓库只保留严格校验、去重并排序后的公网 IPv4 `/32`，不保存下载地址、端口或认证信息，也不再挂在 `region/jp/`。Surge 可在规则层把端点连接交给链式 / 自动选择组；Mihomo 默认模板不调用该规则，必须另行配置并复测 `dialer-proxy`，不能用普通 `RULE-SET` 冒充链式拨号
 - 阿里云香港 SSH 直连入口统一为 `direct/alicloud_hk_ipv4_ssh22_direct`；发布覆盖由官方香港 VPC 当前快照、`AS45102/AS134963/AS24429` 当前与历史 BGP 公告的单调并集组成，自动同步不再删除旧覆盖，并直接保留 `no-resolve + TCP/22` 最终语义
@@ -184,10 +184,11 @@ python tools/build_rules.py
 - 这份工作白名单默认不额外开放局域网代理入口；旁路由已接管流量，工作文件不承担 LAN 代理服务。
 - 其中设备分流继续按局域网源 IP 约束：既包括原有“源 IP + AWS 区域 / 多地区链式 SOCKS5 IP 段”工作机入口，也允许用“源 IP + `region/hk/alibaba_hk`”只给已登记个人终端开放阿里系香港出口；区域精确、GitHub SSH、GitHub Raw 自举入口、GitHub Core 代理入口、GitHub 观察兜底、私有订阅域名同步块、1Password 核心连接、AdsPower、Polygon 主网 RPC、BSC 主网 RPC、海外 DNS 主 IPv4 端点、代理节点 bootstrap DNS 直连例外、海外加密 DNS 显式入口与指定直连不再额外限制源 IP。
 - 工作白名单的区域精确入口显式包含 `region/hk/wps_kdocs`，用于让 WPS / 金山文档先走香港策略，避免落入最终拒绝。
+- 工作白名单新增最高优先级 `region/hk/google_hk`，完整放行 Google 域名、Google AI 与官方公网地址空间到香港，并让其 `[Host]` 解析例外位于国内 DNS 清单前；这项明确例外覆盖 Google 广告拒绝规则。
 - 在该白名单里，`direct/os_time_direct` 属于系统时间同步直连入口，`region/us/microsoft_us` 与 `region/us/macos_update_us` 属于允许保留的系统类美国分流入口。
 - 白名单专属的单个直连域名例外（例如 `smtp.163.com`）默认直接维护在“指定直连”入口，不为单条规则额外拆分公开 `rules/` 文件。
 - 白名单专属的单个拒绝域名，或只用于阻断浏览器扩展更新链路的拒绝规则，也默认直接维护在白名单的“拒绝规则”入口，不为单条规则额外拆分公开 `rules/` 文件。
-- 其中 `proxy/onepassword_proxy`、`proxy/polygon_rpc_proxy`、`proxy/bsc_rpc_proxy`、`proxy/overseas_dns_ipv4_proxy`，代理节点 bootstrap DNS 直连例外 `dns.alidns.com` / `doh.pub`，以及 DoH / DoH3 / DoQ、`cloudflare-dns.com`、`dns.google`、`dns.quad9.net` 都是允许保留的白名单入口；bootstrap DNS 走 `DIRECT`，海外加密 DNS 端点走美国出口。
+- 其中 `proxy/onepassword_proxy`、`proxy/polygon_rpc_proxy`、`proxy/bsc_rpc_proxy`、`proxy/overseas_dns_ipv4_proxy`，代理节点 bootstrap DNS 直连例外 `dns.alidns.com` / `doh.pub`，以及 DoH / DoH3 / DoQ、`cloudflare-dns.com`、`dns.google`、`dns.quad9.net` 都是允许保留的白名单入口；bootstrap DNS 走 `DIRECT`，Google DNS 走香港，其余海外加密 DNS 端点走美国。
   - 其中 GitHub SSH 后先进入 GitHub Raw 自举入口，再显式放行 `proxy/github_core_proxy`，并保留一条 `DOMAIN-KEYWORD,github,REJECT` 广覆盖观察兜底，用于发现 SSH / GitHub Core 之外的漏网之鱼；AdsPower 细分规则后也保留一条 `DOMAIN-KEYWORD,adspower,REJECT` 广覆盖观察兜底。
   - 阿里云香港 SSH、`aliyuncs.com` 与 `check.myclientip.com` 统一收敛到“指定直连”段显式放行；其后额外保留一条阿里云广覆盖 `REJECT` 观察兜底，用于发现上游阿里云规则的漏网之鱼。
 - 私有订阅端点统一在解析后的私人当前配置目录中的 `private_subscription_direct.list` 维护；同步脚本必须显式指定 `-Target surge`、`-Target mihomo` 或 `-Target all`。Surge 目标生成“Chrome 节点选择例外 + 普通订阅更新直连”，Mihomo 目标则让这些精确域名 / IP 的普通流量直接命中节点选择；真实端点不回写公开模板。
@@ -219,7 +220,7 @@ python tools/build_rules.py
 - 默认接入 AdsPower 专项 `reject/direct/proxy` 规则集，并保持在 `proxy/gfw` 前完成细分控制
 - 默认接入 Polygon 主网 RPC 专项 `proxy/polygon_rpc_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
 - 默认接入 BSC 主网 RPC 专项 `proxy/bsc_rpc_proxy` 规则，并保持在 `proxy/gfw` 前优先命中
-- 默认接入海外 DNS 主 IPv4 端点专项 `proxy/overseas_dns_ipv4_proxy` 规则，并保持在 `proxy/gfw` 前优先命中；命中后统一走 `🇺🇸 美国-自动选择`
+- 默认接入海外 DNS 主 IPv4 端点专项 `proxy/overseas_dns_ipv4_proxy` 规则，并保持在 `proxy/gfw` 前优先命中；Google 官方地址空间规则更早命中 `8.8.8.8` 并走香港，其余端点继续走 `🇺🇸 美国-自动选择`
 - 默认在 `github_ssh_direct` 后先保留 `DOMAIN,raw.githubusercontent.com,"🚀 节点选择"` 自举入口，再接入 `proxy/github_core_proxy`；同时继续保留 `raw.githubusercontent.com = server:https://cloudflare-dns.com/dns-query` 这一条规则产物下载解析例外，但它不是代理节点 bootstrap，不能替代 `proxy-node-domains` 的 AliDNS 解析
 - Surge `[Host]` 中的 `proxy-node-domains` 必须使用生产设备可直接访问的 Sub-Store 分享文件 URL，形如 `https://<你的 Sub-Store 后端或反代域名>/share/file/proxy-node-domains`；不要把未经同网络验证的 `/api/file/` 链接直接写进生产配置
 - `proxy-node-domains` 返回内容必须过滤 IP，并按一行一个域名输出；逗号分隔的一整行不符合 Surge `DOMAIN-SET` 预期
@@ -265,7 +266,7 @@ python tools/build_rules.py
 - X / Twitter 网页、短链与静态资源，以及 Polymarket 相关域名应先命中 `region/hk/global_media`，再落到 `proxy/gfw`
 - 1Password 核心连接专项规则如启用，应先命中 `proxy/onepassword_proxy`，再落到 `proxy/gfw`
 - 操作系统时间同步专项规则应先命中 `direct/os_time_direct`，再落到其他普通 `direct/*`
-- Google 通用服务、海外 AI、Microsoft 与 macOS 更新专项入口应先命中 `region/us/*`，其中 Microsoft / macOS 更新仍必须排在 `reject/os_update_reject` 之后，避免默认禁更逻辑失效
+- Google 全业务与官方公网地址空间必须最先命中 `region/hk/google_hk` 并走香港；非 Google 海外 AI、Microsoft 与 macOS 更新继续命中 `region/us/*`，其中 Microsoft / macOS 更新仍必须排在 `reject/os_update_reject` 之后
 - DNS 信任边界优先于连通性微调：普通目标网站域名默认不得交给国内 DNS；国内 DNS 只作为 DNS 服务器域名 bootstrap、代理节点 `server` 域名 bootstrap，以及小型精选或性能型国内业务清单的受限例外。性能型清单只用于三份性能配置，工作白名单和公开示例继续使用小型清单；详细约束见 [docs/network-security/dns-leak-prevention.md](docs/network-security/dns-leak-prevention.md)
 - 同一套路由骨架不等于同一个客户端运行时；`Surge`、`Clash Verge Rev`、`Clash Meta for Android` 在 DNS 启动链上允许存在实现差异
 - 本地同时维护 Clash Verge Rev 与 Clash Meta for Android 时，允许拆成两份 Mihomo 私有配置；规则骨架尽量共享，节点域名解析策略允许分别维护
@@ -277,7 +278,7 @@ python tools/build_rules.py
 - 文件头必须先写清楚：这份规则负责什么、不负责什么、与相邻规则文件的边界是什么、客户端顺序上应放在哪里
 - 同一小节内部默认顺序是：小节注释、`INCLUDE,upstream/...`、显式域名 / 网段、`DOMAIN-KEYWORD` 兜底
 - IP 类源规则可以只写 `IP-CIDR`、`IP-CIDR6`、`GEOIP`、`IP-ASN`、`ASN` 主体；构建产物会自动补 `no-resolve`，客户端调用纯 IP 规则集时仍建议在 `RULE-SET` 层保留 `no-resolve`
-- 像 `ai_us`、`ai_cn_direct`、`bytedance_direct`、`google_us`、`crypto_tw` 这类多平台或多服务混合文件，优先按平台或服务分组
+- 像 `ai_us`、`ai_cn_direct`、`bytedance_direct`、`google_hk`、`crypto_tw` 这类多平台或多服务混合文件，优先按平台或服务分组
 - 像 `cn_direct`、`telegram` 这类入口型或通用基础兜底文件，可以保持“上游主体 + 本地最高优先级兜底”的简单结构，但仍要把边界写清楚
 - 任务中一旦出现错误、用户纠正、错误假设、验证失败或回滚，必须在同一任务内自动完成“现象—根因—修复—防复发”复盘；可机械验证的经验优先落到测试或检查脚本，其余写入最窄的维护文档，并同步 `AGENTS.md` 与规则编排文档
 - 私有配置排障时，脱敏必须发生在命令输出之前；不得先打印完整私有行再依赖最终回复隐藏，优先只输出字段名、计数、哈希或已替换敏感值的片段
@@ -286,20 +287,21 @@ python tools/build_rules.py
 
 ## Google 路由强约束
 
-- Google 通用服务（含 Google Play / YouTube / FCM）主维护在 `rules/region/us/google_us.list`；Google Play 下载 CDN 与重定向域也应在这里显式兜底，避免被后面的通用 direct/gfw 抢先接管
-- `Gemini` / `AI Studio` / `NotebookLM` 允许在 `rules/region/us/ai_us.list` 保留 AI 视角交叉兜底，但客户端顺序仍必须让 `google_us` 排在 `ai_us` 前
-- 客户端应接入 `dist/surge/rules/region/us/google_us.list` 或 `dist/mihomo/classical/region/us/google_us.yaml`
-- Google 规则必须绑定 `US-AUTO`（或等价美国策略组），不再提供 `proxy/google` 双入口
-- 规则顺序必须先放 Google US 与 AI US 等精确入口，再放 WPS / 香港券商；随后按 `direct/ai_cn_direct`、`direct/bytedance_direct`、`region/hk/global_media` 排列，最后才进入其余普通直连与广谱代理规则
-- 新增或调整 Google 规则时，先改该源文件，再执行构建同步 `dist/`
+- Google、YouTube、Google Play、Workspace、FCM、Gemini、AI Studio、NotebookLM 与 DeepMind 统一维护在 `rules/region/hk/google_hk.list`；`region/us/ai_us.list` 不再保留任何 Google 交叉兜底
+- Google 域名入口组合完整 Blackmatrix7 Google / FCM / YouTube / Gemini 上游与本地激进关键词；IP 入口每日同步 Google 官方 `goog.json` 的全部 IPv4 / IPv6 前缀
+- 为满足宁可过度覆盖也不遗漏，官方地址空间不扣除 Google Cloud 客户地址，因此第三方 GCP 服务也可能走香港
+- 客户端应接入 `dist/surge/rules/region/hk/google_hk.list` 或 `dist/mihomo/classical/region/hk/google_hk.yaml`，并固定绑定香港自动选择组
+- `google_hk` 必须位于全部拒绝、`ai_us`、国内直连、海外 DNS IP 美国分流与广谱兜底之前；这会让 Google 广告与统计域名也优先走香港而不再被广告规则拒绝
+- Surge `[Host]` 与 Mihomo `nameserver-policy` 必须让 `google_hk` 使用海外加密 DNS；`dns.google` 与 `8.8.8.8` 等 Google DNS 连接本身仍由前置 Google 规则送往香港
+- 新增或调整 Google 规则时，先改该源文件或官方地址同步器，再执行上游同步与构建
 
 ## AI 路由约定
 
-- `rules/region/us/ai_us.list` 当前按“第三方上游聚合 + 本地激进兜底”维护，但定位已收敛为“海外 AI 平台入口”，统一承接 `OpenAI`、`Claude`、`Gemini`、`Copilot`、`Cursor`、`Grok`、`Windsurf`、`Augment` 等海外 AI 平台，并统一绑定美国地区策略
+- `rules/region/us/ai_us.list` 当前按“第三方上游聚合 + 本地激进兜底”维护，只承接 `OpenAI`、`Claude`、`Copilot`、`Cursor`、`Grok`、`Windsurf`、`Augment` 等非 Google 海外 AI 平台，并统一绑定美国地区策略
 - `rules/direct/ai_cn_direct.list` 新增为“国内 AI 显式直连入口”，优先承接 `Kimi / Moonshot`、`DeepSeek`、`豆包`、`即梦`、`Trae 中国大陆入口`、`元宝`、`混元`、`通义 / 千问`、`智谱 / ChatGLM`、`MiniMax / 海螺`、`文心` 等国内 AI 平台
 - `Trae` 只在 `ai_us` 中保留明确海外入口；`DeepSeek`、`Trae` 中国大陆入口与其他国内 AI 不应并入 `ai_us`，而应优先落到 `direct/ai_cn_direct`，共享基础设施再继续落到 `direct/bytedance_direct`、`direct/cn_direct`
 - 上游主体优先引用 `blackmatrix7/ios_rule_script`、`SkywalkerJi/Clash-Rules` 与 `Accademia/Additional_Rule_For_Clash` 的快照；其中 `Trae` 只参考第三方上游，不再直接整包并入，避免把国内入口误送到海外 AI 代理策略
-- 客户端顺序继续保持 `google_us` 在前、`ai_us` 在后；国内侧固定为 `direct/ai_cn_direct < direct/bytedance_direct < region/hk/global_media < direct/cn_direct`，确保显式国内入口优先命中，并只改变 `snssdk.com` 这一已确认交集
+- 客户端顺序固定保持 `google_hk` 位于全部拒绝和 `ai_us` 之前；国内侧继续为 `direct/ai_cn_direct < direct/bytedance_direct < region/hk/global_media < direct/cn_direct`
 - 私有 `rulemesh-substore-surge-work-whitelist.conf` 不会自动并入这组新的国内 AI 放行入口；工作白名单仍需继续按“只放行明确白名单入口，其余统一 REJECT”的原则单独评估
 
 ## 上游维护方式
@@ -365,7 +367,7 @@ python tools/build_rules.py
 
 长期承担 DHCP 与旁路由流量接管的 Surge Mac，可使用 [docs/surge-local-monitoring.md](docs/surge-local-monitoring.md) 中的本地监控闭环。该机制由 macOS `launchd` 启动，与 Surge 的交互只通过自带 `surge-cli` 读取请求、DNS、规则、策略与有效配置摘要；它不要求打开 HTTP API，也不启用 MITM。
 
-默认每 20 秒读取请求增量、每 5 分钟检查 DNS 与配置摘要、每 15 分钟执行轻量主动探测；全量 HMAC 去重键约保留 1 小时，关注请求明细保留 36 小时，探测、DNS 摘要、配置 / 健康审计与建议索引保留 14 天，数据库预算默认 256 MiB。独立的 Codex automation 每日 `09:00 Asia/Shanghai` 从已安装的运行副本读取脱敏报告并把完整建议留在 Scheduled；可选飞书提醒由本地守护进程在 `09:05` 独立发送，只包含采集质量和待查看项数量，它不是 Scheduled 成功完成的回执。落盘主机名只限国内分类目标、Google / ChatGPT 受控依赖、配置中的主动探测主机及其子域、明确命中 `google_us` / `ai_us` 的美国平台目标与失败 `FINAL` 候选；其余只保存匿名客户端与策略 ID、规则类型、错误类别、计时，以及去重和关联所需的不可逆摘要。不得保存 URL 路径或查询、设备名或 IP、headers、body、原始 profile 或完整 CLI 输出。
+默认每 20 秒读取请求增量、每 5 分钟检查 DNS 与配置摘要、每 15 分钟执行轻量主动探测；全量 HMAC 去重键约保留 1 小时，关注请求明细保留 36 小时，探测、DNS 摘要、配置 / 健康审计与建议索引保留 14 天，数据库预算默认 256 MiB。独立的 Codex automation 每日 `09:00 Asia/Shanghai` 从已安装的运行副本读取脱敏报告并把完整建议留在 Scheduled；可选飞书提醒由本地守护进程在 `09:05` 独立发送，只包含采集质量和待查看项数量，它不是 Scheduled 成功完成的回执。落盘主机名只限国内分类目标、Google / ChatGPT 受控依赖、配置中的主动探测主机及其子域、明确命中 `google_hk` / `ai_us` 的受控平台目标与失败 `FINAL` 候选；其余只保存匿名客户端与策略 ID、规则类型、错误类别、计时，以及去重和关联所需的不可逆摘要。不得保存 URL 路径或查询、设备名或 IP、headers、body、原始 profile 或完整 CLI 输出。
 
 请求类慢路径建议只依据 DNS / TCP 建连计时和明确失败触发；完整请求持续时间可能包含长轮询、流式传输或下载，仅作为调查上下文。固定轻量 HTTPS 主动探测仍保留端到端总耗时判断。
 

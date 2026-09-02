@@ -46,10 +46,10 @@ class PrivateDnsPrecedenceTests(unittest.TestCase):
         surge_rule.parent.mkdir(parents=True)
         surge_rule.write_text("DOMAIN-SUFFIX,openai.com\n", encoding="utf-8")
 
-        surge_google_rule = (
-            self.root / "dist/surge/rules/region/us/google_us.list"
+        surge_us_rule = (
+            self.root / "dist/surge/rules/region/us/microsoft_us.list"
         )
-        surge_google_rule.write_text(
+        surge_us_rule.write_text(
             "IP-CIDR,203.0.113.0/24,no-resolve\n", encoding="utf-8"
         )
 
@@ -59,10 +59,10 @@ class PrivateDnsPrecedenceTests(unittest.TestCase):
             "payload:\n  - 'DOMAIN-SUFFIX,openai.com'\n", encoding="utf-8"
         )
 
-        mihomo_google_rule = (
-            self.root / "dist/mihomo/classical/region/us/google_us.yaml"
+        mihomo_us_rule = (
+            self.root / "dist/mihomo/classical/region/us/microsoft_us.yaml"
         )
-        mihomo_google_rule.write_text(
+        mihomo_us_rule.write_text(
             "payload:\n  - 'IP-CIDR,203.0.113.0/24,no-resolve'\n",
             encoding="utf-8",
         )
@@ -136,7 +136,7 @@ class PrivateDnsPrecedenceTests(unittest.TestCase):
         ai_target: str = "US-AUTO",
         other_us_target: str | None = None,
         other_us_url: str = (
-            f"{PUBLIC_RAW_ROOT}/dist/surge/rules/region/us/google_us.list"
+            f"{PUBLIC_RAW_ROOT}/dist/surge/rules/region/us/microsoft_us.list"
         ),
         group_lines: list[str] | None = None,
     ) -> Path:
@@ -497,7 +497,7 @@ FINAL,AUTO
             [self.overseas_host_line(), self.performance_host_line()],
             other_us_url=(
                 "https://rules.invalid/vtgpcmsvgs/rulemesh/main/"
-                "dist/surge/rules/region/us/google_us.list"
+                "dist/surge/rules/region/us/microsoft_us.list"
             ),
         )
 
@@ -546,7 +546,7 @@ FINAL,AUTO
         ai_target: str = "US-AUTO",
         other_us_target: str | None = None,
         other_us_url: str = (
-            f"{PUBLIC_RAW_ROOT}/dist/mihomo/classical/region/us/google_us.yaml"
+            f"{PUBLIC_RAW_ROOT}/dist/mihomo/classical/region/us/microsoft_us.yaml"
         ),
         pure_ip_url: str = (
             f"{PUBLIC_RAW_ROOT}/dist/mihomo/classical/region/us/pure_ip.yaml"
@@ -583,7 +583,7 @@ proxy-providers:
   provider_a:
     type: http
 rule-providers:
-  us_google:
+  us_microsoft:
     type: http
     behavior: classical
     url: {other_us_url}
@@ -605,7 +605,7 @@ rule-providers:
     format: text
     url: {performance_url}
 rules:
-  - RULE-SET,us_google,{other_us_target}
+  - RULE-SET,us_microsoft,{other_us_target}
   - RULE-SET,us_ai,{ai_target}
   - RULE-SET,pure_ip,{ai_target}
   - RULE-SET,cn_direct,DIRECT
@@ -1106,7 +1106,7 @@ rules:
             self.overseas_policy_lines() + self.performance_policy_lines(),
             other_us_url=(
                 "https://rules.invalid/vtgpcmsvgs/rulemesh/main/"
-                "dist/mihomo/classical/region/us/google_us.yaml"
+                "dist/mihomo/classical/region/us/microsoft_us.yaml"
             ),
             pure_ip_url=(
                 f"{PUBLIC_RAW_ROOT}/dist/mihomo/classical/region/us/missing.yaml"

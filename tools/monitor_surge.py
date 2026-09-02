@@ -463,7 +463,7 @@ def classify_host(
     if host_matches(host, cn_suffixes):
         return "domestic"
     rule_text = str(rule or "").lower()
-    if "google_us" in rule_text:
+    if "google_hk" in rule_text:
         return "google"
     if "ai_us" in rule_text:
         return "us_platform"

@@ -1,4 +1,5 @@
 import inspect
+import http.client
 import io
 import json
 import os
@@ -17,6 +18,48 @@ if str(TOOLS_DIR) not in sys.path:
 import sync_upstream_rules  # noqa: E402
 import send_upstream_alert  # noqa: E402
 import build_rules  # noqa: E402
+
+
+class GoogleIpSnapshotTests(unittest.TestCase):
+    def test_builds_canonical_ipv4_and_ipv6_rules_from_official_payload(self) -> None:
+        payload = {
+            "syncToken": "123",
+            "creationTime": "2026-09-02T00:00:00Z",
+            "prefixes": [
+                {"ipv6Prefix": "2001:4860:4000::/36"},
+                {"ipv4Prefix": "142.250.0.0/15"},
+                {"ipv4Prefix": "8.8.8.0/24"},
+            ],
+        }
+
+        text = sync_upstream_rules.build_google_ip_snapshot_text(payload)
+
+        self.assertIn(sync_upstream_rules.GOOGLE_IP_RANGES_URL, text)
+        self.assertIn("同步令牌: 123", text)
+        self.assertIn("IPv4 前缀数量: 2", text)
+        self.assertIn("IPv6 前缀数量: 1", text)
+        self.assertLess(text.index("IP-CIDR,8.8.8.0/24,no-resolve"), text.index("IP-CIDR,142.250.0.0/15,no-resolve"))
+        self.assertIn("IP-CIDR6,2001:4860:4000::/36,no-resolve", text)
+
+    def test_rejects_duplicate_or_non_public_google_prefixes(self) -> None:
+        duplicate = {
+            "syncToken": "123",
+            "creationTime": "2026-09-02T00:00:00Z",
+            "prefixes": [
+                {"ipv4Prefix": "8.8.8.0/24"},
+                {"ipv4Prefix": "8.8.8.0/24"},
+            ],
+        }
+        private = {
+            "syncToken": "123",
+            "creationTime": "2026-09-02T00:00:00Z",
+            "prefixes": [{"ipv4Prefix": "10.0.0.0/8"}],
+        }
+
+        with self.assertRaisesRegex(ValueError, "重复"):
+            sync_upstream_rules.validate_google_ip_ranges_payload(duplicate)
+        with self.assertRaisesRegex(ValueError, "公网"):
+            sync_upstream_rules.validate_google_ip_ranges_payload(private)
 
 
 class BuildAwsSnapshotTextTests(unittest.TestCase):
@@ -809,6 +852,23 @@ class SyncFailureTests(unittest.TestCase):
         self.assertEqual(len(failures), 1)
         self.assertEqual(failures[0].category, "上游内容为空")
         self.assertEqual(failures[0].resource, "example/test.list")
+
+    def test_short_http_read_is_recorded_as_fetch_failure(self) -> None:
+        failures: list[sync_upstream_rules.UpstreamFailure] = []
+        item = sync_upstream_rules.UpstreamFile(
+            Path("example/test.list"),
+            "https://example.com/test.list",
+        )
+
+        with mock.patch(
+            "sync_upstream_rules.fetch_text",
+            side_effect=http.client.IncompleteRead(b"partial", 10),
+        ):
+            updated, failed = sync_upstream_rules.sync_one(item, failures)
+
+        self.assertEqual((updated, failed), (False, True))
+        self.assertEqual(len(failures), 1)
+        self.assertEqual(failures[0].category, "抓取失败")
 
     def test_sync_alicloud_snapshots_records_auth_failure(self) -> None:
         failures: list[sync_upstream_rules.UpstreamFailure] = []

@@ -82,6 +82,7 @@ FINAL,自动选择,dns-failed
 自动选择 = smart, policy-path=a
 
 [Rule]
+RULE-SET,https://example.com/region/hk/google_hk.list,HK-AUTO
 RULE-SET,https://example.com/direct/apple_direct.list,DIRECT
 RULE-SET,https://example.com/region/hk/personal_priority_hk.list,HK-AUTO
 RULE-SET,https://example.com/region/hk/notion_hk.list,HK-AUTO
@@ -98,6 +99,24 @@ FINAL,自动选择,dns-failed
         )
 
         self.assertEqual(check_private_performance.validate_profile(path), [])
+
+    def test_surge_personal_requires_google_hk_before_reject(self) -> None:
+        path = self.write_temp(
+            "rulemesh-substore-surge-personal.conf",
+            """[Proxy Group]
+自动选择 = smart, policy-path=a
+香港自动选择 = smart, policy-path=b, policy-regex-filter=香港|HK
+
+[Rule]
+RULE-SET,https://example.com/reject/adblock_reject.list,REJECT
+RULE-SET,https://example.com/region/hk/google_hk.list,香港自动选择
+FINAL,自动选择,dns-failed
+""",
+        )
+
+        messages = [item.message for item in check_private_performance.validate_profile(path)]
+
+        self.assertTrue(any("google_hk" in message for message in messages))
 
     def test_surge_work_requires_exact_domestic_entries(self) -> None:
         path = self.write_temp(
@@ -221,6 +240,22 @@ FINAL,REJECT
 
         self.assertTrue(any("必须早于 reject_adblock" in message for message in messages))
 
+    def test_mihomo_requires_google_hk_provider_and_hong_kong_route(self) -> None:
+        content = self.mihomo_fixture(
+            interval=300,
+            lazy="false",
+            match="自动选择",
+            tolerance=100,
+        ).replace(
+            "RULE-SET,hk_google,香港自动选择",
+            "RULE-SET,hk_google,美国自动选择",
+        )
+        path = self.write_temp("rulemesh-substore-mihomo-clash-meta.yaml", content)
+
+        messages = [item.message for item in check_private_performance.validate_profile(path)]
+
+        self.assertTrue(any("google_hk" in message for message in messages))
+
     def test_accepts_performance_first_profiles(self) -> None:
         personal = self.write_temp(
             "rulemesh-substore-surge-personal.conf",
@@ -229,6 +264,7 @@ FINAL,REJECT
 美国自动选择 = smart, policy-path=b, policy-regex-filter=美国|US
 
 [Rule]
+RULE-SET,https://example.com/region/hk/google_hk.list,HK-AUTO
 RULE-SET,https://example.com/direct/apple_direct.list,DIRECT
 RULE-SET,https://example.com/region/hk/personal_priority_hk.list,HK-AUTO
 RULE-SET,https://example.com/region/hk/notion_hk.list,HK-AUTO
@@ -245,7 +281,11 @@ FINAL,自动选择,dns-failed
         )
         work = self.write_temp(
             "rulemesh-substore-surge-work-whitelist.conf",
-            """[Rule]
+            """[Proxy Group]
+香港自动选择 = smart, policy-path=a, policy-regex-filter=香港|HK
+
+[Rule]
+RULE-SET,https://example.com/region/hk/google_hk.list,香港自动选择
 DOMAIN-SUFFIX,zsxq.com,DIRECT
 DOMAIN-SUFFIX,yikaiying.com,DIRECT
 FINAL,REJECT
@@ -264,6 +304,11 @@ FINAL,REJECT
         *, interval: int, lazy: str, match: str, tolerance: int
     ) -> str:
         return f"""rule-providers:
+  hk_google:
+    type: http
+    behavior: classical
+    url: https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/hk/google_hk.yaml
+    path: ./ruleset/region/hk/google_hk.yaml
   hk_securities_aggressive:
     type: http
     behavior: classical
@@ -307,6 +352,7 @@ proxy-groups:
     tolerance: 50
     lazy: {lazy}
 rules:
+  - RULE-SET,hk_google,香港自动选择
   - RULE-SET,hk_securities_aggressive,香港自动选择
   - RULE-SET,reject_adblock,REJECT
   - RULE-SET,region-us-ai,美国自动选择

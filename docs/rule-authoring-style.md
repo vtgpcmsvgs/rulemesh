@@ -10,7 +10,7 @@
   - `rules/region/us/ai_us.list`
   - `rules/direct/ai_cn_direct.list`
   - `rules/direct/bytedance_direct.list`
-  - `rules/region/us/google_us.list`
+  - `rules/region/hk/google_hk.list`
   - `rules/region/tw/crypto_tw.list`
   - `rules/region/hk/global_media.list`
 
@@ -91,8 +91,8 @@ DOMAIN-KEYWORD,...
 
 例如：
 
-- `ai_us.list` 适合按 `ChatGPT / OpenAI`、`Claude / Anthropic`、`Gemini / Google AI`、`Perplexity` 这类平台分组
-- `google_us.list` 适合按 `Google FCM`、`YouTube`、`Google 通用服务`、`Gemini / Google AI` 这类服务分组
+- `ai_us.list` 适合按 `ChatGPT / OpenAI`、`Claude / Anthropic`、`Copilot`、`Perplexity` 这类非 Google 平台分组
+- `google_hk.list` 适合按 `Google 通用服务`、`Google FCM`、`Google Play`、`YouTube`、`Gemini / Google AI`、官方 IP 地址空间这类服务分组
 - `crypto_tw.list` 适合按 `交易所 / 接入基础设施`、`链上数据 / 区块浏览器`、`预测市场` 这类类别分组
 - `bytedance_direct.list` 适合按 `字节跳动 / ByteDance` 与 `抖音 / Douyin` 分组
 - `global_media.list` 适合按 `上游 GlobalMedia 主体`、`X / Twitter 网页补站`、`Polymarket 香港解锁补站` 这类服务小节分组
@@ -177,7 +177,7 @@ IP 类源规则可以只写主体字段；构建产物会自动补 `no-resolve`�
 
 - `ai_us.list` 要明确“只负责海外 AI，不负责国内 AI，并默认绑定美国策略”
 - `ai_cn_direct.list` 要明确“显式国内 AI 在前，字节共享基础设施仍交给 bytedance_direct”
-- `google_us.list` 要明确“Gemini 允许在 ai_us 交叉兜底，但 google_us 必须排在 ai_us 前”
+- `google_hk.list` 要明确“完整 Google 域名与官方 IP 地址空间固定香港，Google AI 不得在 ai_us 交叉兜底，且本规则必须位于全部拒绝与 ai_us 前”
 - `cn_direct.list` 要明确“它是最宽泛的大陆通用兜底，应放在更细分规则之后”
 
 私有服务商导出的端点清单还必须遵守额外的脱敏与原子更新边界：原始响应只在内存中处理，逐行完整校验 IPv4、端口与认证字段，拒绝空响应、异常行、非公网 IPv4 和重复 IP；全部通过后按 IPv4 数值排序并全量替换。公开源规则只允许保留 `IP-CIDR,<IPv4>/32`，下载地址、端口、用户名、密码、令牌和 `plan_id` 一律不得进入仓库、日志或文档。
@@ -252,7 +252,7 @@ IP 类源规则可以只写主体字段；构建产物会自动补 `no-resolve`�
 - `rules/region/us/ai_us.list`
 - `rules/direct/ai_cn_direct.list`
 - `rules/direct/bytedance_direct.list`
-- `rules/region/us/google_us.list`
+- `rules/region/hk/google_hk.list`
 - `rules/region/tw/crypto_tw.list`
 - `rules/region/hk/global_media.list`
 - `rules/region/hk/wps_kdocs.list`

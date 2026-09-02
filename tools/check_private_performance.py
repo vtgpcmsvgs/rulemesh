@@ -29,6 +29,12 @@ HK_SECURITIES_RULE_URL = (
     "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/"
     "dist/mihomo/classical/region/hk/hk_securities_aggressive.yaml"
 )
+GOOGLE_HK_RULE_IDENTIFIER = "region/hk/google_hk"
+GOOGLE_HK_RULE_PROVIDER = "hk_google"
+GOOGLE_HK_RULE_URL = (
+    "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/"
+    "dist/mihomo/classical/region/hk/google_hk.yaml"
+)
 
 
 @dataclass(frozen=True)
@@ -115,8 +121,64 @@ def parse_surge_groups(lines: list[str]) -> dict[str, tuple[int, str, str]]:
     return groups
 
 
-def validate_surge_personal(path: Path, lines: list[str]) -> list[PerformanceFinding]:
+def validate_surge_google_hk(path: Path, lines: list[str]) -> list[PerformanceFinding]:
+    active_rules = [
+        (index, line.strip())
+        for index, line in section_lines(lines, "Rule")
+        if line.strip() and not line.lstrip().startswith(("#", ";"))
+    ]
+    google_rule = next(
+        (
+            (position, line_number, [scalar(part) for part in line.split(",")])
+            for position, (line_number, line) in enumerate(active_rules)
+            if f"/{GOOGLE_HK_RULE_IDENTIFIER}.list," in line
+        ),
+        None,
+    )
+    if google_rule is None:
+        return [
+            PerformanceFinding(
+                path,
+                1,
+                "Surge 缺少 google_hk 香港全业务入口。",
+                "在全部拒绝、ai_us 与海外 DNS IP 规则前加入 google_hk 并绑定香港组。",
+            )
+        ]
+
+    position, line_number, parts = google_rule
     findings: list[PerformanceFinding] = []
+    if len(parts) < 3 or role(parts[2]) != "hk":
+        findings.append(
+            PerformanceFinding(
+                path,
+                line_number,
+                "Surge 的 google_hk 未绑定香港组。",
+                "把 google_hk 固定到香港自动选择组。",
+            )
+        )
+    blocking_identifiers = (
+        "/reject/",
+        "/region/us/ai_us.list,",
+        "/proxy/overseas_dns_ipv4_proxy.list,",
+    )
+    if any(
+        earlier_position < position
+        and any(identifier in line for identifier in blocking_identifiers)
+        for earlier_position, (_, line) in enumerate(active_rules)
+    ):
+        findings.append(
+            PerformanceFinding(
+                path,
+                line_number,
+                "Surge 的 google_hk 必须早于全部拒绝、ai_us 与海外 DNS IP 规则。",
+                "把 google_hk 移到 [Rule] 有效规则顶部。",
+            )
+        )
+    return findings
+
+
+def validate_surge_personal(path: Path, lines: list[str]) -> list[PerformanceFinding]:
+    findings = validate_surge_google_hk(path, lines)
     groups = parse_surge_groups(lines)
     active_rules = [
         (index, line.strip())
@@ -249,7 +311,7 @@ def validate_surge_personal(path: Path, lines: list[str]) -> list[PerformanceFin
 
 
 def validate_surge_work(path: Path, lines: list[str]) -> list[PerformanceFinding]:
-    findings: list[PerformanceFinding] = []
+    findings = validate_surge_google_hk(path, lines)
     active_rules = [
         (index, line.strip())
         for index, line in section_lines(lines, "Rule")
@@ -441,6 +503,65 @@ def validate_mihomo(path: Path, lines: list[str]) -> list[PerformanceFinding]:
         findings.append(
             PerformanceFinding(path, ai_us[0] if ai_us else 1, "Mihomo 的 ai-us 规则必须固定美国组。", "恢复 OpenAI / ChatGPT 美国出口。")
         )
+
+    google_provider = rule_providers.get(GOOGLE_HK_RULE_PROVIDER)
+    if google_provider is None or google_provider.url != GOOGLE_HK_RULE_URL:
+        findings.append(
+            PerformanceFinding(
+                path,
+                google_provider.line if google_provider else 1,
+                "Mihomo 缺少规范的 google_hk provider。",
+                "注册规范的 Google 香港规则 URL，并保持两份 Mihomo 配置一致。",
+            )
+        )
+
+    google_rule = next(
+        (
+            (position, line, parts)
+            for position, (line, parts) in enumerate(rules)
+            if len(parts) >= 3
+            and parts[0].upper() == "RULE-SET"
+            and parts[1] == GOOGLE_HK_RULE_PROVIDER
+        ),
+        None,
+    )
+    if google_rule is None:
+        findings.append(
+            PerformanceFinding(
+                path,
+                1,
+                "Mihomo 缺少 google_hk 香港全业务入口。",
+                "在全部拒绝、us_ai 与海外 DNS IP 规则前加入 google_hk 并绑定香港组。",
+            )
+        )
+    else:
+        google_position, google_line, google_parts = google_rule
+        target = groups.get(google_parts[2])
+        if target is None or role(f"{target.name} {target.filter_text}") != "hk":
+            findings.append(
+                PerformanceFinding(
+                    path,
+                    google_line,
+                    "Mihomo 的 google_hk 未绑定香港组。",
+                    "把 google_hk 固定到香港自动选择组。",
+                )
+            )
+        blocking_providers = {"reject_adblock", "reject_os_update", "reject_adspower", "us_ai", "proxy_overseas_dns_ipv4"}
+        if any(
+            position < google_position
+            and len(parts) >= 2
+            and parts[0].upper() == "RULE-SET"
+            and parts[1] in blocking_providers
+            for position, (_, parts) in enumerate(rules)
+        ):
+            findings.append(
+                PerformanceFinding(
+                    path,
+                    google_line,
+                    "Mihomo 的 google_hk 必须早于全部拒绝、us_ai 与海外 DNS IP 规则。",
+                    "把 google_hk 移到 rules 有效规则顶部。",
+                )
+            )
 
     hk_provider = rule_providers.get(HK_SECURITIES_RULE_PROVIDER)
     if hk_provider is None or hk_provider.url != HK_SECURITIES_RULE_URL:

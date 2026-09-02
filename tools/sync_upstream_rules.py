@@ -9,6 +9,7 @@ import datetime as dt
 import hashlib
 import hmac
 import html
+import http.client
 import ipaddress
 import json
 import os
@@ -26,9 +27,18 @@ from typing import Any, Callable
 ROOT = Path(__file__).resolve().parents[1]
 UPSTREAM_ROOT = ROOT / "rules" / "upstream"
 USER_AGENT = "rulemesh-upstream-sync/1.0"
+FETCH_EXCEPTIONS = (
+    urllib.error.URLError,
+    TimeoutError,
+    OSError,
+    http.client.HTTPException,
+)
+FETCH_AND_VALUE_EXCEPTIONS = (*FETCH_EXCEPTIONS, ValueError)
 RULEMESH_REPO = "vtgpcmsvgs/rulemesh"
 RULEMESH_REPO_URL = f"https://github.com/{RULEMESH_REPO}"
 AWS_IP_RANGES_URL = "https://ip-ranges.amazonaws.com/ip-ranges.json"
+GOOGLE_IP_RANGES_URL = "https://www.gstatic.com/ipranges/goog.json"
+GOOGLE_IP_SNAPSHOT_PATH = Path("google/goog_ip_ranges.list")
 ALICLOUD_PUBLIC_IP_DOC_URL = (
     "https://help.aliyun.com/zh/eip/developer-reference/"
     "api-vpc-2016-04-28-describepublicipaddress-eips"
@@ -278,6 +288,10 @@ UPSTREAM_FILES = (
         "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/GoogleFCM/GoogleFCM.list",
     ),
     UpstreamFile(
+        Path("blackmatrix7/google.list"),
+        "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Google/Google.list",
+    ),
+    UpstreamFile(
         Path("blackmatrix7/global_media.list"),
         "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/GlobalMedia/GlobalMedia.list",
     ),
@@ -517,7 +531,7 @@ def classify_fetch_failure(exc: BaseException) -> str:
 
 
 def classify_alicloud_failure(exc: BaseException) -> str:
-    if isinstance(exc, (urllib.error.URLError, TimeoutError, OSError)):
+    if isinstance(exc, FETCH_EXCEPTIONS):
         return classify_fetch_failure(exc)
 
     lowered = format_exception_message(exc).lower()
@@ -645,7 +659,7 @@ def sync_one(item: UpstreamFile, failures: list[UpstreamFailure]) -> tuple[bool,
     try:
         latest = fetch_text(item.url)
         latest = normalize_upstream_text(item, latest)
-    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+    except FETCH_EXCEPTIONS as exc:
         print(f"[WARN] {item.path.as_posix()} fetch failed: {exc}")
         record_failure(
             failures,
@@ -785,7 +799,7 @@ def fetch_hkex_participant_page_text(page_number: int) -> str:
     for _ in range(HKEX_FETCH_ATTEMPTS):
         try:
             return fetch_text(url)
-        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        except FETCH_EXCEPTIONS as exc:
             last_error = exc
     assert last_error is not None
     raise last_error
@@ -880,7 +894,7 @@ def sync_hkex_participant_websites(
     try:
         pages = fetch_hkex_participant_pages()
         snapshot_text = build_hkex_participant_snapshot_text(pages)
-    except (urllib.error.URLError, TimeoutError, OSError, ValueError) as exc:
+    except FETCH_AND_VALUE_EXCEPTIONS as exc:
         detail = format_exception_message(exc)
         print(f"[WARN] {HKEX_SEHK_PARTICIPANT_WEBSITES_PATH.as_posix()} sync failed: {detail}")
         record_failure(
@@ -1105,7 +1119,7 @@ def build_geodata_snapshot_text() -> str:
 def sync_geodata_snapshot(failures: list[UpstreamFailure]) -> tuple[int, int]:
     try:
         readme_text = fetch_text(META_RULES_DAT_README_URL)
-    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+    except FETCH_EXCEPTIONS as exc:
         print(f"[WARN] {META_RULES_DAT_GEODATA_SNAPSHOT_PATH.as_posix()} fetch failed: {exc}")
         record_failure(
             failures,
@@ -1143,7 +1157,7 @@ def sync_geodata_snapshot(failures: list[UpstreamFailure]) -> tuple[int, int]:
 def sync_chainlist_rpc_snapshots(failures: list[UpstreamFailure]) -> tuple[int, int]:
     try:
         raw_text = fetch_text(CHAINLIST_RPCS_URL)
-    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+    except FETCH_EXCEPTIONS as exc:
         print(f"[WARN] {CHAINLIST_RESOURCE_PATH.as_posix()} fetch failed: {exc}")
         record_failure(
             failures,
@@ -1228,7 +1242,7 @@ def sync_chainlist_rpc_snapshots(failures: list[UpstreamFailure]) -> tuple[int, 
 def sync_onepassword_snapshot(failures: list[UpstreamFailure]) -> tuple[int, int]:
     try:
         raw_text = fetch_text(ONEPASSWORD_PORTS_DOMAINS_URL)
-    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+    except FETCH_EXCEPTIONS as exc:
         print(f"[WARN] {ONEPASSWORD_CORE_PATH.as_posix()} fetch failed: {exc}")
         record_failure(
             failures,
@@ -1271,6 +1285,109 @@ def validate_aws_payload(data: object) -> dict[str, object]:
     if not isinstance(prefixes, list):
         raise ValueError("AWS payload is missing the prefixes array")
     return data
+
+
+def validate_google_ip_ranges_payload(
+    data: object,
+) -> tuple[dict[str, object], list[ipaddress.IPv4Network], list[ipaddress.IPv6Network]]:
+    if not isinstance(data, dict):
+        raise ValueError("Google 地址池不是 JSON 对象")
+    if not str(data.get("syncToken", "")).strip():
+        raise ValueError("Google 地址池缺少同步令牌")
+    if not str(data.get("creationTime", "")).strip():
+        raise ValueError("Google 地址池缺少创建时间")
+    entries = data.get("prefixes")
+    if not isinstance(entries, list) or not entries:
+        raise ValueError("Google 地址池 prefixes 数组为空")
+
+    networks: list[ipaddress.IPv4Network | ipaddress.IPv6Network] = []
+    seen: set[str] = set()
+    for index, entry in enumerate(entries, start=1):
+        if not isinstance(entry, dict):
+            raise ValueError(f"Google 地址池第 {index} 项不是对象")
+        present = [key for key in ("ipv4Prefix", "ipv6Prefix") if key in entry]
+        if len(present) != 1 or not isinstance(entry[present[0]], str):
+            raise ValueError(f"Google 地址池第 {index} 项必须只含一个 IP 前缀")
+        raw_prefix = entry[present[0]].strip()
+        try:
+            network = ipaddress.ip_network(raw_prefix, strict=True)
+        except ValueError as exc:
+            raise ValueError(f"Google 地址池第 {index} 项不是规范 IP 前缀") from exc
+        if present[0] == "ipv4Prefix" and not isinstance(network, ipaddress.IPv4Network):
+            raise ValueError(f"Google 地址池第 {index} 项 IP 版本不匹配")
+        if present[0] == "ipv6Prefix" and not isinstance(network, ipaddress.IPv6Network):
+            raise ValueError(f"Google 地址池第 {index} 项 IP 版本不匹配")
+        if not network.is_global:
+            raise ValueError(f"Google 地址池第 {index} 项不是公网前缀")
+        canonical = str(network)
+        if canonical in seen:
+            raise ValueError(f"Google 地址池包含重复前缀: {canonical}")
+        seen.add(canonical)
+        networks.append(network)
+
+    networks.sort(key=lambda item: (item.version, int(item.network_address), item.prefixlen))
+    ipv4 = [item for item in networks if isinstance(item, ipaddress.IPv4Network)]
+    ipv6 = [item for item in networks if isinstance(item, ipaddress.IPv6Network)]
+    if not ipv4 or not ipv6:
+        raise ValueError("Google 地址池必须同时包含 IPv4 与 IPv6 前缀")
+    return data, ipv4, ipv6
+
+
+def build_google_ip_snapshot_text(payload: dict[str, object]) -> str:
+    validated, ipv4, ipv6 = validate_google_ip_ranges_payload(payload)
+    lines = [
+        f"# 来源: {GOOGLE_IP_RANGES_URL}",
+        "# 标题: Google 官方完整公网地址空间",
+        f"# 同步令牌: {validated['syncToken']}",
+        f"# 上游创建时间: {validated['creationTime']}",
+        "# 范围: goog.json 公布的完整地址空间，故意包含 Google Cloud 客户地址以实现激进覆盖。",
+        f"# IPv4 前缀数量: {len(ipv4)}",
+        f"# IPv6 前缀数量: {len(ipv6)}",
+        "",
+        *(f"IP-CIDR,{network},no-resolve" for network in ipv4),
+        *(f"IP-CIDR6,{network},no-resolve" for network in ipv6),
+        "",
+    ]
+    return "\n".join(lines)
+
+
+def sync_google_ip_snapshot(failures: list[UpstreamFailure]) -> tuple[int, int]:
+    try:
+        raw_text = fetch_text(GOOGLE_IP_RANGES_URL)
+    except FETCH_EXCEPTIONS as exc:
+        print(f"[WARN] {GOOGLE_IP_SNAPSHOT_PATH.as_posix()} fetch failed: {exc}")
+        record_failure(
+            failures,
+            source="Google 官方地址池",
+            resource=GOOGLE_IP_SNAPSHOT_PATH.as_posix(),
+            url=GOOGLE_IP_RANGES_URL,
+            category=classify_fetch_failure(exc),
+            detail=format_exception_message(exc),
+        )
+        return 0, 1
+
+    try:
+        payload = json.loads(raw_text)
+        rendered = build_google_ip_snapshot_text(payload)
+    except (json.JSONDecodeError, ValueError) as exc:
+        detail = format_exception_message(exc)
+        print(f"[WARN] {GOOGLE_IP_SNAPSHOT_PATH.as_posix()} parse failed: {detail}")
+        record_failure(
+            failures,
+            source="Google 官方地址池",
+            resource=GOOGLE_IP_SNAPSHOT_PATH.as_posix(),
+            url=GOOGLE_IP_RANGES_URL,
+            category="返回内容异常",
+            detail=detail,
+        )
+        return 0, 1
+
+    destination = UPSTREAM_ROOT / GOOGLE_IP_SNAPSHOT_PATH
+    if write_if_changed(destination, rendered):
+        print(f"[UPDATE] {GOOGLE_IP_SNAPSHOT_PATH.as_posix()}")
+        return 1, 0
+    print(f"[SKIP] {GOOGLE_IP_SNAPSHOT_PATH.as_posix()}")
+    return 0, 0
 
 
 def collect_aws_ipv4_prefixes(
@@ -1327,7 +1444,7 @@ def build_aws_snapshot_text(payload: dict[str, object], snapshot: AwsRegionSnaps
 def sync_aws_snapshots(failures: list[UpstreamFailure]) -> tuple[int, int]:
     try:
         raw_text = fetch_text(AWS_IP_RANGES_URL)
-    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+    except FETCH_EXCEPTIONS as exc:
         print(f"[WARN] aws/ip-ranges.json fetch failed: {exc}")
         record_failure(
             failures,
@@ -1545,7 +1662,7 @@ def send_upstream_failure_alerts(failures: list[UpstreamFailure]) -> None:
 
     try:
         send_feishu_webhook_message(config, build_upstream_failure_message(failures))
-    except (urllib.error.URLError, TimeoutError, OSError, ValueError) as exc:
+    except FETCH_AND_VALUE_EXCEPTIONS as exc:
         print(f"[WARN] upstream failure webhook send failed: {exc}", file=sys.stderr)
         return
 
@@ -1576,7 +1693,7 @@ def ensure_upstream_failure_alerts_sent(failures: list[UpstreamFailure]) -> None
 
     try:
         send_feishu_webhook_message(config, build_upstream_failure_message(failures))
-    except (urllib.error.URLError, TimeoutError, OSError, ValueError) as exc:
+    except FETCH_AND_VALUE_EXCEPTIONS as exc:
         print(f"[WARN] upstream failure webhook send failed: {exc}", file=sys.stderr)
         if upstream_webhook_required():
             raise RuntimeError(f"upstream failure webhook send failed: {exc}") from exc
@@ -2523,7 +2640,7 @@ def sync_alicloud_snapshots(failures: list[UpstreamFailure]) -> tuple[int, int]:
         if credentials is not None:
             try:
                 payload = fetch_stable_alicloud_region_snapshot(snapshot, credentials)
-            except (urllib.error.URLError, TimeoutError, OSError, ValueError) as exc:
+            except FETCH_AND_VALUE_EXCEPTIONS as exc:
                 if existing_payload is not None and not running_in_github_actions():
                     payload = existing_payload
                     print(
@@ -2571,7 +2688,7 @@ def sync_alicloud_snapshots(failures: list[UpstreamFailure]) -> tuple[int, int]:
         try:
             bgp_payload = fetch_stable_alicloud_bgp_snapshot()
             bgp_prefixes = validate_alicloud_bgp_snapshot_payload(bgp_payload)
-        except (urllib.error.URLError, TimeoutError, OSError, ValueError) as exc:
+        except FETCH_AND_VALUE_EXCEPTIONS as exc:
             print(f"[WARN] {snapshot.bgp_path.as_posix()} sync failed: {exc}")
             record_failure(
                 failures,
@@ -2706,6 +2823,7 @@ def sync_alicloud_snapshots(failures: list[UpstreamFailure]) -> tuple[int, int]:
 
 SYNC_TASKS = (
     SyncTask(name="generic_upstreams", runner=sync_generic_upstreams),
+    SyncTask(name="google_ip_ranges", runner=sync_google_ip_snapshot),
     SyncTask(name="geodata", runner=sync_geodata_snapshot),
     SyncTask(name="onepassword", runner=sync_onepassword_snapshot),
     SyncTask(name="chainlist", runner=sync_chainlist_rpc_snapshots),

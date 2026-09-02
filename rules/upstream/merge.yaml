@@ -127,15 +127,19 @@ merge_plan:
     notes:
       - 仅覆盖 github.com:22 与 ssh.github.com:443
       - 客户端顺序必须放在 proxy/gfw 前
-  - id: us-google
-    target: rules/region/us/google_us.list
-    purpose: Google / YouTube / Gemini 通用入口统一走美国策略
+  - id: hk-google
+    target: rules/region/hk/google_hk.list
+    purpose: Google / YouTube / Gemini / Google Cloud 地址空间统一走香港策略
     strategy:
       - include_upstream_first_then_local_keyword_fallback
-      - include_blackmatrix7_google_and_youtube
+      - include_blackmatrix7_google_fcm_youtube_and_gemini
+      - include_complete_official_goog_json_ip_space
     notes:
-      - Google 通用规则主维护在 rules/region/us/google_us.list，避免 proxy 与旧台湾入口分叉
-      - Gemini / AI Studio / NotebookLM 允许在 rules/region/us/ai_us.list 保留 AI 视角交叉兜底，但 google_us 仍应排在 ai_us 前
+      - Google 全业务规则只维护在 rules/region/hk/google_hk.list，不在 ai_us 或其他区域保留交叉兜底
+      - 客户端必须把 google_hk 放在广告拒绝、ai_us、国内直连、海外 DNS IP 美国分流与所有广谱兜底之前
+      - 官方 goog.json 地址空间动态变化；同步时拒绝空数据、重复前缀、非公网地址与异常 IP 版本
+      - 为满足宁可过度覆盖也不遗漏，完整保留 Google Cloud 客户地址，允许第三方 GCP 服务走香港
+      - Surge [Host] 与 Mihomo nameserver-policy 继续让 Google 目标域名使用海外加密 DNS，不得回落国内 DNS
 
   - id: us-microsoft
     target: rules/region/us/microsoft_us.list
@@ -319,8 +323,8 @@ merge_plan:
       - keep_scope_small_and_stable
       - match_exact_ipv4_endpoint_without_port_binding
     notes:
-      - 当前精确匹配 1.1.1.1/32、8.8.8.8/32 与 9.9.9.9/32，不再绑定 53 端口，方便后续复用到其他端口探活
-      - 不并入 rules/region/us/google_us.list，避免把 DNS IP 入口混入 Google 通用服务；客户端默认统一绑定美国地区策略
+      - 当前精确匹配 1.1.1.1/32 与 9.9.9.9/32，不再绑定 53 端口，方便后续复用到其他端口探活
+      - Google 8.8.8.8 已从本文件移除，由前置 rules/region/hk/google_hk.list 的官方完整地址空间固定走香港
       - 客户端顺序应放在 proxy/gfw 前，避免被广谱代理入口提前命中
 
   - id: hk-global-media

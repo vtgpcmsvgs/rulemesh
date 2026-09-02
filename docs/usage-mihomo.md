@@ -38,7 +38,8 @@
 - `region/hk/alibaba_hk.yaml` 是可选的阿里系香港入口，默认公开模板不启用；专用设备配置可注册 provider 并在国内直连与阿里云 SSH 指定直连前绑定 `🇭🇰 香港-自动选择`
 - `region/hk/wps_kdocs.yaml` 专门承接 WPS Office、金山文档、开放平台、云文档与资源分发连接，并绑定 `🇭🇰 香港-自动选择`
 - `region/hk/global_media.yaml` 额外承接 X / Twitter 网页、短链与静态资源，以及 Polymarket 显式域名与激进关键词兜底，并默认绑定 `🇭🇰 香港-自动选择`
-- `region/us/ai_us.yaml` 统一承接 OpenAI / Claude / Gemini / Copilot / Cursor / Grok / Windsurf / Augment 等海外 AI 平台，并保留更激进的关键词兜底；客户端默认绑定 `🇺🇸 美国-自动选择`
+- `region/hk/google_hk.yaml` 统一承接 Google 全业务、Google AI 与官方完整公网地址空间，绑定 `🇭🇰 香港-自动选择` 并位于全部拒绝规则之前
+- `region/us/ai_us.yaml` 统一承接 OpenAI / Claude / Copilot / Cursor / Grok / Windsurf / Augment 等非 Google 海外 AI 平台，并保留更激进的关键词兜底；客户端默认绑定 `🇺🇸 美国-自动选择`
 - `direct/ai_cn_direct.yaml` 显式承接 Kimi / DeepSeek / 豆包 / 即梦 / Trae 中国大陆 / 元宝 / 混元 / 通义 / 千问 / 智谱 / MiniMax / 文心等国内 AI 入口；调用顺序固定为 `direct_ai_cn < direct_bytedance < hk_global_media < direct_cn`。两份 Mihomo 私有配置的普通目标网站继续默认使用海外 `nameserver`，实际启用且位于中国大陆通用兜底前的 `reject/`、`proxy/`、`region/` 集合必须先使用海外 DNS，随后仅 `rule-set:cn-performance-dns-domains` 可按已批准例外使用国内 DNS。
 - 阿里云香港 SSH 继续走 `direct/alicloud_hk_ipv4_ssh22_direct.yaml`，调用层保留 `DIRECT,no-resolve`，该 provider 更新间隔使用 3600 秒；远程 provider 前必须先放仅限 TCP/22 的阿里注册大块与 `AS45102/AS134963/AS24429` 内联兜底
 - AWS 香港区域入口已统一为 `region/hk/hk_aws_ipv4.yaml`
@@ -112,26 +113,27 @@
 
 ## 规则顺序建议
 
-1. 拒绝规则
-2. 区域精确规则；在 `hk_global_media` 前依次插入 `direct_ai_cn`、`direct_bytedance`
-3. GitHub 仓库 SSH 定向直连
-4. GitHub Core 节点选择规则
-5. AdsPower 细分直连规则
-6. AdsPower 细分节点选择规则
-7. Polygon 主网 RPC 节点选择规则
-8. BSC 主网 RPC 节点选择规则
-9. 海外 DNS 主 IPv4 端点美国分流规则
-10. 可选：1Password 核心连接节点选择规则
-11. 其余直连规则
-12. 代理优先规则
-13. IP 规则
-14. `MATCH`
+1. Google 全业务香港规则
+2. 拒绝规则
+3. 其他区域精确规则；在 `hk_global_media` 前依次插入 `direct_ai_cn`、`direct_bytedance`
+4. GitHub 仓库 SSH 定向直连
+5. GitHub Core 节点选择规则
+6. AdsPower 细分直连规则
+7. AdsPower 细分节点选择规则
+8. Polygon 主网 RPC 节点选择规则
+9. BSC 主网 RPC 节点选择规则
+10. 海外 DNS 主 IPv4 端点美国分流规则
+11. 可选：1Password 核心连接节点选择规则
+12. 其余直连规则
+13. 代理优先规则
+14. IP 规则
+15. `MATCH`
 
 注意：
 
-- `region/us/google_us.yaml` 对应规则应放在 `region/us/ai_us.yaml` 与 `region/hk/global_media.yaml` 前。
-- Google Play 下载 CDN 与重定向域应继续由 `region/us/google_us.yaml` 显式承接，不要依赖后面的 `direct_cn` 或 `proxy_gfw` 兜底。
-- `region/us/ai_us.yaml` 当前聚合海外 AI 平台，且对 Gemini / AI Studio / NotebookLM 保留 AI 视角交叉兜底；它也应继续放在广谱区域规则前，并统一绑定 `🇺🇸 美国-自动选择`。
+- `region/hk/google_hk.yaml` 对应规则必须放在全部拒绝、`region/us/ai_us.yaml`、`direct_cn`、海外 DNS IP 美国分流与所有广谱规则前，并绑定 `🇭🇰 香港-自动选择`。
+- Google Play、YouTube、Workspace、FCM、Gemini、DeepMind、Google 广告/统计域名与官方 `goog.json` 全部 IPv4 / IPv6 地址空间均由 `google_hk` 承接；完整地址空间故意包含 Google Cloud 客户地址。
+- `region/us/ai_us.yaml` 只聚合非 Google 海外 AI 平台，不得重新加入 Gemini / AI Studio / NotebookLM / DeepMind；它继续绑定 `🇺🇸 美国-自动选择`。
 - `DeepSeek`、`Trae` 中国大陆入口与其他国内 AI 不应并入 `region/us/ai_us.yaml`；它们应优先由 `direct_ai_cn` 承接，字节共享基础设施与中国大陆通用兜底再继续落到 `direct_bytedance`、`direct_cn`。
 - `direct_ai_cn` 属于显式国内 AI 直连入口，顺序固定为 `direct_ai_cn < direct_bytedance < hk_global_media < direct_cn`；静态交集审计确认只纠正 `snssdk.com`，路由动作不直接推导 DNS 出口，两份 Mihomo 私有配置继续遵守“普通目标默认走海外 `nameserver`、高优先级已启用规则集先走海外 DNS、性能型国内清单后置”的分层基线。
 - `region/hk/wps_kdocs.yaml` 必须放在 `direct_cn` 与 `MATCH` 前并绑定 `🇭🇰 香港-自动选择`；它不加入 `cn-dns-domains`，因此继续使用海外 `nameserver`，也不需要 `proxy-server-nameserver`。
@@ -145,7 +147,7 @@
 - `direct/adspower_direct.yaml` 与 `proxy/adspower_proxy.yaml` 都应放在 `proxy/gfw.yaml` 前，确保 AdsPower 的细分直连与节点选择优先命中。
 - `proxy/polygon_rpc_proxy.yaml` 应放在 `proxy/gfw.yaml` 前，确保 Polygon 主网 RPC 域名优先走 `🚀 节点选择`。
 - `proxy/bsc_rpc_proxy.yaml` 应放在 `proxy/gfw.yaml` 前，确保 BSC 主网 RPC 域名优先走 `🚀 节点选择`。
-- `proxy/overseas_dns_ipv4_proxy.yaml` 应放在 `proxy/gfw.yaml` 前，确保 `1.1.1.1/32`、`8.8.8.8/32` 与 `9.9.9.9/32` 优先走 `🇺🇸 美国-自动选择`。
+- `proxy/overseas_dns_ipv4_proxy.yaml` 应放在 `proxy/gfw.yaml` 前，使 `1.1.1.1/32` 与 `9.9.9.9/32` 走 `🇺🇸 美国-自动选择`；Google `8.8.8.8` 已由更早的 `google_hk` 固定香港。
 - 如果你是 1Password 重度用户，可额外接入 `proxy/onepassword_proxy.yaml`，并同样放在 `proxy/gfw.yaml` 前；这条规则由仓库每日自动抓取 1Password 官方支持页生成，默认只覆盖官方自有核心域名与更新/基础设施端点，详情见 [docs/onepassword-proxy-rules.md](onepassword-proxy-rules.md)。
 - `reject/adspower_reject.yaml` 应和其他拒绝规则一起放在最前，先拦截隐私追踪与可安全阻断端点。
 - `reject/adspower_reject.yaml` 当前只承载 Mihomo classical 已确认支持的 AdsPower 拒绝规则；源规则里为 Surge 保留的 `URL-REGEX` 条目不会进入这份 Mihomo 产物。
