@@ -1,6 +1,8 @@
 # 生成来源：rules/proxy/polygon_rpc_proxy.list
 # 行为：classical
 payload:
+  - "DOMAIN,137.rpc.thirdweb.com"
+  - "DOMAIN-WILDCARD,*.137.rpc.thirdweb.com"
   - "DOMAIN,1rpc.io"
   - "DOMAIN-WILDCARD,*.1rpc.io"
   - "DOMAIN,api-polygon-mainnet-full.n.dwellir.com"

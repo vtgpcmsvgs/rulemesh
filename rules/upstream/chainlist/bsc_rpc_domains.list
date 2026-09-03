@@ -4,14 +4,16 @@
 # chainId: 56
 # 维护策略: 只增不减；保留历史已收录主机名，避免上游日常波动导致覆盖面回撤。
 # 规则展开: 每个主机名同时生成 DOMAIN 与 DOMAIN-WILDCARD，统一收敛为节点选择入口。
-# 本次抓取主机数: 58
-# 累计主机数: 62
-# 同步时间: 2026-09-02T06:14:18+00:00
+# 本次抓取主机数: 59
+# 累计主机数: 63
+# 同步时间: 2026-09-03T06:16:29+00:00
 
 DOMAIN,0.48.club
 DOMAIN-WILDCARD,*.0.48.club
 DOMAIN,1rpc.io
 DOMAIN-WILDCARD,*.1rpc.io
+DOMAIN,56.rpc.thirdweb.com
+DOMAIN-WILDCARD,*.56.rpc.thirdweb.com
 DOMAIN,api-bsc-mainnet-full.n.dwellir.com
 DOMAIN-WILDCARD,*.api-bsc-mainnet-full.n.dwellir.com
 DOMAIN,api.zan.top

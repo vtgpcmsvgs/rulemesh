@@ -5,6 +5,8 @@ payload:
   - "DOMAIN-WILDCARD,*.0.48.club"
   - "DOMAIN,1rpc.io"
   - "DOMAIN-WILDCARD,*.1rpc.io"
+  - "DOMAIN,56.rpc.thirdweb.com"
+  - "DOMAIN-WILDCARD,*.56.rpc.thirdweb.com"
   - "DOMAIN,api-bsc-mainnet-full.n.dwellir.com"
   - "DOMAIN-WILDCARD,*.api-bsc-mainnet-full.n.dwellir.com"
   - "DOMAIN,api.zan.top"

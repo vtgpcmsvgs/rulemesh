@@ -2,6 +2,8 @@
 # 类型：rules
 # 请勿直接编辑 dist。
 
+DOMAIN,137.rpc.thirdweb.com
+DOMAIN-WILDCARD,*.137.rpc.thirdweb.com
 DOMAIN,1rpc.io
 DOMAIN-WILDCARD,*.1rpc.io
 DOMAIN,api-polygon-mainnet-full.n.dwellir.com
