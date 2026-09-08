@@ -1,8 +1,9 @@
-# Outlook 邮箱直连规则：覆盖 Outlook、Hotmail 与 Exchange Online 邮箱数据面。
+# Outlook 邮箱直连规则：覆盖 Outlook、Hotmail、Exchange Online 邮件与常用登录认证链路。
 # 维护边界：
-# 1) 本文件只承接邮箱品牌与邮件服务域名，不把 live.com、microsoftonline.com 等共享认证根域整体直连。
+# 1) 邮件域名与精确共享登录入口直连，不把 live.com、microsoftonline.com、microsoft.com 根域整体直连。
 # 2) Personal 客户端必须把本入口放在 region/us/microsoft_us 前，Microsoft Store 专项美国规则仍应更早。
-# 3) 共享登录、通知与 Microsoft 基础设施继续由 Microsoft 美国规则承接，避免 Store 登录链路被邮箱规则吞掉。
+# 3) 登录认证专用资源一并直连；其他应用复用相同认证域名时也会直连，Store 目录、许可、下载与通知仍走美国。
+# 4) 不扩散到工作白名单；直连仅指业务连接，Surge Personal 必须在国内 DNS 清单前保留本规则集的海外解析例外。
 
 # Outlook / Exchange Online 当前官方端点族。
 DOMAIN-SUFFIX,outlook.com
@@ -12,12 +13,35 @@ DOMAIN-SUFFIX,outlook.office365.com
 DOMAIN-SUFFIX,outlook.cloud.microsoft
 DOMAIN-SUFFIX,outlookgroups.ms
 DOMAIN-SUFFIX,outlookmobile.com
+DOMAIN,smtp.office365.com
 
 # Hotmail 与网页邮箱精确入口。
 DOMAIN-SUFFIX,hotmail.com
 DOMAIN-SUFFIX,hotmail.co.uk
 DOMAIN,outlook.live.com
 DOMAIN,mail.live.com
+
+# 网页邮箱与第三方邮件客户端的账户登录、授权入口。
+# 微软官方端点参考：https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+DOMAIN,login.live.com
+DOMAIN,account.live.com
+DOMAIN,signup.live.com
+DOMAIN,login.microsoftonline.com
+DOMAIN,ccs.login.microsoftonline.com
+DOMAIN,device.login.microsoftonline.com
+DOMAIN,login.microsoft.com
+DOMAIN,login.windows.net
+DOMAIN,login.microsoftonline-p.com
+DOMAIN,loginex.microsoftonline.com
+DOMAIN,logincert.microsoftonline.com
+
+# 登录页面脚本、图片与验证资源；仅承接认证专用域名族。
+DOMAIN-SUFFIX,msauth.net
+DOMAIN-SUFFIX,msftauth.net
+DOMAIN-SUFFIX,msauthimages.net
+DOMAIN-SUFFIX,msftauthimages.net
+DOMAIN-SUFFIX,hip.live.com
+DOMAIN,auth.gfx.ms
 
 # 用户批准的品牌兜底。
 DOMAIN-KEYWORD,outlook

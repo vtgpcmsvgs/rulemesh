@@ -20,7 +20,7 @@
 - `region/hk/notion_hk`：承接 Notion 官方域名族、旧域名与 `notion` 品牌关键词兜底。
 - `region/hk/hk_securities_aggressive`：承接港交所当前 SEHK 参与者公开网站快照、老虎证券完整品牌域名族与低误伤品牌关键词。
 - `direct/apple_direct`：承接 Apple 官方企业网络清单涉及的 Apple、iCloud、CloudKit、CDN 与内容域名族。
-- `direct/outlook_direct`：承接 Outlook、Hotmail、Exchange Online 邮箱数据面；Microsoft 共享认证域名不放入这里。
+- `direct/outlook_direct`：承接 Outlook、Hotmail、Exchange Online 邮箱数据面；2026-09-08 修订：精确共享登录入口与认证专用资源一并直连，其他应用复用时同样直连；不扩大到平台根域，DNS 保持海外解析。
 - `region/us/microsoft_store_us`：承接 Microsoft Store 目录、购买、授权、下载、Delivery Optimization 与 Windows Update 相关端点。
 
 现有 `region/us/microsoft_us` 继续承接 Store / Outlook carve-out 之后的其余 Microsoft 与 OneDrive 流量。

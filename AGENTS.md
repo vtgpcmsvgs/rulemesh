@@ -33,6 +33,7 @@
 - `rg` 未命中时会以退出码 `1` 结束；把“确认不存在”作为预期结果的审计命令应单独处理该退出码，避免让后续已完成的检查被误报为失败
 - 重跑任务临时验证脚本前先检查其 `param` 块或 `Get-Help`，显式传入全部必需参数，不要假设临时脚本可以无参数运行
 - 对包含多个重复 `[Rule]`、`dns:` 或同型多行字符串的测试 / 配置使用 `apply_patch` 时，补丁上下文必须带唯一函数名、节名或文件级锚点；应用后先检查实际命中区块，再运行测试，避免修改到更早的相似夹具
+- 诊断或编辑 Surge 节时必须匹配独占一行的节标题并断言目标唯一，不能用 `split('[Rule]')` 或全文替换 `[Host]`；注释也可能引用节名，误命中会造成规则全部漏检。多文件替换应先核对全部锚点，脚本非零退出后必须立即停止，不能用后续 Git 命令的退出码掩盖失败。
 - 当前机器已确认存在的解释器路径是：
   - `%LocalAppData%\Programs\Python\Python314\python.exe`
 - 如果直接执行该解释器出现 `Access is denied`（访问被拒绝），这是沙箱限制，不是仓库问题；需要申请提升权限后再运行
@@ -107,6 +108,7 @@
 - GitHub 在该工作路由文件中除 `github_ssh_direct` 外，还允许紧随其后保留 `DOMAIN,raw.githubusercontent.com` 下载入口与一条广覆盖 `DOMAIN-KEYWORD,github` 观察兜底；它们用于显式放行 GitHub Raw 规则产物下载，并发现 SSH / Raw 之外的漏网之鱼，不得被“去重”或“收敛”掉
 - GitHub Raw 下载链路默认还应保留独立 `[Host]` 解析例外；当前私有配置使用 `raw.githubusercontent.com = server:https://cloudflare-dns.com/dns-query`，避免规则产物下载回落到本地/国内系统 DNS；但这不是代理节点 bootstrap，不能影响 `proxy-node-domains` 继续使用 AliDNS DoH
 - AdsPower 在该工作路由文件中除精细 `adspower_direct` / `adspower_proxy` 外，还允许紧随其后保留一条广覆盖 `DOMAIN-KEYWORD,adspower` 观察兜底；它是故意用于发现细分规则漏网之鱼的，不得被“去重”或“收敛”掉
+- Outlook 直连从 2026-09-08 起包括邮件、精确共享登录入口与认证专用资源；不得回滚成“邮件直连但登录走美国”。共享认证域名被其他应用复用时同样直连，不扩大到 Microsoft 根域；Store 目录、许可与下载继续美国分流。Surge Personal 的 `[Host]` 必须在国内 DNS 清单前为 `direct/outlook_direct` 显式绑定海外 DoH，业务直连不代表国内解析。
 - 上述工作路由白名单特化只适用于工作路由文件本身，不自动扩散到两个 `personal` 配置，也不要把 `personal` 配置的通用结构反向覆盖到该工作路由文件
 - 只要工作路由白名单逻辑、适用范围、维护边界发生变化，必须同步更新 `docs/surge-work-cluster-whitelist.md`、`README.md` 与相关使用说明，避免后续失忆式回滚
 - 若本次任务产生了实际文件变更，且用户没有明确禁止提交，则默认在验证完成后提交 git commit

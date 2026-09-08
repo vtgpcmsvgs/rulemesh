@@ -157,6 +157,26 @@ class GoogleHongKongRoutingTests(unittest.TestCase):
 
 
 class AggressivePersonalSourceTests(unittest.TestCase):
+    def test_outlook_login_and_mail_are_direct_without_claiming_microsoft_platform(self) -> None:
+        rules = ROOT / "rules" / "direct" / "outlook_direct.list"
+        for domain in (
+            "outlook.live.com", "outlook.office365.com", "smtp.office365.com",
+            "smtp-mail.outlook.com", "login.live.com", "account.live.com",
+            "login.microsoftonline.com", "login.microsoft.com", "login.windows.net",
+            "logincdn.msauth.net", "aadcdn.msauth.net", "aadcdn.msftauth.net",
+            "logincdn.msftauth.net", "aadcdn.msauthimages.net",
+            "aadcdn.msftauthimages.net", "auth.gfx.ms",
+        ):
+            with self.subTest(domain=domain):
+                self.assertTrue(surge_rule_set_matches_domain(rules, domain))
+        for domain in (
+            "storage.live.com", "office.live.com", "graph.microsoft.com",
+            "admin.microsoftonline.com", "www.microsoft.com",
+            "purchase.md.mp.microsoft.com", "licensing.mp.microsoft.com",
+        ):
+            with self.subTest(domain=domain):
+                self.assertFalse(surge_rule_set_matches_domain(rules, domain))
+
     def test_tiger_marketing_runtime_dependencies_use_hong_kong_rule(self) -> None:
         rules = (
             ROOT

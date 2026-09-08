@@ -69,14 +69,14 @@ merge_plan:
 
   - id: outlook-direct
     target: rules/direct/outlook_direct.list
-    purpose: Personal 激进配置的 Outlook 邮箱数据面直连入口
+    purpose: Personal 激进配置的 Outlook 邮件与常用登录认证直连入口
     strategy:
       - manual_only
       - official_outlook_and_hotmail_domains
-      - keep_shared_microsoft_auth_in_us_rules
+      - exact_auth_endpoints_and_dedicated_auth_resources_direct
     notes:
       - 放在 Microsoft Store 美国专项之后、通用 Microsoft 美国规则之前
-      - 不把 live.com 与 microsoftonline.com 根域整体直连，避免共享登录链路改变 Store 出口
+      - 不把 live.com 与 microsoftonline.com 根域整体直连；共享认证入口直连也影响其他应用，但 Store 目录、许可和下载继续走美国
 
   - id: bilibili-direct
     target: rules/direct/bilibili_direct.list

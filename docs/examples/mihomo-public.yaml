@@ -97,6 +97,10 @@ dns:
     - https://dns.google/dns-query
   # > 国内直连业务域名 DNS；小米 / MIUI、国内天气服务与微信小程序运行域等按服务族维护，只用于 cn-dns-domains 专用清单，不扩散到所有 DIRECT
   nameserver-policy:
+    # 邮件业务直连仍保留海外解析，优先于国内 DNS 清单。
+    "rule-set:direct_outlook":
+      - https://cloudflare-dns.com/dns-query
+      - https://dns.google/dns-query
     "rule-set:cn-dns-domains":
       - https://dns.alidns.com/dns-query
       - https://doh.pub/dns-query
@@ -683,6 +687,7 @@ rules:
   - RULE-SET,hk_notion,🇭🇰 香港-自动选择
   - RULE-SET,hk_securities_aggressive,🇭🇰 香港-自动选择
   - RULE-SET,us_microsoft_store,🇺🇸 美国-自动选择
+  # 邮件、精确登录入口与认证资源直连；其他应用复用共享认证时同样直连。
   - RULE-SET,direct_outlook,DIRECT
   - DOMAIN-SUFFIX,yikaiying.com,DIRECT
 

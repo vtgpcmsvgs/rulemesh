@@ -161,7 +161,7 @@ python tools/build_rules.py
 - `rules/region/hk/hk_brokers.list` 专门承接复星证券/复星财富、致富证券、辉立证券与富途，默认使用品牌关键词激进兜底并绑定 `🇭🇰 香港-自动选择`，顺序应放在 `region/hk/global_media` 与 `proxy/gfw` 前
 - Personal 激进规则拆成独立入口：`region/hk/personal_priority_hk` 承接截图中指定的 `doubleclick.net`、`xygj.pro` 与 `h3c.com`；`region/hk/notion_hk` 覆盖 Notion 官方域名族；`region/hk/hk_securities_aggressive` 聚合老虎证券显式域名、营销合规判区与静态资源等官方基础设施，以及港交所参与者网站快照。三者均绑定香港自动选择并先于广告拒绝、国内直连和广谱代理，但不得扩散进工作白名单
 - 港交所参与者网站由 `tools/sync_upstream_rules.py` 从官方参与者名录逐页同步；当前快照覆盖 588 个参与者页面中的 464 个唯一网站主机。它是可审计的高覆盖快照，不宣称等于所有香港持牌机构或其全部第三方域名
-- `direct/apple_direct` 将 Apple 官方域名族统一直连，`direct/outlook_direct` 将 Outlook / Hotmail / Exchange Online 邮件数据面直连；`region/us/microsoft_store_us` 单独承接 Microsoft Store、许可、目录和下载交付端点并绑定美国自动选择。激进 Personal 调用层还显式让 `yikaiying.com` 直连
+- `direct/apple_direct` 将 Apple 官方域名族统一直连，`direct/outlook_direct` 将 Outlook / Hotmail / Exchange Online 邮件、精确登录入口与认证专用资源直连（共享认证被其他应用复用时同样直连，仍使用海外 DNS）；`region/us/microsoft_store_us` 单独承接 Microsoft Store、许可、目录和下载交付端点并绑定美国自动选择。激进 Personal 调用层还显式让 `yikaiying.com` 直连
 - `rules/region/hk/alibaba_hk.list` 是按设备选择启用的阿里系香港入口，聚合 Alibaba 主体与 XianYu 专项上游，并用 `goofish / xianyu / idlefish` 等关键词补强闲鱼；默认公开模板不启用，调用层必须限定专用设备或专用配置，并放在国内直连与阿里云 SSH 指定直连前
 - `rules/region/hk/wps_kdocs.list` 专门承接 WPS Office、金山文档、开放平台、云文档与资源分发连接，默认绑定 `🇭🇰 香港-自动选择`，并必须放在 `direct/cn_direct` 与工作白名单 `FINAL,REJECT` 前
 - `rules/region/hk/global_media.list` 额外承接 `x.com`、`t.co`、`twimg.com` 与 `twitter.com` 等 X / Twitter 网页域名，以及 `polymarket.com` 与 `DOMAIN-KEYWORD,polymarket` 这组 Polymarket 香港兜底，默认绑定 `🇭🇰 香港-自动选择`；客户端必须先放 `direct/ai_cn_direct` 与 `direct/bytedance_direct`，避免唯一交集 `snssdk.com` 被香港媒体规则抢先命中

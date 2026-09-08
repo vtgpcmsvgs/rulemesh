@@ -61,9 +61,9 @@ sources:
     outlook_direct.list:
       preferred:
         - repo: self
-          note: Personal 激进配置的 Outlook / Hotmail / Exchange Online 邮箱数据面直连入口，不扩大到共享 Microsoft 登录根域
+          note: Personal 激进配置的邮件、精确登录入口与认证专用资源直连，不扩大到 Microsoft 平台根域
         - repo: Microsoft Learn
-          note: 参考 Microsoft 365 URLs and IP address ranges 及官方端点服务，覆盖 Outlook 当前品牌与邮件服务域名
+          note: 参考 Microsoft 365 URLs and IP address ranges 及官方端点服务，覆盖 Outlook 当前品牌、邮件服务、登录与认证资源域名
     bytedance_direct.list:
       preferred:
         - repo: self

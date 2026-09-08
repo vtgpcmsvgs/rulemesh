@@ -144,8 +144,8 @@
       "category": "direct",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 13,
-        "mihomo_classical": 13
+        "surge_rules": 31,
+        "mihomo_classical": 31
       },
       "dist": {
         "surge_rules": "dist/surge/rules/direct/outlook_direct.list",

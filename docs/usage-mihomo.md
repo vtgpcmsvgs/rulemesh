@@ -34,7 +34,7 @@
 - 默认启用 Tun 全量接管与域名嗅探，优先把 Mihomo 的实际体验拉到接近 Surge 的水位。
 - `region/hk/hk_brokers.yaml` 专门承接复星证券/复星财富、致富证券、辉立证券与富途，默认用激进品牌关键词兜底并绑定 `🇭🇰 香港-自动选择`
 - 激进 Personal 入口还包括 `region/hk/personal_priority_hk.yaml`、`region/hk/notion_hk.yaml` 与 `region/hk/hk_securities_aggressive.yaml`，分别覆盖指定高优先级域名、Notion 官方域名族，以及老虎证券公开入口、营销合规判区、静态资源等官方基础设施和港交所参与者网站快照；调用顺序必须先于广告拒绝、国内直连与广谱代理
-- `direct/apple_direct.yaml` 与 `direct/outlook_direct.yaml` 分别用于 Apple 官方域名族和 Outlook 邮件数据面直连；`region/us/microsoft_store_us.yaml` 用于 Microsoft Store、许可、目录与下载交付端点美国分流。公开示例还显式让 `yikaiying.com` 直连
+- `direct/apple_direct.yaml` 与 `direct/outlook_direct.yaml` 分别用于 Apple 官方域名族和 Outlook 邮件、精确登录入口与认证专用资源直连；共享认证域名被其他应用复用时同样直连，DNS 仍使用海外解析。两份现有 Mihomo 私有配置未接入此入口，本次不改变其路由；`region/us/microsoft_store_us.yaml` 用于 Microsoft Store、许可、目录与下载交付端点美国分流。公开示例还显式让 `yikaiying.com` 直连
 - `region/hk/alibaba_hk.yaml` 是可选的阿里系香港入口，默认公开模板不启用；专用设备配置可注册 provider 并在国内直连与阿里云 SSH 指定直连前绑定 `🇭🇰 香港-自动选择`
 - `region/hk/wps_kdocs.yaml` 专门承接 WPS Office、金山文档、开放平台、云文档与资源分发连接，并绑定 `🇭🇰 香港-自动选择`
 - `region/hk/global_media.yaml` 额外承接 X / Twitter 网页、短链与静态资源，以及 Polymarket 显式域名与激进关键词兜底，并默认绑定 `🇭🇰 香港-自动选择`
