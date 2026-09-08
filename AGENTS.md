@@ -80,7 +80,7 @@
 - 同一 GitHub 账号的登录状态不会自动建立本地目录映射；当 `rulemesh-local` 在本机不存在时，必须先读取登记文件、通过 GitHub 查询登记仓库并按文档恢复，不能直接声称私人配置不存在，也不能新建同名空仓库
 - Codex 沙箱若把已登记私人仓库报为 `dubious ownership`，只对当前命令使用 `git -c "safe.directory=<已确认的私人仓库绝对路径>" ...`，不要修改全局 `safe.directory`；PowerShell 中包含 `@{upstream}` 的 Git revision 必须整体加引号，避免被解释为哈希表语法
 - Codex 当前工作区若只允许写公开仓库，私有同步脚本可能在 `WriteAllText` 阶段报 `Access denied`；这是独立私人仓库的沙箱写权限限制，应在确认目标绝对路径后申请提升权限重跑，不要误改脚本或配置来绕过
-- Windows PowerShell 5.1 的一次性诊断命令也禁止使用 `$HOME` / `$home` 作为临时变量；变量名大小写不敏感，会与只读系统变量冲突。哈希计算不要依赖较新 .NET 的 `SHA256.HashData` 或 `Convert.ToHexString`，统一使用 `SHA256.Create()` 与 `BitConverter`
+- Windows PowerShell 5.1 的一次性诊断命令禁止使用 `$HOME` / `$home`、`$Host` / `$host` 等自动变量名作为临时变量；变量名大小写不敏感，会与只读系统变量冲突。统一使用带任务语义的变量名（例如 `$endpointHost`）。哈希计算不要依赖较新 .NET 的 `SHA256.HashData` 或 `Convert.ToHexString`，统一使用 `SHA256.Create()` 与 `BitConverter`
 - Codex 沙箱若不允许写 `.git/FETCH_HEAD`、索引或对象库，`git fetch` / `add` / `commit` 应在确认仓库路径后申请提升权限；不要把后续只读命令的成功退出码误当成前一个 Git 写操作也已成功
 - 修改 `rulemesh-local` 前先确认工作区、当前分支和远程同步状态；修改完成后必须提交并推送，且只有远程推送成功并确认本地未领先远程时才算私有配置同步完成
 - 私有仓库可以完整纳管配置内容，但检查、提交和验证过程中仍不得在回复或日志中回显真实订阅地址、密钥、签名、证书参数或其他敏感值
