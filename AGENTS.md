@@ -43,6 +43,13 @@
 - 维护解析后的私人当前配置目录里的私有机场 provider 时，如果某个机场同时存在“入口域名”和“真实落地主机”，默认两者都要加入私有订阅端点源；优先使用精确 `DOMAIN` / `IP-CIDR`，不要用无必要的宽后缀覆盖，也不要只保留入口域名，否则 Clash Verge / Mihomo 可能在刷新 provider 时走偏、报 EOF，或把本地缓存刷成不完整内容
 - 维护两份 Mihomo 私有配置里的机场 `proxy-providers` 时，默认每个机场 provider 都要显式保留 `proxy: DIRECT`，表示 Mihomo 后台下载 / 更新订阅 URL 直连；普通流量访问这些订阅端点则由 `rules` 中的精确域名 / IP 规则统一交给节点选择，不使用 Surge 的 `PROCESS-NAME + 域名` 逻辑规则，也不要把 `rule-providers` 拉 GitHub 规则集用的代理出站逻辑套到机场订阅 provider 上
 - 对会按请求头协商响应格式的私有机场 provider，先实际探测返回内容；若通用 Mihomo 标识不能稳定返回 Clash YAML，可在该 provider 上显式使用已验证的 `header.User-Agent`，并让两份 Mihomo 配置保持一致
+- 检查当前全部机场 provider 的有效期与可用性时，默认采用 30 秒目标、60 秒上限的只读快速路径：
+  - 仅以两份 Mihomo 配置 `proxy-providers` 下的二级键为当前清单，并先核对名称、直属 `url`、`proxy: DIRECT` 与 `header.User-Agent` 是否一致；任一不一致时停止外部探测并先报告配置漂移。解析直属四空格 `url`，不得把六空格的 `health-check.url` 当成订阅地址，也不得用运行目录中的旧缓存反推当前清单
+  - 因机场 provider 固定为 `proxy: DIRECT`，订阅探测必须使用相同 User-Agent 且显式绕过系统代理；PowerShell 路径统一使用 `HttpClient` + `SocketsHttpHandler.UseProxy = false`，任务开始即对全局 `CancellationTokenSource` 调用 60 秒 `CancelAfter`，每请求 linked token 再调用 10 秒 `CancelAfter`，并发成批检查 HTTP 状态、顶层 `proxies`、`Subscription-Userinfo` 到期与剩余流量。不得把 `Invoke-WebRequest -OperationTimeoutSeconds` 当作完整请求 deadline；单项只可在全局预算仍充足时短重试一次
+  - 运行中的 Clash Verge Rev 优先读取实际 `external-controller-pipe`，使用 linked token 的 `ConnectAsync` / `WriteAsync` / `ReadAsync` 后只请求一次 `/providers/proxies`；存活节点必须同时满足 `alive = true`，并在读取该 provider 的 `health-check.interval` 后按时间戳选出最新一条 `history`，要求该条 `delay > 0` 且仍在新鲜度窗口内。`history` 为空、过旧或时间不可解析只能报告“存活未知”；`external-controller` 为空时不得猜测 TCP 端口或把 mixed-port 当控制端口
+  - 结论必须拆成端点 / 内容、配额、日历有效期与运行态四项：明确 `0 < expire <= now` 或在有效正数 `total` 下 `upload + download >= total` 时总体无效；`Expire = 0`、缺失配额或缺失到期时间只能报告“服务端未提供”，不能擅自解释为永久有效；其余项通过且至少一个节点有近期成功健康历史时才可报告当前可用，个别节点失败不影响结论
+  - 默认不得调用可能长时间阻塞的强制 `/healthcheck`、启动隔离 Mihomo、重载客户端或反复试错；运行态不可读时，立即把订阅有效与节点存活拆开报告证据缺口，只有用户明确要求深挖时才升级验证
+  - 常规检查由主流程一次完成，不先分派多个重复审计；子审计结果必须由主流程复核后才能使用。输出只保留 provider 名、HTTP 状态、节点计数、存活计数、剩余比例与到期时间，不得输出 URL、token、节点名、server、控制器密钥、header 或响应正文
 - 用 Mihomo 原生 `-t -d` 做临时语法检查时，`-d` 必须指向已确认位于任务临时目录下的专用目录；PowerShell 变量不得使用大小写不敏感的 `$home` / `$HOME`，避免把缓存或数据库误写到用户主目录
 - 私有机场 provider 若发生重命名（例如机场别名变更），除同步更新 `current` 下的 Mihomo / Surge 配置外，还要检查 Clash Verge 运行目录中的旧 provider 缓存、辅助 profile、remote profile 注册项与历史当前项；避免新旧 provider id 并存，导致 UI 继续读取旧缓存或把问题误判成“节点被过滤”
 - DNS 泄漏按安全事故级别处理：普通目标网站域名默认不得交给国内 DNS；国内 DNS 只能作为“DNS 服务器域名 bootstrap”、“代理节点 server 域名 bootstrap”以及两层明确国内业务清单的专用例外。小型精选 `cn_dns_domains` 只服务工作白名单等严格范围；自动合并中国直连域名主体的性能型 `cn_performance_dns_domains` 只服务 Surge Personal 与两份 Mihomo 性能配置，绝不因模板统一或工作白名单维护而互换。
@@ -82,6 +89,7 @@
 - Codex 沙箱若把已登记私人仓库报为 `dubious ownership`，只对当前命令使用 `git -c "safe.directory=<已确认的私人仓库绝对路径>" ...`，不要修改全局 `safe.directory`；PowerShell 中包含 `@{upstream}` 的 Git revision 必须整体加引号，避免被解释为哈希表语法
 - Codex 当前工作区若只允许写公开仓库，私有同步脚本可能在 `WriteAllText` 阶段报 `Access denied`；这是独立私人仓库的沙箱写权限限制，应在确认目标绝对路径后申请提升权限重跑，不要误改脚本或配置来绕过
 - Windows PowerShell 5.1 的一次性诊断命令禁止使用 `$HOME` / `$home`、`$Host` / `$host` 等自动变量名作为临时变量；变量名大小写不敏感，会与只读系统变量冲突。统一使用带任务语义的变量名（例如 `$endpointHost`）。哈希计算不要依赖较新 .NET 的 `SHA256.HashData` 或 `Convert.ToHexString`，统一使用 `SHA256.Create()` 与 `BitConverter`
+- 跨 Windows PowerShell 5.1 与 PowerShell 7 检查文件 BOM 时，不要使用版本语义不一致的 `Get-Content -Encoding Byte`；统一用 `[System.IO.File]::ReadAllBytes()` 读取前三个字节后判断，避免验证命令本身因版本差异失败
 - Codex 沙箱若不允许写 `.git/FETCH_HEAD`、索引或对象库，`git fetch` / `add` / `commit` 应在确认仓库路径后申请提升权限；不要把后续只读命令的成功退出码误当成前一个 Git 写操作也已成功
 - 修改 `rulemesh-local` 前先确认工作区、当前分支和远程同步状态；修改完成后必须提交并推送，且只有远程推送成功并确认本地未领先远程时才算私有配置同步完成
 - 私有仓库可以完整纳管配置内容，但检查、提交和验证过程中仍不得在回复或日志中回显真实订阅地址、密钥、签名、证书参数或其他敏感值

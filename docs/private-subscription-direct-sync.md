@@ -81,6 +81,44 @@
 - 同一个逻辑机场存在多个等价 URL 时，默认只保留一个 provider，避免节点重复；其余仍需保留的入口可以留在端点源中作为普通流量规则
 - 两份 Mihomo 文件的 provider 名称、URL、路径、更新出站、请求头、健康检查与代理组引用必须保持一致
 
+## Mihomo provider 有效性极速审计
+
+这项审计只回答两个问题：订阅当前是否仍在有效期内，以及每个 provider 是否至少有一个经健康历史确认的存活节点。正常情况下以 30 秒完成为目标；从任务开始即设置 60 秒全局 deadline，到点必须取消未完成的网络或命名管道操作，停止扩展试验并准确报告证据缺口。
+
+### 固定判定口径
+
+- 当前清单只取两份 Mihomo 配置 `proxy-providers` 下的二级键；运行目录中的缓存文件只用于辅助对照，不能把已删除 provider 的旧缓存算回当前清单
+- 结果固定拆成四项证据，不把它们压成一个含糊的“有效”：端点 / 内容、配额、日历有效期、运行态节点存活
+- 端点 / 内容通过要求直属订阅 URL 直连返回成功且响应含非空顶层 `proxies` 清单；缓存可用但端点失败时只能报告缓存运行态，不能据此证明订阅端点当前有效
+- `Subscription-Userinfo` 中存在完整数值字段且 `total > 0` 时才计算比例：`upload + download >= total` 判定配额耗尽，小于 `total` 时报告剩余流量；字段缺失、数值无效或 `total <= 0` 时报告“配额未提供 / 未确认”，不能按零消耗处理
+- `expire > 0` 且大于当前 Unix 时间时判定仍在日历有效期内；`expire > 0` 且小于等于当前时间时判定已过期；`expire = 0` 或缺失只表示服务端未提供日历到期时间，不能写成“永久有效”。到期时间直接用 Unix 秒转换并输出 ISO 日期，不要把本地化后的月 / 日字符串再次解析
+- 运行态存活节点必须同时满足 `alive = true`，并把所有可解析时间戳的 `history` 记录按时间排序后取最新一条，要求该条 `delay > 0` 且仍在新鲜度窗口内；不能用“窗口内任一旧成功记录”替代最新结果。新鲜度窗口取 `max(2 × 该 provider 的 health-check.interval, 10 分钟)`；配置间隔缺失 / 无效、`history` 为空、最新记录过旧或时间不可解析时只能报告“存活未知”，不能利用 Mihomo 初始 `alive = true` 误判存活
+- 总体结论中，明确过期或配额耗尽会直接否决“有效”；其余项通过且至少一个节点有近期成功历史时可以报告“当前可用”，但配额或到期元数据缺失时必须同时保留对应“未提供 / 未确认”，不得升级成“有效期内”。个别节点失败不影响结论；结果应写成“确认存活数 / 已加载数”
+- 订阅响应里的节点条目数与内核实际加载数可以不同；只要响应非空且运行态确认存活数大于零，先记录差异，不在常规审计里猜测过滤、去重或协议兼容原因
+
+### 默认快速路径
+
+1. 从两份 Mihomo 文件提取 provider 名称、直属 `url`、`proxy`、`header.User-Agent` 与对应 `health-check.interval`，断言两份结构完全一致且每个 provider 都是 `proxy: DIRECT`；任一不一致时停止外部探测，先报告配置漂移，不能任选一份继续。解析器只能把 provider 直属的四空格 `url` 当订阅地址；六空格 `health-check.url` 是节点测速地址，六空格 `health-check.interval` 只用于计算健康历史新鲜度。
+2. 启动全局 `CancellationTokenSource` 和单调计时器，并在任务开始立即调用 `CancelAfter(60 秒)`；PowerShell 路径使用 `SocketsHttpHandler` 设置 `UseProxy = false` 与 5 秒 `ConnectTimeout`，每个 `HttpClient` 请求创建与全局 token 联动的 `CancellationTokenSource` 并调用 `CancelAfter(10 秒)`，全部 provider 用 `Task.WhenAll` 并发。`SendAsync(..., linkedToken)` 与 `ReadAsByteArrayAsync(linkedToken)` 必须复用该 token，把响应头和响应体完整读取都纳入同一 deadline；不得用仅限制流读取空闲时间的 `Invoke-WebRequest -OperationTimeoutSeconds` 冒充完整请求超时。只在剩余全局预算不少于一次完整请求预算时，对单项短重试一次。按声明编码或 UTF-8 解码字节，兼容 `application/octet-stream`，不要把 `Byte[]` 直接转成字符串。只在内存中检查 HTTP 状态、顶层 `proxies` 与 `Subscription-Userinfo`，不要输出响应正文；统计节点条目时同时兼容独占一行的 `-` 与 `- ...` 两种 YAML 序列写法。
+3. 如果 Clash Verge Rev 与 Mihomo 正在运行，从当前运行配置读取实际 `external-controller-pipe`；命名管道连接使用最长 2 秒、与全局 token 联动的 `ConnectAsync`，完整写入与读取使用最长 5 秒 linked token 的 `WriteAsync` / `ReadAsync`。只请求一次 `/providers/proxies`，正确解码可能存在的 HTTP chunked 响应后再解析 JSON；按 provider 汇总 `proxies.Count`，并对每个节点按可解析时间戳取最新 `history`，仅统计同时满足 `alive = true`、最新记录 `delay > 0` 且仍在新鲜度窗口内的节点。命名管道路径无需且不得读取或发送控制器密钥。
+4. 用一张脱敏表返回 provider 名、端点 / 内容、配额、日历有效期、订阅节点条目数、确认存活数 / 已加载数和结论。旧缓存、源响应与运行态数量差异放在表后单独说明；任何未取得的证据都显式写“未提供 / 未确认”，不从其他项推断。
+
+### 默认禁止的慢路径
+
+- 不从 `proxy_provider` 缓存目录枚举“当前 provider”，也不把缓存存在等同于运行时已加载
+- 不猜测控制器 TCP 端口，不把 mixed-port、DNS 端口或 Clash Verge 服务端口当作 Mihomo API；`external-controller` 为空时直接使用已配置的命名管道
+- 不默认调用 `/providers/proxies/<name>/healthcheck`；该调用可能等待整批节点超时并长时间占用控制通道
+- 已有分钟级新鲜的运行态 health history 时，不启动隔离 Mihomo、不重载配置、不刷新 provider，也不为了解析 YAML 临时安装依赖
+- 不用紧凑的一次性 PowerShell 长命令堆叠解析、下载、管道通信与格式化；先保持步骤短且输出已脱敏，避免语法重试反而超过审计本身耗时
+- 不直接采用子审计的“成功”结论；主流程至少复核 provider 清单、订阅响应结构与运行态计数三项
+
+### 快速路径无法闭环时
+
+- 订阅直连成功但运行时未启动：分别报告“端点 / 内容通过”、配额与日历有效期元数据结果，并写“节点存活待运行态确认”；不要把端点成功直接改写成订阅总体有效，也不要擅自启动用户客户端
+- 运行态可读但订阅请求超时：保留“`alive = true` 且按时间戳取到的最新健康记录在新鲜度窗口内并且 `delay > 0`”的确认存活证据；若只有 `alive`，或间隔缺失 / 无效、历史为空 / 过旧 / 不可解析，则写“存活未知”，并把端点直连状态写成“本次未确认”。单项最多做一次短重试
+- 命名管道暂时忙或不可读：停止强制 health-check 与隔离核心尝试，报告最后一次可验证快照的时间；只有用户明确要求继续深挖时，才设计独立且可清理的临时验证
+- 任一失败都不得回显 URL、token、节点名、server、控制器密钥、请求头或响应正文
+
 ## Surge 语法防回滚
 
 - Surge 的 Chrome 节点选择例外属于逻辑规则，最终形态是 `AND,((PROCESS-NAME,...),(...)),策略名`

@@ -342,6 +342,7 @@ python tools/build_rules.py
 - 真实 Webhook、密钥、私有订阅地址、MITM 参数与本地长期使用配置应继续保留在公开仓库外部的私人 `rulemesh-local` 仓库中
 - 私有订阅端点同步块统一保留在解析后的私人当前配置目录中：使用 `private_subscription_direct.list` 作为单一源文件，运行 `sync_private_subscription_direct.ps1` 时显式选择 `-Target surge`、`-Target mihomo` 或 `-Target all`；不要在用户明确排除某一客户端时顺带更新它。目录解析见 [docs/private-repository-bootstrap.md](docs/private-repository-bootstrap.md)
 - 两份 Mihomo 私有配置里的机场 `proxy-providers` 默认必须保留 `proxy: DIRECT`，用于让后台订阅 URL 更新直连；订阅端点的普通流量由 Mihomo `rules` 中的精确 `DOMAIN` / `IP-CIDR` 规则交给节点选择。这和 `rule-providers` 拉 GitHub 规则集时可使用 `proxy: "🚀 节点选择"` 是三条彼此独立的链路
+- 检查机场 provider 是否过期、流量耗尽或仍有存活节点时，统一按 [私有订阅端点同步约定](docs/private-subscription-direct-sync.md#mihomo-provider-有效性极速审计) 的 30 秒目标 / 60 秒硬上限只读路径执行：并发无代理探测直属订阅 URL，再通过 Clash Verge Rev 命名管道单次读取运行态汇总，分别报告端点、配额、有效期与经近期健康历史确认的存活状态；默认不强制 health-check、不启动隔离核心，也不依据旧缓存下结论
 - 四份本地私有配置里，所有基于 `policy-path` / provider 的代理组默认共用同一套排除条件：`剩余流量`、`套餐到期`、`距离下次重置`、`过滤掉`、`Expire Date`、`Traffic Reset` 这类状态/提示项按前缀匹配，`直接连接` 这类独立占位项按整行精确匹配，`联系我们` 与 `1.2 GB | 50 GB` 这类提示继续专项匹配
 - 如果某个 provider 会给真实节点名追加统一前缀，不要把供应商名或独立占位项写成宽匹配，否则可能误伤真实节点
 - 详细背景、禁止事项与改动前检查清单见 [docs/proxy-group-filter-methodology.md](docs/proxy-group-filter-methodology.md)
