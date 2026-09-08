@@ -1,7 +1,7 @@
 # 上游来源：https://www.hkex.com.hk/eng/plw/searchparticipant.aspx?SEARCH=VIW&SEL_TYPE=SE&BROK_NUM=&PR_NAME=&PR_NAME1=&PR_ID=&page=1
 # 说明：港交所当前 SEHK 参与者公开 Website Address 的完整分页快照。
 # 维护：同步器只接受 HTTP/HTTPS 公网主机名；异常或截断响应不会覆盖旧快照。
-# 统计：参与者 588 条，分页 118 页，唯一网站主机 464 个。
+# 统计：参与者 589 条，分页 118 页，唯一网站主机 464 个。
 # 请勿直接编辑，更新请重新执行上游同步。
 
 DOMAIN-SUFFIX,81181133.com
