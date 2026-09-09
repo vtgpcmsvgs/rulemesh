@@ -47,3 +47,5 @@ GitHub Raw 继续保留独立海外解析入口 `raw.githubusercontent.com = ser
 源规则修改后执行 `tools/build_rules.ps1` 与 `tools/check.ps1`，不要手改 dist。私有配置维护必须提交并推送独立私人仓库。
 
 相关说明：[工作白名单](surge-work-cluster-whitelist.md)、[订阅端点同步](private-subscription-direct-sync.md)、[GeoIP](geoip-upstream.md)、[DNS 边界](network-security/dns-leak-prevention.md)、[只读本地监控](surge-local-monitoring.md)。监控只生成调查建议，仍须分开取得调查和执行授权，不因本次性能维护改变该流程。
+
+机场手动组必须独立保留并在选择入口可访问，不能因普通规则直接使用自动组而删除。公开模板提供单机场占位示例；私人三份 Surge 各保留七组。爱思规则集中在 `direct/aisi_direct`（仅 Personal）；Google Play 重复项复用 `google_hk`；AI DNS 用 `region/us/ai_dns_us` 绑定美国，早于设备、加密 DNS 协议和最终兜底。

@@ -1,0 +1,12 @@
+# 爱思助手精选直连入口：集中维护原 Personal 配置中的域名和关键词兜底。
+# 边界：不包含 Apple 官方更新域名；这些由紧随其后的 direct/apple_direct 承接。
+# 顺序：仅用于 Surge Personal，在 Apple 直连、更新拒绝和设备广谱分流前调用。
+# 不自动扩入工作白名单或原本未启用该业务的 Mihomo 配置。
+
+# 爱思助手站点与下载入口。
+DOMAIN-SUFFIX,i4.cn
+DOMAIN-SUFFIX,i5.cn
+
+# 保留原配置批准的激进关键词兜底，可能匹配第三方同名域名。
+DOMAIN-KEYWORD,i4
+DOMAIN-KEYWORD,aisi

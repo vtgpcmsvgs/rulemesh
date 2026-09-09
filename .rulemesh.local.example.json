@@ -1,5 +1,5 @@
 {
-  "$comment": "客户端结构以 docs/examples/ 的 Surge 与 Mihomo 模板及 docs/performance-baseline.md 为准：国内 DNS，AI 美国，Crypto 台湾，其他已登记地区例外保留；本 JSON 不覆盖客户端字段。",
+  "$comment": "客户端结构以 docs/examples/ 的 Surge 与 Mihomo 模板及 docs/performance-baseline.md 为准：国内 DNS，AI 美国，Crypto 台湾，其他已登记地区例外保留；Surge 保留独立机场手动组，规则归并边界见性能基线；本 JSON 不覆盖客户端字段。",
   "upstream_alert": {
     "feishu_webhook_url": "https://open.feishu.cn/open-apis/bot/v2/hook/请替换为你自己的 webhook",
     "feishu_secret": "请替换为你自己的签名密钥"

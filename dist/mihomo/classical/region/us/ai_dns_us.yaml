@@ -1,0 +1,4 @@
+# 生成来源：rules/region/us/ai_dns_us.list
+# 行为：classical
+payload:
+  - "DOMAIN,cloudflare-dns.com"

@@ -16,6 +16,18 @@ defaults:
     manual_entries_first: true
 
 merge_plan:
+  - id: aisi-direct
+    target: rules/direct/aisi_direct.list
+    purpose: Surge Personal 爱思精选直连，Apple 更新复用既有 Apple 直连规则
+    strategy:
+      - manual_only
+      - preserve_existing_personal_scope
+  - id: ai-dns-us
+    target: rules/region/us/ai_dns_us.list
+    purpose: Surge AI 专用 Cloudflare DoH 美国出口，独立于普通海外 DNS
+    strategy:
+      - manual_only
+      - exact_resolver_hostname
   - id: cn-social-direct
     target: rules/direct/cn_social_direct.list
     purpose: 小红书与微信精选直连，优先于 Google 广谱规则和广告拒绝

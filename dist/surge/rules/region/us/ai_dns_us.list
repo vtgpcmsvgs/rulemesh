@@ -1,0 +1,5 @@
+# 生成来源：rules/region/us/ai_dns_us.list
+# 类型：rules
+# 请勿直接编辑 dist。
+
+DOMAIN,cloudflare-dns.com

@@ -1,11 +1,11 @@
 {
   "summary": {
-    "domain-only": 11,
+    "domain-only": 12,
     "ipcidr-only": 7,
-    "classical/mixed": 25,
+    "classical/mixed": 26,
     "dns-domain-set": 2,
     "empty": 0,
-    "total_sources": 45,
+    "total_sources": 47,
     "total_warnings": 0
   },
   "sources": [
@@ -33,6 +33,19 @@
       "dist": {
         "surge_rules": "dist/surge/rules/direct/ai_cn_direct.list",
         "mihomo_classical": "dist/mihomo/classical/direct/ai_cn_direct.yaml"
+      }
+    },
+    {
+      "source": "rules/direct/aisi_direct.list",
+      "category": "direct",
+      "classification": "classical/mixed",
+      "counts": {
+        "surge_rules": 4,
+        "mihomo_classical": 4
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/direct/aisi_direct.list",
+        "mihomo_classical": "dist/mihomo/classical/direct/aisi_direct.yaml"
       }
     },
     {
@@ -475,6 +488,19 @@
       "dist": {
         "surge_rules": "dist/surge/rules/region/tw/taipei_aws_ipv4.list",
         "mihomo_classical": "dist/mihomo/classical/region/tw/taipei_aws_ipv4.yaml"
+      }
+    },
+    {
+      "source": "rules/region/us/ai_dns_us.list",
+      "category": "region",
+      "classification": "domain-only",
+      "counts": {
+        "surge_rules": 1,
+        "mihomo_classical": 1
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/region/us/ai_dns_us.list",
+        "mihomo_classical": "dist/mihomo/classical/region/us/ai_dns_us.yaml"
       }
     },
     {

@@ -22,13 +22,13 @@
 - 全地区组去掉国家标签筛选，只排除套餐占位项，允许没有地区标签的有效节点参与。Mihomo 使用 300 秒主动测速、全地区容差 50、美国容差 100；测速只衡量连接延迟，不等同于下载吞吐。
 - Mihomo 开启 `tcp-concurrent`，并发尝试目标的多个 IP，采用先成功的连接；保持 IPv4、ARC 缓存和 fake-ip。Surge 保持原有 smart 组与客户端自身连接机制，不机械移植同名字段。
 - AWS IP 区域组和 `chain_socks5_ipcidr` 不再注册或调用于配置；`rules/`、上游登记与 `dist/` 产物继续保留，暂停使用不等于删除维护资产。
-- Surge 中因 AWS/链式调用停用而不再被规则或其他组引用的设备组一并清理，避免无用途的订阅与测速；仍被总开关引用的地区组保留。
+- Surge 只清理随 AWS/链式功能停用的设备专用组。机场手动组是独立选择功能，即使没有规则引用也必须保留；三份私人 Surge 各恢复七组，保持原订阅与过滤器，设为可见并接入手动选择入口。两份 Mihomo 原有九组未删除，本轮保留。
 
 ## DNS
 
 普通业务默认使用 AliDNS 与 DNSPod 两个国内 DoH，减少国内 CDN 调度偏差及海外解析绕行。不再为普通代理、拒绝或地区规则镜像大量海外 DNS policy，也不重复加载十万条性能型 DNS 专用域名清单。原清单仍保留为可选规则资产。
 
-Surge 保留 `use-local-host-item-for-proxy = false`、`hijack-dns = *:53` 与 `encrypted-dns-follow-outbound-mode = true`。`[Host]` 第一项将 `ai_us` 指定到 Cloudflare DoH，独立 `DOMAIN,cloudflare-dns.com` 使用美国组；GitHub Raw 规则下载保留同一解析例外。节点域名仍通过 Sub-Store 的 `proxy-node-domains` 分享文件单独 bootstrap，不能写入订阅域名或 IP。
+Surge 保留 `use-local-host-item-for-proxy = false`、`hijack-dns = *:53` 与 `encrypted-dns-follow-outbound-mode = true`。`[Host]` 第一项将 `ai_us` 指定到 Cloudflare DoH，独立 `region/us/ai_dns_us` 规则集使用相同美国组；GitHub Raw 规则下载保留同一解析例外。节点域名仍通过 Sub-Store 的 `proxy-node-domains` 分享文件单独 bootstrap，不能写入订阅域名或 IP。
 
 Mihomo 的 `nameserver` 使用国内双 DoH；唯一 `nameserver-policy` 为 `rule-set:us_ai`，将 Cloudflare 和 Google DoH 都显式附加 `#美国组名`。按 Mihomo 原生语义，同时配置国内 `proxy-server-nameserver` 解析节点域名，避免指定代理的 AI DNS 形成自举循环。`respect-rules`、`use-hosts`、`use-system-hosts`、`ipv6` 保持 false；不引入 `fallback`、`direct-nameserver` 或第二层节点 DNS policy。
 
@@ -51,3 +51,11 @@ GeoIP 直接使用 `https://github.com/MetaCubeX/meta-rules-dat/releases/downloa
 - 本机系统 Python 不保证安装 PyYAML；静态检查复用仓库标准库解析器，真实 YAML 语法交给 Mihomo `-t -d`。不要把依赖缺失误判成配置错误。
 - Windows 全仓搜索用目录加 `--glob`，不向 `rg` 传递 PowerShell 未展开的通配路径；非零退出立即处理。
 - 构建与静态校验通过不代表生产运行时已加载。Surge 必须在实际 Mac 上更新配置并检查出口；Mihomo 需要确认最终生效配置与外层覆写。不得把未发生的吞吐提升写成测试结果。
+
+## 机场组恢复与规则归并
+
+- 上轮把没有规则引用的机场组误判为无用设备组；现已分开维护，检查器要求三份私人 Surge 的机场保护块各有七个有效且可见的独立 select 组，并验证手动入口引用。机场增减时同步调整该基线及检查，不能静默删组。
+- 爱思的四条域名及关键词集中到 `direct/aisi_direct`，只在 Surge Personal 与对应公开模板调用；两个 Apple 下载域名由既有 `apple_direct` 覆盖。Google Play / Android 的五条重复域名由更早的 `google_hk` 覆盖。
+- `region/us/ai_dns_us` 只集中 Cloudflare DoH 精确主机，不合并进普通海外 DNS 或 AI 业务域名集。Mihomo 保留 DoH URL 的美国代理参数，不增加无用 provider。
+- 设备源地址、订阅端点与同步标记留在私人配置；GitHub Raw、自举 DNS 及工作观察项继续独立。归并不能越过设备条件或扩大白名单。
+- 多文件补丁预检失败时不继续落盘；迁移先核对全部节标题、数量和历史来源，通过后统一写入。正则替换含过滤器的文本时使用函数返回字面内容，避免反斜杠被解释为替换转义。

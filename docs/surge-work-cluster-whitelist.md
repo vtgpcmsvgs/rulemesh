@@ -27,7 +27,7 @@ AWS IP 与链式 SOCKS5 设备分流调用已停用；仓库源规则与产物�
 
 ## DNS 与运行时
 
-普通业务采用国内双 DoH；AI 在 Host 中单独使用 Cloudflare DoH，并由独立域名规则走美国。保留 GitHub Raw 海外 Host 解析、节点 DOMAIN-SET bootstrap、hijack-dns、代理侧解析及加密 DNS 遵守出站。
+普通业务采用国内双 DoH；AI 在 Host 中单独使用 Cloudflare DoH，并由独立 `region/us/ai_dns_us` 规则集走美国。保留 GitHub Raw 海外 Host 解析、节点 DOMAIN-SET bootstrap、hijack-dns、代理侧解析及加密 DNS 遵守出站。
 
 小型 cn_dns_domains 引用可保留，不替换为性能型清单。DNS 解析本身不授予白名单放行。国内 DoH 端点显式 DIRECT，其他加密 DNS 入口保持白名单规则；Cloudflare 是 AI 解析美国例外，其余默认自动代理。
 
@@ -36,3 +36,5 @@ Surge Enhanced Mode 由客户端启用，profile 不写 dns-mode；保留 localh
 ## 联动
 
 每次修改白名单逻辑同步本文件、README、使用说明与私有配置；验证最终拒绝、精确放行、同步标记和地区例外。通用性能调整不授权扩大设备或业务范围。安装在 Mac 的只读监控遵守原有两阶段审批，不自动执行配置变更。
+
+工作配置恢复七个机场手动选择组；它们只提供策略界面入口，不授予新的流量放行。AI DNS 归并保持原有精确主机和规则位置；Personal 爱思规则不扩入工作白名单。

@@ -11,6 +11,30 @@ OVERSEAS = ("https://cloudflare-dns.com/dns-query", "https://dns.google/dns-quer
 METADATA_FILTER = r"^(?!剩余流量)(?!(直接连接)$)(?!套餐到期)(?!距离下次重置)(?!.*联系我们)(?!过滤掉)(?!Expire Date)(?!Traffic Reset)(?!.*\d+(?:\.\d+)?\s*(?:[KMGT]B?|B)\s*\|\s*\d+(?:\.\d+)?\s*(?:[KMGT]B?|B)).*$"
 PUBLIC_US_FILTER = METADATA_FILTER[:-3] + r".*((🇺🇸)|(美国)|(United States)|(US)).*$"
 GEOIP_URL = "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/country.mmdb"
+AI_DNS_RULE = BASE + "surge/rules/region/us/ai_dns_us.list"
+AIRPORT_START = "# AIRPORT_MANUAL_GROUPS_START"
+AIRPORT_END = "# AIRPORT_MANUAL_GROUPS_END"
+
+
+def check_airport_groups(lines: list[str]) -> list[str]:
+    """当前私人 Surge 的七个机场手动入口属于用户功能，不能按规则引用数清理。"""
+    import check_private_dns_precedence as dns
+
+    if lines.count(AIRPORT_START) != 1 or lines.count(AIRPORT_END) != 1:
+        return ["机场手动组保护块必须完整且唯一。"]
+    start, end = lines.index(AIRPORT_START), lines.index(AIRPORT_END)
+    section = dict(dns._active_surge_section(lines, "Proxy Group"))
+    active = [line for number, line in section.items() if start < number - 1 < end]
+    groups = dns._parse_surge_groups(["[Proxy Group]", *active])
+    all_groups = dns._parse_surge_groups(lines)
+    owners = [g for g in all_groups.values() if g.group_type == "select" and set(groups).issubset(g.members)]
+    if start >= end or len(active) != 7 or len(groups) != 7 or not owners:
+        return ["必须保留七个独立机场手动组并接入手动选择入口。"]
+    if not all(g.group_type == "select" and g.has_external_source and g.filter_text for g in groups.values()):
+        return ["机场手动组必须保留订阅来源与过滤条件。"]
+    if not all(re.search(r"(?:^|,)\s*hidden=0(?:,|$)", line) for line in active):
+        return ["机场手动组必须在界面中可见。"]
+    return []
 REGIONAL = {
     "region/tw/crypto_tw": "tw", "region/jp/domains_to_jp": "jp",
     "region/hk/hk_brokers": "hk", "region/hk/hk_securities_aggressive": "hk",
@@ -52,6 +76,8 @@ def check(path: Path, lines: list[str]) -> list[str]:
         for marker in ("PRIVATE_SUBSCRIPTION_DIRECT_START", "PRIVATE_SUBSCRIPTION_DIRECT_END"):
             require(sum(marker in line for line in lines) == 1, "私有订阅同步块的起止标记必须完整保留。")
     if surge:
+        if path.name.startswith("rulemesh-substore-"):
+            errors.extend(check_airport_groups(lines))
         for name in ("General", "Host", "Proxy Group", "Rule"):
             require(sum(line.strip() == f"[{name}]" for line in lines) == 1, f"Surge {name} 节必须唯一。")
         groups = dns._parse_surge_groups(lines)
@@ -121,7 +147,7 @@ def check(path: Path, lines: list[str]) -> list[str]:
         policy_index = -2 if parts[-1] in {"no-resolve", "dns-failed"} else -1
         target = parts[policy_index]
         is_ai = position == ai_position
-        is_ai_dns = surge and parts[:2] == ["DOMAIN", "cloudflare-dns.com"]
+        is_ai_dns = surge and parts[:2] == ["RULE-SET", AI_DNS_RULE]
         if target in groups:
             if position not in fixed_positions.values():
                 require(target == (us if is_ai or is_ai_dns else auto), "无明确地区要求的代理规则仍绑定地区或手动组。")
@@ -154,7 +180,10 @@ def check(path: Path, lines: list[str]) -> list[str]:
         host = [line for _, line in dns._active_surge_section(lines, "Host")]
         ai_host = f"RULE-SET:{BASE}surge/rules/region/us/ai_us.list = server:{OVERSEAS[0]}"
         require(bool(host) and host[0] == ai_host, "Surge Host 第一项必须为 AI 专用海外 DoH。")
-        require(sum(parts[:2] == ["DOMAIN", "cloudflare-dns.com"] and parts[2] == us for _, parts in rules) == 1, "Surge AI DoH 缺少美国出站。")
+        ai_dns_positions = [pos for pos, (_, parts) in enumerate(rules) if parts[:3] == ["RULE-SET", AI_DNS_RULE, us]]
+        require(len(ai_dns_positions) == 1, "Surge AI DoH 缺少唯一规则集美国出站。")
+        if len(ai_dns_positions) == 1:
+            require(all(ai_dns_positions[0] < pos for pos, (_, parts) in enumerate(rules) if parts[0] in {"SRC-IP", "PROTOCOL", "FINAL"}), "AI DNS 美国出口必须早于设备、协议和最终兜底。")
         for endpoint in ("dns.alidns.com", "doh.pub"):
             require(any(parts[:3] == ["DOMAIN", endpoint, "DIRECT"] for _, parts in rules), "国内 DoH 端点必须显式直连。")
         node_entries = [line for line in host if "proxy-node-domains" in line]

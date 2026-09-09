@@ -675,3 +675,6 @@ rules:
   - RULE-SET,direct_cn,DIRECT
   - RULE-SET,proxy_gfw,♻️ 自动选择
   - MATCH,♻️ 自动选择
+
+# 归并约定：Google Play 复用 hk_google；AI DNS 用上述 DoH 美国代理参数。
+# Surge 专用 ai_dns_us 与 Personal 爱思入口不机械注册到本配置；机场手动功能不可按规则引用数删除。

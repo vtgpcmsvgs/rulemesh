@@ -20,6 +20,10 @@ sources:
           note: 广告拦截继续保持小而可读，不引入额外大体量上游
 
   direct:
+    aisi_direct.list:
+      preferred:
+        - repo: self
+          note: 集中维护 Surge Personal 已批准的爱思域名与关键词，不扩入工作白名单
     cn_social_direct.list:
       preferred:
         - repo: self
@@ -185,6 +189,10 @@ sources:
           note: Telegram 默认使用全地区自动选择，地区路径保留兼容
         - repo: Loyalsoldier/surge-rules
           note: 负责 telegramcidr.txt 补充
+    us/ai_dns_us.list:
+      preferred:
+        - repo: self
+          note: Surge AI 专用 Cloudflare DoH 精确主机美国出口，Mihomo 使用 DoH 代理参数
     us/ai_us.list:
       preferred:
         - repo: self

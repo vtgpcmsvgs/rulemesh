@@ -1,0 +1,7 @@
+# AI 专用 DNS 传输出口：将 Surge 的 Cloudflare DoH 连接固定到美国。
+# 边界：只匹配当前 AI 解析器的精确主机，不包含 AI 业务域名或其他公共 DNS。
+# 顺序：绑定 ai_us 相同美国组，位于通用加密 DNS 协议、设备分流和最终兜底之前。
+# Mihomo 的 AI DoH 通过 URL 的代理参数指定美国，不机械增加本规则调用。
+
+# 与 Surge Host 中 AI 专用 Cloudflare DoH 配套维护。
+DOMAIN,cloudflare-dns.com

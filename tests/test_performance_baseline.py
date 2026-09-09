@@ -71,6 +71,44 @@ class PerformanceBaselineTests(unittest.TestCase):
         errors = baseline.check(Path("rulemesh-substore-surge-personal.conf"), text.splitlines())
         self.assertTrue(any("同步块" in error for error in errors))
 
+    def test_airport_manual_groups_are_not_rule_reachability_garbage(self):
+        groups = [f'机场{i} = select, policy-path=https://example.com/{i}, hidden=0, policy-regex-filter=^机场{i}' for i in range(7)]
+        owner = '手动入口 = select, ' + ', '.join(f'机场{i}' for i in range(7))
+        lines = ['[Proxy Group]', owner, baseline.AIRPORT_START, *groups, baseline.AIRPORT_END, '[Rule]', 'FINAL,DIRECT']
+        self.assertEqual(baseline.check_airport_groups(lines), [])
+        for changed in (
+            [line for line in lines if line != groups[0]],
+            [line for line in lines if line != baseline.AIRPORT_START],
+            [line for line in lines if line != owner],
+            [line.replace('hidden=0', 'hidden=1') for line in lines],
+            [line.replace(' = select, policy-path=', ' = smart, policy-path=') for line in lines],
+        ):
+            self.assertTrue(baseline.check_airport_groups(changed))
+
+    def test_ai_dns_ruleset_must_keep_us_outbound_before_device_rules(self):
+        path, text = self.fixture('surge')
+        line = next(x for x in text.splitlines() if x.startswith('RULE-SET,' + baseline.AI_DNS_RULE + ','))
+        self.assertTrue(baseline.check(path, text.replace(line, '').splitlines()))
+        changed = text.replace(line, line.replace('🇺🇸 美国-自动选择', '♻️ 自动选择'))
+        self.assertTrue(any('DoH' in error for error in baseline.check(path, changed.splitlines())))
+        changed = text.replace(line, 'SRC-IP,192.0.2.1,"♻️ 自动选择"\n' + line)
+        self.assertTrue(any('设备' in error for error in baseline.check(path, changed.splitlines())))
+        source = ROOT / 'rules/region/us/ai_dns_us.list'
+        self.assertEqual(build_rules.build_source(source).outputs['surge_rules'], ['DOMAIN,cloudflare-dns.com'])
+
+    def test_aisi_ruleset_keeps_scope_and_apple_updates_are_already_covered(self):
+        source = ROOT / 'rules/direct/aisi_direct.list'
+        self.assertEqual(set(build_rules.build_source(source).outputs['surge_rules']), {
+            'DOMAIN-SUFFIX,i4.cn', 'DOMAIN-SUFFIX,i5.cn', 'DOMAIN-KEYWORD,i4', 'DOMAIN-KEYWORD,aisi',
+        })
+        path, text = self.fixture('surge')
+        active = [line for _, line in parser._active_surge_section(text.splitlines(), 'Rule')]
+        aisi = next(i for i, line in enumerate(active) if '/aisi_direct.list,' in line)
+        apple = next(i for i, line in enumerate(active) if '/apple_direct.list,' in line)
+        reject = next(i for i, line in enumerate(active) if '/reject/' in line)
+        self.assertLess(aisi, apple)
+        self.assertLess(apple, reject)
+
     def test_private_sync_accepts_empty_surge_indent(self):
         script = Path(os.environ.get("USERPROFILE", "")) / "Desktop/rulemesh-local/sync_private_subscription_direct.ps1"
         powershell = shutil.which("powershell")
@@ -119,6 +157,10 @@ if ($taskLines.Count -ne 1 -or $taskLines[0] -ne '# test') { throw 'Unexpected f
             return (kind == "DOMAIN" and domain == value) or (kind == "DOMAIN-SUFFIX" and (domain == value or domain.endswith("." + value))) or (kind == "DOMAIN-KEYWORD" and value in domain)
 
         cases = {
+            "download.i4.cn": "DIRECT", "www.i5.cn": "DIRECT",
+            "secure-appldnld.apple.com": "DIRECT", "updates.cdn-apple.com": "DIRECT",
+            "cloudflare-dns.com": "🇺🇸 美国-自动选择",
+            **{domain: "♻️ 自动选择" for domain in ("googleplay.com", "googleusercontent.com", "android.com", "gvt3.com", "xn--ngstr-lra8j.com")},
             "www.douyin.com": "DIRECT", "www.xiaohongshu.com": "DIRECT",
             "sns-webpic-qc.xhscdn.com": "DIRECT", "login.weixin.qq.com": "DIRECT",
             "servicewechat.com": "DIRECT", "chatgpt.com": "🇺🇸 美国-自动选择",

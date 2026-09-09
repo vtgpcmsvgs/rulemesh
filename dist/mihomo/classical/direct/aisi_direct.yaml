@@ -1,0 +1,7 @@
+# 生成来源：rules/direct/aisi_direct.list
+# 行为：classical
+payload:
+  - "DOMAIN-SUFFIX,i4.cn"
+  - "DOMAIN-SUFFIX,i5.cn"
+  - "DOMAIN-KEYWORD,i4"
+  - "DOMAIN-KEYWORD,aisi"
