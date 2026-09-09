@@ -1,3 +1,5 @@
+> 历史设计存档：当前路由和 DNS 已由 [2026-09-09 性能基线](../../performance-baseline.md) 取代，本文不作为配置恢复依据。
+
 # Surge Personal 激进分流与双 MITM 设计
 
 ## 目标

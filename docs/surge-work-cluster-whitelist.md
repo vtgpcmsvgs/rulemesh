@@ -1,106 +1,38 @@
 # Surge 工作路由白名单约定
 
-本文只记录私有工作路由文件的维护约定，用来防止后续把它误改回“和个人模板完全一致”的结构。
+仅适用于私有 `rulemesh-substore-surge-work-whitelist.conf`。它长期独立于两份 Surge Personal、两份 Mihomo 与公开模板；不得为了统一模板取消白名单。
 
-## 适用范围
+## 当前放行边界
 
-- 仅适用于本地私有 Surge 文件 `rulemesh-substore-surge-work-whitelist.conf`
-- 不适用于家庭与公司两份 Surge Personal
-- 不适用于 `rulemesh-substore-mihomo-clash-verge.yaml`
-- 不适用于 `rulemesh-substore-mihomo-clash-meta.yaml`
-- 不适用于仓库里的公开模板 `docs/examples/surge-public.conf` 与 `docs/examples/mihomo-public.yaml`
+用户最新性能要求适用于已允许的连接，详见 [性能基线](performance-baseline.md)。固定工作电脑仍执行 `FINAL,REJECT`，保留既有设备条件，公开文档不得记录真实源地址、设备标识、订阅或 MITM。
 
-## 隐私边界
+1. AI（含 Google AI）第一条规则固定美国。
+2. 抖音和新增微信、小红书精选入口前置 DIRECT，不增加整个腾讯或中国通用白名单。
+3. 日本明确访问例外、Crypto 台湾、香港券商香港先于 Google 通用入口。
+4. Google 普通业务与完整地址空间、WPS 和其他已批准代理入口自动择优。
+5. 保留既有拒绝、设备条件、GitHub SSH/Raw/Core、1Password、AdsPower、订阅端点、Polygon/BSC RPC、DNS、LAN、系统时间和指定直连。
+6. 其余连接最终 `FINAL,REJECT`。
 
-- 这份工作路由文件里的真实 `SRC-IP` 列表、私有 `policy-path`、订阅地址、私有订阅更新域名与 `[MITM]` 参数继续只保留在本地私有目录
-- 公开仓库只记录“有 6 台固定工作电脑使用白名单模式”这一维护事实，不回写真实局域网 IP 或其他敏感值
+AWS IP 与链式 SOCKS5 设备分流调用已停用；仓库源规则与产物保留。其他设备条件不扩大成全流量放行。阿里业务的既有源地址条件保留，出口改为自动组。
 
-## 当前白名单原则
+## 精确维护约定
 
-- 工作路由仍以那 6 台固定工作电脑为核心维护对象，并继续采用白名单模式
-- Google 全业务香港白名单是最高优先级例外，必须位于全部拒绝规则之前；Google 广告与统计域名因此不再命中广告拒绝
-- 设备分流继续按“源 IP + AWS 区域 / 多地区链式 SOCKS5 IP 段”定向到对应设备组
-- 已登记个人终端允许在同一设备分流段使用“源 IP + `region/hk/alibaba_hk`”条件规则，只把阿里系流量交给香港自动选择；不得扩成这些终端的全流量入口，也不得移除源地址条件
-- 只有 2.1 设备分流继续保留“源 IP + AWS 区域 / 多地区链式 SOCKS5 IP 段”约束；2.2-2.10 不再额外限制源 IP
-- 多地区链式 SOCKS5 端点属于私有服务商导出后脱敏的链式代理入口，不再视为日本区域规则，也不应再挂到单一国家目录或固定日本组
-- `region/hk/google_hk` 作为白名单显式放行项，完整承接 Google 域名、Google AI 与官方 `goog.json` 全部 IPv4 / IPv6 地址空间，并统一走香港节点；故意允许第三方 GCP 服务被过度覆盖
-- `AI US` 入口继续作为白名单显式放行项，但只承接非 Google 海外 AI 平台并统一走美国节点；国内 AI 与 Google AI 都不应借这条入口放行
-- `region/hk/wps_kdocs` 继续作为 WPS Office 与金山文档显式白名单入口，统一走香港自动选择，并必须先于最终拒绝；`[Host]` 同时在 `cn_dns_domains` 前复用该规则集绑定海外 DoH
-- `zsxq.com` 与 `yikaiying.com` 作为本次明确批准的国内性能入口，以两条精确 `DOMAIN-SUFFIX,...,DIRECT` 放在最终拒绝前；不得据此恢复宽泛 `cn_direct`
-- `region/hk/alibaba_hk` 只在已登记个人终端的条件规则中作为香港入口；`[Host]` 在 `cn_dns_domains` 前复用它绑定海外 DoH，以免阿里系域名仍交给国内 DNS，但实际流量放行继续由源地址条件约束
-- `region/hk/hk_brokers` 继续作为香港券商显式放行项，只承接复星证券/复星财富、致富证券、辉立证券与富途，并统一走香港自动选择
-- GitHub 仓库 SSH 定向直连继续保留独立 carve-out
-- GitHub 相关访问继续拆成三段：先保留 `DOMAIN,raw.githubusercontent.com` 自举入口，再显式放行 `proxy/github_core_proxy.list`，其后的 `DOMAIN-KEYWORD,github` 广覆盖观察兜底在工作白名单模式下统一使用 `REJECT`，专门用于发现 SSH / GitHub Core 之外的漏网之鱼
-- `raw.githubusercontent.com` 继续作为规则产物下载自举入口，但不再绑定 `server:system`；当前改用海外 DoH 解析，避免规则产物下载回落到本地/国内系统 DNS
-- 工作白名单默认不额外开放局域网代理入口；旁路由已接管流量，`allow-wifi-access` 继续保持 `false`
-- Surge profile 不写 `dns-mode = fake-ip`；Fake IP 由 Surge Enhanced Mode / VIF 运行时提供，工作路由设备加载 profile 后需要在 Surge 里启用 Enhanced Mode；`always-real-ip` 只精确加入 `localhost.weixin.qq.com` 以保留微信本机 loopback，不新增任何白名单流量入口
-- `skip-proxy` 不再包含 Apple `17.0.0.0/8`，避免 macOS 更新流量绕过白名单里的拒绝规则和美国分流入口
-- IPv6 默认关闭，等完成 IPv6 DNS 泄露、WebRTC 与出口测试后再重新评估
-- `hijack-dns = *:53` 负责接管传统 UDP/TCP 53 DNS；加密 DNS 流量只能作为显式白名单入口放行，不能靠 `FINAL` 兜底
-- 海外 `encrypted-dns-server`、`encrypted-dns-follow-outbound-mode = true` 与 `use-local-host-item-for-proxy = false` 继续保留；`[Host]` 必须在 `cn_dns_domains` 前为 `google_hk` 绑定海外 DoH。DNS 清单扩充本身不自动新增白名单流量放行，Google 放行来自已明确批准的独立规则入口
-- 私有订阅域名同步块继续保留独立显式放行入口，顺序位于 GitHub 观察兜底之后、1Password 之前；端点清单统一在解析后的私人当前配置目录中的 `private_subscription_direct.list` 维护，并以 `-Target surge` 运行同步脚本，先插入 Chrome 访问这些端点时改走 `🚀 节点选择` 的例外，再保留订阅更新直连
-- `proxy/onepassword_proxy.list` 继续保留 `🚀 节点选择`，用于白名单模式下显式放行 1Password 核心连接；其上游快照由仓库每天自动抓取官方支持页生成，但默认只覆盖官方自有核心域名与更新/基础设施端点
-- AdsPower 继续维持 `adspower_reject`、`adspower_direct`、`adspower_proxy` 三段细分
-- 在 `adspower_direct` 与 `adspower_proxy` 之后，额外保留一条广覆盖 `DOMAIN-KEYWORD,adspower,REJECT` 观察兜底，专门用于发现细分规则漏网之鱼
-- `proxy/polygon_rpc_proxy.list` 继续保留 `🚀 节点选择`，用于白名单模式下显式放行 Polygon 主网 RPC 域名
-- `proxy/bsc_rpc_proxy.list` 继续保留 `🚀 节点选择`，用于白名单模式下显式放行 BSC 主网 RPC 域名
-- `proxy/overseas_dns_ipv4_proxy.list` 继续保留，并在 Surge 配置里以 `RULE-SET,...,"🇺🇸 美国-自动选择",no-resolve` 接入，用于白名单模式下显式放行 `1.1.1.1/32` 与 `9.9.9.9/32`；Google `8.8.8.8` 由前置 `google_hk` 走香港
-- `DOMAIN,dns.alidns.com,DIRECT` 与 `DOMAIN,doh.pub,DIRECT` 继续作为代理节点 bootstrap DNS 直连例外，必须放在 DoH / DoH3 / DoQ 通用规则前，避免代理尚未建立时产生 DNS 走代理的循环依赖
-- DoH / DoH3 / DoQ 以及 `cloudflare-dns.com`、`dns.google`、`dns.quad9.net` 继续作为海外加密 DNS 显式白名单入口；`dns.google` 由前置 Google 规则固定香港，其余端点继续走美国
-- `LAN,DIRECT` 继续保留在白名单直连入口中
-- `direct/os_time_direct` 继续保留 `DIRECT`，用于 Windows / Apple 系统时间同步，不并入节点选择
-- 单个白名单专属直连域名（例如 `smtp.163.com`）优先直接维护在 2.10“指定直连”入口，不为单条规则额外新增公开 `rules/` 文件
-- 单个白名单专属拒绝域名，或只用于阻断浏览器扩展更新链路的拒绝规则，优先直接维护在 1)“拒绝规则”入口，不为单条规则额外新增公开 `rules/` 文件
-- `region/us/microsoft_us` 继续作为美国分流入口，Windows 更新禁用仍由前置 `reject/os_update_reject` 先拦截
-- `region/us/macos_update_us` 继续作为美国分流入口，用于需要时临时放开 macOS 系统升级；它只匹配 Apple 官方标注为 macOS only 的更新主机，且必须位于前置拒绝规则之后
-- 阿里云注册大块与 `AS45102/AS134963/AS24429` 的内联规则只在 TCP/22 下直连，并放在 `alicloud_hk_ipv4_ssh22_direct` 远程规则及阿里云观察 `REJECT` 前；这样远程缓存残缺也不会落入 `FINAL,REJECT`
-- `alicloud_hk_ipv4_ssh22_direct` 继续以 `DIRECT,no-resolve` 保留，并与 `DOMAIN-SUFFIX,aliyuncs.com`、`DOMAIN,check.myclientip.com` 共同构成阿里云显式白名单；其后保留广覆盖 `REJECT` 观察兜底
-- 工作白名单模式下，广覆盖观察规则统一只允许使用 `REJECT`；不要对 `DIRECT` 或 `PROXY` 规则使用 `extended-matching`，否则会把可伪造的 Host / SNI 纳入放行判断，放大绕过白名单的风险
-- `bytedance_direct.list` 继续保留 `DIRECT` 并早于 `region/hk/global_media`；工作白名单不因通用模板调整而新增 `ai_cn_direct` 或其他广谱放行
-- 原独立 2.6 `IP 规则` 段已删除，避免与 2.1 设备分流重复
-- 未命中上述白名单入口的流量最终统一落到 `FINAL,REJECT`
+- 不接入 `proxy/gfw`、`direct/cn_direct`、网易或哔哩哔哩广谱直连。Personal 的 Apple、Outlook、Notion、personal_priority、香港证券增强和 Microsoft Store 专项不复制进工作文件。
+- WPS 保留显式入口，自动代理并早于最终拒绝。`zsxq.com`、`yikaiying.com` 的既有精确 DIRECT 继续保留。
+- GitHub SSH carve-out、Raw 下载、Core 规则和已有 GitHub 广覆盖观察项独立保留；AdsPower 三类规则与已有观察兜底也保持原动作。不得把观察规则因去重而删除或扩大放行。
+- 订阅源只在私人目录维护，起止标记必须保留。`-Target surge` 同步浏览器自动代理例外和普通订阅更新 DIRECT；其他客户端不因共享源顺带改动。
+- Polygon/BSC RPC 与 Crypto 同属台湾出站；1Password 和其他无地区要求的白名单代理用自动组。
+- 阿里云 SSH 保留 TCP/22 内联兜底、远程 `DIRECT,no-resolve` 与指定控制面、出口探测直连；不扩展端口或恢复阿里云广谱放行。
+- 系统时间继续 DIRECT；Windows/macOS 更新仍先受既有拒绝规则控制，放行后使用自动代理。禁止通过 skip-proxy 绕过 Apple 17/8 的规则判断。
 
-## 永久差异约定
+## DNS 与运行时
 
-- 这份工作路由白名单是对工作软路由的长期特化，不再追求和两个 `personal` 配置完全一致
-- 后续如果调整个人模板、公开模板或 Mihomo 模板，不要顺手把工作路由改回通用 `proxy/gfw + 广谱 direct + 放行型 FINAL` 结构
-- 反过来，工作路由里的白名单 `REJECT` 兜底也不要迁移到个人模板或 Mihomo 模板
+普通业务采用国内双 DoH；AI 在 Host 中单独使用 Cloudflare DoH，并由独立域名规则走美国。保留 GitHub Raw 海外 Host 解析、节点 DOMAIN-SET bootstrap、hijack-dns、代理侧解析及加密 DNS 遵守出站。
 
-## 维护时必须保留的顺序
+小型 cn_dns_domains 引用可保留，不替换为性能型清单。DNS 解析本身不授予白名单放行。国内 DoH 端点显式 DIRECT，其他加密 DNS 入口保持白名单规则；Cloudflare 是 AI 解析美国例外，其余默认自动代理。
 
-1. Google 全业务香港白名单
-2. 拒绝规则
-3. 设备分流（含已登记个人终端的阿里系香港条件入口）
-4. 其他区域精确规则（含 WPS / 金山文档香港入口）
-5. 香港券商区域入口
-6. GitHub 仓库 SSH 定向直连
-7. GitHub Raw 自举入口
-8. GitHub Core 代理入口
-9. GitHub 广覆盖 REJECT 观察兜底
-10. 私有订阅域名同步块
-11. 1Password 核心连接节点选择入口
-12. AdsPower 细分规则
-13. AdsPower 广覆盖 REJECT 观察兜底
-14. Polygon 主网 RPC 节点选择入口
-15. BSC 主网 RPC 节点选择入口
-16. 海外 DNS 主 IPv4 端点美国分流入口
-17. 代理节点 bootstrap DNS 直连例外
-18. 海外加密 DNS 显式白名单入口
-19. 指定直连入口（含阿里云广覆盖 REJECT 观察兜底）
-20. 全局 `FINAL,REJECT` 兜底
+Surge Enhanced Mode 由客户端启用，profile 不写 dns-mode；保留 localhost.weixin.qq.com 精确回环例外、IPv4 与关闭额外 Wi-Fi 代理入口。GeoIP 改用 MetaCubeX 直接上游。
 
-## 不要误恢复的广谱放行项
+## 联动
 
-若需求没有重新明确变更，不要把下列广谱放行项重新塞回工作路由白名单阶段：
-
-- `proxy/gfw`
-- `direct/netease_direct`
-- `direct/bilibili_direct`
-- `direct/cn_direct`
-
-## 变更联动
-
-- 只要工作路由白名单逻辑发生变化，就要同时更新这份文档
-- 如果只是个人模板或 Mihomo 模板调整，不代表工作路由也应同步同构
-- 如果未来白名单设备范围、允许入口或兜底策略发生变化，优先先确认这是“工作路由私有特化”还是“整个仓库公开默认行为”的变化，再决定是否更新公开模板
-- 如果未来私有订阅域名同步块的源文件、同步脚本或插入顺序发生变化，也要同步更新 [docs/private-subscription-direct-sync.md](private-subscription-direct-sync.md)
+每次修改白名单逻辑同步本文件、README、使用说明与私有配置；验证最终拒绝、精确放行、同步标记和地区例外。通用性能调整不授权扩大设备或业务范围。安装在 Mac 的只读监控遵守原有两阶段审批，不自动执行配置变更。

@@ -1,0 +1,21 @@
+# 国内社交与内容业务直连：小红书、微信及其专用资源域名。
+# 边界：抖音继续由 bytedance_direct 承接；不扩大到整个腾讯、海外社交或通用云服务。
+# 顺序：海外 AI 美国入口之后，Google 广谱规则、广告拒绝和国内通用兜底之前。
+
+# 小红书：主站、短链与图片视频分发。
+DOMAIN-SUFFIX,xiaohongshu.com
+DOMAIN-SUFFIX,xhslink.com
+DOMAIN-SUFFIX,xhscdn.com
+DOMAIN-SUFFIX,xhscdn.net
+DOMAIN-SUFFIX,xiaohongshu.net
+
+# 微信：登录、消息、支付、小程序与专用内容资源。
+DOMAIN-SUFFIX,weixin.qq.com
+DOMAIN-SUFFIX,wx.qq.com
+DOMAIN-SUFFIX,wechat.com
+DOMAIN-SUFFIX,weixin.com
+DOMAIN-SUFFIX,tenpay.com
+DOMAIN-SUFFIX,servicewechat.com
+DOMAIN-SUFFIX,serviceweixin.com
+DOMAIN-SUFFIX,qpic.cn
+DOMAIN-SUFFIX,qlogo.cn

@@ -21,10 +21,10 @@
 - 上游精细规则优先，本地只做高价值兜底
 - 文件头先写清“它负责什么、不负责什么、顺序上放在哪里”
 - 涉及代理节点端点或链式拨号时，文件头还要写清客户端能力边界；Surge 的端点规则分流不能被描述成 Mihomo `dialer-proxy` 的等价实现
-- 区域特化规则若可能与小型或性能型国内 DNS 清单重叠，文件头还要写清两端边界：Surge 在所用国内清单前设置海外 `[Host]` 例外；Mihomo 用已批准的对应 rule-set `nameserver-policy` 镜像默认海外 `nameserver`，这不等于恢复 `fallback`、`direct-nameserver` 或 `proxy-server-nameserver`
+- DNS 按已批准 2026-09-09 性能基线：普通业务默认国内双 DoH，Mihomo 仅 AI 使用专项 policy，地区必需业务优先保留出口
 - 从官方目录分页生成的大型机构域名快照应保留为独立上游文件，由同步器完成并发抓取、重试、页数与条目数阈值校验；本地规则只通过 `INCLUDE` 聚合该快照并补少量高价值品牌域名。不得用 `broker`、`securities`、`capital`、`finance` 这类通用关键词冒充机构穷举
 - Personal 专用激进入口必须在文件头明确“不扩散到工作白名单”，并在调用层同时处理 DNS 优先级；不能因为公开产物可用就机械替换工作白名单已有的精确入口
-- 邮箱等带登录流程的服务要分别检查邮件连接、共享认证与认证资源；`outlook_direct` 按邮件、登录、认证资源分组维护。精确共享登录直连会同时影响其他应用对同一域名的访问，必须说明这个边界，并保留海外 DNS，不能用平台根域兜底代替端点检查。
+- 邮箱等带登录流程的服务要分别检查邮件连接、共享认证与认证资源；`outlook_direct` 按邮件、登录、认证资源分组维护。精确共享登录直连会同时影响其他应用对同一域名的访问，必须说明这个边界，按当前性能基线选择 DNS，不能用平台根域兜底代替端点检查。
 - 自写注释统一用中文，不混入英文占位说明
 
 ## 先分类，再编辑
@@ -96,7 +96,7 @@ DOMAIN-KEYWORD,...
 - `google_hk.list` 适合按 `Google 通用服务`、`Google FCM`、`Google Play`、`YouTube`、`Gemini / Google AI`、官方 IP 地址空间这类服务分组
 - `crypto_tw.list` 适合按 `交易所 / 接入基础设施`、`链上数据 / 区块浏览器`、`预测市场` 这类类别分组
 - `bytedance_direct.list` 适合按 `字节跳动 / ByteDance` 与 `抖音 / Douyin` 分组
-- `global_media.list` 适合按 `上游 GlobalMedia 主体`、`X / Twitter 网页补站`、`Polymarket 香港解锁补站` 这类服务小节分组
+- `global_media.list` 按上游主体与 X/Twitter 分组；Polymarket 独立归入 `crypto_tw` 台湾入口。
 
 不要默认把所有显式域名堆成一段、所有关键词再堆成另一段；这样后续找某个平台时要来回跳，不利于维护。
 
@@ -178,7 +178,7 @@ IP 类源规则可以只写主体字段；构建产物会自动补 `no-resolve`�
 
 - `ai_us.list` 要明确“只负责海外 AI，不负责国内 AI，并默认绑定美国策略”
 - `ai_cn_direct.list` 要明确“显式国内 AI 在前，字节共享基础设施仍交给 bytedance_direct”
-- `google_hk.list` 要明确“完整 Google 域名与官方 IP 地址空间固定香港，Google AI 不得在 ai_us 交叉兜底，且本规则必须位于全部拒绝与 ai_us 前”
+- `google_hk.list` 保留 Google 通用域名与完整 IP 空间；Google AI 在 `ai_us`，客户端前置美国入口，普通 Google 自动择优。
 - `cn_direct.list` 要明确“它是最宽泛的大陆通用兜底，应放在更细分规则之后”
 
 私有服务商导出的端点清单还必须遵守额外的脱敏与原子更新边界：原始响应只在内存中处理，逐行完整校验 IPv4、端口与认证字段，拒绝空响应、异常行、非公网 IPv4 和重复 IP；全部通过后按 IPv4 数值排序并全量替换。公开源规则只允许保留 `IP-CIDR,<IPv4>/32`，下载地址、端口、用户名、密码、令牌和 `plan_id` 一律不得进入仓库、日志或文档。

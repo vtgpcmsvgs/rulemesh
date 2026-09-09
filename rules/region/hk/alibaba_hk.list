@@ -1,7 +1,8 @@
+# 2026-09-09 默认自动择优，旧地区路径仅作兼容；明确地区限制按 docs/performance-baseline.md 单独登记。
 # 阿里系香港区域策略规则：覆盖淘宝、支付宝、闲鱼及阿里系共享域名与网络入口。
-# 维护边界：本规则不代表阿里业务的地理归属，只用于需要固定香港出口的客户端或设备；默认公开模板不启用。
+# 维护边界：本规则不代表阿里业务的地理归属，只用于需要在调用层指定代理出口的客户端或设备；默认公开模板不启用。
 # 客户端顺序必须放在 direct/ai_cn_direct、direct/cn_direct 与阿里云 SSH 指定直连入口前，设备限定应在调用层完成。
-# Surge 必须在所用的 cn_dns_domains 或 cn_performance_dns_domains 前，通过 [Host] 复用本规则集并优先绑定海外 DoH；Mihomo 使用已批准的对应 rule-set nameserver-policy 镜像默认海外 nameserver，并保持单一业务 DNS 真相。
+# DNS 按已批准 2026-09-09 性能基线使用默认国内双 DoH；Mihomo 仅 AI 有专项 policy，不为本文件镜像海外解析。
 
 # Blackmatrix7 Alibaba 主体覆盖阿里巴巴域名族、共享基础设施、应用进程与阿里网络 IP 段。
 INCLUDE,upstream/blackmatrix7/alibaba.list
@@ -15,7 +16,7 @@ DOMAIN-KEYWORD,goofish
 DOMAIN-KEYWORD,xianyu
 DOMAIN-KEYWORD,idlefish
 
-# 阿里核心品牌关键词兜底：接受少量误伤，优先保证已登记设备的阿里系流量全部固定到香港出口。
+# 阿里核心品牌关键词兜底：接受少量误伤，优先保证已登记设备的阿里系流量使用全地区自动出口。
 DOMAIN-KEYWORD,alibaba
 DOMAIN-KEYWORD,alipay
 DOMAIN-KEYWORD,alicdn

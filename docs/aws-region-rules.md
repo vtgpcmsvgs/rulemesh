@@ -1,5 +1,7 @@
 # AWS 区域 IPv4 规则
 
+当前状态（2026-09-09）：源规则、上游同步与 dist 产物继续维护；默认公开模板和五份私有配置已停用 AWS IP 与链式代理调用。以下接入方式仅作将来手动启用时的参考。
+
 这些规则链接由 [AWS ip-ranges.json](https://ip-ranges.amazonaws.com/ip-ranges.json) 自动生成，客户端应从 `dist/` 引用，不要直接引用 `rules/`。
 
 本仓库使用的区域映射：

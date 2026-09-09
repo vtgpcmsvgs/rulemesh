@@ -16,6 +16,14 @@ defaults:
     manual_entries_first: true
 
 merge_plan:
+  - id: cn-social-direct
+    target: rules/direct/cn_social_direct.list
+    purpose: 小红书与微信精选直连，优先于 Google 广谱规则和广告拒绝
+    strategy:
+      - manual_only
+      - explicit_service_domains
+    notes:
+      - 抖音复用 bytedance_direct，海外 AI 前置美国分流，工作白名单只新增这一精选入口
   - id: adspower-direct
     target: rules/direct/adspower_direct.list
     purpose: AdsPower 代理检测与网络环境测试直连放行
@@ -129,21 +137,21 @@ merge_plan:
       - 客户端顺序必须放在 proxy/gfw 前
   - id: hk-google
     target: rules/region/hk/google_hk.list
-    purpose: Google / YouTube / Gemini / Google Cloud 地址空间统一走香港策略
+    purpose: Google 通用业务自动择优，Google AI 前置美国，保留完整官方地址空间
     strategy:
       - include_upstream_first_then_local_keyword_fallback
-      - include_blackmatrix7_google_fcm_youtube_and_gemini
+      - include_blackmatrix7_google_fcm_and_youtube
       - include_complete_official_goog_json_ip_space
     notes:
-      - Google 全业务规则只维护在 rules/region/hk/google_hk.list，不在 ai_us 或其他区域保留交叉兜底
+      - Google AI 由前置 ai_us 美国入口承接，google_hk 保留通用域名和完整 IP 空间并自动择优
       - 客户端必须把 google_hk 放在广告拒绝、ai_us、国内直连、海外 DNS IP 美国分流与所有广谱兜底之前
       - 官方 goog.json 地址空间动态变化；同步时拒绝空数据、重复前缀、非公网地址与异常 IP 版本
-      - 为满足宁可过度覆盖也不遗漏，完整保留 Google Cloud 客户地址，允许第三方 GCP 服务走香港
-      - Surge [Host] 与 Mihomo nameserver-policy 继续让 Google 目标域名使用海外加密 DNS，不得回落国内 DNS
+      - 完整保留 Google Cloud 客户地址，第三方 GCP 服务自动择优；明确地区业务必须前置
+      - DNS 按已批准 2026-09-09 性能基线：普通业务默认国内双 DoH，Mihomo 仅 AI 使用专项 policy，地区必需业务优先保留出口
 
   - id: us-microsoft
     target: rules/region/us/microsoft_us.list
-    purpose: Microsoft / OneDrive 统一走美国策略
+    purpose: Microsoft / OneDrive 默认使用自动策略
     strategy:
       - include_blackmatrix7_first_then_local_process_fallback
       - include_blackmatrix7_onedrive_and_microsoft
@@ -153,7 +161,7 @@ merge_plan:
 
   - id: us-microsoft-store
     target: rules/region/us/microsoft_store_us.list
-    purpose: Personal 激进配置的 Microsoft Store 与下载基础设施统一走美国策略
+    purpose: Personal 激进配置的 Microsoft Store 与下载基础设施默认使用自动策略
     strategy:
       - manual_only
       - official_windows_store_and_delivery_optimization_endpoints
@@ -163,7 +171,7 @@ merge_plan:
 
   - id: us-macos-update
     target: rules/region/us/macos_update_us.list
-    purpose: macOS 系统更新统一走美国策略
+    purpose: macOS 系统更新默认使用自动策略
     strategy:
       - manual_only
       - keep_scope_small_and_stable
@@ -193,7 +201,7 @@ merge_plan:
 
   - id: hk-notion
     target: rules/region/hk/notion_hk.list
-    purpose: Notion 全域名统一走香港策略
+    purpose: Notion 全域名默认自动择优
     strategy:
       - official_domains_first
       - legacy_domain_then_brand_keyword_fallback
@@ -202,7 +210,7 @@ merge_plan:
 
   - id: hk-alibaba
     target: rules/region/hk/alibaba_hk.list
-    purpose: 阿里系业务按设备固定走香港区域策略
+    purpose: 阿里系业务保留设备条件并默认自动择优
     strategy:
       - include_blackmatrix7_alibaba_and_xianyu
       - retain_aggressive_brand_keyword_fallback
@@ -211,12 +219,12 @@ merge_plan:
     notes:
       - 默认公开模板不启用，客户端应在调用层限定设备或明确的专用配置，避免改变其他终端的国内业务路径
       - 客户端顺序必须放在 direct/ai_cn_direct、direct/cn_direct 与阿里云 SSH 指定直连入口前
-      - Surge 的 [Host] 应在所用的 cn_dns_domains 或 cn_performance_dns_domains 前复用本规则集并优先绑定海外 DoH；Mihomo 使用已批准的对应 rule-set nameserver-policy 镜像默认海外 nameserver，并保持单一业务 DNS 真相
+      - DNS 按已批准 2026-09-09 性能基线：普通业务默认国内双 DoH，Mihomo 仅 AI 使用专项 policy，地区必需业务优先保留出口
       - 闲鱼除 XianYu 上游外继续保留 goofish、xianyu 与 idlefish 关键词兜底，优先避免漏网
 
   - id: hk-wps-kdocs
     target: rules/region/hk/wps_kdocs.list
-    purpose: WPS Office 与金山文档相关连接统一走香港策略
+    purpose: WPS Office 与金山文档连接默认自动择优
     strategy:
       - manual_only
       - explicit_official_domains_first_then_brand_keyword_fallback
@@ -224,7 +232,7 @@ merge_plan:
       - reuse_same_ruleset_for_surge_overseas_dns_override
     notes:
       - 客户端顺序必须放在 direct/cn_direct 与工作白名单 FINAL,REJECT 前，避免 WPS 专用域名被通用大陆直连或最终拒绝抢先命中
-      - Surge 的 [Host] 应在所用的 cn_dns_domains 或 cn_performance_dns_domains 前复用本 RULE-SET 并优先绑定海外 DoH；Mihomo 使用已批准的对应 rule-set nameserver-policy 镜像默认海外 nameserver，并保持单一业务 DNS 真相
+      - DNS 按已批准 2026-09-09 性能基线：普通业务默认国内双 DoH，Mihomo 仅 AI 使用专项 policy，地区必需业务优先保留出口
       - 不使用 DOMAIN-KEYWORD,wps，避免误伤 jwpsrv.com 等无关域名；ksyun.com 是为旧文件和对象存储完整性接受的共享基础设施边界
 
   - id: hk-brokers
@@ -324,7 +332,7 @@ merge_plan:
       - match_exact_ipv4_endpoint_without_port_binding
     notes:
       - 当前精确匹配 1.1.1.1/32 与 9.9.9.9/32，不再绑定 53 端口，方便后续复用到其他端口探活
-      - Google 8.8.8.8 已从本文件移除，由前置 rules/region/hk/google_hk.list 的官方完整地址空间固定走香港
+      - Google 8.8.8.8 已从本文件移除，由前置 rules/region/hk/google_hk.list 的官方完整地址空间自动择优
       - 客户端顺序应放在 proxy/gfw 前，避免被广谱代理入口提前命中
 
   - id: hk-global-media
@@ -336,7 +344,7 @@ merge_plan:
     notes:
       - 香港节点通常更稳定、速度更快，适合 global media 场景
       - 香港地区内容更贴近华语用户，且支付方式更友好
-      - Polymarket 当前在已接入上游里只有 gfw 通用后缀，本地在这里保留 DOMAIN-SUFFIX 与 DOMAIN-KEYWORD,polymarket 的香港兜底
+      - Polymarket 的显式后缀与关键词统一在 crypto_tw 维护，台湾出口；opinion.trade 保留日本明确例外
 
   - id: us-ai
     target: rules/region/us/ai_us.list
@@ -471,9 +479,9 @@ runtime_plan:
     strategy:
       - sync_selected_geodata_summary_to_rules_upstream_geodata
       - prefer_mihomo_official_default_provider_metacubex_meta_rules_dat
-      - mirror_selected_country_mmdb_to_rulemesh_release_asset
+      - use_selected_country_mmdb_directly_from_upstream
       - pin_surge_geoip_maxmind_url_and_mihomo_geox_url_mmdb_to_same_country_mmdb
     notes:
       - 不把大体积 mmdb 二进制直接提交到本仓库，只登记上游选择与下载入口
-      - 客户端统一引用本仓库 GitHub Release 镜像，不直接引用第三方仓库 release 链接
+      - 客户端直接引用 MetaCubeX 持续更新的官方 Release，停止本仓库二次镜像分发
       - 如需切换来源，先更新 rules/upstream/geodata 快照、README、workflow 与两端模板，再同步本地私有 Surge / Mihomo 配置

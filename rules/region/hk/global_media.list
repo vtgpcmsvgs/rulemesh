@@ -1,10 +1,10 @@
 # 国际流媒体香港区域策略规则：按“上游主体 + 本地补站”维护。
 # 维护约束：
 # 1) 主体来自 blackmatrix7 的 GlobalMedia.list，持续同步。
-# 2) 本规则集设计目标固定为香港节点，客户端请绑定 HK-AUTO（或等价香港策略组）。
-# 3) 香港节点一般更稳定、速度更快，适合 Telegram、流媒体与社交媒体网页这类大流量场景。
-# 4) 香港地区的流媒体内容与支付方式通常更贴近华语用户，因此 global media 继续统一收敛到 region/hk。
-# 5) Polymarket 当前在已接入上游里只有 gfw 通用兜底，本地在这里提前收敛到香港策略，避免继续误挂到日本区域。
+# 2) 默认绑定全地区自动选择；香港路径保留以兼容已有规则订阅。
+# 3) 速度取决于当前线路质量，不再仅凭地区名推定香港最快。
+# 4) 如有明确内容地区需求，再使用客户端专项规则固定出口。
+# 5) Polymarket 属于 Crypto，统一由前置 region/tw/crypto_tw 台湾入口承接。
 
 # 国际流媒体通用主体：以上游快照为主，承接主流流媒体、视频站点与国际媒体服务。
 INCLUDE,upstream/blackmatrix7/global_media.list
@@ -15,7 +15,3 @@ DOMAIN-SUFFIX,t.co
 DOMAIN-SUFFIX,twimg.com
 DOMAIN-SUFFIX,twitter.com
 DOMAIN-SUFFIX,twitter.jp
-
-# Polymarket：上游当前只有 gfw 通用后缀，本地保留显式域名与更激进的关键词兜底，优先走香港策略。
-DOMAIN-SUFFIX,polymarket.com
-DOMAIN-KEYWORD,polymarket

@@ -1039,6 +1039,9 @@ def validate_profile(
     path: Path, public_root: Path = ROOT
 ) -> list[DnsPrecedenceFinding]:
     lines = path.read_text(encoding="utf-8").splitlines()
+    from check_performance_baseline import applies, check
+    if applies(lines):
+        return [DnsPrecedenceFinding(path, 1, message, "按 docs/performance-baseline.md 修复。") for message in check(path, lines)]
     if path.name == SURGE_WORK:
         relevant_lines = _active_surge_section(lines, "Host")
         relevant_lines.extend(_active_surge_section(lines, "Rule"))

@@ -27,5 +27,7 @@ DOMAIN-SUFFIX,basescan.org
 DOMAIN-SUFFIX,solscan.io
 
 # 预测市场 / 其他补站：保留上游暂未完整覆盖但你明确需要的站点。
+DOMAIN-SUFFIX,polymarket.com
+DOMAIN-KEYWORD,polymarket
 DOMAIN-SUFFIX,kalshi.com
 DOMAIN-SUFFIX,g42.ai

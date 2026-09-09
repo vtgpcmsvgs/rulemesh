@@ -133,12 +133,6 @@ META_RULES_DAT_COUNTRY_MMDB_JSDELIVR_URL = (
 META_RULES_DAT_COUNTRY_MMDB_JSDELIVR_CF_URL = (
     "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb"
 )
-RULEMESH_GEOIP_RELEASE_TAG = "geoip-country-mmdb"
-RULEMESH_GEOIP_ASSET_NAME = "country.mmdb"
-RULEMESH_GEOIP_MIRROR_URL = (
-    f"{RULEMESH_REPO_URL}/releases/download/"
-    f"{RULEMESH_GEOIP_RELEASE_TAG}/{RULEMESH_GEOIP_ASSET_NAME}"
-)
 META_RULES_DAT_REQUIRED_MARKERS = (
     META_RULES_DAT_COUNTRY_MMDB_GITHUB_RELEASE_URL,
     META_RULES_DAT_COUNTRY_MMDB_JSDELIVR_URL,
@@ -1107,10 +1101,7 @@ def build_geodata_snapshot_text() -> str:
         "recommended_endpoint: github_release",
         "recommended_for: surge, mihomo-mmdb",
         "content_reference: Loyalsoldier/v2ray-rules-dat",
-        f"rulemesh_repo: {RULEMESH_REPO}",
-        f"rulemesh_release_tag: {RULEMESH_GEOIP_RELEASE_TAG}",
-        f"rulemesh_asset_name: {RULEMESH_GEOIP_ASSET_NAME}",
-        f"rulemesh_release_mirror: {RULEMESH_GEOIP_MIRROR_URL}",
+        "distribution: direct-upstream",
         "",
     ]
     return "\n".join(lines)

@@ -131,29 +131,30 @@ class GoogleHongKongRoutingTests(unittest.TestCase):
         for rules in (surge_rules, mihomo_rules):
             self.assertIn("DOMAIN-KEYWORD,google", rules)
             self.assertIn("DOMAIN-KEYWORD,youtube", rules)
-            self.assertIn("DOMAIN-KEYWORD,gemini", rules)
+            self.assertNotIn("DOMAIN-KEYWORD,gemini", rules)
             self.assertIn("IP-CIDR,8.8.8.0/24,no-resolve", rules)
             self.assertTrue(any(rule.startswith("IP-CIDR6,") for rule in rules))
 
-    def test_public_templates_route_google_to_hong_kong_before_reject_and_us_ai(self) -> None:
+    def test_public_templates_route_google_automatically_after_us_ai(self) -> None:
         surge = (ROOT / "docs" / "examples" / "surge-public.conf").read_text(encoding="utf-8")
         mihomo = (ROOT / "docs" / "examples" / "mihomo-public.yaml").read_text(encoding="utf-8")
 
-        surge_google = 'region/hk/google_hk.list,"🇭🇰 香港-自动选择"'
-        mihomo_google = "RULE-SET,hk_google,🇭🇰 香港-自动选择"
+        surge_google = 'region/hk/google_hk.list,"♻️ 自动选择"'
+        mihomo_google = "RULE-SET,hk_google,♻️ 自动选择"
         self.assertEqual(surge.count(surge_google), 1)
         self.assertEqual(mihomo.count(mihomo_google), 1)
         self.assertLess(surge.index(surge_google), surge.index("reject/adblock_reject.list,REJECT"))
-        self.assertLess(surge.index(surge_google), surge.index('region/us/ai_us.list,"🇺🇸 美国-自动选择"'))
+        self.assertGreater(surge.index(surge_google), surge.index('region/us/ai_us.list,"🇺🇸 美国-自动选择"'))
         self.assertLess(mihomo.index(mihomo_google), mihomo.index("RULE-SET,reject_adblock,REJECT"))
-        self.assertLess(mihomo.index(mihomo_google), mihomo.index("RULE-SET,us_ai,🇺🇸 美国-自动选择"))
+        self.assertGreater(mihomo.index(mihomo_google), mihomo.index("RULE-SET,us_ai,🇺🇸 美国-自动选择"))
 
-    def test_us_ai_rule_no_longer_claims_google_products(self) -> None:
+    def test_us_ai_rule_covers_google_ai_products(self) -> None:
         result = build_rules.build_source(ROOT / "rules" / "region" / "us" / "ai_us.list")
         rules = "\n".join(result.outputs["surge_rules"]).lower()
 
-        for forbidden in ("google", "gemini", "aistudio", "notebooklm", "makersuite", "deepmind"):
-            self.assertNotIn(forbidden, rules)
+        for required in ("gemini.google.com", "aistudio.google.com", "notebooklm.google.com", "makersuite", "deepmind"):
+            self.assertIn(required, rules)
+        self.assertNotIn("domain-suffix,google.com\n", rules)
 
 
 class AggressivePersonalSourceTests(unittest.TestCase):
@@ -497,12 +498,12 @@ class RepoInvariantTests(unittest.TestCase):
         surge_needles = (
             "direct/ai_cn_direct.list,DIRECT",
             "direct/bytedance_direct.list,DIRECT",
-            "region/hk/global_media.list,\"🇭🇰 香港-自动选择\"",
+            "region/hk/global_media.list,\"♻️ 自动选择\"",
         )
         mihomo_needles = (
             "RULE-SET,direct_ai_cn,DIRECT",
             "RULE-SET,direct_bytedance,DIRECT",
-            "RULE-SET,hk_global_media,🇭🇰 香港-自动选择",
+            "RULE-SET,hk_global_media,♻️ 自动选择",
         )
 
         for content, needles in ((surge, surge_needles), (mihomo, mihomo_needles)):
@@ -624,20 +625,20 @@ class RepoInvariantTests(unittest.TestCase):
         )
 
         self.assertLess(
-            surge.index("region/hk/wps_kdocs.list,\"🇭🇰 香港-自动选择\""),
+            surge.index("region/hk/wps_kdocs.list,\"♻️ 自动选择\""),
             surge.index("direct/cn_direct.list,DIRECT"),
         )
         self.assertLess(
-            surge.index("region/hk/wps_kdocs.list,\"🇭🇰 香港-自动选择\""),
-            surge.index("FINAL,🚀 节点选择"),
+            surge.index("region/hk/wps_kdocs.list,\"♻️ 自动选择\""),
+            surge.index("FINAL,♻️ 自动选择"),
         )
         self.assertLess(
-            mihomo.index("RULE-SET,hk_wps_kdocs,🇭🇰 香港-自动选择"),
+            mihomo.index("RULE-SET,hk_wps_kdocs,♻️ 自动选择"),
             mihomo.index("RULE-SET,direct_cn,DIRECT"),
         )
         self.assertLess(
-            mihomo.index("RULE-SET,hk_wps_kdocs,🇭🇰 香港-自动选择"),
-            mihomo.index("MATCH,🚀 节点选择"),
+            mihomo.index("RULE-SET,hk_wps_kdocs,♻️ 自动选择"),
+            mihomo.index("MATCH,♻️ 自动选择"),
         )
 
     def test_wps_kdocs_rule_avoids_overbroad_wps_keyword(self) -> None:
@@ -727,17 +728,7 @@ class MaintenanceDocumentationTests(unittest.TestCase):
             ("hk-alibaba", ROOT / "rules" / "region" / "hk" / "alibaba_hk.list"),
             ("hk-wps-kdocs", ROOT / "rules" / "region" / "hk" / "wps_kdocs.list"),
         )
-        required = (
-            "[Host]",
-            "cn_dns_domains",
-            "cn_performance_dns_domains",
-            "优先",
-            "海外",
-            "Mihomo",
-            "已批准",
-            "nameserver-policy",
-            "默认海外 nameserver",
-        )
+        required = ("DNS", "2026-09-09", "默认国内双 DoH", "Mihomo", "已批准")
 
         for merge_id, rule_path in cases:
             with self.subTest(source=rule_path.name):

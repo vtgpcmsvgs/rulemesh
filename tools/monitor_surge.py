@@ -1863,8 +1863,8 @@ def analyze(
                     host,
                     "国内目标频繁落入 FINAL 并失败",
                     evidence,
-                    "核对该域名在 direct 规则与 cn_dns_domains 两条轴上的覆盖；确认归属后再补源规则、重建并复测 DNS 出口。",
-                    "中：误判归属会把应代理的目标错误直连，或把普通目标交给国内 DNS。",
+                    "核对 direct 规则与实际 DNS 出口；按当前用户批准的性能基线确认归属后再补源规则、重建并复测。",
+                    "中：误判归属会把需要地区出口的目标错误直连；不得覆盖 AI、Crypto 等明确地区要求。",
                 )
             )
         elif scope == "domestic" and (
@@ -1877,8 +1877,8 @@ def analyze(
                     host,
                     "国内目标存在持续 DNS 失败或高延迟",
                     evidence,
-                    "核对该目标是否命中 cn_dns_domains、实际解析服务器类别与 DIRECT 规则；只为确认的国内业务补白名单。",
-                    "高：不得把全局 DNS 改为国内解析器。",
+                    "核对实际解析服务器类别、耗时与 DIRECT 规则；默认国内 DNS 的性能配置不依赖 cn_dns_domains 命中。",
+                    "中：遵循当前已批准 DNS 基线；普通国内解析不授予工作白名单放行，也不得覆盖 AI 专用解析。",
                 )
             )
         elif scope in {"google", "openai", "us_platform"}:
@@ -1902,7 +1902,7 @@ def analyze(
             _recommendation(
                 "US-PATH",
                 scope + ":" + policy_id,
-                "Google/ChatGPT 等美国平台路径出现持续抖动",
+                "Google/ChatGPT 等目标的当前策略路径出现持续抖动",
                 summarize_group_evidence(entries),
                 "先对匿名策略 ID 对应的美国节点做定向测试并关联事件；证据确认后，再评估专用 Smart Group、fallback 或剔除不稳定节点。",
                 "中：调整策略组可能改变出口 IP，一些平台会触发登录或风控验证。",

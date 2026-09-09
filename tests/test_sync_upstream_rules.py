@@ -474,13 +474,13 @@ class BuildOnepasswordSnapshotTextTests(unittest.TestCase):
 
 
 class GeodataSnapshotTests(unittest.TestCase):
-    def test_build_geodata_snapshot_text_contains_rulemesh_mirror(self) -> None:
+    def test_build_geodata_snapshot_text_uses_direct_upstream(self) -> None:
         text = sync_upstream_rules.build_geodata_snapshot_text()
 
         self.assertIn(sync_upstream_rules.META_RULES_DAT_REPO_URL, text)
-        self.assertIn(sync_upstream_rules.RULEMESH_GEOIP_MIRROR_URL, text)
-        self.assertIn(sync_upstream_rules.RULEMESH_GEOIP_RELEASE_TAG, text)
-        self.assertIn(sync_upstream_rules.RULEMESH_GEOIP_ASSET_NAME, text)
+        self.assertIn(sync_upstream_rules.META_RULES_DAT_COUNTRY_MMDB_GITHUB_RELEASE_URL, text)
+        self.assertIn("distribution: direct-upstream", text)
+        self.assertNotIn("rulemesh_release_mirror:", text)
 
     def test_validate_meta_rules_dat_readme_requires_known_markers(self) -> None:
         readme_text = "\n".join(sync_upstream_rules.META_RULES_DAT_REQUIRED_MARKERS)

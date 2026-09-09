@@ -20,6 +20,10 @@ sources:
           note: 广告拦截继续保持小而可读，不引入额外大体量上游
 
   direct:
+    cn_social_direct.list:
+      preferred:
+        - repo: self
+          note: 小红书与微信专用域名精选直连，抖音复用 bytedance_direct；不扩大到整个腾讯
     adspower_direct.list:
       preferred:
         - repo: self
@@ -134,13 +138,13 @@ sources:
     hk/alibaba_hk.list:
       preferred:
         - repo: self
-          note: 阿里系固定香港出口的可选入口，默认公开模板不启用；通过 Alibaba 主体、XianYu 专项清单与品牌关键词兜底优先保证闲鱼等业务完整命中
+          note: 阿里系按设备选择代理的兼容入口，默认自动择优，默认公开模板不启用；通过 Alibaba 主体、XianYu 专项清单与品牌关键词兜底优先保证闲鱼等业务完整命中
         - repo: blackmatrix7/ios_rule_script
           note: Alibaba.list 负责阿里巴巴域名族、共享基础设施、应用进程与网络 IP 段，XianYu.list 补充闲鱼非品牌域名
     hk/wps_kdocs.list:
       preferred:
         - repo: self
-          note: WPS Office、金山文档、开放平台、云文档、资源分发与金山云旧存储连接统一绑定香港策略，并保留 kdocs/kingsoft 关键词兜底
+          note: WPS Office、金山文档、开放平台、云文档、资源分发与金山云旧存储连接默认自动择优，并保留 kdocs/kingsoft 关键词兜底
         - repo: WPS 官方文档
           note: 参考 WPS 开放平台公开的云文档存储网关根域与 openapi.wps.cn 等官方连接入口
         - repo: Loyalsoldier/surge-rules
@@ -158,7 +162,7 @@ sources:
     hk/notion_hk.list:
       preferred:
         - repo: self
-          note: Notion 官方域名族、历史 notion.so 与 notion 品牌关键词兜底统一绑定香港自动选择
+          note: Notion 官方域名族、历史 notion.so 与 notion 品牌关键词兜底默认使用全地区自动选择
         - repo: Notion Help
           note: 参考 Notion IP addresses & domains to allowlist 的当前官方域名清单
     hk/hk_securities_aggressive.list:
@@ -172,13 +176,13 @@ sources:
     hk/global_media.list:
       preferred:
         - repo: self
-          note: 统一走香港区域策略，香港节点通常更稳更快，流媒体内容与支付方式也更友好；额外承接 X / Twitter 网页域名与 Polymarket 本地激进兜底
+          note: Polymarket 的显式后缀与关键词统一在 crypto_tw 维护，台湾出口；opinion.trade 保留日本明确例外
         - repo: blackmatrix7/ios_rule_script
           note: 负责 GlobalMedia.list 主体
     hk/telegram.list:
       preferred:
         - repo: self
-          note: 统一走香港区域策略，适合 Telegram 大流量场景
+          note: Telegram 默认使用全地区自动选择，地区路径保留兼容
         - repo: Loyalsoldier/surge-rules
           note: 负责 telegramcidr.txt 补充
     us/ai_us.list:
@@ -200,15 +204,15 @@ sources:
     hk/google_hk.list:
       preferred:
         - repo: self
-          note: Google 全业务香港出口主入口，含完整域名、Play、YouTube、FCM、Gemini 与官方完整公网地址空间
+          note: Google 通用业务兼容入口，含完整域名、Play、YouTube、FCM 与官方完整公网地址空间；AI 美国入口优先
         - repo: blackmatrix7/ios_rule_script
-          note: 负责 Google.list、GoogleFCM.list、YouTube.list 与 Gemini.list，通过 INCLUDE 并入该文件
+          note: 负责 Google.list、GoogleFCM.list、YouTube.list；Gemini.list 在 ai_us 单独 INCLUDE
         - repo: google/ipranges
           note: 负责 goog.json 完整 IPv4 / IPv6 地址空间；故意不扣除 Google Cloud 客户地址
     us/microsoft_us.list:
       preferred:
         - repo: self
-          note: Microsoft / OneDrive 统一绑定美国策略，Windows 更新禁用仍由 reject/os_update_reject 先拦截
+          note: Microsoft / OneDrive 默认自动择优，Windows 更新禁用仍由 reject/os_update_reject 先拦截
         - repo: blackmatrix7/ios_rule_script
           note: 负责 Microsoft.list 与 OneDrive.list 主体
     us/microsoft_store_us.list:
@@ -220,13 +224,13 @@ sources:
     us/macos_update_us.list:
       preferred:
         - repo: self
-          note: 仅保留 Apple 官方标注为 macOS only 的系统更新主机，便于与 os_update_reject 配套切换并统一走美国策略
+          note: 仅保留 Apple 官方标注为 macOS only 的系统更新主机，便于与 os_update_reject 配套切换并默认使用自动策略
         - repo: Apple Support
           note: 参考《Use Apple products on enterprise networks》的 Software updates 清单，只挑选 macOS only 项
     jp/domains_to_jp.list:
       preferred:
         - repo: self
-          note: 保留稳定日本域名入口，当前承接 opinion.trade；Polymarket 继续留在香港区域规则
+          note: Polymarket 的显式后缀与关键词统一在 crypto_tw 维护，台湾出口；opinion.trade 保留日本明确例外
     multi/chain_socks5_ipcidr.list:
       preferred:
         - repo: self
@@ -286,4 +290,4 @@ runtime:
         note: 适合只做 GEOIP,CN 的轻量 CN-only 场景，但不适合作为当前跨 Surge + Mihomo 的统一默认源
     delivery:
       - repo: self
-        note: 客户端运行时统一引用本仓库 GitHub Release 的稳定镜像地址；每日 sync-upstream 与 main 分支 build-dist 都会覆盖上传 geoip-country-mmdb/country.mmdb
+        note: 客户端直接引用 MetaCubeX 持续更新的官方 country.mmdb；构建与每日同步不再二次发布 Release 镜像

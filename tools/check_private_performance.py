@@ -652,6 +652,9 @@ def validate_mihomo(path: Path, lines: list[str]) -> list[PerformanceFinding]:
 
 def validate_profile(path: Path) -> list[PerformanceFinding]:
     lines = read_lines(path)
+    from check_performance_baseline import applies, check
+    if applies(lines):
+        return [PerformanceFinding(path, 1, message, "按 docs/performance-baseline.md 修复。") for message in check(path, lines)]
     if path.name in SURGE_PERSONAL_NAMES:
         return validate_surge_personal(path, lines)
     if path.name == "rulemesh-substore-surge-work-whitelist.conf":

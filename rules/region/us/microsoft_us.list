@@ -1,4 +1,5 @@
-# Microsoft / OneDrive 美国分流规则：以上游来源为主，固定绑定美国节点。
+# 2026-09-09 默认自动择优，旧地区路径仅作兼容；明确地区限制按 docs/performance-baseline.md 单独登记。
+# Microsoft / OneDrive 美国分流规则：以上游来源为主，默认绑定全地区自动组。
 # 维护约束：
 # 1) 本文件承接 Microsoft、OneDrive、Windows 生态与应用商店相关流量，客户端请绑定 US-AUTO（或等价美国策略组）。
 # 2) Windows 更新禁用仍由 reject/os_update_reject.list 先拦截；只有临时放开拒绝入口后，系统更新流量才会继续命中本文件并走美国节点。

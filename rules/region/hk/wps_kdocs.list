@@ -1,10 +1,11 @@
+# 2026-09-09 默认自动择优，旧地区路径仅作兼容；明确地区限制按 docs/performance-baseline.md 单独登记。
 # WPS Office 与金山文档香港区域策略规则：覆盖网页、客户端、开放平台、云文档与资源分发连接。
 # 维护约束：
-# 1) 本规则集固定绑定香港策略，客户端顺序必须放在 direct/cn_direct 与工作白名单 FINAL,REJECT 前。
+# 1) 本规则集默认使用全地区自动策略，客户端顺序必须放在 direct/cn_direct 与工作白名单 FINAL,REJECT 前。
 # 2) 官方云文档存储网关会使用 wps.cn、kdocs.cn、wps365.com 与 wps.com；本地同时补齐现有上游中的 WPS 专用域名族。
 # 3) ksyun.com 属于金山云共享基础设施，纳入后可能覆盖非 WPS 的金山云业务；这里接受该边界以优先保证旧文件与对象存储连接完整。
 # 4) 不使用 DOMAIN-KEYWORD,wps，避免误伤 jwpsrv.com 等仅包含 wps 字符串的无关服务。
-# 5) Surge 必须在所用的 cn_dns_domains 或 cn_performance_dns_domains 前，通过 [Host] 复用本 RULE-SET 并优先绑定海外 DoH；Mihomo 使用已批准的对应 rule-set nameserver-policy 镜像默认海外 nameserver，并保持单一业务 DNS 真相。
+# DNS 按已批准 2026-09-09 性能基线使用默认国内双 DoH；Mihomo 仅 AI 有专项 policy，不为本文件镜像海外解析。
 
 # 金山文档、WPS 365 与国际 WPS 云文档入口。
 DOMAIN-SUFFIX,kdocs.cn

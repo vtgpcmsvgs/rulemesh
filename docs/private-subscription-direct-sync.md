@@ -14,13 +14,17 @@
 - `<私有当前配置目录>\rulemesh-substore-mihomo-clash-verge.yaml`
 - `<私有当前配置目录>\rulemesh-substore-mihomo-clash-meta.yaml`
 
+## 当前性能联动
+
+2026-09-09 普通代理端点使用自动组；脚本从现有 onepassword/gfw 路由提取策略，不依赖硬编码中文组名。必须保留 PRIVATE_SUBSCRIPTION_DIRECT_START/END 标记。同步后重新执行性能检查，验证地区专项未变、后台订阅仍为 DIRECT。
+
 ## 设计目标
 
 - 真实机场订阅端点只在私有目录维护，不回写公开仓库
 - 由单一源文件维护端点集合，避免四份客户端配置重复手改
 - 源文件只保存 Surge 与 Mihomo 都支持的规则本体，渲染策略由脚本的 `-Target` 分支决定
-- Surge 分支保持既有“Chrome 节点选择例外 + 普通订阅连接直连”结构
-- Mihomo 分支把这些端点的普通流量统一交给节点选择，不生成 `PROCESS-NAME` 或 `DIRECT` 规则
+- Surge 分支保持既有“Chrome 全地区自动选择例外 + 普通订阅连接直连”结构
+- Mihomo 分支把这些端点的普通流量统一交给全地区自动选择，不生成 `PROCESS-NAME` 或 `DIRECT` 规则
 - Mihomo 的机场订阅后台更新仍由 `proxy-providers.*.proxy: DIRECT` 独立控制，不能用普通流量规则替代
 - 用户明确排除某一客户端时，不得顺带改动该客户端
 
@@ -121,7 +125,7 @@
 
 ## Surge 语法防回滚
 
-- Surge 的 Chrome 节点选择例外属于逻辑规则，最终形态是 `AND,((PROCESS-NAME,...),(...)),策略名`
+- Surge 的 Chrome 全地区自动选择例外属于逻辑规则，最终形态是 `AND,((PROCESS-NAME,...),(...)),策略名`
 - 逻辑规则末尾策略名必须裸写，不能额外套双引号。正确示例：
 
 ```conf

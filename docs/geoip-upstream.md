@@ -1,37 +1,11 @@
 # GeoIP 上游说明
 
-## 当前结论
+Surge 与 Mihomo 直接使用 `MetaCubeX/meta-rules-dat` 持续更新的 [country.mmdb](https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/country.mmdb)。这是 Mihomo 官方文档采用的主流入口；不对项目“最热门”作未经统计的排名判断。
 
-- RuleMesh 当前统一选择 `MetaCubeX/meta-rules-dat` 的 `country.mmdb` 作为上游
-- 对外分发不再直接引用第三方仓库，而是统一走本仓库 Release 镜像：
-  - `https://github.com/vtgpcmsvgs/rulemesh/releases/download/geoip-country-mmdb/country.mmdb`
-- 对应公开模板与本地私有配置都应显式写明这个镜像地址，避免继续依赖客户端默认值
-- 上游登记快照位于 `rules/upstream/geodata/metacubex_country_mmdb.yaml`
+Surge 设置 `geoip-maxmind-url`；Mihomo 设置 `geodata-mode: false` 与 `geox-url.mmdb`，并保留每 24 小时自动更新。首次下载仍需要可用网络。
 
-## 为什么选它
+上游同时提供 mmdb/dat/db/lite 格式，country.mmdb 内容与 Loyalsoldier/v2ray-rules-dat 同源。当前按跨客户端兼容使用完整 mmdb，未切换到仅中国的专用数据库。
 
-- Mihomo 官方文档的 `geox-url` 默认示例直接指向 `MetaCubeX/meta-rules-dat`
-- 同时提供 `country.mmdb`、`geoip.dat`、`geoip.db`、`lite` 变体，适合 Surge 与 Mihomo 共用
-- 上游 README 明确标注 `country.mmdb / geoip.dat / geoip.db` 内容同 `Loyalsoldier/v2ray-rules-dat`，便于交叉验证
+仓库仅在 `rules/upstream/geodata/metacubex_country_mmdb.yaml` 登记来源与下载入口，不提交二进制。构建和每日同步工作流不再二次发布 GeoIP Release。原有历史 Release 无需删除，但当前配置不再引用它。
 
-## 为什么不继续默认用 Hackl0us
-
-- `Hackl0us/GeoIP2-CN` 更适合只做 `GEOIP,CN` 的轻量 CN-only 场景
-- 该项目不适合作为当前跨 Surge + Mihomo 的统一默认上游，因为它不是 Mihomo 官方文档默认入口，也不提供与 Mihomo 生态常用的 `dat/db` 全套配套格式
-- 如果未来明确回到“只服务 CN-only 轻量分流”的目标，可以再重新评估
-
-## 维护约定
-
-- 不把大体积 mmdb 二进制直接提交进本仓库
-- 通过 `tools/sync_upstream_rules.py` 同步 `rules/upstream/geodata/metacubex_country_mmdb.yaml`，只登记来源、下载入口与维护边界
-- 通过 GitHub Actions 在 `geoip-country-mmdb` 这个稳定 Release tag 下覆盖上传最新 `country.mmdb`
-- 若未来切换 GeoIP 默认来源，必须同时更新：
-  - `rules/upstream/geodata/`
-  - `README.md`
-  - `docs/usage-surge.md`
-  - `docs/usage-mihomo.md`
-  - `docs/examples/surge-public.conf`
-  - `docs/examples/mihomo-public.yaml`
-  - `.github/workflows/build-dist.yml`
-  - `.github/workflows/sync-upstream-rules.yml`
-  - 解析后的私人当前配置目录中对应的 Surge / Mihomo 私有配置
+未定制公共资产优先活跃上游；本仓库有本地补充、合并或客户端格式转换的自定义规则继续引用 dist。未来切换默认来源时同步更新登记生成器、模板、私有配置、测试和使用文档。

@@ -510,6 +510,9 @@ def validate_mihomo(path: Path, lines: list[str]) -> list[DnsSafetyFinding]:
     return findings
 def validate_path(path: Path) -> list[DnsSafetyFinding]:
     lines = read_lines(path)
+    from check_performance_baseline import applies, check
+    if applies(lines):
+        return [DnsSafetyFinding("error", path, 1, message, "按 docs/performance-baseline.md 修复。") for message in check(path, lines)]
     config_type = classify_config(path, lines)
     if config_type == "surge":
         return validate_surge(path, lines)

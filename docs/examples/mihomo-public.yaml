@@ -1,3 +1,5 @@
+# RuleMesh 性能基线：2026-09-09
+# 国内直连与国内 DNS 优先；AI 美国、Crypto 台湾及已登记地区例外，其余代理自动择优。
 # RuleMesh Mihomo 公开参考模板
 # 适用场景：
 # 1. 需要保留多订阅聚合、区域自动切换与完整规则顺序。
@@ -21,11 +23,9 @@ mode: rule
 log-level: warning
 global-ua: clash-verge/v2.2.0
 
-# > All Hybrid 网络并发手动切换
-tcp-concurrent: false
+tcp-concurrent: true
 
-# > IPv6 支持（开启双栈）
-ipv6: true
+ipv6: false
 
 unified-delay: true
 find-process-mode: strict
@@ -34,12 +34,12 @@ profile:
   store-selected: true
   store-fake-ip: true
 
-# > GeoIP 数据库（固定为 mmdb，并经由本仓库 Release 镜像分发）
+# GeoIP 直接使用 MetaCubeX 持续更新的官方产物。
 geodata-mode: false
 geo-auto-update: true
 geo-update-interval: 24
 geox-url:
-  mmdb: "https://github.com/vtgpcmsvgs/rulemesh/releases/download/geoip-country-mmdb/country.mmdb"
+  mmdb: "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/country.mmdb"
 
 # > Tun 全量接管
 tun:
@@ -73,46 +73,30 @@ sniffer:
     - "+.local"
 
 # > DNS 分流
-# 1) 普通目标网站域名默认只走海外加密 DNS，避免 DNS 指纹与代理出口错位。
-# 2) 国内 DNS 只允许用于 DNS 服务器域名 bootstrap 与代理节点 server 域名 bootstrap，不进入业务 nameserver。
 # 3) Mihomo 使用 default-nameserver 引导 DNS 服务器域名，使用 proxy-server-nameserver 处理节点域名；不要套用 Surge 的 [Host] 方案。
-# 4) 这份公开参考模板的 DNS 结构不等于两份私有 provider 配置的维护红线。
-# 5) 若维护解析后的私人当前配置目录中的 `rulemesh-substore-mihomo-clash-verge.yaml` / `rulemesh-substore-mihomo-clash-meta.yaml`，若与此处冲突，以 docs/mihomo-tun-dns-methodology.md 的“单一 DNS 真相”约束为准。
 dns:
   enable: true
-  ipv6: true
-  use-hosts: true
-  use-system-hosts: true
-  respect-rules: true
+  ipv6: false
+  use-hosts: false
+  use-system-hosts: false
+  respect-rules: false
   cache-algorithm: arc
   enhanced-mode: fake-ip
   fake-ip-range: 198.18.0.1/16
-  # > DNS 服务器域名 bootstrap；只解析 nameserver / fallback / proxy-server-nameserver 这些 DNS 服务器自身的域名
   default-nameserver:
     - 223.5.5.5
     - 119.29.29.29
-  # > 默认国外加密 DNS
   nameserver:
-    - https://cloudflare-dns.com/dns-query
-    - https://dns.google/dns-query
-  # > 国内直连业务域名 DNS；小米 / MIUI、国内天气服务与微信小程序运行域等按服务族维护，只用于 cn-dns-domains 专用清单，不扩散到所有 DIRECT
-  nameserver-policy:
-    # 邮件业务直连仍保留海外解析，优先于国内 DNS 清单。
-    "rule-set:direct_outlook":
-      - https://cloudflare-dns.com/dns-query
-      - https://dns.google/dns-query
-    "rule-set:cn-dns-domains":
-      - https://dns.alidns.com/dns-query
-      - https://doh.pub/dns-query
-  # > 代理节点 server 域名解析；国内 DNS 只允许出现在这一层
+    - https://dns.alidns.com/dns-query
+    - https://doh.pub/dns-query
   proxy-server-nameserver:
     - https://dns.alidns.com/dns-query
     - https://doh.pub/dns-query
-  # > 国外备用解析
-  fallback:
-    - https://1.0.0.1/dns-query
-    - https://dns.quad9.net/dns-query
-  # > Always Real IP Hosts
+  # AI 专用 DoH 显式指定美国组；节点域名独立直连解析，避免循环依赖。
+  nameserver-policy:
+    "rule-set:us_ai":
+      - "https://cloudflare-dns.com/dns-query#🇺🇸 美国-自动选择"
+      - "https://dns.google/dns-query#🇺🇸 美国-自动选择"
   fake-ip-filter:
     - "+.lan"
     - "+.local"
@@ -130,6 +114,7 @@ dns:
     - "*.battlenet.com"
     - "*.blzstatic.cn"
     - "*.battle.net"
+
 
 proxy-providers:
   # 说明：下面这 3 个是公开模板里的占位订阅源。
@@ -151,7 +136,7 @@ proxy-providers:
     proxy: DIRECT
     health-check:
       enable: true
-      url: "http://www.google.com/generate_204"
+      url: "https://www.google.com/generate_204"
       interval: 300
       timeout: 5000
       lazy: false
@@ -168,7 +153,7 @@ proxy-providers:
     proxy: DIRECT
     health-check:
       enable: true
-      url: "http://www.google.com/generate_204"
+      url: "https://www.google.com/generate_204"
       interval: 300
       timeout: 5000
       lazy: false
@@ -185,7 +170,7 @@ proxy-providers:
     proxy: DIRECT
     health-check:
       enable: true
-      url: "http://www.google.com/generate_204"
+      url: "https://www.google.com/generate_204"
       interval: 300
       timeout: 5000
       lazy: false
@@ -220,7 +205,7 @@ proxy-groups:
 
   - name: "♻️ 自动选择"
     type: url-test
-    url: "http://www.google.com/generate_204"
+    url: "https://www.google.com/generate_204"
     interval: 300
     tolerance: 50
     timeout: 5000
@@ -229,12 +214,11 @@ proxy-groups:
       - provider_a
       - provider_b
       - provider_c
-    filter: "(?i)🇭🇰|香港|hong kong|\\bhk\\b|🇨🇳|台湾|taiwan|\\btw\\b|🇯🇵|日本|japan|\\bjp\\b|🇸🇬|新加坡|singapore|\\bsg\\b|🇺🇸|美国|united states|\\bus\\b|🇰🇷|韩|korea|\\bkr\\b"
     exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
 
   - name: "🇭🇰 香港-自动选择"
     type: url-test
-    url: "http://www.google.com/generate_204"
+    url: "https://www.google.com/generate_204"
     interval: 300
     tolerance: 100
     timeout: 5000
@@ -248,7 +232,7 @@ proxy-groups:
 
   - name: "🇨🇳 台湾-自动选择"
     type: url-test
-    url: "http://www.google.com/generate_204"
+    url: "https://www.google.com/generate_204"
     interval: 300
     tolerance: 100
     timeout: 5000
@@ -262,7 +246,7 @@ proxy-groups:
 
   - name: "🇯🇵 日本-自动选择"
     type: url-test
-    url: "http://www.google.com/generate_204"
+    url: "https://www.google.com/generate_204"
     interval: 300
     tolerance: 150
     timeout: 5000
@@ -276,7 +260,7 @@ proxy-groups:
 
   - name: "🇰🇷 韩国-自动选择"
     type: url-test
-    url: "http://www.google.com/generate_204"
+    url: "https://www.google.com/generate_204"
     interval: 300
     tolerance: 150
     timeout: 5000
@@ -290,7 +274,7 @@ proxy-groups:
 
   - name: "🇸🇬 新加坡-自动选择"
     type: url-test
-    url: "http://www.google.com/generate_204"
+    url: "https://www.google.com/generate_204"
     interval: 300
     tolerance: 150
     timeout: 5000
@@ -304,9 +288,9 @@ proxy-groups:
 
   - name: "🇺🇸 美国-自动选择"
     type: url-test
-    url: "http://www.google.com/generate_204"
+    url: "https://www.google.com/generate_204"
     interval: 300
-    tolerance: 150
+    tolerance: 100
     timeout: 5000
     lazy: false
     use:
@@ -317,15 +301,14 @@ proxy-groups:
     exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
 
 rule-providers:
-  cn-dns-domains:
+  direct_cn_social:
     type: http
-    behavior: domain
-    format: text
-    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/dns/cn_dns_domains.list"
-    path: ./ruleset/cn_dns_domains.list
+    behavior: classical
+    format: yaml
+    url: https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/direct/cn_social_direct.yaml
+    path: ./ruleset/direct/cn_social_direct.yaml
     interval: 86400
-    proxy: DIRECT
-
+    proxy: "♻️ 自动选择"
   reject_adblock:
     type: http
     behavior: classical
@@ -333,7 +316,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/reject/adblock_reject.yaml"
     path: ./ruleset/reject/adblock_reject.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   reject_os_update:
     type: http
@@ -342,7 +325,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/reject/os_update_reject.yaml"
     path: ./ruleset/reject/os_update_reject.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   reject_adspower:
     type: http
@@ -351,7 +334,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/reject/adspower_reject.yaml"
     path: ./ruleset/reject/adspower_reject.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   hk_google:
     type: http
@@ -360,7 +343,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/hk/google_hk.yaml"
     path: ./ruleset/region/hk/google_hk.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   us_ai:
     type: http
@@ -369,7 +352,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/us/ai_us.yaml"
     path: ./ruleset/region/us/ai_us.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   tw_crypto:
     type: http
@@ -378,7 +361,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/tw/crypto_tw.yaml"
     path: ./ruleset/region/tw/crypto_tw.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   jp_domains:
     type: http
@@ -387,7 +370,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/jp/domains_to_jp.yaml"
     path: ./ruleset/region/jp/domains_to_jp.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   hk_telegram:
     type: http
@@ -396,7 +379,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/hk/telegram.yaml"
     path: ./ruleset/region/hk/telegram.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   hk_wps_kdocs:
     type: http
@@ -405,7 +388,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/hk/wps_kdocs.yaml"
     path: ./ruleset/region/hk/wps_kdocs.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   hk_brokers:
     type: http
@@ -414,7 +397,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/hk/hk_brokers.yaml"
     path: ./ruleset/region/hk/hk_brokers.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   hk_personal_priority:
     type: http
@@ -423,7 +406,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/hk/personal_priority_hk.yaml"
     path: ./ruleset/region/hk/personal_priority_hk.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   hk_notion:
     type: http
@@ -432,7 +415,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/hk/notion_hk.yaml"
     path: ./ruleset/region/hk/notion_hk.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   hk_securities_aggressive:
     type: http
@@ -441,7 +424,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/hk/hk_securities_aggressive.yaml"
     path: ./ruleset/region/hk/hk_securities_aggressive.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   hk_global_media:
     type: http
@@ -450,7 +433,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/hk/global_media.yaml"
     path: ./ruleset/region/hk/global_media.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   proxy_adspower:
     type: http
@@ -459,7 +442,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/proxy/adspower_proxy.yaml"
     path: ./ruleset/proxy/adspower_proxy.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   proxy_polygon_rpc:
     type: http
@@ -468,7 +451,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/proxy/polygon_rpc_proxy.yaml"
     path: ./ruleset/proxy/polygon_rpc_proxy.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   proxy_bsc_rpc:
     type: http
@@ -477,7 +460,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/proxy/bsc_rpc_proxy.yaml"
     path: ./ruleset/proxy/bsc_rpc_proxy.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   proxy_overseas_dns_ipv4:
     type: http
@@ -486,7 +469,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/proxy/overseas_dns_ipv4_proxy.yaml"
     path: ./ruleset/proxy/overseas_dns_ipv4_proxy.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   proxy_github_core:
     type: http
@@ -495,7 +478,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/proxy/github_core_proxy.yaml"
     path: ./ruleset/proxy/github_core_proxy.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   proxy_gfw:
     type: http
@@ -504,7 +487,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/proxy/gfw.yaml"
     path: ./ruleset/proxy/gfw.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   direct_github_ssh:
     type: http
@@ -513,7 +496,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/direct/github_ssh_direct.yaml"
     path: ./ruleset/direct/github_ssh_direct.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   direct_adspower:
     type: http
@@ -522,7 +505,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/direct/adspower_direct.yaml"
     path: ./ruleset/direct/adspower_direct.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   direct_os_time:
     type: http
@@ -531,7 +514,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/direct/os_time_direct.yaml"
     path: ./ruleset/direct/os_time_direct.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   direct_alicloud_hk_ipv4_ssh22:
     type: http
@@ -540,7 +523,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/direct/alicloud_hk_ipv4_ssh22_direct.yaml"
     path: ./ruleset/direct/alicloud_hk_ipv4_ssh22_direct.yaml
     interval: 3600
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   us_microsoft:
     type: http
@@ -549,7 +532,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/us/microsoft_us.yaml"
     path: ./ruleset/region/us/microsoft_us.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   us_microsoft_store:
     type: http
@@ -558,7 +541,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/us/microsoft_store_us.yaml"
     path: ./ruleset/region/us/microsoft_store_us.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   us_macos_update:
     type: http
@@ -567,7 +550,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/us/macos_update_us.yaml"
     path: ./ruleset/region/us/macos_update_us.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   direct_ai_cn:
     type: http
@@ -576,7 +559,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/direct/ai_cn_direct.yaml"
     path: ./ruleset/direct/ai_cn_direct.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   direct_apple:
     type: http
@@ -585,7 +568,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/direct/apple_direct.yaml"
     path: ./ruleset/direct/apple_direct.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   direct_outlook:
     type: http
@@ -594,7 +577,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/direct/outlook_direct.yaml"
     path: ./ruleset/direct/outlook_direct.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   direct_bytedance:
     type: http
@@ -603,7 +586,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/direct/bytedance_direct.yaml"
     path: ./ruleset/direct/bytedance_direct.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   direct_netease:
     type: http
@@ -612,7 +595,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/direct/netease_direct.yaml"
     path: ./ruleset/direct/netease_direct.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   direct_bilibili:
     type: http
@@ -621,7 +604,7 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/direct/bilibili_direct.yaml"
     path: ./ruleset/direct/bilibili_direct.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
   direct_cn:
     type: http
@@ -630,114 +613,40 @@ rule-providers:
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/direct/cn_direct.yaml"
     path: ./ruleset/direct/cn_direct.yaml
     interval: 86400
-    proxy: "🚀 节点选择"
-
-  hk_aws_ipv4:
-    type: http
-    behavior: classical
-    format: yaml
-    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/hk/hk_aws_ipv4.yaml"
-    path: ./ruleset/region/hk/hk_aws_ipv4.yaml
-    interval: 86400
-    proxy: "🚀 节点选择"
-
-  jp_tokyo_aws_ipv4:
-    type: http
-    behavior: classical
-    format: yaml
-    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/jp/tokyo_aws_ipv4.yaml"
-    path: ./ruleset/region/jp/tokyo_aws_ipv4.yaml
-    interval: 86400
-    proxy: "🚀 节点选择"
-
-  jp_osaka_aws_ipv4:
-    type: http
-    behavior: classical
-    format: yaml
-    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/jp/osaka_aws_ipv4.yaml"
-    path: ./ruleset/region/jp/osaka_aws_ipv4.yaml
-    interval: 86400
-    proxy: "🚀 节点选择"
-
-  kr_seoul_aws_ipv4:
-    type: http
-    behavior: classical
-    format: yaml
-    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/kr/seoul_aws_ipv4.yaml"
-    path: ./ruleset/region/kr/seoul_aws_ipv4.yaml
-    interval: 86400
-    proxy: "🚀 节点选择"
-
-  tw_taipei_aws_ipv4:
-    type: http
-    behavior: classical
-    format: yaml
-    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/tw/taipei_aws_ipv4.yaml"
-    path: ./ruleset/region/tw/taipei_aws_ipv4.yaml
-    interval: 86400
-    proxy: "🚀 节点选择"
+    proxy: "♻️ 自动选择"
 
 rules:
-  # Google 域名、Google AI、广告与官方完整 IP 地址空间统一优先走香港；必须位于全部拒绝、美国 AI 和 DNS IP 规则之前。
-  - RULE-SET,hk_google,🇭🇰 香港-自动选择
-
-  # Personal 激进优先级必须先于广告和系统更新拒绝规则。
-  - RULE-SET,direct_apple,DIRECT
-  - RULE-SET,hk_personal_priority,🇭🇰 香港-自动选择
-  - RULE-SET,hk_notion,🇭🇰 香港-自动选择
-  - RULE-SET,hk_securities_aggressive,🇭🇰 香港-自动选择
-  - RULE-SET,us_microsoft_store,🇺🇸 美国-自动选择
-  # 邮件、精确登录入口与认证资源直连；其他应用复用共享认证时同样直连。
-  - RULE-SET,direct_outlook,DIRECT
-  - DOMAIN-SUFFIX,yikaiying.com,DIRECT
-
-  - RULE-SET,reject_adblock,REJECT
-  - RULE-SET,reject_os_update,REJECT
-  # 需要临时升级 Windows / macOS 时，可注释上一条拒绝规则，让后面的系统升级美国分流规则接管；系统时间同步仍由 os_time_direct 保持直连。
-  - RULE-SET,reject_adspower,REJECT
-
-  # `us_ai` 当前只聚合非 Google 海外 AI 平台并统一走美国节点；Google AI 已由配置顶部的 `hk_google` 接管。
+  # AI 美国、Crypto 台湾；已登记日本入口与香港券商保留地区，其余代理自动择优。
   - RULE-SET,us_ai,🇺🇸 美国-自动选择
-  # Microsoft / macOS 更新放在 reject 之后、gfw 与普通 direct 之前；默认禁更时仍由上方拒绝规则先拦截。
-  - RULE-SET,us_microsoft,🇺🇸 美国-自动选择
-  - RULE-SET,us_macos_update,🇺🇸 美国-自动选择
-  - RULE-SET,tw_crypto,🇨🇳 台湾-自动选择
-  - RULE-SET,jp_domains,🇯🇵 日本-自动选择
-  - RULE-SET,hk_telegram,🇭🇰 香港-自动选择
-  # WPS Office、金山文档、开放平台、云文档与资源分发连接统一走香港；必须先于 direct_cn 与 MATCH。
-  - RULE-SET,hk_wps_kdocs,🇭🇰 香港-自动选择
-  # 复星证券、致富证券、辉立证券与富途相关入口并入这组。
-  - RULE-SET,hk_brokers,🇭🇰 香港-自动选择
-  # 国内 AI 与字节共享基础设施先直连，避免 snssdk.com 这一交集被后面的香港媒体广谱规则抢先命中。
   - RULE-SET,direct_ai_cn,DIRECT
   - RULE-SET,direct_bytedance,DIRECT
-  # X / Twitter 网页、短链与静态资源，以及 Polymarket 相关域名并入这组。
-  - RULE-SET,hk_global_media,🇭🇰 香港-自动选择
-
-  # GitHub 仓库 SSH 定向直连必须放在 gfw 前，避免把整个 GitHub 放直连。
+  - RULE-SET,direct_cn_social,DIRECT
+  - RULE-SET,jp_domains,🇯🇵 日本-自动选择
+  - RULE-SET,tw_crypto,🇨🇳 台湾-自动选择
+  - RULE-SET,hk_securities_aggressive,🇭🇰 香港-自动选择
+  - RULE-SET,hk_brokers,🇭🇰 香港-自动选择
+  - RULE-SET,hk_google,♻️ 自动选择
+  - RULE-SET,direct_apple,DIRECT
+  - RULE-SET,hk_personal_priority,♻️ 自动选择
+  - RULE-SET,hk_notion,♻️ 自动选择
+  - RULE-SET,us_microsoft_store,♻️ 自动选择
+  - RULE-SET,direct_outlook,DIRECT
+  - DOMAIN-SUFFIX,yikaiying.com,DIRECT
+  - RULE-SET,reject_adblock,REJECT
+  - RULE-SET,reject_os_update,REJECT
+  - RULE-SET,reject_adspower,REJECT
+  - RULE-SET,us_microsoft,♻️ 自动选择
+  - RULE-SET,us_macos_update,♻️ 自动选择
+  - RULE-SET,hk_telegram,♻️ 自动选择
+  - RULE-SET,hk_wps_kdocs,♻️ 自动选择
+  - RULE-SET,hk_global_media,♻️ 自动选择
   - RULE-SET,direct_github_ssh,DIRECT
-
-  # GitHub 核心 HTTPS 代理入口（网页 / API / Gist / Raw / 静态资源）；必须放在 gfw 前。
-  - RULE-SET,proxy_github_core,🚀 节点选择
-
-  # 旧版阿里云广覆盖观察兜底已弃用；阿里云香港 SSH、控制面与出口探测入口统一收敛到后面的直连段显式放行。
-
-  # 4) AdsPower 细分直连（必须放在广谱代理前）
+  - RULE-SET,proxy_github_core,♻️ 自动选择
   - RULE-SET,direct_adspower,DIRECT
-
-  # 5) AdsPower 细分节点选择（必须放在 gfw 前）
-  - RULE-SET,proxy_adspower,🚀 节点选择
-
-  # 6) Polygon 主网 RPC 节点选择（必须放在 gfw 前）
-  - RULE-SET,proxy_polygon_rpc,🚀 节点选择
-
-  # 7) BSC 主网 RPC 节点选择（必须放在 gfw 前）
-  - RULE-SET,proxy_bsc_rpc,🚀 节点选择
-
-  # 8) 海外 DNS 主 IPv4 端点美国分流（必须放在 gfw 前）
-  - RULE-SET,proxy_overseas_dns_ipv4,🇺🇸 美国-自动选择,no-resolve
-
-  # 9) 其余直连规则（direct_ai_cn 与 direct_bytedance 已在上方前置；这里先放系统时间同步，再接其他直连入口）
+  - RULE-SET,proxy_adspower,♻️ 自动选择
+  - RULE-SET,proxy_polygon_rpc,🇨🇳 台湾-自动选择
+  - RULE-SET,proxy_bsc_rpc,🇨🇳 台湾-自动选择
+  - RULE-SET,proxy_overseas_dns_ipv4,♻️ 自动选择,no-resolve
   - DOMAIN,localhost,DIRECT
   - DOMAIN-SUFFIX,local,DIRECT
   - DOMAIN-SUFFIX,lan,DIRECT
@@ -750,7 +659,6 @@ rules:
   - IP-CIDR,169.254.0.0/16,DIRECT,no-resolve
   - IP-CIDR,224.0.0.0/4,DIRECT,no-resolve
   - RULE-SET,direct_os_time,DIRECT
-  # 阿里云 SSH 本地应急兜底必须放在远程 provider 前；即使远程缓存停留在残缺版本，也只放宽 TCP/22。
   - AND,((IP-CIDR,8.208.0.0/12,no-resolve),(NETWORK,tcp),(DST-PORT,22)),DIRECT
   - AND,((IP-CIDR,47.76.0.0/16,no-resolve),(NETWORK,tcp),(DST-PORT,22)),DIRECT
   - AND,((IP-CIDR,47.86.0.0/16,no-resolve),(NETWORK,tcp),(DST-PORT,22)),DIRECT
@@ -765,22 +673,5 @@ rules:
   - RULE-SET,direct_netease,DIRECT
   - RULE-SET,direct_bilibili,DIRECT
   - RULE-SET,direct_cn,DIRECT
-
-  # 10) 代理优先（放在国内直连规则之后，避免国内域名被 gfw 广谱规则提前抢走）
-  - RULE-SET,proxy_gfw,🚀 节点选择
-
-  # 11) IP 规则
-  - RULE-SET,hk_aws_ipv4,🇭🇰 香港-自动选择,no-resolve
-  - RULE-SET,jp_tokyo_aws_ipv4,🇯🇵 日本-自动选择,no-resolve
-  - RULE-SET,jp_osaka_aws_ipv4,🇯🇵 日本-自动选择,no-resolve
-  - RULE-SET,kr_seoul_aws_ipv4,🇰🇷 韩国-自动选择,no-resolve
-  - RULE-SET,tw_taipei_aws_ipv4,🇨🇳 台湾-自动选择,no-resolve
-  # 12) 最终兜底
-  # 极致体验默认回到总开关，不再把所有漏网流量固定锁在某个单一区域。
-  - MATCH,🚀 节点选择
-
-# 公开模板刻意不包含：
-# 1. 真实机场订阅地址与供应商命名。
-# 2. external-controller / secret 等控制面参数。
-# 3. 按局域网源 IP 的设备分流。
-# 4. 仅属于私有 Surge 工作路由文件的白名单 REJECT 结构。
+  - RULE-SET,proxy_gfw,♻️ 自动选择
+  - MATCH,♻️ 自动选择
