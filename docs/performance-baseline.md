@@ -59,3 +59,4 @@ GeoIP 直接使用 `https://github.com/MetaCubeX/meta-rules-dat/releases/downloa
 - `region/us/ai_dns_us` 只集中 Cloudflare DoH 精确主机，不合并进普通海外 DNS 或 AI 业务域名集。Mihomo 保留 DoH URL 的美国代理参数，不增加无用 provider。
 - 设备源地址、订阅端点与同步标记留在私人配置；GitHub Raw、自举 DNS 及工作观察项继续独立。归并不能越过设备条件或扩大白名单。
 - 多文件补丁预检失败时不继续落盘；迁移先核对全部节标题、数量和历史来源，通过后统一写入。正则替换含过滤器的文本时使用函数返回字面内容，避免反斜杠被解释为替换转义。
+- 发布后核对 GitHub Raw 内容时，应与已提交的 `git show HEAD:<路径>` 内容比较；Windows 工作区可能经过 CRLF 转换，直接比较工作区字节会把正确发布误报为内容不一致。
