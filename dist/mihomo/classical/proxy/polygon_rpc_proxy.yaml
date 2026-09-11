@@ -85,3 +85,5 @@ payload:
   - "DOMAIN-WILDCARD,*.rpc.swiftnodes.io"
   - "DOMAIN,rpcfree.com"
   - "DOMAIN-WILDCARD,*.rpcfree.com"
+  - "DOMAIN,xrpc.cl"
+  - "DOMAIN-WILDCARD,*.xrpc.cl"

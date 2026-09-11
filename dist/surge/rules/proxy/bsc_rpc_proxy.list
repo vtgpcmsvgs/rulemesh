@@ -128,3 +128,5 @@ DOMAIN,rpc.swiftnodes.io
 DOMAIN-WILDCARD,*.rpc.swiftnodes.io
 DOMAIN,services.tokenview.io
 DOMAIN-WILDCARD,*.services.tokenview.io
+DOMAIN,xrpc.cl
+DOMAIN-WILDCARD,*.xrpc.cl
