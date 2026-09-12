@@ -13,7 +13,7 @@
 
 海外 AI（含 Gemini）固定美国并作为第一条有效规则；国内 AI、抖音、小红书、微信前置直连。Crypto / Polygon / BSC RPC 固定台湾，`opinion.trade` 保留日本访问例外，香港券商和香港证券保留香港。这些地区入口都早于 Google 官方完整地址空间。
 
-Google 普通业务、流媒体、WPS、Notion、GitHub、其他精确代理规则与 `MATCH` 使用全地区自动组。既有 DIRECT/REJECT 规则保持作用；Polymarket 从媒体入口移入 Crypto。AWS IP 与链式代理 provider 和调用均停用，仓库资产继续维护。
+Google 普通业务、流媒体、WPS、Notion、GitHub及其他精确代理规则使用全地区自动组；未命中前置规则时 `MATCH,DIRECT`。既有前置 DIRECT/REJECT 规则保持作用；Polymarket 从媒体入口移入 Crypto。AWS IP 与链式代理 provider 和调用均停用，仓库资产继续维护。
 
 GitHub SSH 精确直连在 Core / gfw 前；国内通用直连在 gfw 前。阿里云 SSH 继续保留仅 TCP/22 的内联兜底与 `DIRECT,no-resolve` 调用。AdsPower 的三类入口、系统时间同步与可选 1Password 规则继续保留。Surge 的工作白名单不会扩散到 Mihomo。
 

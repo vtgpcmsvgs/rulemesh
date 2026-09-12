@@ -60,7 +60,7 @@
 - Surge 私有配置允许继续维护自己的复杂 DNS 版本；不要因为 Surge 正常，就反推 Mihomo 私有文件也应保持同样结构
 - 两份 Mihomo 与公开模板采用国内 nameserver + AI 专用 nameserver-policy + 国内 proxy-server-nameserver bootstrap；ipv6、use-hosts、use-system-hosts、respect-rules 均为 false，开启 tcp-concurrent，保留 ARC 与 fake-ip。
 - 新版静态检查与生产运行态必须分别报告。历史 v1.19.25 查询未命中模拟 resolver；即使静态检查已通过，DNS 路由运行时仍未确认时也不得声称已经生效。
-- 两份 Surge Personal、两份 Mihomo 与公开模板的通用 FINAL/MATCH 使用全地区自动组；Mihomo provider 与 url-test 保持 interval: 300、lazy: false，全地区 tolerance: 50、美国 tolerance: 100。全地区组只排除套餐占位项，不限制地区标签。
+- 两份 Surge Personal、两份 Mihomo 与公开模板的通用 FINAL/MATCH 按 2026-09-12 用户要求使用 DIRECT；仅工作白名单保持 FINAL,REJECT，前置代理规则继续使用指定组；Mihomo provider 与 url-test 保持 interval: 300、lazy: false，全地区 tolerance: 50、美国 tolerance: 100。全地区组只排除套餐占位项，不限制地区标签。
 - 七份配置的 ai_us 必须为第一条有效规则并包含 Google AI；国内精选直连、日本精确入口、Crypto 台湾和香港券商在 google_hk 完整 IP 规则前。google_hk 兼容路径和官方完整地址空间保留，普通 Google 流量自动择优。
 - Mihomo 私有文件里的机场 provider `health-check.url` 与 `url-test` 组测速 URL 统一使用 HTTPS `https://www.google.com/generate_204`；不要改回 HTTP
 - `proxy-node-domains` 必须是从 Sub-Store 聚合订阅提取的节点 `server` 域名清单，且必须过滤 IP 并按一行一个域名输出；不得包含订阅链接域名、机场面板域名或普通目标网站域名，也不得输出逗号分隔清单

@@ -14,6 +14,21 @@ import build_rules
 
 
 class PerformanceBaselineTests(unittest.TestCase):
+    def test_final_is_direct_except_work_whitelist(self):
+        for client in ('surge', 'mihomo'):
+            path, text = self.fixture(client)
+            prefix = 'FINAL,' if client == 'surge' else '  - MATCH,'
+            line = next(x for x in text.splitlines() if x.startswith(prefix))
+            self.assertEqual(line.split(',')[1], 'DIRECT')
+            for target in ('♻️ 自动选择', '🇺🇸 美国-自动选择', 'REJECT'):
+                changed = text.replace(line, line.replace(',DIRECT', ',' + target))
+                self.assertTrue(any('最终兜底' in error for error in baseline.check(path, changed.splitlines())))
+            if client == 'surge':
+                work = Path('work-whitelist.conf')
+                self.assertTrue(any('最终兜底' in error for error in baseline.check(work, text.splitlines())))
+                changed = text.replace(line, 'FINAL,REJECT')
+                self.assertFalse(any('最终兜底' in error for error in baseline.check(work, changed.splitlines())))
+
     def fixture(self, client):
         path = ROOT / "docs/examples" / ("surge-public.conf" if client == "surge" else "mihomo-public.yaml")
         return path, path.read_text(encoding="utf-8")

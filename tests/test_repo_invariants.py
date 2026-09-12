@@ -630,7 +630,7 @@ class RepoInvariantTests(unittest.TestCase):
         )
         self.assertLess(
             surge.index("region/hk/wps_kdocs.list,\"♻️ 自动选择\""),
-            surge.index("FINAL,♻️ 自动选择"),
+            surge.index("FINAL,DIRECT"),
         )
         self.assertLess(
             mihomo.index("RULE-SET,hk_wps_kdocs,♻️ 自动选择"),
@@ -638,7 +638,7 @@ class RepoInvariantTests(unittest.TestCase):
         )
         self.assertLess(
             mihomo.index("RULE-SET,hk_wps_kdocs,♻️ 自动选择"),
-            mihomo.index("MATCH,♻️ 自动选择"),
+            mihomo.index("MATCH,DIRECT"),
         )
 
     def test_wps_kdocs_rule_avoids_overbroad_wps_keyword(self) -> None:

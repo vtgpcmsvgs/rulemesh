@@ -18,9 +18,9 @@
 5. Personal 精选规则与既有拒绝规则；Apple / Outlook 直连及 Microsoft Store 优先入口保持各自边界。
 6. 其他精确业务、GitHub SSH/Raw/Core、AdsPower、Polygon/BSC RPC、订阅端点与 DNS 出口。
 7. LAN、系统时间、阿里云 TCP/22 和其他国内直连。
-8. `gfw` 与全地区 smart `FINAL`；工作白名单改为 `FINAL,REJECT`。
+8. `gfw` 使用全地区 smart；未命中前置规则时 `FINAL,DIRECT,dns-failed`，工作白名单保持 `FINAL,REJECT`。
 
-普通海外规则与 `FINAL` 直接使用全地区 smart 组；AI 美国、Crypto/RPC 台湾、`opinion.trade` 日本、券商香港是明确例外。地区组仍可用于手动选择。AWS IP 规则和链式 SOCKS5 规则仅保留仓库源文件与产物，配置不再调用。
+命中普通海外规则时使用全地区 smart 组，未命中规则的 `FINAL` 使用 DIRECT；AI 美国、Crypto/RPC 台湾、`opinion.trade` 日本、券商香港是明确例外。地区组仍可用于手动选择。AWS IP 规则和链式 SOCKS5 规则仅保留仓库源文件与产物，配置不再调用。
 
 `global_media` 承接 X / Twitter 和媒体服务；Polymarket 已移入 Crypto 台湾。WPS、Notion、Microsoft Store 等没有当前强制地区要求的业务自动择优；文件名中的旧地区只是兼容路径。国内 AI 由 `ai_cn_direct` 承接，不扩入海外 AI。
 

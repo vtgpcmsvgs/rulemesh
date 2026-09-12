@@ -156,7 +156,7 @@ def check(path: Path, lines: list[str]) -> list[str]:
         if "REJECT" in target:
             require(position > selected["social"][0][0], "国内精选直连必须早于拒绝规则。")
     finals = [parts for _, parts in rules if parts[0] in {"FINAL", "MATCH"}]
-    require(len(finals) == 1 and finals[0][1] == ("REJECT" if work else auto), "最终兜底与工作白名单边界不符。")
+    require(len(finals) == 1 and finals[0][1] == ("REJECT" if work else "DIRECT"), "最终兜底必须为 DIRECT，工作白名单必须保持 REJECT。")
     if work:
         require(not any("/direct/cn_direct.list" in str(parts) or "/proxy/gfw.list" in str(parts) for _, parts in rules), "工作白名单不得增加中国通用或广谱代理入口。")
     require(not any("aws_ipv4" in line or "chain_socks5_ipcidr" in line for line in lines if not line.lstrip().startswith("#")), "配置应停用 AWS IP 与链式代理入口，源规则仍保留。")
