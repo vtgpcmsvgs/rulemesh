@@ -19,8 +19,8 @@
 
 - 公开规则源、构建器、检查器、测试与文档。
 - 私有 `rulemesh-substore-surge-personal.conf`。
-- 私有 `rulemesh-substore-mihomo-clash-verge.yaml`。
-- 私有 `rulemesh-substore-mihomo-clash-meta.yaml`。
+- 私有 `rulemesh-substore-mihomo-flclash-desktop.yaml`。
+- 私有 `rulemesh-substore-mihomo-flclash-android.yaml`。
 
 本次明确不影响：
 

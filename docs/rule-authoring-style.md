@@ -265,3 +265,5 @@ IP 类源规则可以只写主体字段；构建产物会自动补 `no-resolve`�
 配置归并时，先复用已有规则集并验证首条匹配；只有独立职责才新增源文件。`aisi_direct` 只承接 Surge Personal 原有爱思域名与关键词，Apple 更新复用 `apple_direct`；`ai_dns_us` 只承接 Surge AI 解析器的精确传输主机。Google Play 已有覆盖，不建立重复规则集。设备地址、订阅端点不进入公开源规则；机场界面组不是可按规则引用数删除的冗余。
 
 规则停用约定：从授权配置移除调用、内联观察项与专用 provider / DNS 依赖，保留远程源规则、登记、构建逻辑和产物；暂停专用定时任务，共用任务只停对应专用步骤，通用构建保留。重新启用须用户明确要求。AdsPower 为当前停用实例，细则见公开仓库 docs/rule-deactivation.md。`ips5.vip` 独立使用 direct/ips5_direct，AI 之后、Google 广谱和拒绝之前 DIRECT，沿用国内 DNS。
+
+精简兜底由完整 cn_direct 与仅含 DOMAIN/DOMAIN-SUFFIX 的 gfw_precise 自动推导；保留双向域名重叠与全部 IP 规则，不手写上游镜像。cn_direct_light → gfw_precise → DIRECT 三项必须相邻，工作白名单不适用；规则语法扩展必须先补等价证明与检查。

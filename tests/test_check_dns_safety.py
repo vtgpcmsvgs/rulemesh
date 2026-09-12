@@ -228,7 +228,7 @@ proxy-providers: {}
 
     def test_private_mihomo_accepts_single_dns_truth_baseline(self) -> None:
         path = self.write_temp(
-            "rulemesh-substore-mihomo-clash-verge.yaml",
+            "rulemesh-substore-mihomo-flclash-desktop.yaml",
             """ipv6: false
 dns:
   enable: true
@@ -254,7 +254,7 @@ proxy-groups:
 
     def test_private_mihomo_accepts_approved_cn_dns_policy(self) -> None:
         path = self.write_temp(
-            "rulemesh-substore-mihomo-clash-verge.yaml",
+            "rulemesh-substore-mihomo-flclash-desktop.yaml",
             """ipv6: false
 dns:
   enable: true
@@ -278,7 +278,7 @@ proxy-providers: {}
 
     def test_mihomo_private_accepts_allowed_domestic_dns_policy_scalar(self) -> None:
         path = self.write_temp(
-            "rulemesh-substore-mihomo-clash-verge.yaml",
+            "rulemesh-substore-mihomo-flclash-desktop.yaml",
             """dns:
   default-nameserver:
     - 223.5.5.5
@@ -294,7 +294,7 @@ proxy-providers: {}
 
     def test_mihomo_private_accepts_unquoted_cn_dns_policy_list(self) -> None:
         path = self.write_temp(
-            "rulemesh-substore-mihomo-clash-verge.yaml",
+            "rulemesh-substore-mihomo-flclash-desktop.yaml",
             """dns:
   default-nameserver:
     - 223.5.5.5
@@ -311,7 +311,7 @@ proxy-providers: {}
 
     def test_mihomo_private_accepts_unquoted_performance_cn_dns_policy_scalar(self) -> None:
         path = self.write_temp(
-            "rulemesh-substore-mihomo-clash-meta.yaml",
+            "rulemesh-substore-mihomo-flclash-android.yaml",
             """dns:
   default-nameserver:
     - 223.5.5.5
@@ -327,7 +327,7 @@ proxy-providers: {}
 
     def test_mihomo_private_rejects_domestic_dns_for_overseas_rule_set_scalar(self) -> None:
         path = self.write_temp(
-            "rulemesh-substore-mihomo-clash-meta.yaml",
+            "rulemesh-substore-mihomo-flclash-android.yaml",
             """dns:
   default-nameserver:
     - 223.5.5.5
@@ -346,7 +346,7 @@ proxy-providers: {}
 
     def test_mihomo_private_rejects_domestic_dns_policy_flow_mapping(self) -> None:
         path = self.write_temp(
-            "rulemesh-substore-mihomo-clash-meta.yaml",
+            "rulemesh-substore-mihomo-flclash-android.yaml",
             """dns:
   default-nameserver:
     - 223.5.5.5
@@ -364,7 +364,7 @@ proxy-providers: {}
 
     def test_mihomo_private_accepts_overseas_rule_set_policy(self) -> None:
         path = self.write_temp(
-            "rulemesh-substore-mihomo-clash-meta.yaml",
+            "rulemesh-substore-mihomo-flclash-android.yaml",
             """dns:
   default-nameserver:
     - 223.5.5.5
@@ -381,7 +381,7 @@ proxy-providers: {}
 
     def test_mihomo_private_rejects_domestic_dns_for_overseas_rule_set(self) -> None:
         path = self.write_temp(
-            "rulemesh-substore-mihomo-clash-meta.yaml",
+            "rulemesh-substore-mihomo-flclash-android.yaml",
             """ipv6: false
 dns:
   enable: true
@@ -407,7 +407,7 @@ proxy-providers: {}
 
     def test_mihomo_private_accepts_performance_cn_dns_policy(self) -> None:
         path = self.write_temp(
-            "rulemesh-substore-mihomo-clash-verge.yaml",
+            "rulemesh-substore-mihomo-flclash-desktop.yaml",
             """dns:
   default-nameserver:
     - 223.5.5.5
@@ -424,7 +424,7 @@ proxy-providers: {}
 
     def test_private_mihomo_rejects_layered_dns_fields(self) -> None:
         path = self.write_temp(
-            "rulemesh-substore-mihomo-clash-meta.yaml",
+            "rulemesh-substore-mihomo-flclash-android.yaml",
             """ipv6: false
 dns:
   enable: true
@@ -449,7 +449,7 @@ proxy-providers: {}
 
     def test_private_mihomo_rejects_http_generate_204(self) -> None:
         path = self.write_temp(
-            "rulemesh-substore-mihomo-clash-verge.yaml",
+            "rulemesh-substore-mihomo-flclash-desktop.yaml",
             """ipv6: false
 dns:
   enable: true

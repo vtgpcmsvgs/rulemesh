@@ -6,7 +6,7 @@
 - `dist/` 是构建产物层，客户端只引用这里
 - `Surge` 使用 `dist/surge/rules/`
 - `Surge` 与 Mihomo 的国内业务域名 DNS 清单共用 `dist/surge/dns/`；其中小型精选清单服务严格白名单，性能型清单服务已明确启用的个人性能配置
-- `Clash Verge Rev` 与 `Clash Meta for Android` 使用 `dist/mihomo/classical/`
+- `FlClash 桌面端` 与 `FlClash 安卓端` 使用 `dist/mihomo/classical/`
 
 这样做的目标是把“怎么维护规则”与“客户端怎么接入规则”分开，避免客户端继续直接引用第三方规则上游仓库，也避免源规则和客户端格式绑死。GeoIP 数据库属于客户端运行时依赖，是当前保留的显式外部上游例外。
 
@@ -146,7 +146,7 @@ python tools/build_rules.py
 - Crypto、Polymarket、Polygon/BSC RPC 固定台湾；`opinion.trade` 保留日本访问例外，香港券商与 Personal 证券入口保留香港。明确地区要求优先于测速结果。
 - 命中前置规则的其余海外代理业务使用全地区自动组；未命中规则的 FINAL/MATCH 按 2026-09-12 用户要求使用 DIRECT，仅工作白名单保持 REJECT，不再按国家标签限制候选节点；套餐占位项继续过滤。前置 DIRECT/REJECT 行为继续保留。
 - Google 的 google_hk 兼容路径和完整官方 IP 地址空间保留，普通 Google 服务自动择优；AI、国内精选及地区必需规则都在它前面。
-- 国内默认双 DoH，AI 单独通过美国解析；Mihomo 开启 TCP 并发，保留 ARC、fake-ip 和 300 秒主动测速。默认国内 DNS 后不再重复加载十万条 DNS 专用清单。
+- 国内默认双 DoH，AI 单独通过美国解析；Mihomo 开启 TCP 并发，保留 ARC、fake-ip，桌面 300 秒、安卓 600 秒主动测速。默认国内 DNS 后不再重复加载十万条 DNS 专用清单。
 - AWS IP 和链式 SOCKS5 的源规则、快照与构建产物保留；当前配置不再注册或调用。
 - GeoIP 直接使用 [MetaCubeX country.mmdb](https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/country.mmdb)，停止本仓库二次 Release 发布。未定制的公共资源优先活跃上游，自定义规则继续引用 dist。
 
@@ -223,24 +223,18 @@ ai_us 同时承接 OpenAI、Claude、Copilot、Cursor、Grok、Windsurf、Augmen
 - 真实 Webhook、密钥、私有订阅地址、MITM 参数与本地长期使用配置应继续保留在公开仓库外部的私人 `rulemesh-local` 仓库中
 - 私有订阅端点同步块统一保留在解析后的私人当前配置目录中：使用 `private_subscription_direct.list` 作为单一源文件，运行 `sync_private_subscription_direct.ps1` 时显式选择 `-Target surge`、`-Target mihomo` 或 `-Target all`；不要在用户明确排除某一客户端时顺带更新它。目录解析见 [docs/private-repository-bootstrap.md](docs/private-repository-bootstrap.md)
 - 两份 Mihomo 私有配置里的机场 `proxy-providers` 默认必须保留 `proxy: DIRECT`，用于让后台订阅 URL 更新直连；订阅端点的普通流量由 Mihomo `rules` 中的精确 `DOMAIN` / `IP-CIDR` 规则交给节点选择。这和 `rule-providers` 拉 GitHub 规则集时可使用 `proxy: "🚀 节点选择"` 是三条彼此独立的链路
-- 检查机场 provider 是否过期、流量耗尽或仍有存活节点时，统一按 [私有订阅端点同步约定](docs/private-subscription-direct-sync.md#mihomo-provider-有效性极速审计) 的 30 秒目标 / 60 秒硬上限只读路径执行：并发无代理探测直属订阅 URL，再通过 Clash Verge Rev 命名管道单次读取运行态汇总，分别报告端点、配额、有效期与经近期健康历史确认的存活状态；默认不强制 health-check、不启动隔离核心，也不依据旧缓存下结论
+- 检查机场 provider 是否过期、流量耗尽或仍有存活节点时，统一按 [私有订阅端点同步约定](docs/private-subscription-direct-sync.md#mihomo-provider-有效性极速审计) 的 30 秒目标 / 60 秒硬上限只读路径执行：并发无代理探测直属订阅 URL，再通过实际已配置的 Mihomo 控制器单次读取运行态汇总。FlClash 默认私有 IPC 不是 HTTP 控制器；控制器未启用时报告运行态未知。分别报告端点、配额、有效期与近期健康历史；默认不强制 health-check、不启动隔离核心，也不依据旧缓存下结论
 - 四份本地私有配置里，所有基于 `policy-path` / provider 的代理组默认共用同一套排除条件：`剩余流量`、`套餐到期`、`距离下次重置`、`过滤掉`、`Expire Date`、`Traffic Reset` 这类状态/提示项按前缀匹配，`直接连接` 这类独立占位项按整行精确匹配，`联系我们` 与 `1.2 GB | 50 GB` 这类提示继续专项匹配
 - 如果某个 provider 会给真实节点名追加统一前缀，不要把供应商名或独立占位项写成宽匹配，否则可能误伤真实节点
 - 详细背景、禁止事项与改动前检查清单见 [docs/proxy-group-filter-methodology.md](docs/proxy-group-filter-methodology.md)
-- 如果本地同时维护 Clash Verge Rev 与 Clash Meta for Android，建议分别维护 `rulemesh-substore-mihomo-clash-verge.yaml` 与 `rulemesh-substore-mihomo-clash-meta.yaml`
+- 如果本地同时维护 FlClash 桌面端 与 FlClash 安卓端，建议分别维护 `rulemesh-substore-mihomo-flclash-desktop.yaml` 与 `rulemesh-substore-mihomo-flclash-android.yaml`
 - 五份私有配置共享业务策略基线，但保留 Surge / Mihomo 自身的 DNS 与运行时语义，工作白名单也保持独立。
 - 两份 Mihomo 私有配置使用默认国内双 DoH、AI 专用美国 DoH 与独立节点 bootstrap；IPv4、关闭 hosts 混入和 respect-rules 的约束继续保留。
 - 旧版 2026-08-21 分层镜像 DNS 已由 2026-09-09 性能基线取代；不得按历史说明删除新版 AI 专用 policy 或必需的节点 bootstrap。
 - Mihomo 私有文件里的 provider `health-check.url` 与 `url-test` 组测速 URL 统一使用 HTTPS `https://www.google.com/generate_204`，不要改回 HTTP
-- 如果把 `rulemesh-substore-mihomo-clash-verge.yaml` 当成 Clash Verge Rev 的日常主配置，建议在客户端“订阅”页对这份本地配置右键“编辑信息”，把 `更新时间隔` 设为 `720` 分钟，作为默认维护基线
-- 这项 `720` 分钟设置不写回 YAML，而是保存在每台设备自己的 Clash Verge Rev profile 元数据里；换设备后需要重新设置一次
-- 这项 `720` 分钟设置不替代 YAML 里的 `proxy-providers` / `rule-providers` 自身 `interval`；后者仍负责 Mihomo 内核层的下载间隔，前者只是额外的外层定时重载保险，用于降低长期后台运行、睡眠唤醒后 provider 偶发不刷新的概率
-- 如果把 `rulemesh-substore-mihomo-clash-verge.yaml` 当成 Clash Verge Rev 的唯一权威配置，默认应关闭 Clash Verge Rev 的 `DNS 覆写`；否则运行时 `dns` 会被 AppData 下的 `dns_config.yaml` 覆盖
-- 如果明确保留 Clash Verge Rev 的 `DNS 覆写`，则应把 `dns_config.yaml` 视为实际生效的 `dns` 单一真相，而不是继续假设源文件里的 `dns:` 会原样生效
-- 如果关闭 Clash Verge Rev 的 `DNS 覆写` 后出现“国内可访问、国外代理不通”，默认先确认桌面端私有文件是否被改离了“单一 DNS 真相”版本，而不是先回滚规则顺序或怀疑节点本身
-- 如果某个 provider 在 Clash Verge Rev 私有链路里整批测速失败，但把同一订阅直接导入客户端又正常，默认先按 [docs/mihomo-tun-dns-methodology.md](docs/mihomo-tun-dns-methodology.md) 对比运行时 `dns:`，优先排查 DNS 链差异，不要先把问题归因到节点本身
+- 如果某个 provider 在 FlClash 桌面端 私有链路里整批测速失败，但把同一订阅直接导入客户端又正常，默认先按 [docs/mihomo-tun-dns-methodology.md](docs/mihomo-tun-dns-methodology.md) 对比运行时 `dns:`，优先排查 DNS 链差异，不要先把问题归因到节点本身
 - 如果两份 Mihomo 私有文件里出现高优先级海外例外与 `rule-set:cn-performance-dns-domains` 之外的 `nameserver-policy`、`proxy-server-nameserver`、`fallback` 或 `respect-rules: true`，默认按 DNS 回归处理；已批准的分层例外不应被误删
-- 对 Clash Meta for Android 的兼容性调整，默认也先保持“单一 DNS 真相”版本；只有在用户明确确认且 Android 运行时复测证明必须特化时，才允许为 Android 单独增加例外
+- 对 FlClash 安卓端 的兼容性调整，默认也先保持“单一 DNS 真相”版本；只有在用户明确确认且 Android 运行时复测证明必须特化时，才允许为 Android 单独增加例外
 - 这组私有订阅域名同步规则只记录在本地目录与私有文档约定中，不回写公开 `rules/`、`dist/` 或公开模板
 - 详细维护方式见 [docs/private-subscription-direct-sync.md](docs/private-subscription-direct-sync.md)
 - 若私有配置结构发生变化，必须同步更新 `.rulemesh.local.example.json` 与相关文档，但只能提交脱敏占位值
@@ -287,3 +281,5 @@ ai_us 同时承接 OpenAI、Claude、Copilot、Cursor、Grok、Windsurf、Augmen
 机场策略与配置精简：三份私人 Surge 的七个机场手动组分别保留并接回选择入口，不按规则引用数量删除。Personal 爱思入口集中为 `direct/aisi_direct`；Apple 更新和 Google Play 复用既有规则集；Surge AI DNS 的美国出口集中为 `region/us/ai_dns_us`。Mihomo 保持已有组与 DNS 代理参数，不扩大业务范围。设备地址及订阅端点继续只在私人仓库维护，详见 [性能基线](docs/performance-baseline.md)。
 
 2026-09-12：`direct/ips5_direct` 以 DIRECT 覆盖 `ips5.vip` 主域及全部子域，位于 AI 之后、Google 广谱与拒绝之前，使用默认国内双 DoH；工作白名单仅增加该服务。AdsPower 停用范围、资产与定时任务处理见[规则停用与恢复](docs/rule-deactivation.md)。
+
+2026-09-12 FlClash 迁移与优化以 [客户端性能基线](docs/flclash-performance.md) 为准：桌面和安卓使用新文件名；通用末尾改为 cn_direct_light → gfw_precise → DIRECT，完整规则资产保留。工作白名单不接入新兜底，机场手动组保留。桌面 300 秒、安卓 600 秒，备用地区按需检测；以最终生成配置核对界面覆写。

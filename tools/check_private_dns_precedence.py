@@ -18,8 +18,8 @@ PRIVATE_PROFILE_NAMES = {
     "rulemesh-substore-surge-personal.conf",
     "rulemesh-substore-surge-personal-company.conf",
     "rulemesh-substore-surge-work-whitelist.conf",
-    "rulemesh-substore-mihomo-clash-verge.yaml",
-    "rulemesh-substore-mihomo-clash-meta.yaml",
+    "rulemesh-substore-mihomo-flclash-desktop.yaml",
+    "rulemesh-substore-mihomo-flclash-android.yaml",
 }
 SURGE_PERSONAL_NAMES = {
     "rulemesh-substore-surge-personal.conf",
@@ -27,8 +27,8 @@ SURGE_PERSONAL_NAMES = {
 }
 SURGE_WORK = "rulemesh-substore-surge-work-whitelist.conf"
 MIHOMO_PROFILES = {
-    "rulemesh-substore-mihomo-clash-verge.yaml",
-    "rulemesh-substore-mihomo-clash-meta.yaml",
+    "rulemesh-substore-mihomo-flclash-desktop.yaml",
+    "rulemesh-substore-mihomo-flclash-android.yaml",
 }
 ROUTING_CATEGORIES = {"reject", "proxy", "region"}
 AI_US_RULE_IDENTIFIER = "region/us/ai_us"

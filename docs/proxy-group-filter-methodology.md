@@ -55,8 +55,8 @@ policy-regex-filter=^(?!.*剩余流量)(?!.*直接连接)(?!.*供应商名)...
 
 ## 同步范围
 
-- 解析后的私人当前配置目录中的 `rulemesh-substore-mihomo-clash-verge.yaml`
-- 解析后的私人当前配置目录中的 `rulemesh-substore-mihomo-clash-meta.yaml`
+- 解析后的私人当前配置目录中的 `rulemesh-substore-mihomo-flclash-desktop.yaml`
+- 解析后的私人当前配置目录中的 `rulemesh-substore-mihomo-flclash-android.yaml`
 - 解析后的私人当前配置目录中的家庭与公司两份 Surge Personal：`rulemesh-substore-surge-personal.conf`、`rulemesh-substore-surge-personal-company.conf`
 - 解析后的私人当前配置目录中的 `rulemesh-substore-surge-work-whitelist.conf`
 - `docs/examples/mihomo-public.yaml`
@@ -77,3 +77,5 @@ policy-regex-filter=^(?!.*剩余流量)(?!.*直接连接)(?!.*供应商名)...
 - 手动切换、自动组和地区组应尽量只展示真实节点。
 - 过滤规则的维护目标不是“写法看起来统一”，而是“既能过滤占位项，又不误伤真实节点”。
 - 只要存在 provider 前缀注入或统一命名机制，就把它当成改动前必查项，而不是普通样式调整。
+
+2026-09-12 FlClash 迁移与优化以 [客户端性能基线](flclash-performance.md) 为准：桌面和安卓使用新文件名；通用末尾改为 cn_direct_light → gfw_precise → DIRECT，完整规则资产保留。工作白名单不接入新兜底，机场手动组保留。桌面 300 秒、安卓 600 秒，备用地区按需检测；以最终生成配置核对界面覆写。

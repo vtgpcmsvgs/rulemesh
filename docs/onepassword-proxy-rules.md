@@ -9,8 +9,8 @@
 - `tools/sync_upstream_rules.py`
 - 本地私有家庭与公司两份 Surge Personal
 - 本地私有 `rulemesh-substore-surge-work-whitelist.conf`
-- 本地私有 `rulemesh-substore-mihomo-clash-verge.yaml`
-- 本地私有 `rulemesh-substore-mihomo-clash-meta.yaml`
+- 本地私有 `rulemesh-substore-mihomo-flclash-desktop.yaml`
+- 本地私有 `rulemesh-substore-mihomo-flclash-android.yaml`
 
 ## 设计目标
 

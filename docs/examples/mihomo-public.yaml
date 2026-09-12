@@ -11,8 +11,6 @@
 # - https://example.com/subscriptions/provider-b.yaml
 # - https://example.com/subscriptions/provider-c.yaml
 # 如果客户端支持，请同时开启 TUN 模式；这份模板默认按 Tun + 嗅探 + 分流 DNS 设计。
-# 如果把这份文件作为 Clash Verge Rev 的本地日常主配置导入，建议在客户端“订阅”页对该配置右键“编辑信息”，把“更新时间隔”设为 720 分钟。
-# 这项 720 分钟设置不会写回 YAML，而是 Clash Verge Rev 保存在本机 profile 元数据里的外层定时重载设置；每台设备都要单独设置一次。
 # Surge 公开模板里的 dns-mode / Host 复用 / 局域网代理入口开关只属于 Surge 运行时语义；Mihomo 继续按本文件与 docs/mihomo-tun-dns-methodology.md 独立维护。
 
 mixed-port: 7897
@@ -21,7 +19,7 @@ mode: rule
 
 # > 日志级别
 log-level: warning
-global-ua: clash-verge/v2.2.0
+global-ua: FlClash/0.8.97
 
 tcp-concurrent: true
 
@@ -126,8 +124,6 @@ proxy-providers:
   # 不要把机场订阅 provider 的 proxy 改成“🚀 节点选择”，否则订阅链接可能经由代理节点暴露，也可能让订阅更新依赖代理本身造成循环。
   # GitHub 规则集更新是另一条链路；rule-providers 可以继续按需要使用 proxy: "🚀 节点选择"。
   # health-check.interval: 300 = 每 5 分钟做一次测速，只影响延迟显示和自动组选路。
-  # 如果在 Clash Verge Rev 里把这份文件作为本地配置长期使用，建议再配合客户端侧的 720 分钟“更新时间隔”做外层定时重载。
-  # 维护约定：YAML 里的 interval 仍负责 Mihomo 内核层更新；Clash Verge Rev 的 720 分钟只作为保底保险，不替代这里的 interval。
   provider_a:
     type: http
     url: "https://example.com/subscriptions/provider-a.yaml"
@@ -264,7 +260,7 @@ proxy-groups:
     interval: 300
     tolerance: 150
     timeout: 5000
-    lazy: false
+    lazy: true
     use:
       - provider_a
       - provider_b
@@ -278,7 +274,7 @@ proxy-groups:
     interval: 300
     tolerance: 150
     timeout: 5000
-    lazy: false
+    lazy: true
     use:
       - provider_a
       - provider_b
@@ -474,8 +470,8 @@ rule-providers:
     type: http
     behavior: classical
     format: yaml
-    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/proxy/gfw.yaml"
-    path: ./ruleset/proxy/gfw.yaml
+    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/proxy/gfw_precise.yaml"
+    path: ./ruleset/proxy/gfw_precise.yaml
     interval: 86400
     proxy: "♻️ 自动选择"
 
@@ -591,8 +587,8 @@ rule-providers:
     type: http
     behavior: classical
     format: yaml
-    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/direct/cn_direct.yaml"
-    path: ./ruleset/direct/cn_direct.yaml
+    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/direct/cn_direct_light.yaml"
+    path: ./ruleset/direct/cn_direct_light.yaml
     interval: 86400
     proxy: "♻️ 自动选择"
 

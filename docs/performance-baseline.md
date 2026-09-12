@@ -20,7 +20,7 @@
 - AI 入口放在第一条有效规则，避免 Google 完整 IP 地址空间和其他广谱规则抢先匹配；国内 AI 继续使用 `ai_cn_direct` 直连。
 - 抖音复用 `bytedance_direct`；新增 `cn_social_direct` 仅维护微信、小红书及专用 CDN 域名，不放宽整个腾讯或通用云服务。
 - 日本精确例外、Crypto 和香港券商都早于 Google 广谱规则。`google_hk`、`global_media` 等旧路径保留以兼容已有订阅，但一般业务默认自动择优。
-- 全地区组去掉国家标签筛选，只排除套餐占位项，允许没有地区标签的有效节点参与。Mihomo 使用 300 秒主动测速、全地区容差 50、美国容差 100；测速只衡量连接延迟，不等同于下载吞吐。
+- 全地区组去掉国家标签筛选，只排除套餐占位项，允许没有地区标签的有效节点参与。FlClash 桌面使用 300 秒主动测速、安卓使用 600 秒；实际业务组主动、备用地区按需检测、全地区容差 50、美国容差 100；测速只衡量连接延迟，不等同于下载吞吐。
 - Mihomo 开启 `tcp-concurrent`，并发尝试目标的多个 IP，采用先成功的连接；保持 IPv4、ARC 缓存和 fake-ip。Surge 保持原有 smart 组与客户端自身连接机制，不机械移植同名字段。
 - AWS IP 区域组和 `chain_socks5_ipcidr` 不再注册或调用于配置；`rules/`、上游登记与 `dist/` 产物继续保留，暂停使用不等于删除维护资产。
 - Surge 只清理随 AWS/链式功能停用的设备专用组。机场手动组是独立选择功能，即使没有规则引用也必须保留；三份私人 Surge 各恢复七组，保持原订阅与过滤器，设为可见并接入手动选择入口。两份 Mihomo 原有九组未删除，本轮保留。
@@ -69,3 +69,5 @@ GeoIP 直接使用 `https://github.com/MetaCubeX/meta-rules-dat/releases/downloa
 用户要求两份 Surge Personal、两份 Mihomo 与两份公开模板的最终兜底统一 DIRECT，减少未被国内规则覆盖的业务绕行。Surge 保留 `FINAL,DIRECT,dns-failed`，Mihomo 使用 `MATCH,DIRECT`；工作白名单保持 `FINAL,REJECT`。这一变更同样适用于未命中前置规则的海外域名，不会自动保证其可达。
 
 AI、Crypto、其他明确地区、Google、gfw 等前置规则和机场组不变；默认国内 DNS、AI 专用美国 DoH 与节点 bootstrap 不变。检查器按当前基线拒绝把普通兜底改回自动组，历史无标记夹具继续保留历史校验语义。
+
+2026-09-12 FlClash 迁移与优化以 [客户端性能基线](flclash-performance.md) 为准：桌面和安卓使用新文件名；通用末尾改为 cn_direct_light → gfw_precise → DIRECT，完整规则资产保留。工作白名单不接入新兜底，机场手动组保留。桌面 300 秒、安卓 600 秒，备用地区按需检测；以最终生成配置核对界面覆写。

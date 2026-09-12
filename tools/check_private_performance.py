@@ -13,16 +13,16 @@ PRIVATE_PROFILE_NAMES = {
     "rulemesh-substore-surge-personal.conf",
     "rulemesh-substore-surge-personal-company.conf",
     "rulemesh-substore-surge-work-whitelist.conf",
-    "rulemesh-substore-mihomo-clash-verge.yaml",
-    "rulemesh-substore-mihomo-clash-meta.yaml",
+    "rulemesh-substore-mihomo-flclash-desktop.yaml",
+    "rulemesh-substore-mihomo-flclash-android.yaml",
 }
 SURGE_PERSONAL_NAMES = {
     "rulemesh-substore-surge-personal.conf",
     "rulemesh-substore-surge-personal-company.conf",
 }
 MIHOMO_PROFILE_NAMES = {
-    "rulemesh-substore-mihomo-clash-verge.yaml",
-    "rulemesh-substore-mihomo-clash-meta.yaml",
+    "rulemesh-substore-mihomo-flclash-desktop.yaml",
+    "rulemesh-substore-mihomo-flclash-android.yaml",
 }
 HK_SECURITIES_RULE_PROVIDER = "hk_securities_aggressive"
 HK_SECURITIES_RULE_URL = (

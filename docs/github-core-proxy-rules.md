@@ -52,7 +52,7 @@ Surge：
 
 - `https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/rules/proxy/github_core_proxy.list`
 
-Mihomo / Clash Verge Rev：
+Mihomo / FlClash 桌面端：
 
 - `https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/proxy/github_core_proxy.yaml`
 
@@ -67,7 +67,7 @@ RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/r
 RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/rules/proxy/gfw.list,"🚀 节点选择"
 ```
 
-Mihomo / Clash Verge Rev：
+Mihomo / FlClash 桌面端：
 
 ```yaml
 rule-providers:

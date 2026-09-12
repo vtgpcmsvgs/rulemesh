@@ -60,6 +60,31 @@ class PerformanceBaselineTests(unittest.TestCase):
                 self.assertTrue(baseline.applies(text.splitlines()))
                 self.assertEqual(baseline.check(path, text.splitlines()), [])
 
+    def test_flclash_process_matching_remains_on_demand(self):
+        path, text = self.fixture('mihomo')
+        for mode in ('always', 'off'):
+            changed = text.replace('find-process-mode: strict', 'find-process-mode: ' + mode)
+            self.assertTrue(any('按需识别进程' in error for error in baseline.check(path, changed.splitlines())))
+
+    def test_platform_health_intervals_and_active_groups(self):
+        _, text = self.fixture('mihomo')
+        desktop = Path('flclash-desktop.yaml')
+        android = Path('flclash-android.yaml')
+        self.assertEqual(baseline.check(desktop, text.splitlines()), [])
+        self.assertTrue(any('检测' in error for error in baseline.check(android, text.splitlines())))
+        android_text = text.replace('interval: 300', 'interval: 600')
+        self.assertEqual(baseline.check(android, android_text.splitlines()), [])
+        sleeping = text.replace('lazy: false', 'lazy: true')
+        self.assertTrue(any('主动检测' in error for error in baseline.check(desktop, sleeping.splitlines())))
+
+    def test_light_rules_require_adjacent_direct_tail(self):
+        for client in ('surge', 'mihomo'):
+            path, text = self.fixture(client)
+            marker = 'FINAL,DIRECT' if client == 'surge' else '  - MATCH,DIRECT'
+            injected = 'DOMAIN,example.com,REJECT\n' if client == 'surge' else '  - DOMAIN,example.com,REJECT\n'
+            changed = text.replace(marker, injected + marker)
+            self.assertTrue(any('必须相邻' in error for error in baseline.check(path, changed.splitlines())))
+
     def test_crypto_cannot_be_changed_to_performance_or_us_group(self):
         for client in ("surge", "mihomo"):
             path, text = self.fixture(client)

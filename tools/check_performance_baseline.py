@@ -163,7 +163,14 @@ def check(path: Path, lines: list[str]) -> list[str]:
     finals = [parts for _, parts in rules if parts[0] in {"FINAL", "MATCH"}]
     require(len(finals) == 1 and finals[0][1] == ("REJECT" if work else "DIRECT"), "最终兜底必须为 DIRECT，工作白名单必须保持 REJECT。")
     if work:
-        require(not any("/direct/cn_direct.list" in str(parts) or "/proxy/gfw.list" in str(parts) for _, parts in rules), "工作白名单不得增加中国通用或广谱代理入口。")
+        require(not any(any(token in str(parts) for token in ('cn_direct', 'gfw', 'direct_cn', 'proxy_gfw')) for _, parts in rules), "工作白名单不得增加中国通用或广谱代理入口。")
+    else:
+        tail = [parts for _, parts in rules][-3:]
+        expected = [BASE + 'surge/rules/direct/cn_direct_light.list', BASE + 'surge/rules/proxy/gfw_precise.list'] if surge else ['direct_cn', 'proxy_gfw']
+        require(len(tail) == 3 and all(tail[i][:2] == ['RULE-SET', expected[i]] for i in range(2)) and tail[0][2] == 'DIRECT' and tail[1][2] == auto, '精简直连表、精确代理表、DIRECT 兜底必须相邻且位于末尾。')
+        if not surge:
+            for key, file in zip(expected, ('direct/cn_direct_light', 'proxy/gfw_precise')):
+                require(key in providers and providers[key][1] == BASE + 'mihomo/classical/' + file + '.yaml', '精简兜底 provider 必须引用配套产物。')
     require(not any("aws_ipv4" in line or "chain_socks5_ipcidr" in line for line in lines if not line.lstrip().startswith("#")), "配置应停用 AWS IP 与链式代理入口，源规则仍保留。")
     require(any(GEOIP_URL in line for line in lines if not line.lstrip().startswith("#")), "GeoIP 必须直接使用 MetaCubeX 持续更新的上游。")
     require(not any("vtgpcmsvgs/rulemesh/releases/download/" in line for line in lines if not line.lstrip().startswith("#")), "配置不得重新依赖本仓库 Release 镜像。")
@@ -197,6 +204,7 @@ def check(path: Path, lines: list[str]) -> list[str]:
     else:
         require(not groups[auto].filter_text, "全地区 url-test 组不得限定地区标签。")
         require("tcp-concurrent: true" in lines and "ipv6: false" in lines, "Mihomo 必须开启 TCP 并发并保留 IPv4 基线。")
+        require("find-process-mode: strict" in lines, "FlClash 必须按需识别进程，避免 always 开销或 off 使进程规则失效。")
         values, policies = dns._parse_mihomo_dns(lines)
         require(values == DOMESTIC, "Mihomo 默认业务 DNS 应为国内双 DoH。")
         require(len(policies) == 1 and policies[0].providers == ("us_ai",), "Mihomo 仅保留 AI 专用 DNS policy。")
@@ -223,10 +231,12 @@ def check(path: Path, lines: list[str]) -> list[str]:
         require(tuple(node_dns) == DOMESTIC, "指定代理的 AI DoH 必须配套独立国内节点 bootstrap，避免解析循环。")
         require(not any(name in {"cn-dns-domains", "cn-performance-dns-domains"} for name in providers), "Mihomo 不应重复加载 DNS 专用域名清单。")
         health, parsed_groups, _ = performance.parse_mihomo(lines)
-        require(bool(health) and all(item.interval == "300" and item.lazy == "false" for item in health), "机场健康检查必须保持 300 秒主动检测。")
+        health_interval = '600' if 'flclash-android' in path.name else '300'
+        require(bool(health) and all(item.interval == health_interval and item.lazy == "false" for item in health), "机场健康检查应为桌面 300 秒、安卓 600 秒主动检测。")
         for name, group in parsed_groups.items():
             if group.group_type == "url-test":
-                require(group.interval == "300" and group.lazy == "false", "自动组必须保持 300 秒主动检测。")
+                used = any(name in parts[2:3] for _, parts in rules)
+                require(group.interval == health_interval and group.lazy == ('false' if used else 'true'), "自动组须采用客户端检测周期，实际业务组主动检测，备用地区组按需检测。")
                 require(group.tolerance == ("100" if name == us else "50") if name in {us, auto} else True, "全地区/美国组切换容差应为 50/100。")
         # 只检查字段和值，不在错误中输出机场标识、订阅地址或 header。
         active = False

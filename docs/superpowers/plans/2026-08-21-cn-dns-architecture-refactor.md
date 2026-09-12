@@ -15,7 +15,7 @@
 ## Global Constraints
 
 - `C:\Users\zaife\Desktop\rulemesh-local\rulemesh-substore-surge-work-whitelist.conf` 在本任务中必须保持 Git blob ID、文件内容、规则和 DNS 行为完全不变。
-- 只修改 Surge Personal、Mihomo Clash Verge、Mihomo Clash Meta 三份性能配置；两份 Mihomo 的 DNS 结构必须一致。
+- 只修改 Surge Personal、Mihomo FlClash 桌面端、Mihomo FlClash 安卓端 三份性能配置；两份 Mihomo 的 DNS 结构必须一致。
 - OpenAI / ChatGPT 的 `ai-us` 路由继续固定美国策略，且 `ai-us` 必须优先使用海外 DNS。
 - 两份 Mihomo 保持 `ipv6: false`、`dns.ipv6: false`、`use-hosts: false`、`use-system-hosts: false`、`respect-rules: false`。
 - 不得新增 `fallback`、`direct-nameserver`、`proxy-server-nameserver`、`proxy-server-nameserver-policy` 或 `direct-nameserver-follow-policy`。
@@ -258,8 +258,8 @@ git commit -m "test: 守护 DNS 规则优先级"
 
 **Files:**
 - Modify: `C:\Users\zaife\Desktop\rulemesh-local\rulemesh-substore-surge-personal.conf`
-- Modify: `C:\Users\zaife\Desktop\rulemesh-local\rulemesh-substore-mihomo-clash-verge.yaml`
-- Modify: `C:\Users\zaife\Desktop\rulemesh-local\rulemesh-substore-mihomo-clash-meta.yaml`
+- Modify: `C:\Users\zaife\Desktop\rulemesh-local\rulemesh-substore-mihomo-flclash-desktop.yaml`
+- Modify: `C:\Users\zaife\Desktop\rulemesh-local\rulemesh-substore-mihomo-flclash-android.yaml`
 - Must not modify: `C:\Users\zaife\Desktop\rulemesh-local\rulemesh-substore-surge-work-whitelist.conf`
 
 **Interfaces:**
@@ -416,7 +416,7 @@ git -C C:\Users\zaife\Desktop\rulemesh-local diff --exit-code -- rulemesh-substo
 - [ ] **Step 4: 提交私有仓库**
 
 ```powershell
-git add -- AGENTS.md README.md rulemesh-substore-surge-personal.conf rulemesh-substore-mihomo-clash-verge.yaml rulemesh-substore-mihomo-clash-meta.yaml
+git add -- AGENTS.md README.md rulemesh-substore-surge-personal.conf rulemesh-substore-mihomo-flclash-desktop.yaml rulemesh-substore-mihomo-flclash-android.yaml
 git commit -m "feat: 扩展性能型中国 DNS"
 ```
 

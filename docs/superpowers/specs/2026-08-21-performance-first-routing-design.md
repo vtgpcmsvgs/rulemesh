@@ -11,7 +11,7 @@
 - `zsxq.com` 已被 `direct/cn_direct` 覆盖，但没有进入 `dns/cn_dns_domains`，因此存在“流量直连、DNS 仍绕海外”的分裂。
 - `yikaiying.com` 未命中公开直连规则，也未进入国内 DNS 白名单；三份通用配置会把它送入美国兜底，工作白名单配置会拒绝它。
 - 两份 Mihomo 配置虽然注册了 `cn_dns_domains` 规则提供器，但没有通过 `nameserver-policy` 使用它。
-- Clash Verge 版的 provider 与自动测速组使用 `interval: 900`、`lazy: true`；链路劣化后，测速状态可能比 Meta 版更陈旧。
+- FlClash 桌面端 版的 provider 与自动测速组使用 `interval: 900`、`lazy: true`；链路劣化后，测速状态可能比 Meta 版更陈旧。
 - 当前 Windows 主机没有运行 Surge 或 Mihomo。无配置客户端参与的三次 ChatGPT 直连基线中，一次 TLS 建连约为 10 秒，另外两次约为 0.2 秒，说明国际偶发卡顿不能只归因于 DNS，也需要改善出口选择的新鲜度。
 
 ## 目标
@@ -109,14 +109,14 @@ OpenAI / ChatGPT 域名
 - `rulemesh-substore-surge-work-whitelist.conf`
   - 为 `zsxq.com`、`yikaiying.com` 增加精确 DIRECT 入口。
   - 保持 `FINAL,REJECT`，不接入 `cn_direct`、`proxy/gfw` 或通用国际兜底。
-- `rulemesh-substore-mihomo-clash-verge.yaml`
+- `rulemesh-substore-mihomo-flclash-desktop.yaml`
   - 增加仅针对 `rule-set:cn_dns_domains` 的 `nameserver-policy`，复用现有国内加密 DNS。
   - 保持 `respect-rules: false`、`use-hosts: false`、`use-system-hosts: false`。
   - 保持 `proxy-server-nameserver`、`direct-nameserver`、`fallback` 缺失。
   - 将 `MATCH` 从美国自动选择组改为现有全地区自动选择组。
   - provider 与自动测速组统一为 `interval: 300`、`lazy: false`。
   - 全地区自动组保留较低切换阻尼；美国组降低过高阻尼，但仍避免相近节点频繁变更出口。
-- `rulemesh-substore-mihomo-clash-meta.yaml`
+- `rulemesh-substore-mihomo-flclash-android.yaml`
   - 应用相同 DNS 策略和 MATCH 变更。
   - 保持现有 `interval: 300`、`lazy: false`，只同步美国组阻尼调整。
 - `README.md` 与私有 `AGENTS.md`

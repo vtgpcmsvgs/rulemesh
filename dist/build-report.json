@@ -1,11 +1,11 @@
 {
   "summary": {
-    "domain-only": 13,
+    "domain-only": 14,
     "ipcidr-only": 7,
-    "classical/mixed": 26,
+    "classical/mixed": 27,
     "dns-domain-set": 2,
     "empty": 0,
-    "total_sources": 48,
+    "total_sources": 50,
     "total_warnings": 0
   },
   "sources": [
@@ -111,6 +111,19 @@
       "dist": {
         "surge_rules": "dist/surge/rules/direct/cn_direct.list",
         "mihomo_classical": "dist/mihomo/classical/direct/cn_direct.yaml"
+      }
+    },
+    {
+      "source": "rules/direct/cn_direct_light.list",
+      "category": "direct",
+      "classification": "classical/mixed",
+      "counts": {
+        "surge_rules": 9755,
+        "mihomo_classical": 9755
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/direct/cn_direct_light.list",
+        "mihomo_classical": "dist/mihomo/classical/direct/cn_direct_light.yaml"
       }
     },
     {
@@ -228,6 +241,19 @@
       "dist": {
         "surge_rules": "dist/surge/rules/proxy/gfw.list",
         "mihomo_classical": "dist/mihomo/classical/proxy/gfw.yaml"
+      }
+    },
+    {
+      "source": "rules/proxy/gfw_precise.list",
+      "category": "proxy",
+      "classification": "domain-only",
+      "counts": {
+        "surge_rules": 4385,
+        "mihomo_classical": 4385
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/proxy/gfw_precise.list",
+        "mihomo_classical": "dist/mihomo/classical/proxy/gfw_precise.yaml"
       }
     },
     {

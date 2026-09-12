@@ -11,8 +11,8 @@
 - `<私有当前配置目录>\rulemesh-substore-surge-personal.conf`
 - `<私有当前配置目录>\rulemesh-substore-surge-personal-company.conf`
 - `<私有当前配置目录>\rulemesh-substore-surge-work-whitelist.conf`
-- `<私有当前配置目录>\rulemesh-substore-mihomo-clash-verge.yaml`
-- `<私有当前配置目录>\rulemesh-substore-mihomo-clash-meta.yaml`
+- `<私有当前配置目录>\rulemesh-substore-mihomo-flclash-desktop.yaml`
+- `<私有当前配置目录>\rulemesh-substore-mihomo-flclash-android.yaml`
 
 ## 当前性能联动
 
@@ -102,15 +102,15 @@
 
 ### 默认快速路径
 
-1. 从两份 Mihomo 文件提取 provider 名称、直属 `url`、`proxy`、`header.User-Agent` 与对应 `health-check.interval`，断言两份结构完全一致且每个 provider 都是 `proxy: DIRECT`；任一不一致时停止外部探测，先报告配置漂移，不能任选一份继续。解析器只能把 provider 直属的四空格 `url` 当订阅地址；六空格 `health-check.url` 是节点测速地址，六空格 `health-check.interval` 只用于计算健康历史新鲜度。
+1. 从两份 Mihomo 文件提取 provider 名称、直属 `url`、`proxy`、`header.User-Agent`，断言这些订阅字段一致且每个 provider 都是 `proxy: DIRECT`；任一不一致时停止外部探测，先报告配置漂移，不能任选一份继续。桌面健康检查 300 秒、安卓 600 秒属于已批准差异；按实际运行客户端的间隔计算新鲜度。解析器只能把 provider 直属的四空格 `url` 当订阅地址；六空格 `health-check.url` 是节点测速地址。
 2. 启动全局 `CancellationTokenSource` 和单调计时器，并在任务开始立即调用 `CancelAfter(60 秒)`；PowerShell 路径使用 `SocketsHttpHandler` 设置 `UseProxy = false` 与 5 秒 `ConnectTimeout`，每个 `HttpClient` 请求创建与全局 token 联动的 `CancellationTokenSource` 并调用 `CancelAfter(10 秒)`，全部 provider 用 `Task.WhenAll` 并发。`SendAsync(..., linkedToken)` 与 `ReadAsByteArrayAsync(linkedToken)` 必须复用该 token，把响应头和响应体完整读取都纳入同一 deadline；不得用仅限制流读取空闲时间的 `Invoke-WebRequest -OperationTimeoutSeconds` 冒充完整请求超时。只在剩余全局预算不少于一次完整请求预算时，对单项短重试一次。按声明编码或 UTF-8 解码字节，兼容 `application/octet-stream`，不要把 `Byte[]` 直接转成字符串。只在内存中检查 HTTP 状态、顶层 `proxies` 与 `Subscription-Userinfo`，不要输出响应正文；统计节点条目时同时兼容独占一行的 `-` 与 `- ...` 两种 YAML 序列写法。
-3. 如果 Clash Verge Rev 与 Mihomo 正在运行，从当前运行配置读取实际 `external-controller-pipe`；命名管道连接使用最长 2 秒、与全局 token 联动的 `ConnectAsync`，完整写入与读取使用最长 5 秒 linked token 的 `WriteAsync` / `ReadAsync`。只请求一次 `/providers/proxies`，正确解码可能存在的 HTTP chunked 响应后再解析 JSON；按 provider 汇总 `proxies.Count`，并对每个节点按可解析时间戳取最新 `history`，仅统计同时满足 `alive = true`、最新记录 `delay > 0` 且仍在新鲜度窗口内的节点。命名管道路径无需且不得读取或发送控制器密钥。
+3. FlClash 正在运行时，从生成配置读取实际已启用的 Mihomo 控制器。TCP 使用配置指定的端点与认证；已配置 HTTP 命名管道的连接最长 2 秒，完整写入与读取最长 5 秒，均使用与全局 token 联动的异步操作。只请求一次 `/providers/proxies`，正确解码 HTTP chunked 后解析 JSON；仅统计 `alive = true`、最新 `history.delay > 0` 且仍在新鲜度窗口内的节点。FlClash 的私有二进制 IPC 不是该接口；两个控制器字段都为空时直接报告运行态未知，不另行启用控制器。
 4. 用一张脱敏表返回 provider 名、端点 / 内容、配额、日历有效期、订阅节点条目数、确认存活数 / 已加载数和结论。旧缓存、源响应与运行态数量差异放在表后单独说明；任何未取得的证据都显式写“未提供 / 未确认”，不从其他项推断。
 
 ### 默认禁止的慢路径
 
 - 不从 `proxy_provider` 缓存目录枚举“当前 provider”，也不把缓存存在等同于运行时已加载
-- 不猜测控制器 TCP 端口，不把 mixed-port、DNS 端口或 Clash Verge 服务端口当作 Mihomo API；`external-controller` 为空时直接使用已配置的命名管道
+- 不猜测控制器 TCP 端口，不把 mixed-port、DNS 端口或 FlClash 服务端口当作 Mihomo API；只使用明确配置的 HTTP 控制器，不能根据产品名称推断管道协议
 - 不默认调用 `/providers/proxies/<name>/healthcheck`；该调用可能等待整批节点超时并长时间占用控制通道
 - 已有分钟级新鲜的运行态 health history 时，不启动隔离 Mihomo、不重载配置、不刷新 provider，也不为了解析 YAML 临时安装依赖
 - 不用紧凑的一次性 PowerShell 长命令堆叠解析、下载、管道通信与格式化；先保持步骤短且输出已脱敏，避免语法重试反而超过审计本身耗时

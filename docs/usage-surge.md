@@ -18,7 +18,7 @@
 5. Personal 精选规则与既有拒绝规则；Apple / Outlook 直连及 Microsoft Store 优先入口保持各自边界。
 6. 其他精确业务、GitHub SSH/Raw/Core、Polygon/BSC RPC、订阅端点与 DNS 出口。
 7. LAN、系统时间、阿里云 TCP/22 和其他国内直连。
-8. `gfw` 使用全地区 smart；未命中前置规则时 `FINAL,DIRECT,dns-failed`，工作白名单保持 `FINAL,REJECT`。
+8. `gfw_precise` 使用全地区 smart；未命中前置规则时 `FINAL,DIRECT,dns-failed`，工作白名单保持 `FINAL,REJECT`。
 
 命中普通海外规则时使用全地区 smart 组，未命中规则的 `FINAL` 使用 DIRECT；AI 美国、Crypto/RPC 台湾、`opinion.trade` 日本、券商香港是明确例外。地区组仍可用于手动选择。AWS IP 规则和链式 SOCKS5 规则仅保留仓库源文件与产物，配置不再调用。
 
@@ -51,3 +51,5 @@ GitHub Raw 继续保留独立海外解析入口 `raw.githubusercontent.com = ser
 机场手动组必须独立保留并在选择入口可访问，不能因普通规则直接使用自动组而删除。公开模板提供单机场占位示例；私人三份 Surge 各保留七组。爱思规则集中在 `direct/aisi_direct`（仅 Personal）；Google Play 重复项复用 `google_hk`；AI DNS 用 `region/us/ai_dns_us` 绑定美国，早于设备、加密 DNS 协议和最终兜底。
 
 2026-09-12：`direct/ips5_direct` 以 DIRECT 覆盖 `ips5.vip` 主域及全部子域，位于 AI 之后、Google 广谱与拒绝之前，使用默认国内双 DoH；工作白名单仅增加该服务。AdsPower 停用范围、资产与定时任务处理见[规则停用与恢复](rule-deactivation.md)。
+
+2026-09-12 FlClash 迁移与优化以 [客户端性能基线](flclash-performance.md) 为准：桌面和安卓使用新文件名；通用末尾改为 cn_direct_light → gfw_precise → DIRECT，完整规则资产保留。工作白名单不接入新兜底，机场手动组保留。桌面 300 秒、安卓 600 秒，备用地区按需检测；以最终生成配置核对界面覆写。

@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Iterable
 
 import sync_adspower_rules
+import sync_performance_rules
 import sync_upstream_rules
 
 
@@ -808,6 +809,9 @@ def run_build() -> int:
             f"proxy={adspower_sync.rule_counts.get('proxy', 0)}"
         )
 
+    if (RULES_ROOT / 'proxy/gfw_precise.list').is_file():
+        count = sync_performance_rules.sync(RULES_ROOT, build_source)
+        print(f'[SYNC] 中国精简冲突保护表：{count} 条规则')
     source_files = iter_source_files()
     dns_domain_source_files = iter_dns_domain_source_files()
     validate_source_files(source_files)

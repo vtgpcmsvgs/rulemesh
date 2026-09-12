@@ -14,15 +14,16 @@
 
 本次七份配置的静态检查和三份 Mihomo 的原生语法检查分别执行；DNS 路由运行时仍未确认。旧版 v1.19.25 曾出现 DNS 查询未命中模拟 resolver 的情况，不能拿旧版测试证明新版生效，也不能把“静态检查已通过”解释为线路吞吐已经提升。
 
-Clash Verge Rev 源 profile、DNS 覆写、全局扩展脚本与最终运行配置是不同层。使用源文件为单一真相时关闭 DNS 覆写；若保留覆写，则审计实际 dns_config.yaml 和最终运行态。Android 也需检查真实加载结果，不按同名字段推定与 Surge 相同。
 
 发生 provider 全部测速失败但直导可用时，先通过实际 controller/命名管道和日志确认 DNS 及最终配置。只读探测不可读时报告证据缺口，不猜测端口、不强制重复健康检查。运行态审计不得输出节点或订阅秘密。
 
 ## 验证顺序
 
 1. 静态检查地区过滤、AI 与 Google 的顺序、AI DNS 的美国组参数，以及节点 bootstrap。
-2. 用 Mihomo `-t -d` 在专用临时目录检查真实配置语法，禁止把运行缓存写入用户主目录。
+2. 标准 Mihomo 可用 `-t -d` 在专用临时目录检查。FlClashCore 使用原生 IPC，不能传 Mihomo 命令行参数；先 `validateConfig` 检查 YAML，再隔离 `setupConfig` 检查语义与资源加载。禁止把临时缓存写入用户主目录。
 3. 客户端加载后对抖音、小红书、微信检查 DIRECT；AI 检查美国，Crypto 检查台湾，券商/日本例外检查对应地区。
 4. 检查 DNS 实际出口与连接耗时，再评估吞吐。不要只看网页可打开或健康检查成功。
 
 客户端不同不要求逐字段相同。Surge 的 Host / Enhanced Mode 机制不能搬进 Mihomo；任何新字段都先核对 [Mihomo 官方语义](https://wiki.metacubex.one/config/dns/)。
+
+2026-09-12 FlClash 迁移与优化以 [客户端性能基线](flclash-performance.md) 为准：桌面和安卓使用新文件名；通用末尾改为 cn_direct_light → gfw_precise → DIRECT，完整规则资产保留。工作白名单不接入新兜底，机场手动组保留。桌面 300 秒、安卓 600 秒，备用地区按需检测；以最终生成配置核对界面覆写。

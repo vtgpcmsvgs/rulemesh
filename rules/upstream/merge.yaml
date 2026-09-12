@@ -16,6 +16,18 @@ defaults:
     manual_entries_first: true
 
 merge_plan:
+  - id: cn-direct-light
+    target: rules/direct/cn_direct_light.list
+    purpose: 最终 DIRECT 场景的中国域名冲突保护与原有中国 IP 直连
+    strategy:
+      - generated_from_cn_direct_and_gfw_precise
+      - preserve_all_ip_rules_and_overlapping_domains
+  - id: gfw-precise
+    target: rules/proxy/gfw_precise.list
+    purpose: 具体 GFW 域名代理，不再按顶级域强制代理
+    strategy:
+      - include_loyalsoldier_gfw_only
+      - exact_decodo_service_suffix
   - id: ips5-direct
     target: rules/direct/ips5_direct.list
     purpose: ips5.vip 主域及全部子域直连

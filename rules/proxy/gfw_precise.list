@@ -1,0 +1,10 @@
+# 精确海外代理兜底：只承接明确 GFW 域名与 Decodo 官方主域。
+# 边界：不引入 tld-not-cn 顶级域泛匹配，不以 decodo 关键词代理任意第三方域名。
+# 与 cn_direct_light 配套使用，二者之后必须立即 FINAL/MATCH DIRECT；工作白名单不调用。
+# 旧 gfw 完整源文件与上游快照保留为兼容资产。
+
+# 上游具体域名。
+INCLUDE,upstream/loyalsoldier/gfw.txt
+
+# Decodo 官方服务，仅覆盖主域和子域。
+DOMAIN-SUFFIX,decodo.com

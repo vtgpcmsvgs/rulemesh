@@ -44,7 +44,7 @@
 ```python
 def test_private_mihomo_accepts_approved_cn_dns_policy(self) -> None:
     path = self.write_temp(
-        "rulemesh-substore-mihomo-clash-verge.yaml",
+        "rulemesh-substore-mihomo-flclash-desktop.yaml",
         """ipv6: false
 dns:
   enable: true
@@ -149,7 +149,7 @@ def test_surge_work_requires_exact_domestic_entries_and_reject_final(self) -> No
     self.assertTrue(any("yikaiying.com" in message for message in messages))
 
 def test_mihomo_rejects_stale_health_and_us_match(self) -> None:
-    path = self.write_temp("rulemesh-substore-mihomo-clash-verge.yaml", mihomo_fixture())
+    path = self.write_temp("rulemesh-substore-mihomo-flclash-desktop.yaml", mihomo_fixture())
     messages = [item.message for item in validate_profile(path)]
     self.assertTrue(any("300" in message for message in messages))
     self.assertTrue(any("MATCH" in message for message in messages))
@@ -341,8 +341,8 @@ git commit -m "docs: 记录性能优先分流边界"
 **Files:**
 - Modify: `C:/Users/zaife/Desktop/rulemesh-local/rulemesh-substore-surge-personal.conf:317`
 - Modify: `C:/Users/zaife/Desktop/rulemesh-local/rulemesh-substore-surge-work-whitelist.conf:102-292`
-- Modify: `C:/Users/zaife/Desktop/rulemesh-local/rulemesh-substore-mihomo-clash-verge.yaml:75-105,116-454,887`
-- Modify: `C:/Users/zaife/Desktop/rulemesh-local/rulemesh-substore-mihomo-clash-meta.yaml:75-104,116-454,887`
+- Modify: `C:/Users/zaife/Desktop/rulemesh-local/rulemesh-substore-mihomo-flclash-desktop.yaml:75-105,116-454,887`
+- Modify: `C:/Users/zaife/Desktop/rulemesh-local/rulemesh-substore-mihomo-flclash-android.yaml:75-104,116-454,887`
 - Modify: `C:/Users/zaife/Desktop/rulemesh-local/README.md`
 - Modify: `C:/Users/zaife/Desktop/rulemesh-local/AGENTS.md`
 
@@ -483,7 +483,7 @@ Expected: 构建 0 warning；全部测试与检查通过；`dist/` 只有三条�
 - [ ] **Step 3: 提交私有仓库**
 
 ```powershell
-git -C C:\Users\zaife\Desktop\rulemesh-local add -- rulemesh-substore-surge-personal.conf rulemesh-substore-surge-work-whitelist.conf rulemesh-substore-mihomo-clash-verge.yaml rulemesh-substore-mihomo-clash-meta.yaml README.md AGENTS.md
+git -C C:\Users\zaife\Desktop\rulemesh-local add -- rulemesh-substore-surge-personal.conf rulemesh-substore-surge-work-whitelist.conf rulemesh-substore-mihomo-flclash-desktop.yaml rulemesh-substore-mihomo-flclash-android.yaml README.md AGENTS.md
 git -C C:\Users\zaife\Desktop\rulemesh-local commit -m "feat: 切换为性能优先分流"
 ```
 

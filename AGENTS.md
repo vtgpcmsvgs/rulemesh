@@ -40,18 +40,18 @@
 - 维护解析后的私人当前配置目录中的 `sync_private_subscription_direct.ps1` 这类 Windows PowerShell 私有同步脚本时，不要直接硬编码中文或 emoji 策略组名；UTF-8 无 BOM 的 `.ps1` 在 Windows PowerShell 5.1 下可能被按本地代码页误读，导致 Mihomo / Surge 配置里写出乱码策略组名并触发 `proxy not found`。优先保持脚本源码 ASCII-only，或从目标配置提取现有策略组名后再写回
 - 运行上述私有订阅同步脚本时必须显式传入 `-Target surge`、`-Target mihomo` 或 `-Target all`；用户明确要求只改某一客户端时，只运行对应目标，不得用共享源文件为理由顺带改动另一客户端
 - 上述私有订阅同步脚本在生成 Surge 的 `AND,((PROCESS-NAME,...),(...)),策略名` 逻辑规则时，末尾策略名必须裸写，不要再套双引号；`RULE-SET,...,"🚀 节点选择"` 这类普通规则允许带引号，但 `AND` 规则若写成 `...,"🚀 节点选择"`，Surge 会把引号算进策略名并报 `unknown policy`
-- 维护解析后的私人当前配置目录里的私有机场 provider 时，如果某个机场同时存在“入口域名”和“真实落地主机”，默认两者都要加入私有订阅端点源；优先使用精确 `DOMAIN` / `IP-CIDR`，不要用无必要的宽后缀覆盖，也不要只保留入口域名，否则 Clash Verge / Mihomo 可能在刷新 provider 时走偏、报 EOF，或把本地缓存刷成不完整内容
+- 维护解析后的私人当前配置目录里的私有机场 provider 时，如果某个机场同时存在“入口域名”和“真实落地主机”，默认两者都要加入私有订阅端点源；优先使用精确 `DOMAIN` / `IP-CIDR`，不要用无必要的宽后缀覆盖，也不要只保留入口域名，否则 FlClash 桌面端 / Mihomo 可能在刷新 provider 时走偏、报 EOF，或把本地缓存刷成不完整内容
 - 维护两份 Mihomo 私有配置里的机场 `proxy-providers` 时，默认每个机场 provider 都要显式保留 `proxy: DIRECT`，表示 Mihomo 后台下载 / 更新订阅 URL 直连；普通流量访问这些订阅端点则由 `rules` 中的精确域名 / IP 规则统一交给节点选择，不使用 Surge 的 `PROCESS-NAME + 域名` 逻辑规则，也不要把 `rule-providers` 拉 GitHub 规则集用的代理出站逻辑套到机场订阅 provider 上
 - 对会按请求头协商响应格式的私有机场 provider，先实际探测返回内容；若通用 Mihomo 标识不能稳定返回 Clash YAML，可在该 provider 上显式使用已验证的 `header.User-Agent`，并让两份 Mihomo 配置保持一致
 - 检查当前全部机场 provider 的有效期与可用性时，默认采用 30 秒目标、60 秒上限的只读快速路径：
   - 仅以两份 Mihomo 配置 `proxy-providers` 下的二级键为当前清单，并先核对名称、直属 `url`、`proxy: DIRECT` 与 `header.User-Agent` 是否一致；任一不一致时停止外部探测并先报告配置漂移。解析直属四空格 `url`，不得把六空格的 `health-check.url` 当成订阅地址，也不得用运行目录中的旧缓存反推当前清单
   - 因机场 provider 固定为 `proxy: DIRECT`，订阅探测必须使用相同 User-Agent 且显式绕过系统代理；PowerShell 路径统一使用 `HttpClient` + `SocketsHttpHandler.UseProxy = false`，任务开始即对全局 `CancellationTokenSource` 调用 60 秒 `CancelAfter`，每请求 linked token 再调用 10 秒 `CancelAfter`，并发成批检查 HTTP 状态、顶层 `proxies`、`Subscription-Userinfo` 到期与剩余流量。不得把 `Invoke-WebRequest -OperationTimeoutSeconds` 当作完整请求 deadline；单项只可在全局预算仍充足时短重试一次
-  - 运行中的 Clash Verge Rev 优先读取实际 `external-controller-pipe`，使用 linked token 的 `ConnectAsync` / `WriteAsync` / `ReadAsync` 后只请求一次 `/providers/proxies`；存活节点必须同时满足 `alive = true`，并在读取该 provider 的 `health-check.interval` 后按时间戳选出最新一条 `history`，要求该条 `delay > 0` 且仍在新鲜度窗口内。`history` 为空、过旧或时间不可解析只能报告“存活未知”；`external-controller` 为空时不得猜测 TCP 端口或把 mixed-port 当控制端口
+  - 运行中的 FlClash 只读取实际已配置的 Mihomo HTTP 控制器；`external-controller` 与 `external-controller-pipe` 都为空时报告运行态未知，不能把 FlClash 私有 IPC 当 HTTP 管道。已配置管道使用 linked token 的 `ConnectAsync` / `WriteAsync` / `ReadAsync`，只请求一次 `/providers/proxies`；存活节点必须同时满足 `alive = true`，并按实际客户端的 `health-check.interval` 判断最新 `history` 的新鲜度且 `delay > 0`。`history` 为空、过旧或时间不可解析只能报告“存活未知”；不得猜测 TCP 端口或把 mixed-port 当控制端口
   - 结论必须拆成端点 / 内容、配额、日历有效期与运行态四项：明确 `0 < expire <= now` 或在有效正数 `total` 下 `upload + download >= total` 时总体无效；`Expire = 0`、缺失配额或缺失到期时间只能报告“服务端未提供”，不能擅自解释为永久有效；其余项通过且至少一个节点有近期成功健康历史时才可报告当前可用，个别节点失败不影响结论
   - 默认不得调用可能长时间阻塞的强制 `/healthcheck`、启动隔离 Mihomo、重载客户端或反复试错；运行态不可读时，立即把订阅有效与节点存活拆开报告证据缺口，只有用户明确要求深挖时才升级验证
   - 常规检查由主流程一次完成，不先分派多个重复审计；子审计结果必须由主流程复核后才能使用。输出只保留 provider 名、HTTP 状态、节点计数、存活计数、剩余比例与到期时间，不得输出 URL、token、节点名、server、控制器密钥、header 或响应正文
 - 用 Mihomo 原生 `-t -d` 做临时语法检查时，`-d` 必须指向已确认位于任务临时目录下的专用目录；PowerShell 变量不得使用大小写不敏感的 `$home` / `$HOME`，避免把缓存或数据库误写到用户主目录
-- 私有机场 provider 若发生重命名（例如机场别名变更），除同步更新 `current` 下的 Mihomo / Surge 配置外，还要检查 Clash Verge 运行目录中的旧 provider 缓存、辅助 profile、remote profile 注册项与历史当前项；避免新旧 provider id 并存，导致 UI 继续读取旧缓存或把问题误判成“节点被过滤”
+- 私有机场 provider 若发生重命名（例如机场别名变更），除同步更新 `current` 下的 Mihomo / Surge 配置外，还要检查 FlClash 桌面端 运行目录中的旧 provider 缓存、辅助 profile、remote profile 注册项与历史当前项；避免新旧 provider id 并存，导致 UI 继续读取旧缓存或把问题误判成“节点被过滤”
 - 2026-09-09 用户已批准性能基线：普通业务默认国内双 DoH，海外 AI（含 Google AI）美国出口与独立海外解析；Crypto 台湾、明确日本入口与香港券商保留地区，其余海外代理自动择优。完整约束见 docs/performance-baseline.md；不得恢复旧版默认海外 DNS 和大量镜像 policy。
 - 维护 Surge DNS 时只能使用 `[Host] + DOMAIN-SET` 隔离节点 server 域名；`use-local-host-item-for-proxy` 默认保持 `false`，不要在 Surge 里伪造 Mihomo 的 `proxy-server-nameserver`
 - Surge profile 不要写 `dns-mode = fake-ip`；Fake IP 由 Surge Enhanced Mode / VIF 运行时提供，Mac 端在 Surge 里启用 Enhanced Mode，不要把 Mihomo / Stash 的 `dns-mode` 搬进 Surge
@@ -60,7 +60,7 @@
 - Surge 私有配置允许继续维护自己的复杂 DNS 版本；不要因为 Surge 正常，就反推 Mihomo 私有文件也应保持同样结构
 - 两份 Mihomo 与公开模板采用国内 nameserver + AI 专用 nameserver-policy + 国内 proxy-server-nameserver bootstrap；ipv6、use-hosts、use-system-hosts、respect-rules 均为 false，开启 tcp-concurrent，保留 ARC 与 fake-ip。
 - 新版静态检查与生产运行态必须分别报告。历史 v1.19.25 查询未命中模拟 resolver；即使静态检查已通过，DNS 路由运行时仍未确认时也不得声称已经生效。
-- 两份 Surge Personal、两份 Mihomo 与公开模板的通用 FINAL/MATCH 按 2026-09-12 用户要求使用 DIRECT；仅工作白名单保持 FINAL,REJECT，前置代理规则继续使用指定组；Mihomo provider 与 url-test 保持 interval: 300、lazy: false，全地区 tolerance: 50、美国 tolerance: 100。全地区组只排除套餐占位项，不限制地区标签。
+- 两份 Surge Personal、两份 Mihomo 与公开模板的通用 FINAL/MATCH 按 2026-09-12 用户要求使用 DIRECT；仅工作白名单保持 FINAL,REJECT，前置代理规则继续使用指定组；FlClash 桌面 provider 与 url-test 使用 interval: 300、安卓使用 600；provider 与实际业务组 lazy: false，备用地区组 lazy: true，全地区 tolerance: 50、美国 tolerance: 100。全地区组只排除套餐占位项，不限制地区标签。
 - 七份配置的 ai_us 必须为第一条有效规则并包含 Google AI；国内精选直连、日本精确入口、Crypto 台湾和香港券商在 google_hk 完整 IP 规则前。google_hk 兼容路径和官方完整地址空间保留，普通 Google 流量自动择优。
 - Mihomo 私有文件里的机场 provider `health-check.url` 与 `url-test` 组测速 URL 统一使用 HTTPS `https://www.google.com/generate_204`；不要改回 HTTP
 - `proxy-node-domains` 必须是从 Sub-Store 聚合订阅提取的节点 `server` 域名清单，且必须过滤 IP 并按一行一个域名输出；不得包含订阅链接域名、机场面板域名或普通目标网站域名，也不得输出逗号分隔清单
@@ -111,7 +111,7 @@
 - 新增或调整默认对外使用的规则入口、规则顺序、策略含义或公开模板行为时，必须同步更新 `README.md`、`docs/usage-surge.md`、`docs/usage-mihomo.md`、`docs/examples/surge-public.conf`、`docs/examples/mihomo-public.yaml`
 - 若本次修改影响使用方式、规则组织、构建方式、产物结构或维护约定，必须同步更新相关文档
 - 2026-05-07 下线的两类激进 `reject` 入口不再恢复到源规则、公开模板或私有配置，除非用户明确要求重新启用
-- 私有 `rulemesh-substore-surge-work-whitelist.conf` 属于长期特化的工作路由白名单配置；它与两份 Surge Personal、`rulemesh-substore-mihomo-clash-verge.yaml`、`rulemesh-substore-mihomo-clash-meta.yaml` 从现在起允许永久不一致，不得因为“统一模板”或“对齐 personal 配置”而回滚
+- 私有 `rulemesh-substore-surge-work-whitelist.conf` 属于长期特化的工作路由白名单配置；它与两份 Surge Personal、`rulemesh-substore-mihomo-flclash-desktop.yaml`、`rulemesh-substore-mihomo-flclash-android.yaml` 从现在起允许永久不一致，不得因为“统一模板”或“对齐 personal 配置”而回滚
 - Surge Personal 固定维护家庭版 `rulemesh-substore-surge-personal.conf` 与公司版 `rulemesh-substore-surge-personal-company.conf`；两者只允许用途标识和 MITM 不同，路由与 DNS 结构必须同步。Personal 专用的 `personal_priority_hk`、`notion_hk`、`hk_securities_aggressive`、`apple_direct`、`outlook_direct` 与 `microsoft_store_us` 不得同步进工作白名单
 - 工作配置也使用默认国内 DNS；可保留小型 cn_dns_domains，不引用性能型清单，DNS 调整不授予流量放行。
 - 维护 `rulemesh-substore-surge-work-whitelist.conf` 时，默认应维持“仅放行明确白名单入口，其余流量对工作电脑统一 REJECT”的原则；若要恢复广谱放行（如 `proxy/gfw`、广谱 `direct`、`FINAL` 兜底放行），必须得到用户明确确认
@@ -154,7 +154,7 @@
 - `.rulemesh.local.json`、`%USERPROFILE%\Desktop\rulemesh-local` 整个私人仓库、私有 `policy-path`、真实机场订阅地址、Webhook、AccessKey、STS、`[MITM]` 证书参数、局域网设备分流规则都视为私有内容
 - 默认不要把私有文件内容或敏感值写回公开仓库，也不要在回复中完整回显真实密钥、签名、订阅 URL 或其他敏感参数
 - 即使需要在公开仓库里记录工作路由白名单维护约定，也只允许写“固定工作电脑”“白名单模式”“与 personal 永久不一致”这类抽象说明；不要把真实 `SRC-IP` 范围、私有设备标识、订阅地址或本地策略分组细节写回公开仓库
-- 若 `rulemesh-substore-mihomo-clash-verge.yaml` 出现“某个 provider 全部测速失败，但同一订阅直导 Clash Verge Rev 正常”的现象，默认先对比运行时 `dns:`，并通过 Mihomo API / 命名管道与日志确认实际生效配置；不要先把问题归因到节点失效，也不要只停留在更换测速 URL 这一层
+- 若 `rulemesh-substore-mihomo-flclash-desktop.yaml` 出现“某个 provider 全部测速失败，但同一订阅直导 FlClash 桌面端 正常”的现象，默认先对比运行时 `dns:`，并通过 Mihomo API / 命名管道与日志确认实际生效配置；不要先把问题归因到节点失效，也不要只停留在更换测速 URL 这一层
 - 新版 Mihomo 只允许 AI 专用 policy 与国内节点 bootstrap；respect-rules: true、fallback、direct-nameserver、proxy-server-nameserver-policy 继续禁止。不要把当前已批准 proxy-server-nameserver 误判为旧版回滚。
 - 若本地私有配置结构发生变化，必须同步更新 `.rulemesh.local.example.json` 与相关文档，但只允许写入脱敏占位值
 - 若任务需要参考私有配置，默认只说明字段名、用途与是否生效，不直接暴露真实值
@@ -201,3 +201,11 @@
 
 - 多文件字节保真编辑的锚点须按实际文件换行匹配，不得根据终端显示假定 CRLF；兼容 LF / CRLF 后仍断言唯一，全部预检通过再写入。
 - `tools/check.ps1` 包含重建和会暂时调整产物的测试；必须等待完整进程成功退出后再读取 `dist/`、构建报告或生成提交文件清单，避免并发审计把中间态误报为产物丢失。
+
+## FlClash 迁移与极致优化
+
+- 桌面、安卓唯一现用客户端均为 FlClash，对应私人文件为 rulemesh-substore-mihomo-flclash-desktop.yaml / rulemesh-substore-mihomo-flclash-android.yaml。以 docs/flclash-performance.md 为当前接入、测速、覆写与复测依据；旧客户端缓存和命名管道不能代表 FlClash 运行态。
+- 标准模式导入规则，DNS 覆写关闭；必须检查 preferences 中的 patchClashConfig 和生成 config.yaml。进程匹配 strict，不能直接 off。
+- cn_direct_light 由构建自动推导，只适用于紧接 gfw_precise、最终 DIRECT 的末尾；工作白名单不调用。完整 cn_direct/gfw、AWS/链式和已停用 AdsPower 资产保留。
+- 校验 native validateConfig 只代表 YAML 能解析，需区分真正加载；provider 缓存须位于隔离 home 内。API 404 不能误报节点不可用，DNS UDP 被 TUN 缓存命中不能误报公网解析器更快。
+- 阅读第三方源码前先用 rg --files 确认路径，不能把旧文件布局当作当前事实；脚本依赖用明确运行时路径，临时 PyYAML 不假设系统环境全局可用。

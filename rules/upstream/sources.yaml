@@ -20,6 +20,10 @@ sources:
           note: 广告拦截继续保持小而可读，不引入额外大体量上游
 
   direct:
+    cn_direct_light.list:
+      preferred:
+        - repo: self
+          note: 从 cn_direct 与 gfw_precise 自动生成冲突保护表，保留全部中国 IP 规则，最终必须 DIRECT
     ips5_direct.list:
       preferred:
         - repo: self
@@ -101,6 +105,10 @@ sources:
         - repo: GitHub Docs
           note: 参考 github.com:22 与 ssh.github.com:443 的 SSH 接入说明，避免把网页流量误放直连
   proxy:
+    gfw_precise.list:
+      preferred:
+        - repo: Loyalsoldier/surge-rules
+          note: 只引用 gfw.txt 的具体域名，不引入顶级域泛匹配；本地补 Decodo 官方主域
     adspower_proxy.list:
       preferred:
         - repo: self

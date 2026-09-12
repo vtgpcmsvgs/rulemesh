@@ -82,7 +82,7 @@ Surge：
 
 - `https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/rules/direct/alicloud_hk_ipv4_ssh22_direct.list`
 
-Mihomo / Clash Verge Rev：
+Mihomo / FlClash 桌面端：
 
 - `https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/direct/alicloud_hk_ipv4_ssh22_direct.yaml`
 
@@ -97,7 +97,7 @@ DOMAIN-SUFFIX,aliyuncs.com,DIRECT
 DOMAIN,check.myclientip.com,DIRECT
 ```
 
-Mihomo / Clash Verge Rev：
+Mihomo / FlClash 桌面端：
 
 ```yaml
 rule-providers:

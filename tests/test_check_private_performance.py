@@ -136,7 +136,7 @@ FINAL,REJECT
 
     def test_mihomo_rejects_stale_health_and_us_match(self) -> None:
         path = self.write_temp(
-            "rulemesh-substore-mihomo-clash-verge.yaml",
+            "rulemesh-substore-mihomo-flclash-desktop.yaml",
             self.mihomo_fixture(interval=900, lazy="true", match="美国自动选择", tolerance=150),
         )
 
@@ -158,7 +158,7 @@ FINAL,REJECT
             "  - RULE-SET,hk_securities_aggressive,香港自动选择\n",
             "",
         )
-        path = self.write_temp("rulemesh-substore-mihomo-clash-verge.yaml", content)
+        path = self.write_temp("rulemesh-substore-mihomo-flclash-desktop.yaml", content)
 
         messages = [
             item.message for item in check_private_performance.validate_profile(path)
@@ -176,7 +176,7 @@ FINAL,REJECT
             "  hk_securities_aggressive:\n",
             "  unrelated_provider:\n",
         )
-        path = self.write_temp("rulemesh-substore-mihomo-clash-verge.yaml", content)
+        path = self.write_temp("rulemesh-substore-mihomo-flclash-desktop.yaml", content)
 
         messages = [
             item.message for item in check_private_performance.validate_profile(path)
@@ -194,7 +194,7 @@ FINAL,REJECT
             "dist/mihomo/classical/region/hk/hk_securities_aggressive.yaml",
             "dist/mihomo/classical/region/hk/hk_brokers.yaml",
         )
-        path = self.write_temp("rulemesh-substore-mihomo-clash-verge.yaml", content)
+        path = self.write_temp("rulemesh-substore-mihomo-flclash-desktop.yaml", content)
 
         messages = [
             item.message for item in check_private_performance.validate_profile(path)
@@ -212,7 +212,7 @@ FINAL,REJECT
             "RULE-SET,hk_securities_aggressive,香港自动选择",
             "RULE-SET,hk_securities_aggressive,自动选择",
         )
-        path = self.write_temp("rulemesh-substore-mihomo-clash-verge.yaml", content)
+        path = self.write_temp("rulemesh-substore-mihomo-flclash-desktop.yaml", content)
 
         messages = [
             item.message for item in check_private_performance.validate_profile(path)
@@ -232,7 +232,7 @@ FINAL,REJECT
             "  - RULE-SET,reject_adblock,REJECT\n"
             "  - RULE-SET,hk_securities_aggressive,香港自动选择\n",
         )
-        path = self.write_temp("rulemesh-substore-mihomo-clash-meta.yaml", content)
+        path = self.write_temp("rulemesh-substore-mihomo-flclash-android.yaml", content)
 
         messages = [
             item.message for item in check_private_performance.validate_profile(path)
@@ -250,7 +250,7 @@ FINAL,REJECT
             "RULE-SET,hk_google,香港自动选择",
             "RULE-SET,hk_google,美国自动选择",
         )
-        path = self.write_temp("rulemesh-substore-mihomo-clash-meta.yaml", content)
+        path = self.write_temp("rulemesh-substore-mihomo-flclash-android.yaml", content)
 
         messages = [item.message for item in check_private_performance.validate_profile(path)]
 
@@ -292,7 +292,7 @@ FINAL,REJECT
 """,
         )
         mihomo = self.write_temp(
-            "rulemesh-substore-mihomo-clash-meta.yaml",
+            "rulemesh-substore-mihomo-flclash-android.yaml",
             self.mihomo_fixture(interval=300, lazy="false", match="自动选择", tolerance=100),
         )
 

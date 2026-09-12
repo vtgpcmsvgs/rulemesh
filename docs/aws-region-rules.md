@@ -36,7 +36,7 @@ Surge：
 - 首尔：`https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/rules/region/kr/seoul_aws_ipv4.list`
 - 台北：`https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/rules/region/tw/taipei_aws_ipv4.list`
 
-Mihomo / Clash Verge Rev：
+Mihomo / FlClash 桌面端：
 
 - 香港：`https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/hk/hk_aws_ipv4.yaml`
 - 东京：`https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/jp/tokyo_aws_ipv4.yaml`
@@ -56,7 +56,7 @@ RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/r
 RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/rules/region/tw/taipei_aws_ipv4.list,TW-AUTO,no-resolve
 ```
 
-Mihomo / Clash Verge Rev：
+Mihomo / FlClash 桌面端：
 
 ```yaml
 rule-providers:

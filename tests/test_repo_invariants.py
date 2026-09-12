@@ -626,7 +626,7 @@ class RepoInvariantTests(unittest.TestCase):
 
         self.assertLess(
             surge.index("region/hk/wps_kdocs.list,\"♻️ 自动选择\""),
-            surge.index("direct/cn_direct.list,DIRECT"),
+            surge.index("direct/cn_direct_light.list,DIRECT"),
         )
         self.assertLess(
             surge.index("region/hk/wps_kdocs.list,\"♻️ 自动选择\""),

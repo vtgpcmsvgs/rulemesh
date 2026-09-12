@@ -30,12 +30,12 @@ SURGE_CONFIG_NAMES = (
 )
 MIHOMO_CONFIG_NAMES = (
     "mihomo-public.yaml",
-    "rulemesh-substore-mihomo-clash-verge.yaml",
-    "rulemesh-substore-mihomo-clash-meta.yaml",
+    "rulemesh-substore-mihomo-flclash-desktop.yaml",
+    "rulemesh-substore-mihomo-flclash-android.yaml",
 )
 MIHOMO_SINGLE_DNS_TRUTH_CONFIG_NAMES = (
-    "rulemesh-substore-mihomo-clash-verge.yaml",
-    "rulemesh-substore-mihomo-clash-meta.yaml",
+    "rulemesh-substore-mihomo-flclash-desktop.yaml",
+    "rulemesh-substore-mihomo-flclash-android.yaml",
 )
 MIHOMO_SINGLE_DNS_TRUTH_FORBIDDEN_KEYS = {
     "proxy-server-nameserver",
@@ -538,8 +538,8 @@ def default_paths(repo_root: Path) -> list[Path]:
                 private_config_root
                 / "rulemesh-substore-surge-personal-company.conf",
                 private_config_root / "rulemesh-substore-surge-work-whitelist.conf",
-                private_config_root / "rulemesh-substore-mihomo-clash-verge.yaml",
-                private_config_root / "rulemesh-substore-mihomo-clash-meta.yaml",
+                private_config_root / "rulemesh-substore-mihomo-flclash-desktop.yaml",
+                private_config_root / "rulemesh-substore-mihomo-flclash-android.yaml",
             ]
         )
 

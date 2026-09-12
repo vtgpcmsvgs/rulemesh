@@ -570,7 +570,7 @@ FINAL,AUTO
     use: [provider_a]
     filter: "(?i)香港|\\bhk\\b|美国|\\bus\\b"""
         return self.write_profile(
-            "rulemesh-substore-mihomo-clash-verge.yaml",
+            "rulemesh-substore-mihomo-flclash-desktop.yaml",
             f"""dns:
   nameserver:
     - https://cloudflare-dns.com/dns-query
