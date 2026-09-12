@@ -205,7 +205,7 @@
 ## FlClash 迁移与极致优化
 
 - 桌面、安卓唯一现用客户端均为 FlClash，对应私人文件为 rulemesh-substore-mihomo-flclash-desktop.yaml / rulemesh-substore-mihomo-flclash-android.yaml。以 docs/flclash-performance.md 为当前接入、测速、覆写与复测依据；旧客户端缓存和命名管道不能代表 FlClash 运行态。
-- 标准模式导入规则，DNS 覆写关闭；必须检查 preferences 中的 patchClashConfig 和生成 config.yaml。进程匹配 strict，不能直接 off。
+- 标准模式导入规则，DNS 覆写关闭；必须检查 preferences 中的 patchClashConfig 和生成 config.yaml。源文件进程匹配 strict；FlClash 0.8.97 界面只接受 always/off，实际保留 always 以支持进程规则，不能写入无效 strict 或直接 off。先检查客户端枚举再改字段，不能将内核支持等同于界面支持。
 - cn_direct_light 由构建自动推导，只适用于紧接 gfw_precise、最终 DIRECT 的末尾；工作白名单不调用。完整 cn_direct/gfw、AWS/链式和已停用 AdsPower 资产保留。
 - 校验 native validateConfig 只代表 YAML 能解析，需区分真正加载；provider 缓存须位于隔离 home 内。API 404 不能误报节点不可用，DNS UDP 被 TUN 缓存命中不能误报公网解析器更快。
 - 阅读第三方源码前先用 rg --files 确认路径，不能把旧文件布局当作当前事实；脚本依赖用明确运行时路径，临时 PyYAML 不假设系统环境全局可用。

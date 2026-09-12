@@ -204,7 +204,7 @@ def check(path: Path, lines: list[str]) -> list[str]:
     else:
         require(not groups[auto].filter_text, "全地区 url-test 组不得限定地区标签。")
         require("tcp-concurrent: true" in lines and "ipv6: false" in lines, "Mihomo 必须开启 TCP 并发并保留 IPv4 基线。")
-        require("find-process-mode: strict" in lines, "FlClash 必须按需识别进程，避免 always 开销或 off 使进程规则失效。")
+        require("find-process-mode: strict" in lines, "Mihomo 源文件应保留按需识别进程；FlClash 界面覆写能力需另行实机验证。")
         values, policies = dns._parse_mihomo_dns(lines)
         require(values == DOMESTIC, "Mihomo 默认业务 DNS 应为国内双 DoH。")
         require(len(policies) == 1 and policies[0].providers == ("us_ai",), "Mihomo 仅保留 AI 专用 DNS policy。")
