@@ -301,6 +301,14 @@ proxy-groups:
     exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
 
 rule-providers:
+  direct_ips5:
+    type: http
+    behavior: classical
+    format: yaml
+    url: https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/direct/ips5_direct.yaml
+    path: ./ruleset/direct/ips5_direct.yaml
+    interval: 86400
+    proxy: "♻️ 自动选择"
   direct_cn_social:
     type: http
     behavior: classical
@@ -324,15 +332,6 @@ rule-providers:
     format: yaml
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/reject/os_update_reject.yaml"
     path: ./ruleset/reject/os_update_reject.yaml
-    interval: 86400
-    proxy: "♻️ 自动选择"
-
-  reject_adspower:
-    type: http
-    behavior: classical
-    format: yaml
-    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/reject/adspower_reject.yaml"
-    path: ./ruleset/reject/adspower_reject.yaml
     interval: 86400
     proxy: "♻️ 自动选择"
 
@@ -435,15 +434,6 @@ rule-providers:
     interval: 86400
     proxy: "♻️ 自动选择"
 
-  proxy_adspower:
-    type: http
-    behavior: classical
-    format: yaml
-    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/proxy/adspower_proxy.yaml"
-    path: ./ruleset/proxy/adspower_proxy.yaml
-    interval: 86400
-    proxy: "♻️ 自动选择"
-
   proxy_polygon_rpc:
     type: http
     behavior: classical
@@ -495,15 +485,6 @@ rule-providers:
     format: yaml
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/direct/github_ssh_direct.yaml"
     path: ./ruleset/direct/github_ssh_direct.yaml
-    interval: 86400
-    proxy: "♻️ 自动选择"
-
-  direct_adspower:
-    type: http
-    behavior: classical
-    format: yaml
-    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/direct/adspower_direct.yaml"
-    path: ./ruleset/direct/adspower_direct.yaml
     interval: 86400
     proxy: "♻️ 自动选择"
 
@@ -621,6 +602,7 @@ rules:
   - RULE-SET,direct_ai_cn,DIRECT
   - RULE-SET,direct_bytedance,DIRECT
   - RULE-SET,direct_cn_social,DIRECT
+  - RULE-SET,direct_ips5,DIRECT
   - RULE-SET,jp_domains,🇯🇵 日本-自动选择
   - RULE-SET,tw_crypto,🇨🇳 台湾-自动选择
   - RULE-SET,hk_securities_aggressive,🇭🇰 香港-自动选择
@@ -634,7 +616,6 @@ rules:
   - DOMAIN-SUFFIX,yikaiying.com,DIRECT
   - RULE-SET,reject_adblock,REJECT
   - RULE-SET,reject_os_update,REJECT
-  - RULE-SET,reject_adspower,REJECT
   - RULE-SET,us_microsoft,♻️ 自动选择
   - RULE-SET,us_macos_update,♻️ 自动选择
   - RULE-SET,hk_telegram,♻️ 自动选择
@@ -642,8 +623,6 @@ rules:
   - RULE-SET,hk_global_media,♻️ 自动选择
   - RULE-SET,direct_github_ssh,DIRECT
   - RULE-SET,proxy_github_core,♻️ 自动选择
-  - RULE-SET,direct_adspower,DIRECT
-  - RULE-SET,proxy_adspower,♻️ 自动选择
   - RULE-SET,proxy_polygon_rpc,🇨🇳 台湾-自动选择
   - RULE-SET,proxy_bsc_rpc,🇨🇳 台湾-自动选择
   - RULE-SET,proxy_overseas_dns_ipv4,♻️ 自动选择,no-resolve

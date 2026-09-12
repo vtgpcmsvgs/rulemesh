@@ -20,6 +20,10 @@ sources:
           note: 广告拦截继续保持小而可读，不引入额外大体量上游
 
   direct:
+    ips5_direct.list:
+      preferred:
+        - repo: self
+          note: ips5.vip 主域及全部子域直连，独立服务入口，不扩展到其他服务商或节点 IP
     aisi_direct.list:
       preferred:
         - repo: self

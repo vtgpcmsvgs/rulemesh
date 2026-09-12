@@ -27,6 +27,8 @@
 
 ## DNS
 
+2026-09-12 补充：AdsPower 在全部当前配置中停用，保留仓库规则资产；`direct/ips5_direct` 以 DIRECT 覆盖 `ips5.vip` 及全部子域，位于 AI 之后、Google 广谱与拒绝之前。停用流程见 [规则停用与恢复](rule-deactivation.md)，校验同时防止残留 provider、观察兜底和新直连入口被抢先覆盖。
+
 普通业务默认使用 AliDNS 与 DNSPod 两个国内 DoH，减少国内 CDN 调度偏差及海外解析绕行。不再为普通代理、拒绝或地区规则镜像大量海外 DNS policy，也不重复加载十万条性能型 DNS 专用域名清单。原清单仍保留为可选规则资产。
 
 Surge 保留 `use-local-host-item-for-proxy = false`、`hijack-dns = *:53` 与 `encrypted-dns-follow-outbound-mode = true`。`[Host]` 第一项将 `ai_us` 指定到 Cloudflare DoH，独立 `region/us/ai_dns_us` 规则集使用相同美国组；GitHub Raw 规则下载保留同一解析例外。节点域名仍通过 Sub-Store 的 `proxy-node-domains` 分享文件单独 bootstrap，不能写入订阅域名或 IP。

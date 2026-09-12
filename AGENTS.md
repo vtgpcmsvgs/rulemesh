@@ -27,7 +27,7 @@
 
 - 在 Codex Windows 沙箱里，`python` / `py -3` 可能不可用，即使 Python 已安装
 - 使用 `rg` 搜索以连字符开头的模式（例如 `-Target`）时，必须在模式前加 `--`，避免被解析成命令行选项
-- PowerShell 不会替 `rg` 展开 `tools/check*.py` 这类路径通配符；应改用 `rg <pattern> tools --glob 'check*.py'`，避免 Windows 将星号路径直接传给 `rg` 后报路径语法错误
+- PowerShell 不会替 `rg` 展开任何路径通配符（包括 `tools/check*.py`、`docs/examples/*`）；统一传实际目录并用 `--glob` 筛选。读取未确认存在的文件前先用 `rg --files` 定位，避免从业务简称猜测文件名；命令失败必须立即处理，不能由后续读取成功掩盖。
 - PowerShell 的语句级 `foreach (...) { ... }` 不能直接在右花括号后接管道；需要继续 `Format-Table`、`Where-Object` 等处理时，先把循环结果赋给任务专用变量，或用 `@(...)` 收集后再接管道
 - PowerShell 的 `New-Item` 不支持 `-LiteralPath`；创建已验证的明确路径时使用 `-Path`，不要把其他文件 cmdlet 的参数习惯直接套用到 `New-Item`
 - `rg` 未命中时会以退出码 `1` 结束；把“确认不存在”作为预期结果的审计命令应单独处理该退出码，避免让后续已完成的检查被误报为失败
@@ -119,7 +119,7 @@
 - region/hk/wps_kdocs 仍是工作白名单精确放行入口，位于 FINAL,REJECT 前；当前自动择优并使用默认国内 DNS，不再强制香港与海外解析。
 - GitHub 在该工作路由文件中除 `github_ssh_direct` 外，还允许紧随其后保留 `DOMAIN,raw.githubusercontent.com` 下载入口与一条广覆盖 `DOMAIN-KEYWORD,github` 观察兜底；它们用于显式放行 GitHub Raw 规则产物下载，并发现 SSH / Raw 之外的漏网之鱼，不得被“去重”或“收敛”掉
 - GitHub Raw 下载链路默认还应保留独立 `[Host]` 解析例外；当前私有配置使用 `raw.githubusercontent.com = server:https://cloudflare-dns.com/dns-query`，避免规则产物下载回落到本地/国内系统 DNS；但这不是代理节点 bootstrap，不能影响 `proxy-node-domains` 继续使用 AliDNS DoH
-- AdsPower 在该工作路由文件中除精细 `adspower_direct` / `adspower_proxy` 外，还允许紧随其后保留一条广覆盖 `DOMAIN-KEYWORD,adspower` 观察兜底；它是故意用于发现细分规则漏网之鱼的，不得被“去重”或“收敛”掉
+- AdsPower 按 2026-09-12 用户要求在五份私有配置与两份公开模板停用：移除三类调用、专用 provider 和工作观察兜底，保留主清单、源规则、登记、派生器与产物；重新启用须用户明确要求。
 - Outlook 直连覆盖邮件、精确共享登录与认证资源，不扩大到 Microsoft 根域；共享认证也影响其他应用。默认国内 DNS 已获批准，Microsoft Store 使用自动代理，不再固定美国。
 - 上述工作路由白名单特化只适用于工作路由文件本身，不自动扩散到两个 `personal` 配置，也不要把 `personal` 配置的通用结构反向覆盖到该工作路由文件
 - 只要工作路由白名单逻辑、适用范围、维护边界发生变化，必须同步更新 `docs/surge-work-cluster-whitelist.md`、`README.md` 与相关使用说明，避免后续失忆式回滚
@@ -196,3 +196,8 @@
 - 机场手动组是用户明确保留的界面功能，不得以无规则引用、规则不可达或性能精简为由删除。三份私人 Surge 当前各七组，保留原订阅和过滤器、可见并接入手动选择入口；数量变更须同步保护检查。停用 AWS 设备组不能波及机场组。
 - 归并规则先确认既有规则集覆盖和首条命中顺序；Google Play 复用 google_hk，Surge Personal 爱思复用 aisi_direct，Apple 官方更新复用 apple_direct。ai_dns_us 单独保证 Surge AI DoH 美国出口，不扩大工作白名单或机械增加 Mihomo provider。私有 SRC-IP、端点及同步标记不写入公开规则。
 - 多文件修改先完成全部唯一锚点和数量预检再写入；补丁存在空更新区块等格式错误时立即修正并重新预检，不得假设已部分成功。
+
+规则停用约定：从授权配置移除调用、内联观察项与专用 provider / DNS 依赖，保留远程源规则、登记、构建逻辑和产物；暂停专用定时任务，共用任务只停对应专用步骤，通用构建保留。重新启用须用户明确要求。AdsPower 为当前停用实例，细则见公开仓库 docs/rule-deactivation.md。`ips5.vip` 独立使用 direct/ips5_direct，AI 之后、Google 广谱和拒绝之前 DIRECT，沿用国内 DNS。
+
+- 多文件字节保真编辑的锚点须按实际文件换行匹配，不得根据终端显示假定 CRLF；兼容 LF / CRLF 后仍断言唯一，全部预检通过再写入。
+- `tools/check.ps1` 包含重建和会暂时调整产物的测试；必须等待完整进程成功退出后再读取 `dist/`、构建报告或生成提交文件清单，避免并发审计把中间态误报为产物丢失。

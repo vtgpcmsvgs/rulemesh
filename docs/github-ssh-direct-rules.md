@@ -27,7 +27,7 @@
 3. `direct/github_ssh_direct`
 4. Surge 专用：`DOMAIN,raw.githubusercontent.com,"🚀 节点选择"` 自举入口
 5. `proxy/github_core_proxy`
-6. 其他更细的专项 carve-out，例如 `direct/adspower_direct`、`proxy/adspower_proxy`、`proxy/polygon_rpc_proxy`、`proxy/bsc_rpc_proxy`
+6. 其他更细的专项 carve-out，例如 `proxy/polygon_rpc_proxy`、`proxy/bsc_rpc_proxy`
 7. `proxy/gfw`
 8. 其他普通 `direct/*`
 9. IP 规则
@@ -48,7 +48,7 @@ Mihomo / Clash Verge Rev：
 Surge：
 
 ```ini
-# 必须放在 GitHub Core / proxy/gfw.list 前；中间仍可继续插入 AdsPower / Polygon RPC / BSC RPC 等更细专项规则
+# 必须放在 GitHub Core / proxy/gfw.list 前；中间仍可继续插入 Polygon RPC / BSC RPC 等更细专项规则
 RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/rules/direct/github_ssh_direct.list,DIRECT
 DOMAIN,raw.githubusercontent.com,"🚀 节点选择"
 RULE-SET,https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/rules/proxy/github_core_proxy.list,"🚀 节点选择"
@@ -76,7 +76,7 @@ rule-providers:
     interval: 86400
 
 rules:
-  # 必须放在 proxy_github_core / proxy_gfw 前；中间仍可继续插入 AdsPower / Polygon RPC / BSC RPC 等更细专项规则
+  # 必须放在 proxy_github_core / proxy_gfw 前；中间仍可继续插入 Polygon RPC / BSC RPC 等更细专项规则
   - RULE-SET,direct_github_ssh,DIRECT
   - RULE-SET,proxy_github_core,🚀 节点选择
   - RULE-SET,proxy_gfw,🚀 节点选择

@@ -1,11 +1,11 @@
 {
   "summary": {
-    "domain-only": 12,
+    "domain-only": 13,
     "ipcidr-only": 7,
     "classical/mixed": 26,
     "dns-domain-set": 2,
     "empty": 0,
-    "total_sources": 47,
+    "total_sources": 48,
     "total_warnings": 0
   },
   "sources": [
@@ -137,6 +137,19 @@
       "dist": {
         "surge_rules": "dist/surge/rules/direct/github_ssh_direct.list",
         "mihomo_classical": "dist/mihomo/classical/direct/github_ssh_direct.yaml"
+      }
+    },
+    {
+      "source": "rules/direct/ips5_direct.list",
+      "category": "direct",
+      "classification": "domain-only",
+      "counts": {
+        "surge_rules": 1,
+        "mihomo_classical": 1
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/direct/ips5_direct.list",
+        "mihomo_classical": "dist/mihomo/classical/direct/ips5_direct.yaml"
       }
     },
     {

@@ -16,7 +16,7 @@
 3. 日本明确访问例外、Crypto 台湾、香港券商与 Personal 香港证券。
 4. Google 通用业务自动择优，保留官方完整地址空间。
 5. Personal 精选规则与既有拒绝规则；Apple / Outlook 直连及 Microsoft Store 优先入口保持各自边界。
-6. 其他精确业务、GitHub SSH/Raw/Core、AdsPower、Polygon/BSC RPC、订阅端点与 DNS 出口。
+6. 其他精确业务、GitHub SSH/Raw/Core、Polygon/BSC RPC、订阅端点与 DNS 出口。
 7. LAN、系统时间、阿里云 TCP/22 和其他国内直连。
 8. `gfw` 使用全地区 smart；未命中前置规则时 `FINAL,DIRECT,dns-failed`，工作白名单保持 `FINAL,REJECT`。
 
@@ -37,7 +37,7 @@ GitHub Raw 继续保留独立海外解析入口 `raw.githubusercontent.com = ser
 - GitHub SSH 直连必须先于 GitHub Core / gfw，Raw 自举入口独立存在，GitHub 网页和 API 使用自动代理。
 - Outlook 邮件、精确共享登录和认证资源直连，不扩展到整个 Microsoft 根域；共享认证被其他应用复用时也直连。
 - 阿里云远程 SSH 规则之前保留只限 TCP/22 的内联兜底；`aliyuncs.com` 和 `check.myclientip.com` 保持既有精确直连。普通配置不恢复阿里云广谱观察放行。
-- AdsPower 保留拒绝、直连、代理三类规则；1Password 可按需接入其专用产物。
+- AdsPower 的拒绝、直连、代理调用及工作观察兜底已停用，远程资产继续保留；1Password 可按需接入其专用产物。
 - 工作文件保留既有观察规则、设备条件与最终拒绝，不复制 Personal 专用入口。
 
 ## 分发与维护
@@ -49,3 +49,5 @@ GitHub Raw 继续保留独立海外解析入口 `raw.githubusercontent.com = ser
 相关说明：[工作白名单](surge-work-cluster-whitelist.md)、[订阅端点同步](private-subscription-direct-sync.md)、[GeoIP](geoip-upstream.md)、[DNS 边界](network-security/dns-leak-prevention.md)、[只读本地监控](surge-local-monitoring.md)。监控只生成调查建议，仍须分开取得调查和执行授权，不因本次性能维护改变该流程。
 
 机场手动组必须独立保留并在选择入口可访问，不能因普通规则直接使用自动组而删除。公开模板提供单机场占位示例；私人三份 Surge 各保留七组。爱思规则集中在 `direct/aisi_direct`（仅 Personal）；Google Play 重复项复用 `google_hk`；AI DNS 用 `region/us/ai_dns_us` 绑定美国，早于设备、加密 DNS 协议和最终兜底。
+
+2026-09-12：`direct/ips5_direct` 以 DIRECT 覆盖 `ips5.vip` 主域及全部子域，位于 AI 之后、Google 广谱与拒绝之前，使用默认国内双 DoH；工作白名单仅增加该服务。AdsPower 停用范围、资产与定时任务处理见[规则停用与恢复](rule-deactivation.md)。

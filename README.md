@@ -154,10 +154,10 @@ python tools/build_rules.py
 
 - 工作白名单保持最终 `FINAL,REJECT` 和既有设备条件，只补充微信、小红书精选直连，不增加 cn_direct / gfw 广谱放行；Personal 专项入口不得复制进去。
 - 家庭和公司两份 Surge Personal 只允许用途说明与 MITM 不同，路由与 DNS 同步；两份 Mihomo 的 provider 和地区策略同步。
-- GitHub SSH 精确直连先于 Core / gfw；Raw 自举入口与海外 Host 解析独立保留。工作文件已有 GitHub、AdsPower 观察规则不能被通用去重删除。
+- GitHub SSH 精确直连先于 Core / gfw；Raw 自举入口与海外 Host 解析独立保留。工作文件已有 GitHub 观察规则保留；AdsPower 观察规则已按用户要求停用。
 - Outlook 邮件、精确共享认证与资源直连，不放宽 Microsoft 根域。WPS、Notion、Microsoft Store 等普通代理自动择优，香港证券保留香港。
 - 阿里云 SSH 仅 TCP/22 的内联兜底必须先于远程规则；阿里控制面与出口探测精确直连保留。已登记设备的阿里业务条件仍保留源地址，普通代理策略改为自动组。
-- AdsPower 继续维护主清单并生成 reject/direct/proxy；Polygon、BSC 和可选 1Password 等上游持续更新，不直接替换掉本地定制规则。
+- AdsPower 保留主清单与 reject/direct/proxy 产物，当前配置不再调用；Polygon、BSC 和可选 1Password 等上游持续更新，不直接替换掉本地定制规则。
 - Surge 测速保留 HTTP，Mihomo 保留 HTTPS；Surge 不写 dns-mode 或 proxy-server-nameserver。传统 DNS 接管、节点 bootstrap、IPv4 基线与微信本机回环例外继续保留。
 - 私有订阅下载后台 DIRECT 与普通端点自动代理是不同连接；同步脚本按明确 Target 执行，且必须保留同步块起止标记。
 - 2026-05-07 下线的激进拒绝入口不恢复；本地只读监控仍使用 RM-INV / RM-EXEC 两阶段授权，不自动修改配置。
@@ -285,3 +285,5 @@ ai_us 同时承接 OpenAI、Claude、Copilot、Cursor、Grok、Windsurf、Augmen
 - 目标是同时兼顾：上游的精准全面 + 本地兜底的抗失效能力。
 
 机场策略与配置精简：三份私人 Surge 的七个机场手动组分别保留并接回选择入口，不按规则引用数量删除。Personal 爱思入口集中为 `direct/aisi_direct`；Apple 更新和 Google Play 复用既有规则集；Surge AI DNS 的美国出口集中为 `region/us/ai_dns_us`。Mihomo 保持已有组与 DNS 代理参数，不扩大业务范围。设备地址及订阅端点继续只在私人仓库维护，详见 [性能基线](docs/performance-baseline.md)。
+
+2026-09-12：`direct/ips5_direct` 以 DIRECT 覆盖 `ips5.vip` 主域及全部子域，位于 AI 之后、Google 广谱与拒绝之前，使用默认国内双 DoH；工作白名单仅增加该服务。AdsPower 停用范围、资产与定时任务处理见[规则停用与恢复](docs/rule-deactivation.md)。

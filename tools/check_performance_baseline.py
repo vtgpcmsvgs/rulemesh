@@ -89,6 +89,7 @@ def check(path: Path, lines: list[str]) -> list[str]:
             rules.append((index, parts))
         identifiers = {
             BASE + "surge/rules/region/us/ai_us.list": "ai",
+            BASE + "surge/rules/direct/ips5_direct.list": "ips5",
             BASE + "surge/rules/direct/bytedance_direct.list": "douyin",
             BASE + "surge/rules/direct/cn_social_direct.list": "social",
             BASE + "surge/rules/region/hk/google_hk.list": "google",
@@ -99,11 +100,12 @@ def check(path: Path, lines: list[str]) -> list[str]:
         groups = dns._parse_mihomo_groups(lines)
         auto_groups = [name for name, group in groups.items() if group.group_type == "url-test"]
         rules = dns._parse_mihomo_rules(lines)
-        identifiers = {"us_ai": "ai", "direct_bytedance": "douyin", "direct_cn_social": "social", "hk_google": "google"}
+        identifiers = {"us_ai": "ai", "direct_ips5": "ips5", "direct_bytedance": "douyin", "direct_cn_social": "social", "hk_google": "google"}
         providers = dns._parse_mihomo_providers(lines)
         for name, identifier in {
             "us_ai": "region/us/ai_us", "direct_bytedance": "direct/bytedance_direct",
             "direct_cn_social": "direct/cn_social_direct", "hk_google": "region/hk/google_hk",
+            "direct_ips5": "direct/ips5_direct",
         }.items():
             require(name in providers and providers[name][1] == BASE + f"mihomo/classical/{identifier}.yaml", f"Mihomo {name} 必须引用规范公开产物。")
 
@@ -116,9 +118,9 @@ def check(path: Path, lines: list[str]) -> list[str]:
     for position, (_, parts) in enumerate(rules):
         if len(parts) >= 3 and parts[0] == "RULE-SET" and parts[1] in identifiers:
             selected.setdefault(identifiers[parts[1]], []).append((position, parts))
-    for identifier in ("ai", "douyin", "social", "google"):
+    for identifier in ("ai", "douyin", "social", "ips5", "google"):
         require(len(selected.get(identifier, [])) == 1, f"{identifier} 必须有且只有一个显式入口。")
-    if not all(len(selected.get(key, [])) == 1 for key in ("ai", "douyin", "social", "google")):
+    if not all(len(selected.get(key, [])) == 1 for key in ("ai", "douyin", "social", "ips5", "google")):
         return errors
     ai_position, ai_rule = selected["ai"][0]
     us = ai_rule[2]
@@ -137,10 +139,12 @@ def check(path: Path, lines: list[str]) -> list[str]:
         if identifier.startswith("region/"):
             require(position < selected["google"][0][0], "地区必需入口必须早于 Google 完整 IP 地址空间。")
     require(all(key in fixed_positions for key in ("region/tw/crypto_tw", "region/jp/domains_to_jp", "region/hk/hk_brokers")), "缺少 Crypto 台湾、日本明确入口或香港券商专项规则。")
-    for key in ("douyin", "social"):
+    for key in ("douyin", "social", "ips5"):
         position, parts = selected[key][0]
         require(parts[2] == "DIRECT", f"{key} 必须直连。")
         require(ai_position < position < selected["google"][0][0], f"{key} 必须在 AI 之后、Google 广谱规则之前。")
+    # 停用只撤销配置调用和专用注册；保留源规则与产物，以便明确授权后恢复。
+    require(not any("adspower" in line.lower() for line in lines if line.strip() and not line.lstrip().startswith(("#", ";", "//"))), "AdsPower 已停用，配置不得保留调用、观察兜底或专用 provider / DNS 入口。")
     for position, (_, parts) in enumerate(rules):
         if not parts:
             continue
@@ -155,6 +159,7 @@ def check(path: Path, lines: list[str]) -> list[str]:
             require(target in {"DIRECT", "REJECT", "REJECT-DROP", "REJECT-TINYGIF"}, "规则引用未知策略。")
         if "REJECT" in target:
             require(position > selected["social"][0][0], "国内精选直连必须早于拒绝规则。")
+            require(position > selected["ips5"][0][0], "ips5 直连必须早于拒绝规则。")
     finals = [parts for _, parts in rules if parts[0] in {"FINAL", "MATCH"}]
     require(len(finals) == 1 and finals[0][1] == ("REJECT" if work else "DIRECT"), "最终兜底必须为 DIRECT，工作白名单必须保持 REJECT。")
     if work:

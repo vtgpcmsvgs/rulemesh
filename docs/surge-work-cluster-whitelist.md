@@ -10,7 +10,7 @@
 2. 抖音和新增微信、小红书精选入口前置 DIRECT，不增加整个腾讯或中国通用白名单。
 3. 日本明确访问例外、Crypto 台湾、香港券商香港先于 Google 通用入口。
 4. Google 普通业务与完整地址空间、WPS 和其他已批准代理入口自动择优。
-5. 保留既有拒绝、设备条件、GitHub SSH/Raw/Core、1Password、AdsPower、订阅端点、Polygon/BSC RPC、DNS、LAN、系统时间和指定直连。
+5. 保留既有拒绝、设备条件、GitHub SSH/Raw/Core、1Password、订阅端点、Polygon/BSC RPC、DNS、LAN、系统时间和指定直连。
 6. 其余连接最终 `FINAL,REJECT`。
 
 AWS IP 与链式 SOCKS5 设备分流调用已停用；仓库源规则与产物保留。其他设备条件不扩大成全流量放行。阿里业务的既有源地址条件保留，出口改为自动组。
@@ -19,7 +19,7 @@ AWS IP 与链式 SOCKS5 设备分流调用已停用；仓库源规则与产物�
 
 - 不接入 `proxy/gfw`、`direct/cn_direct`、网易或哔哩哔哩广谱直连。Personal 的 Apple、Outlook、Notion、personal_priority、香港证券增强和 Microsoft Store 专项不复制进工作文件。
 - WPS 保留显式入口，自动代理并早于最终拒绝。`zsxq.com`、`yikaiying.com` 的既有精确 DIRECT 继续保留。
-- GitHub SSH carve-out、Raw 下载、Core 规则和已有 GitHub 广覆盖观察项独立保留；AdsPower 三类规则与已有观察兜底也保持原动作。不得把观察规则因去重而删除或扩大放行。
+- GitHub SSH carve-out、Raw 下载、Core 规则和已有 GitHub 广覆盖观察项独立保留；AdsPower 三类规则与观察兜底已按用户要求全部停用，仓库资产继续保留。GitHub 观察项仍不得因通用去重而删除。
 - 订阅源只在私人目录维护，起止标记必须保留。`-Target surge` 同步浏览器自动代理例外和普通订阅更新 DIRECT；其他客户端不因共享源顺带改动。
 - Polygon/BSC RPC 与 Crypto 同属台湾出站；1Password 和其他无地区要求的白名单代理用自动组。
 - 阿里云 SSH 保留 TCP/22 内联兜底、远程 `DIRECT,no-resolve` 与指定控制面、出口探测直连；不扩展端口或恢复阿里云广谱放行。
@@ -38,3 +38,5 @@ Surge Enhanced Mode 由客户端启用，profile 不写 dns-mode；保留 localh
 每次修改白名单逻辑同步本文件、README、使用说明与私有配置；验证最终拒绝、精确放行、同步标记和地区例外。通用性能调整不授权扩大设备或业务范围。安装在 Mac 的只读监控遵守原有两阶段审批，不自动执行配置变更。
 
 工作配置恢复七个机场手动选择组；它们只提供策略界面入口，不授予新的流量放行。AI DNS 归并保持原有精确主机和规则位置；Personal 爱思规则不扩入工作白名单。
+
+2026-09-12：`direct/ips5_direct` 以 DIRECT 覆盖 `ips5.vip` 主域及全部子域，位于 AI 之后、Google 广谱与拒绝之前，使用默认国内双 DoH；工作白名单仅增加该服务。AdsPower 停用范围、资产与定时任务处理见[规则停用与恢复](rule-deactivation.md)。

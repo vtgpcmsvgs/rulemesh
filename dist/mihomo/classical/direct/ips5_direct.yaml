@@ -1,0 +1,4 @@
+# 生成来源：rules/direct/ips5_direct.list
+# 行为：classical
+payload:
+  - "DOMAIN-SUFFIX,ips5.vip"

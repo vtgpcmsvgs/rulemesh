@@ -38,7 +38,7 @@
 3. `direct/github_ssh_direct`
 4. Surge 专用：`DOMAIN,raw.githubusercontent.com,"🚀 节点选择"` 自举入口
 5. `proxy/github_core_proxy`
-6. 其他更细的专项入口，例如 AdsPower / Polygon RPC / BSC RPC / Google Public DNS / 1Password
+6. 其他更细的专项入口，例如 Polygon RPC / BSC RPC / Google Public DNS / 1Password
 7. `proxy/gfw`
 8. 其他普通 `direct/*`
 9. IP 规则

@@ -16,6 +16,15 @@ defaults:
     manual_entries_first: true
 
 merge_plan:
+  - id: ips5-direct
+    target: rules/direct/ips5_direct.list
+    purpose: ips5.vip 主域及全部子域直连
+    strategy:
+      - manual_only
+      - explicit_service_domain_suffix
+    notes:
+      - 七份配置在 AI 之后、Google 广谱和拒绝之前以 DIRECT 调用，使用默认国内 DNS
+
   - id: aisi-direct
     target: rules/direct/aisi_direct.list
     purpose: Surge Personal 爱思精选直连，Apple 更新复用既有 Apple 直连规则

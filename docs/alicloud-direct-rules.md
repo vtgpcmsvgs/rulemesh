@@ -38,7 +38,7 @@
 - `IP-ASN,45102/134963/24429`：承接静态快照同步间隙的新公告；ASN 数据库可能滞后，因此不能替代静态 CIDR
 - `RULE-SET,.../direct/alicloud_hk_ipv4_ssh22_direct...,DIRECT,no-resolve`：阿里云香港 SSH TCP/22 入口
 - `DOMAIN-SUFFIX,aliyuncs.com,DIRECT`：阿里云 SSH 控制面入口
-- `DOMAIN,check.myclientip.com,DIRECT`：AdsPower / 阿里云隧道出口探测入口
+- `DOMAIN,check.myclientip.com,DIRECT`：阿里云隧道共用出口探测入口
 - 它们统一放在直连段显式维护；工作白名单模式下还允许在其后追加一条阿里云广覆盖 `REJECT` 观察兜底，用于发现上游阿里云规则的漏网之鱼
 - 工作白名单模式下，广覆盖观察规则统一只允许使用 `REJECT`；除 `REJECT` 外不要对 `DIRECT` 或 `PROXY` 规则使用 `extended-matching`
 

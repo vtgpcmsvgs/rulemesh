@@ -15,7 +15,7 @@
 
 Google 普通业务、流媒体、WPS、Notion、GitHub及其他精确代理规则使用全地区自动组；未命中前置规则时 `MATCH,DIRECT`。既有前置 DIRECT/REJECT 规则保持作用；Polymarket 从媒体入口移入 Crypto。AWS IP 与链式代理 provider 和调用均停用，仓库资产继续维护。
 
-GitHub SSH 精确直连在 Core / gfw 前；国内通用直连在 gfw 前。阿里云 SSH 继续保留仅 TCP/22 的内联兜底与 `DIRECT,no-resolve` 调用。AdsPower 的三类入口、系统时间同步与可选 1Password 规则继续保留。Surge 的工作白名单不会扩散到 Mihomo。
+GitHub SSH 精确直连在 Core / gfw 前；国内通用直连在 gfw 前。阿里云 SSH 继续保留仅 TCP/22 的内联兜底与 `DIRECT,no-resolve` 调用。AdsPower 三类调用与专用 provider 已停用，远程资产继续保留；系统时间同步与可选 1Password 规则继续保留。Surge 的工作白名单不会扩散到 Mihomo。
 
 ## DNS、测速与连接
 
@@ -36,3 +36,5 @@ Clash Verge Rev 的 720 分钟外层更新时间隔是 profile 元数据，不�
 规则更新执行 `tools/build_rules.ps1` 与 `tools/check.ps1`；原生语法检查的 `-d` 必须是任务临时目录下的专用路径。相关说明：[DNS/TUN](mihomo-tun-dns-methodology.md)、[过滤](proxy-group-filter-methodology.md)、[订阅同步](private-subscription-direct-sync.md)、[GeoIP](geoip-upstream.md)。
 
 配置精简优先复用已有规则集；Google Play / Android 已由 `hk_google` 覆盖。Surge 专用的 `ai_dns_us` 传输规则和 Personal 爱思入口不机械复制到 Mihomo，AI DNS 继续通过 DoH URL 的美国代理参数生效。既有策略组保持；机场手动入口不能仅因没有规则引用而删除。
+
+2026-09-12：`direct/ips5_direct` 以 DIRECT 覆盖 `ips5.vip` 主域及全部子域，位于 AI 之后、Google 广谱与拒绝之前，使用默认国内双 DoH；工作白名单仅增加该服务。AdsPower 停用范围、资产与定时任务处理见[规则停用与恢复](rule-deactivation.md)。
