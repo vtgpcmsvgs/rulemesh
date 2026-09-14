@@ -378,8 +378,8 @@
       "category": "region",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 490,
-        "mihomo_classical": 490
+        "surge_rules": 491,
+        "mihomo_classical": 491
       },
       "dist": {
         "surge_rules": "dist/surge/rules/region/hk/hk_securities_aggressive.list",
