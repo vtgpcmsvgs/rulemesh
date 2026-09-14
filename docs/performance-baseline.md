@@ -27,7 +27,7 @@
 
 ## DNS
 
-2026-09-14 安卓下载修复是本基线的窄例外：Google/Play 使用独立 fallback 稳定组，同组海外 DoH 的 `rule-set:hk_google` 位于 AI policy 后，并使用进程兜底和定向 UDP/443 REJECT。国内默认、节点 bootstrap、AI 美国与其他地区约束仍保留。下文“唯一 AI policy”和普通 Google 自动组默认值适用于桌面与公开模板；安卓以 [专项保护](android-network-repair.md) 为准。
+2026-09-14 安卓下载修复是本基线的窄例外：Google/Play 使用独立 fallback 稳定组，同组海外 DoH 的 `rule-set:hk_google` 位于 AI policy 后，并使用进程兜底。保留 QUIC，禁止恢复已导致实机 Cronet 重试的 Google/Play UDP/443 拒绝。国内默认、节点 bootstrap、AI 美国与其他地区约束仍保留。下文“唯一 AI policy”和普通 Google 自动组默认值适用于桌面与公开模板；安卓以 [专项保护](android-network-repair.md) 为准。
 
 2026-09-12 补充：AdsPower 在全部当前配置中停用，保留仓库规则资产；`direct/ips5_direct` 以 DIRECT 覆盖 `ips5.vip` 及全部子域，位于 AI 之后、Google 广谱与拒绝之前。停用流程见 [规则停用与恢复](rule-deactivation.md)，校验同时防止残留 provider、观察兜底和新直连入口被抢先覆盖。
 

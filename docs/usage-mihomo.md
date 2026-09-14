@@ -29,7 +29,7 @@ GeoIP 使用 `geodata-mode: false`，`geox-url.mmdb` 直接引用 [MetaCubeX cou
 
 ## 客户端与维护
 
-安卓反复出现 Play 下载转圈时，采用 [安卓下载保护](android-network-repair.md)：Google 专用 fallback 组、同组海外 DNS、系统下载进程兜底、Google UDP/443 定向 REJECT。系统下载管理器替其他应用发起的下载也会走代理；必须实机验收持续下载进度，不能只测商店首页。
+安卓反复出现 Play 下载转圈时，采用 [安卓下载保护](android-network-repair.md)：Google 专用 fallback 组、同组海外 DNS、系统下载进程兜底，并保留 QUIC。实机已发现拒绝 UDP/443 会导致 Cronet 协议错误及下载重试，不能强制其回退 TCP。手机使用全应用 VPN，关闭系统代理与允许绕过，开启 DNS 劫持；这些开关须在 FlClash 界面设置，不能仅导入 YAML。系统下载管理器替其他应用发起的下载也会走代理；必须实机完成整包安装，不能只测商店首页。
 
 
 私有订阅端点源修改后仅在已授权目标上运行 `sync_private_subscription_direct.ps1 -Target mihomo`；普通端点规则使用全地区自动组，后台订阅仍直连。不要输出真实 URL、token、节点名或 server。

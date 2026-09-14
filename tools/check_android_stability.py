@@ -17,8 +17,8 @@ def active(path: Path, lines: list[str]) -> bool:
     return path.name == PROFILE or MARKER in lines
 
 
-def quic_rules() -> list[str]:
-    # 使用明确 REJECT，不能用静默 DROP 等待超时，也不能关闭全部 UDP。
+def retired_quic_rules() -> list[str]:
+    # 实机 Cronet 未可靠回退，旧定向拒绝会引发网络错误；仅用于检测回归。
     matchers = ["RULE-SET,hk_google", *(f"PROCESS-NAME,{p}" for p in PACKAGES)]
     return [f"AND,((NETWORK,udp),(DST-PORT,443),({m})),REJECT" for m in matchers]
 
@@ -60,17 +60,20 @@ def check(path: Path, lines: list[str]) -> list[str]:
         end = next((i for i in range(start, len(lines)) if lines[i].startswith("  - name:") or re.match(r"^[\w-]+:", lines[i])), len(lines))
         block = lines[start:end]
         require(any(re.fullmatch(r'    url:\s*[\"\']?https://www\.google\.com/generate_204[\"\']?', s) for s in block), "Google 稳定组必须使用 HTTPS 连通性检查。")
-        require(not any(re.match(r"    disable-udp:\s*true", s) for s in block), "Google 不能用 disable-udp 替代前置拒绝，否则可能跳过代理规则。")
+        require(not any(re.match(r"    disable-udp:\s*true", s) for s in block), "Google 稳定组必须保留 UDP 能力，不能强制 Cronet 回退或跳过代理规则。")
     health = health_groups.get(target)
     require(health is not None and health.interval == "600" and health.lazy == "false", "Google 稳定组必须每 600 秒主动检查。")
     rules = [parts for _, parts in parser._parse_mihomo_rules(lines)]
     codes = [",".join(parts) for parts in rules]
     google = next((i for i, p in enumerate(rules) if p[:2] == ["RULE-SET", "hk_google"]), -1)
     reject = next((i for i, p in enumerate(rules) if p[:2] == ["RULE-SET", "reject_adblock"]), len(rules))
-    required = quic_rules()
-    for rule in required:
-        require(codes.count(rule) == 1 and 0 < codes.index(rule) < google if rule in codes else False,
-                "Google 域名与下载进程的 UDP/443 必须在 Google 放行前明确 REJECT。")
+    for code in codes:
+        compact = re.sub(r"\s+", "", code).lower()
+        rejects_udp = "network,udp" in compact and compact.rsplit(",", 1)[-1].startswith("reject")
+        google_scope = "rule-set,hk_google" in compact or any(f"process-name,{p}" in compact for p in PACKAGES)
+        global_quic = compact.startswith("and,((network,udp),(dst-port,443)),") or compact.startswith("and,((dst-port,443),(network,udp)),")
+        require(not (rejects_udp and (google_scope or global_quic)),
+                "不得恢复 Google/Play UDP/443 拒绝：实机 Cronet 会发生协议错误及下载重试。")
     for package in PACKAGES:
         rule = f"PROCESS-NAME,{package},{target}"
         require(codes.count(rule) == 1 and google < codes.index(rule) < reject if rule in codes else False,

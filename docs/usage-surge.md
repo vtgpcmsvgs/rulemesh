@@ -2,7 +2,7 @@
 
 当前公开参考配置是 [surge-public.conf](examples/surge-public.conf)，适合个人终端。五份私有配置与公开模板共同遵循 [2026-09-09 性能基线](performance-baseline.md)；工作白名单仍有独立放行边界。
 
-2026-09-14 [安卓网络修复](android-network-repair.md) 的 Google 稳定组、进程规则与 DNS 例外仅适用于安卓 FlClash。Surge 继续复用 Google/Play 既有域名覆盖，不搬入 Mihomo 的字段，也不因安卓调整扩大工作白名单。
+2026-09-14 [安卓网络修复](android-network-repair.md) 的 Google 稳定组、进程规则与 DNS 例外仅适用于安卓 FlClash。安卓已撤销会导致 Cronet 重试的 UDP/443 拒绝。Surge 继续复用 Google/Play 既有域名覆盖，不搬入 Mihomo 的字段，也不因安卓调整扩大工作白名单。
 
 ## 接入
 

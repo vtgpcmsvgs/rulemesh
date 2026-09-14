@@ -24,7 +24,7 @@ class AndroidStabilityTests(unittest.TestCase):
         text = text.replace("rule-providers:\n", group + "rule-providers:\n", 1)
         policy = '    "rule-set:hk_google":\n' + "".join(f'      - "{url}#{stable}"\n' for url in baseline.OVERSEAS)
         text = text.replace("  fake-ip-filter:\n", policy + "  fake-ip-filter:\n", 1)
-        rules = android.quic_rules() + ["RULE-SET,hk_google," + stable]
+        rules = ["RULE-SET,hk_google," + stable]
         rules += [f"PROCESS-NAME,{package},{stable}" for package in android.PACKAGES]
         text = text.replace("  - RULE-SET,hk_google," + auto, "\n".join("  - " + rule for rule in rules), 1)
         return Path(android.PROFILE), text
@@ -33,15 +33,28 @@ class AndroidStabilityTests(unittest.TestCase):
         path, text = self.fixture()
         self.assertEqual(baseline.check(path, text.splitlines()), [])
 
-    def test_download_processes_and_quic_cannot_be_removed_or_shadowed(self):
+    def test_download_processes_cannot_be_removed_or_shadowed(self):
         path, text = self.fixture()
-        protected = android.quic_rules() + [f"PROCESS-NAME,{p},下载稳定" for p in android.PACKAGES]
+        protected = [f"PROCESS-NAME,{p},下载稳定" for p in android.PACKAGES]
         for rule in protected:
             line = "  - " + rule
             for changed in (text.replace(line + "\n", ""), text.replace(line + "\n", "") + "\n" + line):
                 with self.subTest(rule=rule):
                     self.assertTrue(android.check(path, changed.splitlines()))
-        self.assertTrue(android.check(path, text.replace(",REJECT\n", ",REJECT-DROP\n").splitlines()))
+
+    def test_cronet_quic_rejection_cannot_return(self):
+        path, text = self.fixture()
+        retired = android.retired_quic_rules() + [
+            "AND,((NETWORK,udp),(DST-PORT,443)),REJECT",
+            "AND,((DST-PORT,443),(NETWORK,udp)),REJECT",
+        ]
+        for rule in retired:
+            for reject in ("REJECT", "REJECT-DROP"):
+                changed = text.replace("rules:\n", "rules:\n  - " + rule.replace("REJECT", reject) + "\n")
+                with self.subTest(rule=rule, reject=reject):
+                    self.assertTrue(android.check(path, changed.splitlines()))
+        disabled = text.replace("type: fallback", "type: fallback\n    disable-udp: true")
+        self.assertTrue(android.check(path, disabled.splitlines()))
 
     def test_google_dns_must_follow_ai_and_use_same_download_group(self):
         path, text = self.fixture()
