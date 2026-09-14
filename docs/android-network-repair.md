@@ -23,16 +23,30 @@
 
 运行态 DNS 复测：导入后 AI 查询曾出现超时，重建 VPN 后 `chatgpt.com` 与 `play.googleapis.com` 均返回成功；同时观察到 Cloudflare/Google DoH 分别经过 AI 美国组和 Google 稳定组。大智慧、滴滴域名查询也成功，但控制器连接列表没有暴露内核的国内 DoH 直连套接字，国内 DNS 出口仍以有效配置为证，未完成独立抓包确认。ADB 的启动命令曾超时，实际 VPN 随后恢复；验收以恢复后的查询与连接为准，不能把命令超时写成操作成功。
 
-FlClash 0.8.97 源码默认：标准模式、DNS 覆写关闭、进程识别 `always`、VPN 开启、应用访问控制关闭、VPN 系统代理开启、允许绕过开启、全端口 DNS 劫持关闭。本机已从备份核对这些值，并实际修改为：系统代理关闭、允许应用绕过关闭、DNS 劫持开启；VPN、全应用接管、IPv6 关闭及进程识别继续保留。重建 VPN 后核对生效，避免浏览器 HTTP 代理与应用 VPN/DNS 接管路径分离。
+FlClash 0.8.97 源码默认：标准模式、DNS 覆写关闭、进程识别 `always`、VPN 开启、应用访问控制关闭、VPN 系统代理开启、允许绕过开启、全端口 DNS 劫持关闭。本机已从备份核对这些值，并实际修改为：系统代理关闭、允许应用绕过关闭、DNS 劫持开启；VPN、全应用接管、IPv6 关闭及进程识别继续保留。第一次验收只核对了保存值，随后用户反馈大智慧仍有空白组件；系统层发现旧 VPN HTTP 代理仍存在。完整停止并启动 VPN 后，才确认实际移除，详见下文补充验收。
 
 这些是客户端设置，不能靠修改 YAML 的桌面 TUN 字段宣称已经完成。换手机、清除 FlClash 数据或重装后，应重新核对。浏览器若另外设置了自定义安全 DNS，须单独检查其解析路径，不能把 HTTP 状态错误都归因于 DNS。
 
 ## 大智慧与滴滴的处理方案
 
 - Google/YouTube 网页：Chrome 普通 Google 首页、搜索结果及 YouTube 首页均加载。最初 Google 返回 `/m` 的 HTTP 404，访问 `/ncr` 后普通入口恢复；这是服务端已返回页面，不能记录成 DNS 或 TCP 不通。没有清除 Chrome 全部数据。
-- 大智慧：确认包名 `com.android.dazhihui`；“统一股份 600506”的分时、日 K、成交量和 MACD 均完整显示。业务域名及专用 TCP/12345 连接走 DIRECT 且有持续返回，未发现需要新增规则的实际失败入口，因此保留既有源规则与 Fake IP。该结果证明当前页面可用，不证明原故障唯一由某个开关造成。
+- 大智慧：首轮曾观察到单只股票分时和日 K 加载，但用户随后确认多个组件仍无数据，首轮结果不能作为整体验收。补充复测捕获空白报价及行情连接错误，并发现运行中的 VPN 仍发布旧 HTTP 代理；完整停止、启动 VPN 后同页恢复，重开应用后多个股票、自选曲线、日 K 与行情总览均加载。继续保留既有源规则与 Fake IP，未新增未经证实的域名或应用绕过项。
 - 滴滴：确认包名 `com.sdu.didi.psnger`；历史订单页面已加载，主要业务请求和 TCP/25641 长连接为 DIRECT 且有返回。系统 `RUN_ANY_IN_BACKGROUND` 为允许，但这不覆盖所有厂商省电机制。没有可复现的真实行程结束事件，订单即时更新与长期后台推送仍未验收；没有创建、支付或改变任何订单。
 - Mac Surge 当前没有用户确认的同类故障；本次下载例外只在安卓启用。Surge 的域名覆盖已随共用资产检查，但未连接 Mac 验证运行时，不能称其运行态完全正常。
+
+### 大智慧补充验收：保存值与实际 VPN 不一致
+
+用户确认 Google、YouTube 和 Play 已恢复，但大智慧“有的组件有网、有的没网”。同一时刻的证据为：界面和备份中的 `vpnProps.systemProxy` 均为 `false`，Android 活动 FlClash VPN 的 `LinkProperties` 却仍带回环 HTTP 代理。大智慧部分连接进入 HTTP/HTTPS 代理入口，行情 TCP/12346 反复没有返回，并出现关联的 `dns resolve failed`；其他资讯与广告连接已直连成功，因此不能用“应用已有返回流量”判定全部恢复。
+
+这次保持 YAML、Fake IP、DNS policy 和分流规则不变，在 FlClash 仪表盘完整停止 VPN，再启动。Android 系统层确认新的活动 VPN 已没有 `HttpProxy`，同一空白页面恢复报价、分时、五档、成交量与日 K；TCP/12345 从 Tun 入口 DIRECT 返回数据。再强制结束并重开大智慧，多个原先为空的自选报价、迷你曲线和行情总览均恢复，期间没有再次捕获大智慧的 DNS 错误。没有清除应用数据、修改自选或执行交易。
+
+DNS 复测中，`chatgpt.com`、`play.googleapis.com`、`www.gw.com.cn`、`dsp.dzh.com.cn` 均成功；AI/Google 的 DoH 仍分别经过既定美国组/稳定组。国内 DNS 出口仍保留前述独立抓包限制。此轮活动 VPN 的底层为移动数据，不能把系统历史中的 Wi-Fi 条目当成当前网络。
+
+完整重建 VPN 后还追加一次 Play 回归：VLC 完整下载 33,081,623 字节并安装成功，`attempt=0`，安装完成时间 71.232 秒，未捕获 `1404` 或 `ERR_QUIC_*`。这一次样本与前一轮三次下载分开记录，确认真正移除 VPN HTTP 代理后下载仍可完成。
+
+迁移、恢复备份或修改 VPN 开关后，必须完整停止并启动 FlClash VPN，再检查系统运行态；只关闭应用窗口、导入 YAML 或看到开关为关闭都不足以验收。新增只读工具 `tools/check_android_vpn_runtime.py --adb <adb.exe 的实际路径>`：读取唯一 USB 设备，确认活动 VPN 归属 FlClash 且不带 HTTP 代理；输出仅计数、布尔值和错误类型。它不修改手机，不替代 DNS 出口和业务验收，也不自动加入无人连接手机时的构建流程。
+
+解析器测试覆盖 `CELLULAR|VPN`、`WIFI|VPN`、历史记录、其他 VPN、断开状态、残留代理和未知字段格式。运行态无法唯一确认时失败，不把缺失证据写成开关已生效。
 
 ## 验收、回滚与证据边界
 
@@ -71,5 +85,7 @@ FlClash 0.8.97 源码默认：标准模式、DNS 覆写关闭、进程识别 `al
 - 诊断采集设置时限、停止标记与更新时间；采集结束或失败后不再把旧文件当实时结果。安装日志按时间和任务重试分开记录，不能按状态全局去重后把后一次下载误当首次。并发 DNS 探测逐项保留成功和错误，禁止一个异常吞掉其他结果。
 - 全仓复核发现 README 仍引用旧分层 DNS 白名单并混淆 DNS `fallback` 与代理组 `type: fallback`，已替换为现行基线和安卓窄例外；检查和维护时必须按字段所属节判断，避免旧说明诱发回滚。
 - DocumentsUI 的面包屑包含 Download，不代表当前就在该目录根部；导出后应先确认成功提示和实际文件位置，再读取备份。收尾用唯一文件名定位、校验 ZIP 与文件哈希后复制到明确的任务目录，避免把路径错误误判为导出失败。
+- 补充复测纠正了“保存值等于生效值”的错误假设：VPN 开关变更必须通过完整停止/启动和系统 `LinkProperties` 验收；传输可能为 `CELLULAR|VPN`，不能只搜索固定字符串 `Transports: VPN`。这两项已写入只读检查器与回归测试。
+- ADB 启动应用先解析当前 launcher activity；自绘图表标签可能不在 UI 文本树中，应以当前截图确定位置。截图生成命令返回运行中会话时，必须等其成功退出后再读取文件，不能把尚未生成误报为丢失。
 
 参考：[Mihomo 路由规则](https://wiki.metacubex.one/config/rules/)、[DNS](https://wiki.metacubex.one/config/dns/)、[Fallback](https://wiki.metacubex.one/config/proxy-groups/fallback/)、[内置策略](https://wiki.metacubex.one/config/proxies/built-in/)、[FlClash 源码](https://github.com/chen08209/FlClash)、[大智慧官网](https://www.gw.com.cn/)。

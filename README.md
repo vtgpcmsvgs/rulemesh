@@ -285,3 +285,5 @@ ai_us 同时承接 OpenAI、Claude、Copilot、Cursor、Grok、Windsurf、Augmen
 2026-09-12 FlClash 迁移与优化以 [客户端性能基线](docs/flclash-performance.md) 为准：桌面和安卓使用新文件名；通用末尾改为 cn_direct_light → gfw_precise → DIRECT，完整规则资产保留。工作白名单不接入新兜底，机场手动组保留。桌面 300 秒、安卓 600 秒，备用地区按需检测；以最终生成配置核对界面覆写。
 
 2026-09-14 安卓下载保护继续复用 `google_hk`，AI 美国入口保持第一。Google/Play 使用稳定优先的 fallback 组，DNS 与下载使用同组；五个下载相关进程提供兜底，保留 QUIC。实机 Cronet 在 UDP/443 被拒绝时出现协议错误和反复重试，已撤销这项拒绝并加入防回归检查。国内解析不变，Mac/桌面保留原基线。客户端接管设置、大智慧/滴滴结果和下载验收见 [安卓网络修复](docs/android-network-repair.md)。
+
+大智慧补充复测发现：关闭系统代理的保存值没有让旧 VPN 的 HTTP 代理立即消失，完整停止并启动 VPN 后多个空白行情组件才恢复。迁移、恢复或修改 VPN 设置后，用 `tools/check_android_vpn_runtime.py --adb <实际路径>` 只读核对系统运行态，并复测实际失败页面；不能只凭 YAML、备份或开关状态验收。

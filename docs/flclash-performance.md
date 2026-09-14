@@ -6,6 +6,8 @@
 
 2026-09-14 安卓的 Google/Play 下载采用 [专项保护](android-network-repair.md)：稳定优先组、Google 专项 DNS、下载进程兜底和全应用 VPN 接管，保留 QUIC；实机暴露 Cronet 回退兼容问题后已撤销 UDP/443 拒绝。本文件中的普通 Google 自动择优与唯一 AI policy 仍适用于桌面，安卓以专项说明为准。文件检查、隔离内核和实机下载必须分开报告。
 
+安卓开关修改或备份恢复后，还须完整停止并启动 VPN，用 `tools/check_android_vpn_runtime.py --adb <实际路径>` 核对系统层不再发布旧 HTTP 代理。大智慧补充复测曾出现界面已经关闭、运行态仍保留代理的情况，导致多个行情组件空白；保存的 `vpnProps` 不能代替这一步。
+
 - 桌面：`rulemesh-substore-mihomo-flclash-desktop.yaml`。
 - 安卓：`rulemesh-substore-mihomo-flclash-android.yaml`。
 - 两份文件位于独立私人仓库根目录；同步脚本与公开检查使用新文件名。文件级分享链接也必须切换到新文件名。

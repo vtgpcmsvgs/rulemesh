@@ -206,6 +206,7 @@
 
 - 2026-09-14 安卓 Google 下载使用独立 fallback 稳定组，同组海外 DoH 在 AI policy 后；五个下载相关包保留进程兜底和 QUIC，AI 仍第一条。实机 Cronet 在 UDP/443 被拒绝时发生协议错误、1404 网络错误和重试，禁止恢复 Google/Play 定向拒绝或用 disable-udp 强制回退。默认国内 DNS、节点 bootstrap、其他地区例外不变；不得机械扩散到桌面或 Surge。配置及验收边界见 docs/android-network-repair.md，必须通过 check_android_stability.py。
 - ADB 读取、模拟点击、应用私有数据访问是三个独立能力；设备拒绝时按系统授权边界处理。UI/API 输出必须在输出前白名单脱敏。诊断复用解析器前检查字段定义，构建器传绝对源路径；第三方文件路径先枚举，任何错误立即中止依赖步骤。
+- 安卓 VPN 开关的保存值不等于生效值。修改或恢复后必须完整停止/启动 FlClash VPN，并用 tools/check_android_vpn_runtime.py 检查 Android 活动 VPN 不再携带旧 HTTP 代理；系统传输可能是 CELLULAR|VPN 或 WIFI|VPN，不能只匹配 Transports: VPN。业务验收覆盖用户实际失败的多个组件及应用重开，不能凭单页短暂成功宣称整个应用恢复。
 
 - 桌面、安卓唯一现用客户端均为 FlClash，对应私人文件为 rulemesh-substore-mihomo-flclash-desktop.yaml / rulemesh-substore-mihomo-flclash-android.yaml。以 docs/flclash-performance.md 为当前接入、测速、覆写与复测依据；旧客户端缓存和命名管道不能代表 FlClash 运行态。
 - 标准模式导入规则，DNS 覆写关闭；必须检查 preferences 中的 patchClashConfig 和生成 config.yaml。源文件进程匹配 strict；FlClash 0.8.97 界面只接受 always/off，实际保留 always 以支持进程规则，不能写入无效 strict 或直接 off。先检查客户端枚举再改字段，不能将内核支持等同于界面支持。
