@@ -63,6 +63,7 @@ def check(path: Path, lines: list[str]) -> list[str]:
     # 延迟导入避免旧版入口与新版基线互相导入时形成循环。
     import check_private_dns_precedence as dns
     import check_private_performance as performance
+    import check_android_stability as android
 
     errors: list[str] = []
 
@@ -72,6 +73,8 @@ def check(path: Path, lines: list[str]) -> list[str]:
 
     work = "work-whitelist" in path.name
     surge = path.suffix == ".conf"
+    android_repair = not surge and android.active(path, lines)
+    google_stable = android.stable_target(lines) if android_repair else ""
     if path.name.startswith("rulemesh-substore-"):
         for marker in ("PRIVATE_SUBSCRIPTION_DIRECT_START", "PRIVATE_SUBSCRIPTION_DIRECT_END"):
             require(sum(marker in line for line in lines) == 1, "私有订阅同步块的起止标记必须完整保留。")
@@ -154,7 +157,8 @@ def check(path: Path, lines: list[str]) -> list[str]:
         is_ai_dns = surge and parts[:2] == ["RULE-SET", AI_DNS_RULE]
         if target in groups:
             if position not in fixed_positions.values():
-                require(target == (us if is_ai or is_ai_dns else auto), "无明确地区要求的代理规则仍绑定地区或手动组。")
+                expected_target = us if is_ai or is_ai_dns else google_stable if android_repair and android.allowed_stable_rule(parts) else auto
+                require(target == expected_target, "无明确地区要求的代理规则仍绑定地区或手动组。")
         else:
             require(target in {"DIRECT", "REJECT", "REJECT-DROP", "REJECT-TINYGIF"}, "规则引用未知策略。")
         if "REJECT" in target:
@@ -207,9 +211,9 @@ def check(path: Path, lines: list[str]) -> list[str]:
         require("find-process-mode: strict" in lines, "Mihomo 源文件应保留按需识别进程；FlClash 界面覆写能力需另行实机验证。")
         values, policies = dns._parse_mihomo_dns(lines)
         require(values == DOMESTIC, "Mihomo 默认业务 DNS 应为国内双 DoH。")
-        require(len(policies) == 1 and policies[0].providers == ("us_ai",), "Mihomo 仅保留 AI 专用 DNS policy。")
+        require(len(policies) == (2 if android_repair else 1) and policies[0].providers == ("us_ai",), "Mihomo 仅保留 AI 专用 DNS policy；安卓下载保护可追加 Google 专项。")
         expected = tuple(f"{endpoint}#{us}" for endpoint in OVERSEAS)
-        require(len(policies) == 1 and policies[0].nameservers == expected, "AI 的两个海外 DoH 必须显式指定实际美国组。")
+        require(bool(policies) and policies[0].nameservers == expected, "AI 的两个海外 DoH 必须显式指定实际美国组。")
         block = []
         active = False
         for line in lines:
@@ -249,4 +253,6 @@ def check(path: Path, lines: list[str]) -> list[str]:
                 direct_count += bool(re.fullmatch(r"    proxy:\s*[\"']?DIRECT[\"']?", line))
         require(provider_count > 0 and provider_count == direct_count, "所有机场 provider 的下载出站必须为 DIRECT。")
         require(not any("http://www.google.com/generate_204" in line for line in lines if not line.lstrip().startswith("#")), "Mihomo 测速必须使用 HTTPS。")
+    if android_repair:
+        errors.extend(android.check(path, lines))
     return list(dict.fromkeys(errors))

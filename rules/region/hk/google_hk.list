@@ -1,10 +1,10 @@
 # Google 通用服务兼容入口：按“完整上游域名 + 产品专项 + 激进关键词 + 官方 IP 地址空间”维护。
 # 维护约束：
-# 1) Google、YouTube、Google Play、Workspace、FCM 等服务使用全地区自动选择；路径保留以兼容已有订阅。
+# 1) Google、YouTube、Google Play、Workspace、FCM 默认全地区自动选择；安卓下载保护使用独立稳定组，路径保留兼容。
 # 2) 本文件位于海外 AI 美国入口和国内精选直连之后、广告拒绝和广谱兜底之前。
 # 3) Google AI 专项维护在 region/us/ai_us.list，必须先匹配美国入口。
-# 4) 官方 goog.json 地址空间完整纳入，不扣除 Google Cloud 客户地址；第三方 GCP 服务也使用自动选择。
-# 5) 普通 Google 与 Google DNS 连接均以性能优先；AI DNS 独立使用美国出口。
+# 4) 官方 goog.json 地址空间完整纳入，不扣除 Google Cloud 客户地址；第三方 GCP 服务也交给本入口的目标组。
+# 5) 安卓 Google DNS 与下载使用同一稳定组，其他客户端遵循各自性能基线；AI DNS 独立使用美国出口。
 
 # Google 通用服务：完整上游主体优先，覆盖搜索、账号、Gmail、Workspace、静态资源与公共接口。
 INCLUDE,upstream/blackmatrix7/google.list

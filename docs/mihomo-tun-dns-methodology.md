@@ -4,6 +4,8 @@
 
 ## 当前结构
 
+2026-09-14 安卓下载保护允许在 AI policy 后增加 `hk_google` 的同组海外 DoH，并使用独立稳定组和下载进程保护；详见 [安卓网络修复](android-network-repair.md)。这是安卓专项例外，不恢复默认海外 DNS 或大量镜像 policy，桌面与公开模板仍使用下述通用结构。
+
 普通业务国内双 DoH；AI 两个海外 DoH 显式指定美国组；国内 `proxy-server-nameserver` 为代理节点提供独立 bootstrap。AI 业务固定美国，Crypto 台湾和其他已登记地区要求仍优先于自动测速。普通代理规则使用全地区自动组；2026-09-12 起未命中前置规则的 MATCH 使用 DIRECT。
 
 保留 `ipv6: false`、`dns.ipv6: false`、`use-hosts: false`、`use-system-hosts: false`、`respect-rules: false`。保留 TUN、UDP/TCP 53 劫持、域名嗅探、fake-ip、ARC 缓存及必要的 fake-ip-filter，开启 TCP 并发。`fallback`、`direct-nameserver`、`proxy-server-nameserver-policy` 不属于这版最小结构。

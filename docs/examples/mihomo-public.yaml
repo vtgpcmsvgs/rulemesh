@@ -1,6 +1,7 @@
 # RuleMesh 性能基线：2026-09-09
 # 国内直连与国内 DNS 优先；AI 美国、Crypto 台湾及已登记地区例外，其余代理自动择优。
 # RuleMesh Mihomo 公开参考模板
+# 安卓 Google 下载专项保护见 docs/android-network-repair.md；本通用模板保留原有路由和单 AI DNS policy。
 # 适用场景：
 # 1. 需要保留多订阅聚合、区域自动切换与完整规则顺序。
 # 2. 需要公开分享配置结构，但不暴露真实机场订阅、控制器或设备分流信息。

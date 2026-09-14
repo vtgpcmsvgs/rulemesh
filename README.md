@@ -145,7 +145,7 @@ python tools/build_rules.py
 - 海外 AI（含 Gemini、AI Studio、NotebookLM）固定美国，第一条规则优先匹配；国内 AI、抖音、小红书、微信直连。
 - Crypto、Polymarket、Polygon/BSC RPC 固定台湾；`opinion.trade` 保留日本访问例外，香港券商与 Personal 证券入口保留香港。明确地区要求优先于测速结果。
 - 命中前置规则的其余海外代理业务使用全地区自动组；未命中规则的 FINAL/MATCH 按 2026-09-12 用户要求使用 DIRECT，仅工作白名单保持 REJECT，不再按国家标签限制候选节点；套餐占位项继续过滤。前置 DIRECT/REJECT 行为继续保留。
-- Google 的 google_hk 兼容路径和完整官方 IP 地址空间保留，普通 Google 服务自动择优；AI、国内精选及地区必需规则都在它前面。
+- Google 的 google_hk 兼容路径和完整官方 IP 地址空间保留，普通 Google 默认自动择优，安卓下载保护使用独立稳定组；AI、国内精选及地区必需规则都在它前面。
 - 国内默认双 DoH，AI 单独通过美国解析；Mihomo 开启 TCP 并发，保留 ARC、fake-ip，桌面 300 秒、安卓 600 秒主动测速。默认国内 DNS 后不再重复加载十万条 DNS 专用清单。
 - AWS IP 和链式 SOCKS5 的源规则、快照与构建产物保留；当前配置不再注册或调用。
 - GeoIP 直接使用 [MetaCubeX country.mmdb](https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/country.mmdb)，停止本仓库二次 Release 发布。未定制的公共资源优先活跃上游，自定义规则继续引用 dist。
@@ -234,7 +234,7 @@ ai_us 同时承接 OpenAI、Claude、Copilot、Cursor、Grok、Windsurf、Augmen
 - Mihomo 私有文件里的 provider `health-check.url` 与 `url-test` 组测速 URL 统一使用 HTTPS `https://www.google.com/generate_204`，不要改回 HTTP
 - 如果某个 provider 在 FlClash 桌面端 私有链路里整批测速失败，但把同一订阅直接导入客户端又正常，默认先按 [docs/mihomo-tun-dns-methodology.md](docs/mihomo-tun-dns-methodology.md) 对比运行时 `dns:`，优先排查 DNS 链差异，不要先把问题归因到节点本身
 - 如果两份 Mihomo 私有文件里出现高优先级海外例外与 `rule-set:cn-performance-dns-domains` 之外的 `nameserver-policy`、`proxy-server-nameserver`、`fallback` 或 `respect-rules: true`，默认按 DNS 回归处理；已批准的分层例外不应被误删
-- 对 FlClash 安卓端 的兼容性调整，默认也先保持“单一 DNS 真相”版本；只有在用户明确确认且 Android 运行时复测证明必须特化时，才允许为 Android 单独增加例外
+- FlClash 安卓端在 2026-09-14 下载修复中采用独立 Google 稳定组、同组海外 DoH 与进程/UDP 保护；这是用户授权的安卓例外，实机效果单独验收，不能自动扩散到其他配置。详见 [安卓网络修复](docs/android-network-repair.md)。
 - 这组私有订阅域名同步规则只记录在本地目录与私有文档约定中，不回写公开 `rules/`、`dist/` 或公开模板
 - 详细维护方式见 [docs/private-subscription-direct-sync.md](docs/private-subscription-direct-sync.md)
 - 若私有配置结构发生变化，必须同步更新 `.rulemesh.local.example.json` 与相关文档，但只能提交脱敏占位值
@@ -283,3 +283,5 @@ ai_us 同时承接 OpenAI、Claude、Copilot、Cursor、Grok、Windsurf、Augmen
 2026-09-12：`direct/ips5_direct` 以 DIRECT 覆盖 `ips5.vip` 主域及全部子域，位于 AI 之后、Google 广谱与拒绝之前，使用默认国内双 DoH；工作白名单仅增加该服务。AdsPower 停用范围、资产与定时任务处理见[规则停用与恢复](docs/rule-deactivation.md)。
 
 2026-09-12 FlClash 迁移与优化以 [客户端性能基线](docs/flclash-performance.md) 为准：桌面和安卓使用新文件名；通用末尾改为 cn_direct_light → gfw_precise → DIRECT，完整规则资产保留。工作白名单不接入新兜底，机场手动组保留。桌面 300 秒、安卓 600 秒，备用地区按需检测；以最终生成配置核对界面覆写。
+
+2026-09-14 安卓下载保护继续复用 `google_hk`，AI 美国入口保持第一。Google/Play 使用稳定优先的 fallback 组，DNS 与下载使用同组；五个下载相关进程提供兜底，定向拒绝 Google UDP/443以促使 TCP 回退。国内解析不变，Mac/桌面保留原基线。完整方案、大智慧/滴滴排查、代价和实机验收见 [安卓网络修复](docs/android-network-repair.md)。

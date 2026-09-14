@@ -27,6 +27,8 @@
 
 ## DNS
 
+2026-09-14 安卓下载修复是本基线的窄例外：Google/Play 使用独立 fallback 稳定组，同组海外 DoH 的 `rule-set:hk_google` 位于 AI policy 后，并使用进程兜底和定向 UDP/443 REJECT。国内默认、节点 bootstrap、AI 美国与其他地区约束仍保留。下文“唯一 AI policy”和普通 Google 自动组默认值适用于桌面与公开模板；安卓以 [专项保护](android-network-repair.md) 为准。
+
 2026-09-12 补充：AdsPower 在全部当前配置中停用，保留仓库规则资产；`direct/ips5_direct` 以 DIRECT 覆盖 `ips5.vip` 及全部子域，位于 AI 之后、Google 广谱与拒绝之前。停用流程见 [规则停用与恢复](rule-deactivation.md)，校验同时防止残留 provider、观察兜底和新直连入口被抢先覆盖。
 
 普通业务默认使用 AliDNS 与 DNSPod 两个国内 DoH，减少国内 CDN 调度偏差及海外解析绕行。不再为普通代理、拒绝或地区规则镜像大量海外 DNS policy，也不重复加载十万条性能型 DNS 专用域名清单。原清单仍保留为可选规则资产。

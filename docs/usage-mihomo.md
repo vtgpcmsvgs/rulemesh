@@ -20,7 +20,7 @@ GitHub SSH 精确直连在 Core / gfw 前；国内通用直连在 gfw 前。阿�
 ## DNS、测速与连接
 
 - `nameserver` 使用国内 AliDNS / DNSPod 双 DoH，减少国内 CDN 调度偏差。
-- 唯一 `nameserver-policy` 为 `rule-set:us_ai`，两个海外 DoH 显式使用 `#美国组名`。节点域名由国内 `proxy-server-nameserver` 独立 bootstrap，避免 AI DNS 依赖代理时形成循环。
+- 默认 `nameserver-policy` 为 `rule-set:us_ai`，两个海外 DoH 显式使用 `#美国组名`。2026-09-14 安卓下载保护在其后追加 `rule-set:hk_google`，通过独立 Google 稳定组解析；桌面与公开模板仍只保留 AI policy。节点域名由国内 `proxy-server-nameserver` 独立 bootstrap，避免解析循环。
 - 保持 `respect-rules: false`、`use-hosts: false`、`use-system-hosts: false`、IPv4、fake-ip 和 ARC 缓存，不引入 fallback 或二级 policy。
 - `tcp-concurrent: true` 并发尝试多个目标 IP。全地区自动组不限制地区标签，套餐占位项仍由 `exclude-filter` 排除；桌面提供方与自动组每 300 秒检测、安卓每 600 秒；实际业务组主动检测，备用地区组按需检测。全地区容差 50、美国容差 100，使用 HTTPS generate_204。
 - 保留局域网、系统连通性探测和游戏所需 `fake-ip-filter`；不同终端可保留 `listen` 等运行字段差异。
@@ -28,6 +28,8 @@ GitHub SSH 精确直连在 Core / gfw 前；国内通用直连在 gfw 前。阿�
 GeoIP 使用 `geodata-mode: false`，`geox-url.mmdb` 直接引用 [MetaCubeX country.mmdb](https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/country.mmdb)，每 24 小时更新。规则 provider 的下载使用自动代理，机场 provider 下载仍为 DIRECT，两者不能混淆。
 
 ## 客户端与维护
+
+安卓反复出现 Play 下载转圈时，采用 [安卓下载保护](android-network-repair.md)：Google 专用 fallback 组、同组海外 DNS、系统下载进程兜底、Google UDP/443 定向 REJECT。系统下载管理器替其他应用发起的下载也会走代理；必须实机验收持续下载进度，不能只测商店首页。
 
 
 私有订阅端点源修改后仅在已授权目标上运行 `sync_private_subscription_direct.ps1 -Target mihomo`；普通端点规则使用全地区自动组，后台订阅仍直连。不要输出真实 URL、token、节点名或 server。

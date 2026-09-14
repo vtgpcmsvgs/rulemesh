@@ -61,7 +61,7 @@
 - 两份 Mihomo 与公开模板采用国内 nameserver + AI 专用 nameserver-policy + 国内 proxy-server-nameserver bootstrap；ipv6、use-hosts、use-system-hosts、respect-rules 均为 false，开启 tcp-concurrent，保留 ARC 与 fake-ip。
 - 新版静态检查与生产运行态必须分别报告。历史 v1.19.25 查询未命中模拟 resolver；即使静态检查已通过，DNS 路由运行时仍未确认时也不得声称已经生效。
 - 两份 Surge Personal、两份 Mihomo 与公开模板的通用 FINAL/MATCH 按 2026-09-12 用户要求使用 DIRECT；仅工作白名单保持 FINAL,REJECT，前置代理规则继续使用指定组；FlClash 桌面 provider 与 url-test 使用 interval: 300、安卓使用 600；provider 与实际业务组 lazy: false，备用地区组 lazy: true，全地区 tolerance: 50、美国 tolerance: 100。全地区组只排除套餐占位项，不限制地区标签。
-- 七份配置的 ai_us 必须为第一条有效规则并包含 Google AI；国内精选直连、日本精确入口、Crypto 台湾和香港券商在 google_hk 完整 IP 规则前。google_hk 兼容路径和官方完整地址空间保留，普通 Google 流量自动择优。
+- 七份配置的 ai_us 必须为第一条有效规则并包含 Google AI；国内精选直连、日本精确入口、Crypto 台湾和香港券商在 google_hk 完整 IP 规则前。google_hk 兼容路径和官方完整地址空间保留，普通 Google 默认自动择优，安卓按 2026-09-14 下载保护使用独立稳定组。
 - Mihomo 私有文件里的机场 provider `health-check.url` 与 `url-test` 组测速 URL 统一使用 HTTPS `https://www.google.com/generate_204`；不要改回 HTTP
 - `proxy-node-domains` 必须是从 Sub-Store 聚合订阅提取的节点 `server` 域名清单，且必须过滤 IP 并按一行一个域名输出；不得包含订阅链接域名、机场面板域名或普通目标网站域名，也不得输出逗号分隔清单
 - Surge `[Host]` 引用 `proxy-node-domains` 时，必须使用 Surge 生产设备可直接访问的 Sub-Store 分享文件 URL；不要把未经同网络验证的 `https://sub.store/api/file/proxy-node-domains` 写进生产配置
@@ -155,7 +155,7 @@
 - 默认不要把私有文件内容或敏感值写回公开仓库，也不要在回复中完整回显真实密钥、签名、订阅 URL 或其他敏感参数
 - 即使需要在公开仓库里记录工作路由白名单维护约定，也只允许写“固定工作电脑”“白名单模式”“与 personal 永久不一致”这类抽象说明；不要把真实 `SRC-IP` 范围、私有设备标识、订阅地址或本地策略分组细节写回公开仓库
 - 若 `rulemesh-substore-mihomo-flclash-desktop.yaml` 出现“某个 provider 全部测速失败，但同一订阅直导 FlClash 桌面端 正常”的现象，默认先对比运行时 `dns:`，并通过 Mihomo API / 命名管道与日志确认实际生效配置；不要先把问题归因到节点失效，也不要只停留在更换测速 URL 这一层
-- 新版 Mihomo 只允许 AI 专用 policy 与国内节点 bootstrap；respect-rules: true、fallback、direct-nameserver、proxy-server-nameserver-policy 继续禁止。不要把当前已批准 proxy-server-nameserver 误判为旧版回滚。
+- 新版 Mihomo 默认只允许 AI 专用 policy 与国内节点 bootstrap；2026-09-14 安卓下载保护额外允许后置 hk_google policy 与独立稳定组，详见 docs/android-network-repair.md。respect-rules: true、DNS fallback、direct-nameserver、proxy-server-nameserver-policy 继续禁止。不要把当前已批准 proxy-server-nameserver 误判为旧版回滚。
 - 若本地私有配置结构发生变化，必须同步更新 `.rulemesh.local.example.json` 与相关文档，但只允许写入脱敏占位值
 - 若任务需要参考私有配置，默认只说明字段名、用途与是否生效，不直接暴露真实值
 
@@ -203,6 +203,9 @@
 - `tools/check.ps1` 包含重建和会暂时调整产物的测试；必须等待完整进程成功退出后再读取 `dist/`、构建报告或生成提交文件清单，避免并发审计把中间态误报为产物丢失。
 
 ## FlClash 迁移与极致优化
+
+- 2026-09-14 安卓 Google 下载使用独立 fallback 稳定组，同组海外 DoH 在 AI policy 后；Google 及五个下载相关包定向拒绝 UDP/443并保留进程兜底，AI 仍第一条。默认国内 DNS、节点 bootstrap、其他地区例外不变；不得机械扩散到桌面或 Surge。配置及验收边界见 docs/android-network-repair.md，必须通过 check_android_stability.py。
+- ADB 读取、模拟点击、应用私有数据访问是三个独立能力；设备拒绝时按系统授权边界处理。UI/API 输出必须在输出前白名单脱敏。诊断复用解析器前检查字段定义，构建器传绝对源路径；第三方文件路径先枚举，任何错误立即中止依赖步骤。
 
 - 桌面、安卓唯一现用客户端均为 FlClash，对应私人文件为 rulemesh-substore-mihomo-flclash-desktop.yaml / rulemesh-substore-mihomo-flclash-android.yaml。以 docs/flclash-performance.md 为当前接入、测速、覆写与复测依据；旧客户端缓存和命名管道不能代表 FlClash 运行态。
 - 标准模式导入规则，DNS 覆写关闭；必须检查 preferences 中的 patchClashConfig 和生成 config.yaml。源文件进程匹配 strict；FlClash 0.8.97 界面只接受 always/off，实际保留 always 以支持进程规则，不能写入无效 strict 或直接 off。先检查客户端枚举再改字段，不能将内核支持等同于界面支持。

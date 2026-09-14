@@ -1,6 +1,6 @@
 # DNS 解析边界
 
-用户已批准 2026-09-09 普通业务使用国内 DNS、以性能优先的方案。此文不再要求普通海外业务全部使用海外 DNS；当前唯一强制独立海外解析的是 AI，详见 [性能基线](../performance-baseline.md)。
+用户已批准普通业务使用国内 DNS 的性能方案。AI 强制独立美国解析；2026-09-14 安卓下载保护额外为 Google 使用同组海外 DoH，不扩散到桌面或 Surge，详见 [性能基线](../performance-baseline.md)和[安卓专项说明](../android-network-repair.md)。
 
 ## 用途分离
 
@@ -8,7 +8,7 @@ DNS 服务域名 bootstrap、代理节点 server 域名、普通目标网站是�
 
 Surge 使用国内全局 DNS，Host 第一项为 ai_us 的 Cloudflare DoH，Cloudflare 连接固定美国；节点域名继续由 DOMAIN-SET 分享文件单独引导。保留代理侧解析、传统 DNS 接管及加密 DNS 遵守出站，不伪造 proxy-server-nameserver 或 dns-mode 字段。
 
-Mihomo 普通 nameserver 使用国内双 DoH，唯一 AI policy 指定两个海外 DoH 和美国组；proxy-server-nameserver 使用国内双 DoH，避免节点解析与 AI DNS 循环。respect-rules、hosts 混入和 IPv6 保持关闭。
+Mihomo 普通 nameserver 使用国内双 DoH，AI policy 指定两个海外 DoH 和美国组；安卓 Google policy 位于 AI 后并使用下载稳定组。proxy-server-nameserver 使用国内双 DoH，避免节点解析与专项 DNS 循环。respect-rules、hosts 混入和 IPv6 保持关闭。
 
 ## DNS 不决定流量放行
 
