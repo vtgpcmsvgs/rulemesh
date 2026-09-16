@@ -132,8 +132,8 @@ class PerformanceBaselineTests(unittest.TestCase):
         self.assertTrue(any("同步块" in error for error in errors))
 
     def test_airport_manual_groups_are_not_rule_reachability_garbage(self):
-        groups = [f'机场{i} = select, policy-path=https://example.com/{i}, hidden=0, policy-regex-filter=^机场{i}' for i in range(7)]
-        owner = '手动入口 = select, ' + ', '.join(f'机场{i}' for i in range(7))
+        groups = [f'机场{i} = select, policy-path=https://example.com/{i}, hidden=0, policy-regex-filter=^机场{i}' for i in range(8)]
+        owner = '手动入口 = select, ' + ', '.join(f'机场{i}' for i in range(8))
         lines = ['[Proxy Group]', owner, baseline.AIRPORT_START, *groups, baseline.AIRPORT_END, '[Rule]', 'FINAL,DIRECT']
         self.assertEqual(baseline.check_airport_groups(lines), [])
         for changed in (

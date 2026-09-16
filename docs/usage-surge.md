@@ -50,7 +50,7 @@ GitHub Raw 继续保留独立海外解析入口 `raw.githubusercontent.com = ser
 
 相关说明：[工作白名单](surge-work-cluster-whitelist.md)、[订阅端点同步](private-subscription-direct-sync.md)、[GeoIP](geoip-upstream.md)、[DNS 边界](network-security/dns-leak-prevention.md)、[只读本地监控](surge-local-monitoring.md)。监控只生成调查建议，仍须分开取得调查和执行授权，不因本次性能维护改变该流程。
 
-机场手动组必须独立保留并在选择入口可访问，不能因普通规则直接使用自动组而删除。公开模板提供单机场占位示例；私人三份 Surge 各保留七组。爱思规则集中在 `direct/aisi_direct`（仅 Personal）；Google Play 重复项复用 `google_hk`；AI DNS 用 `region/us/ai_dns_us` 绑定美国，早于设备、加密 DNS 协议和最终兜底。
+机场手动组必须独立保留并在选择入口可访问，不能因普通规则直接使用自动组而删除。公开模板提供单机场占位示例；私人三份 Surge 各保留八组。爱思规则集中在 `direct/aisi_direct`（仅 Personal）；Google Play 重复项复用 `google_hk`；AI DNS 用 `region/us/ai_dns_us` 绑定美国，早于设备、加密 DNS 协议和最终兜底。
 
 2026-09-12：`direct/ips5_direct` 以 DIRECT 覆盖 `ips5.vip` 主域及全部子域，位于 AI 之后、Google 广谱与拒绝之前，使用默认国内双 DoH；工作白名单仅增加该服务。AdsPower 停用范围、资产与定时任务处理见[规则停用与恢复](rule-deactivation.md)。
 
