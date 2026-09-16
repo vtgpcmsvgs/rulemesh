@@ -235,7 +235,7 @@ ai_us 同时承接 OpenAI、Claude、Copilot、Cursor、Grok、Windsurf、Augmen
 - 如果某个 provider 在 FlClash 桌面端 私有链路里整批测速失败，但把同一订阅直接导入客户端又正常，默认先按 [docs/mihomo-tun-dns-methodology.md](docs/mihomo-tun-dns-methodology.md) 对比运行时 `dns:`，优先排查 DNS 链差异，不要先把问题归因到节点本身
 - Mihomo DNS 按现行性能基线检查：默认国内双 DoH、AI 专用美国 policy 和国内 `proxy-server-nameserver`；安卓可追加后置 Google policy。旧 `cn-performance-dns-domains` 镜像 policy、DNS `fallback` 和 `respect-rules: true` 不得恢复；代理组的 `type: fallback` 与 DNS `fallback` 是不同字段。
 - FlClash 安卓端在 2026-09-14 下载修复中采用独立 Google 稳定组、同组海外 DoH、进程兜底并保留 QUIC；这是用户授权的安卓例外，实机效果单独验收，不能自动扩散到其他配置。详见 [安卓网络修复](docs/android-network-repair.md)。
-- 2026-09-16 安卓支付宝组件修复仅将支付宝应用访问的三个精确资源主机直连，保留其他阿里系代理、国内 DNS 与 QUIC；检查防止扩大为整个应用或域名后缀直连。手机 Chrome 的 YouTube 前台刷新与视频预览已复测，桌面运行态未验收；细节及证据边界同见 [安卓网络修复](docs/android-network-repair.md)。
+- 2026-09-16 用户进一步改为国内日常业务直连：两份 FlClash 停用阿里系强制代理，撤下临时支付宝补丁；安卓共享下载管理器按目的地分流，保留 Google 专属保护与地区要求。新增常用业务首条命中回归检查；架构原因、实机验收和限制见 [常用业务连通性](docs/common-network-reliability.md)，前一轮记录见 [安卓网络修复](docs/android-network-repair.md)。
 - 这组私有订阅域名同步规则只记录在本地目录与私有文档约定中，不回写公开 `rules/`、`dist/` 或公开模板
 - 详细维护方式见 [docs/private-subscription-direct-sync.md](docs/private-subscription-direct-sync.md)
 - 若私有配置结构发生变化，必须同步更新 `.rulemesh.local.example.json` 与相关文档，但只能提交脱敏占位值
@@ -285,6 +285,6 @@ ai_us 同时承接 OpenAI、Claude、Copilot、Cursor、Grok、Windsurf、Augmen
 
 2026-09-12 FlClash 迁移与优化以 [客户端性能基线](docs/flclash-performance.md) 为准：桌面和安卓使用新文件名；通用末尾改为 cn_direct_light → gfw_precise → DIRECT，完整规则资产保留。工作白名单不接入新兜底，机场手动组保留。桌面 300 秒、安卓 600 秒，备用地区按需检测；以最终生成配置核对界面覆写。
 
-2026-09-14 安卓下载保护继续复用 `google_hk`，AI 美国入口保持第一。Google/Play 使用稳定优先的 fallback 组，DNS 与下载使用同组；五个下载相关进程提供兜底，保留 QUIC。实机 Cronet 在 UDP/443 被拒绝时出现协议错误和反复重试，已撤销这项拒绝并加入防回归检查。国内解析不变，Mac/桌面保留原基线。客户端接管设置、大智慧/滴滴结果和下载验收见 [安卓网络修复](docs/android-network-repair.md)。
+2026-09-14 安卓下载保护继续复用 `google_hk`，AI 美国入口保持第一。Google/Play 使用稳定优先的 fallback 组，DNS 与下载使用同组；按 2026-09-16 修订，仅三个 Google 专属进程提供兜底，共享下载管理器按目的地分流，保留 QUIC。实机 Cronet 在 UDP/443 被拒绝时出现协议错误和反复重试，已撤销这项拒绝并加入防回归检查。国内解析不变，Mac/桌面不机械继承安卓 Google 专项。客户端接管设置、大智慧/滴滴结果和下载验收见 [安卓网络修复](docs/android-network-repair.md)。
 
 大智慧补充复测发现：关闭系统代理的保存值没有让旧 VPN 的 HTTP 代理立即消失，完整停止并启动 VPN 后多个空白行情组件才恢复。迁移、恢复或修改 VPN 设置后，用 `tools/check_android_vpn_runtime.py --adb <实际路径>` 只读核对系统运行态，并复测实际失败页面；不能只凭 YAML、备份或开关状态验收。

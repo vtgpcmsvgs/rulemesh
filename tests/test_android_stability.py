@@ -75,6 +75,20 @@ class AndroidStabilityTests(unittest.TestCase):
     def test_alipay_marker_alone_activates_android_boundary(self):
         self.assertTrue(android.active(Path("mihomo-public.yaml"), ["  " + android.ALIPAY_MARKER]))
 
+    def test_daily_baseline_removes_component_and_shared_download_patches(self):
+        import check_common_routes as common
+        path, text = self.fixture()
+        text = common.MARKER + "\n" + text
+        text = text.replace("  " + android.ALIPAY_MARKER + "\n", "")
+        for rule in android.alipay_component_rules():
+            text = text.replace("  - " + rule + "\n", "")
+        for package in android.PACKAGES[3:]:
+            text = text.replace(f"  - PROCESS-NAME,{package},下载稳定\n", "")
+        self.assertEqual(baseline.check(path, text.splitlines()), [])
+        for package in android.PACKAGES[3:]:
+            changed = text.replace("rules:\n", f"rules:\n  - PROCESS-NAME,{package},下载稳定\n", 1)
+            self.assertTrue(android.check(path, changed.splitlines()))
+
     def test_cronet_quic_rejection_cannot_return(self):
         path, text = self.fixture()
         retired = android.retired_quic_rules() + [

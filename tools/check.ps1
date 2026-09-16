@@ -299,6 +299,19 @@ Invoke-PrivateDnsPrecedenceValidation
 Write-Host "[check] validate private performance"
 Invoke-PrivatePerformanceValidation
 
+Write-Host "[check] validate common application routes"
+$routePython = Resolve-PythonCommand
+$routeChecker = Join-Path $repoRoot "tools\check_common_routes.py"
+if ($routePython.Kind -eq "Launcher") {
+    & $routePython.Value -3 -B -X utf8 $routeChecker
+}
+else {
+    & $routePython.Value -B -X utf8 $routeChecker
+}
+if ($LASTEXITCODE -ne 0) {
+    throw "Common application route validation failed."
+}
+
 Invoke-UnitTests
 
 Write-Host "[check] validate Surge test URLs"

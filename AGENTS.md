@@ -27,7 +27,7 @@
 ## Codex 注意事项
 
 - 在 Codex Windows 沙箱里，`python` / `py -3` 可能不可用，即使 Python 已安装
-- 使用 `rg` 搜索以连字符开头的模式（例如 `-Target`）时，必须在模式前加 `--`，避免被解析成命令行选项
+- 使用 `rg` 搜索以连字符开头的模式（例如 `-Target`）时，必须在模式前加 `--`，避免被解析成命令行选项；所有 `--glob` 等选项必须放在 `--` 之前，不能写到路径列表后被当成文件名
 - PowerShell 不会替 `rg` 展开任何路径通配符（包括 `tools/check*.py`、`docs/examples/*`）；统一传实际目录并用 `--glob` 筛选。读取未确认存在的文件前先用 `rg --files` 定位，避免从业务简称猜测文件名；命令失败必须立即处理，不能由后续读取成功掩盖。
 - PowerShell 的语句级 `foreach (...) { ... }` 不能直接在右花括号后接管道；需要继续 `Format-Table`、`Where-Object` 等处理时，先把循环结果赋给任务专用变量，或用 `@(...)` 收集后再接管道
 - PowerShell 的 `New-Item` 不支持 `-LiteralPath`；创建已验证的明确路径时使用 `-Path`，不要把其他文件 cmdlet 的参数习惯直接套用到 `New-Item`
@@ -205,9 +205,13 @@
 
 ## FlClash 迁移与极致优化
 
-- 2026-09-16 安卓支付宝组件保护只允许包名 `com.eg.android.AlipayGphone` 与 `gw.alipayobjects.com`、`mdn.alipayobjects.com`、`mdn-js.alipayobjects.com` 三个精确主机的 AND 规则 DIRECT，位于 AI 后、Google 广谱与阿里系代理前。国内 DNS、Fake IP、QUIC 与其他阿里业务保留，不扩展为全应用/后缀直连，也不自动扩散到桌面或 Surge。
+- 2026-09-16 用户改为国内日常业务直连：两份 FlClash 停用阿里系强制代理调用及专用 provider，保留源规则、登记和产物；撤下已被正常直连取代的三个支付宝组件补丁。安卓系统下载管理器改按目的地分流，Google 三个专属进程、稳定组、QUIC、DNS 与地区例外保持。此项取代同日早先“必须保留三个支付宝条件规则”的临时约定，Surge 独立配置不机械同步。
+- 常用业务必须通过 `tools/check_common_routes.py` 的 TCP/UDP 域名首条命中检查；数据在 `tools/common_route_cases.json`，覆盖用户指定应用、资源和共享下载场景。静态域名检查没有真实 IP，不得称为设备网络验收；未知语法或缺失 provider 必须报错，不能跳过。手机验收要区分界面、实际返回流量、DNS 出口、网络类型与需要登录/真实订单的业务。
+- 浏览器验收使用 `tools/check_browser_evidence.py` 区分错误页、局部资源失败、未确认媒体和通过；文字长度或旧 DOM 不能盖过主文档错误。VPN 重建后的失败单独保留，再做恢复复测；`/proxies` 不含选中节点时从 `/providers/proxies` 关联，空健康历史即使 `alive=true` 也不能算近期存活证据。
+- 安卓导出备份先确认成功，再在授权下载目录定位唯一实际文件；文件选择器标题不能当完整路径。工具返回的 `exit_code` 不会自动中止外层 JavaScript，拉取等前置命令非零时必须显式停止后续校验。包含 SQL 等嵌套引号的诊断优先写任务脚本文件执行。
 - Android 自绘页面的空控件树不能证明页面空白；结合脱敏截图与网络返回验收。Chrome 页面复测必须确认手机 Chrome 在前台；ADB 点击同时断言目标包名和控件身份，前置命令非零时不执行后续点击。带性能基线标记的配置使用新版检查分派，不能直接调用历史 `validate_mihomo` 默认校验器。
-- 2026-09-14 安卓 Google 下载使用独立 fallback 稳定组，同组海外 DoH 在 AI policy 后；五个下载相关包保留进程兜底和 QUIC，AI 仍第一条。实机 Cronet 在 UDP/443 被拒绝时发生协议错误、1404 网络错误和重试，禁止恢复 Google/Play 定向拒绝或用 disable-udp 强制回退。默认国内 DNS、节点 bootstrap、其他地区例外不变；不得机械扩散到桌面或 Surge。配置及验收边界见 docs/android-network-repair.md，必须通过 check_android_stability.py。
+- 动画页面的 UiAutomator 等待空闲失败只表示界面证据不可读，不能丢弃已取得的网络记录或当作网络故障；文件选择器的搜索控件可能是 `AutoCompleteTextView`，必须按实际控件类型、包名和焦点验证。中文端口说明不可用 `\b` 提取数字边界，应按数字前后不是数字匹配，禁止猜端口。
+- 2026-09-14 安卓 Google 下载使用独立 fallback 稳定组，同组海外 DoH 在 AI policy 后；按 2026-09-16 修订，仅三个 Google 专属进程保留兜底，共享下载管理器按目的地分流，QUIC 与 AI 第一条保持。实机 Cronet 在 UDP/443 被拒绝时发生协议错误、1404 网络错误和重试，禁止恢复 Google/Play 定向拒绝或用 disable-udp 强制回退。默认国内 DNS、节点 bootstrap、其他地区例外不变；不得机械扩散到桌面或 Surge。配置及验收边界见 docs/android-network-repair.md，必须通过 check_android_stability.py。
 - ADB 读取、模拟点击、应用私有数据访问是三个独立能力；设备拒绝时按系统授权边界处理。UI/API 输出必须在输出前白名单脱敏。诊断复用解析器前检查字段定义，构建器传绝对源路径；第三方文件路径先枚举，任何错误立即中止依赖步骤。
 - 安卓 VPN 开关的保存值不等于生效值。修改或恢复后必须完整停止/启动 FlClash VPN，并用 tools/check_android_vpn_runtime.py 检查 Android 活动 VPN 不再携带旧 HTTP 代理；系统传输可能是 CELLULAR|VPN 或 WIFI|VPN，不能只匹配 Transports: VPN。业务验收覆盖用户实际失败的多个组件及应用重开，不能凭单页短暂成功宣称整个应用恢复。
 

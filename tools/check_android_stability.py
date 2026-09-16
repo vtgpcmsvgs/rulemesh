@@ -1,4 +1,4 @@
-"""安卓 Google 下载与支付宝组件保护；诊断不输出私人策略或订阅值。"""
+"""安卓 Google 下载与日常直连保护；兼容历史组件夹具，不输出私人值。"""
 from pathlib import Path
 import re
 
@@ -50,6 +50,8 @@ def allowed_stable_rule(parts: list[str]) -> bool:
 def check(path: Path, lines: list[str]) -> list[str]:
     import check_private_dns_precedence as parser
     import check_private_performance as performance
+    import check_common_routes as common
+    daily = common.MARKER in lines
     errors = []
 
     def require(ok, message):
@@ -81,12 +83,16 @@ def check(path: Path, lines: list[str]) -> list[str]:
     reject = next((i for i, p in enumerate(rules) if p[:2] == ["RULE-SET", "reject_adblock"]), len(rules))
     ai = next((i for i, p in enumerate(rules) if p[:2] == ["RULE-SET", "us_ai"]), -1)
     alibaba = next((i for i, p in enumerate(rules) if p[:2] == ["RULE-SET", "hk_alibaba"]), len(rules))
-    require(sum(line.strip() == ALIPAY_MARKER for line in lines) == 1,
-            "安卓支付宝组件保护标记必须唯一保留。")
     component_rules = alipay_component_rules()
-    for code in component_rules:
-        require(codes.count(code) == 1 and ai < codes.index(code) < min(google, reject, alibaba) if code in codes else False,
-                "支付宝三个组件域名必须各有一条应用限定的精确 DIRECT，位于 AI 后、Google 广谱与阿里系代理前。")
+    if daily:
+        errors.extend(common.profile_contract(path, lines))
+        require(not any(line.strip() == ALIPAY_MARKER for line in lines), "日常直连已替代支付宝组件补丁，旧标记必须移除。")
+    else:
+        require(sum(line.strip() == ALIPAY_MARKER for line in lines) == 1,
+                "历史安卓支付宝组件保护标记必须唯一保留。")
+        for code in component_rules:
+            require(codes.count(code) == 1 and ai < codes.index(code) < min(google, reject, alibaba) if code in codes else False,
+                    "历史支付宝三个组件域名必须各有一条应用限定的精确 DIRECT，位于 AI 后、Google 广谱与阿里系代理前。")
     for code in codes:
         compact = re.sub(r"\s+", "", code)
         if "alipay" in compact.lower() and compact.endswith(",DIRECT"):
@@ -102,10 +108,10 @@ def check(path: Path, lines: list[str]) -> list[str]:
         global_quic = compact.startswith("and,((network,udp),(dst-port,443)),") or compact.startswith("and,((dst-port,443),(network,udp)),")
         require(not (rejects_udp and (google_scope or global_quic)),
                 "不得恢复 Google/Play UDP/443 拒绝：实机 Cronet 会发生协议错误及下载重试。")
-    for package in PACKAGES:
+    for package in (PACKAGES[:3] if daily else PACKAGES):
         rule = f"PROCESS-NAME,{package},{target}"
         require(codes.count(rule) == 1 and google < codes.index(rule) < reject if rule in codes else False,
-                "Google Play、服务框架与系统下载管理器必须在广告拒绝前使用同一稳定组。")
+                "Google 专属进程必须在广告拒绝前使用同一稳定组；历史配置另保留旧下载管理器保护。")
     require(not any(p[:2] == ["NETWORK", "udp"] and p[-1].startswith("REJECT") for p in rules), "不得用全局 UDP 拒绝代替 Google 定向保护。")
     _, policies = parser._parse_mihomo_dns(lines)
     require(len(policies) == 2 and policies[0].providers == ("us_ai",) and policies[1].providers == ("hk_google",),

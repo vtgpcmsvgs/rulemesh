@@ -29,7 +29,7 @@ GeoIP 使用 `geodata-mode: false`，`geox-url.mmdb` 直接引用 [MetaCubeX cou
 
 ## 客户端与维护
 
-安卓反复出现 Play 下载转圈时，采用 [安卓下载保护](android-network-repair.md)：Google 专用 fallback 组、同组海外 DNS、系统下载进程兜底，并保留 QUIC。实机已发现拒绝 UDP/443 会导致 Cronet 协议错误及下载重试，不能强制其回退 TCP。手机使用全应用 VPN，关闭系统代理与允许绕过，开启 DNS 劫持；这些开关须在 FlClash 界面设置，不能仅导入 YAML。系统下载管理器替其他应用发起的下载也会走代理；必须实机完成整包安装，不能只测商店首页。
+安卓反复出现 Play 下载转圈时，采用 [安卓下载保护](android-network-repair.md)：Google 专用 fallback 组、同组海外 DNS、三个 Google 专属进程兜底，并保留 QUIC。实机已发现拒绝 UDP/443 会导致 Cronet 协议错误及下载重试，不能强制其回退 TCP。手机使用全应用 VPN，关闭系统代理与允许绕过，开启 DNS 劫持；这些开关须在 FlClash 界面设置，不能仅导入 YAML。按 [2026-09-16 修订](common-network-reliability.md)，两份 FlClash 停用阿里系强制代理，安卓共享下载管理器按目的地分流，避免其他应用的国内下载绕海外；必须实机完成整包安装，不能只测商店首页。
 
 修改开关或恢复完整备份后，在仪表盘完整停止并启动 VPN，再验证 Android 当前 VPN 已无旧 HTTP 代理；仅核对保存值曾漏掉大智慧行情故障。可使用只读 `tools/check_android_vpn_runtime.py --adb <实际路径>`，然后复测多处原失败组件及应用重开。该运行态检查需要已授权的 USB 手机，不作为离线构建的强制步骤。
 
