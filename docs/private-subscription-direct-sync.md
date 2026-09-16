@@ -1,89 +1,68 @@
-# 私有订阅端点同步约定
+# 私有机场官网与订阅端点同步约定
 
-本文只记录本地私有“订阅端点同步块”的维护方式，避免真实订阅域名 / IP 散落在多个配置文件中，也避免把 Surge 与 Mihomo 的不同语义混在一起。
+业务目标是浏览器访问机场官网走代理、客户端更新订阅直连。官网与订阅是否共用域名决定规则写法，不能只凭订阅 URL 猜官网，也不能对全部机场一刀切。
 
-## 适用范围
+## 适用范围与脚本来源
 
-下文的 `<私有当前配置目录>` 必须按 [private-repository-bootstrap.md](private-repository-bootstrap.md) 解析：优先使用 `rulemesh-local/current`，不存在时使用直接包含主配置与同步脚本的仓库根目录。
+`<私有当前配置目录>` 按 [private-repository-bootstrap.md](private-repository-bootstrap.md) 解析：优先 `rulemesh-local/current`，不存在时使用直接包含主配置和同步脚本的仓库根目录。
 
-- `<私有当前配置目录>\private_subscription_direct.list`
-- `<私有当前配置目录>\sync_private_subscription_direct.ps1`
-- `<私有当前配置目录>\rulemesh-substore-surge-personal.conf`
-- `<私有当前配置目录>\rulemesh-substore-surge-personal-company.conf`
-- `<私有当前配置目录>\rulemesh-substore-surge-work-whitelist.conf`
-- `<私有当前配置目录>\rulemesh-substore-mihomo-flclash-desktop.yaml`
-- `<私有当前配置目录>\rulemesh-substore-mihomo-flclash-android.yaml`
+- 私有源：`private_subscription_direct.list`，只存精确端点和用途，不存 URL 路径、查询、令牌或节点数据。
+- 通用脚本源：公开仓库 `tools/sync_private_subscription_direct.ps1`；同名私人运行副本必须逐字节同步。公开脚本不含真实端点和配置。
+- 目标：家庭/公司两份 Surge Personal、工作白名单，以及桌面/安卓两份 FlClash，共五份配置。
 
-## 当前性能联动
+## 用途决定出口
 
-2026-09-09 普通代理端点使用自动组；脚本从现有 onepassword/gfw 路由提取策略，不依赖硬编码中文组名。必须保留 PRIVATE_SUBSCRIPTION_DIRECT_START/END 标记。同步后重新执行性能检查，验证地区专项未变、后台订阅仍为 DIRECT。
+| 用途字段 | 含义 | Surge | Mihomo 普通访问 | Mihomo 订阅更新 |
+| --- | --- | --- | --- | --- |
+| WEBSITE | 已确认的官网专用域名 | 自动代理 | 自动代理 | 不作为订阅来源 |
+| SUBSCRIPTION | 已确认的订阅专用端点 | DIRECT，无浏览器代理例外 | DIRECT | provider `proxy: DIRECT` |
+| SHARED | 官网/订阅共用或保留既有浏览器兼容行为 | 浏览器进程代理，之后 DIRECT | 自动代理 | provider `proxy: DIRECT` |
 
-## 设计目标
+旧端点未提供官网映射时保留 SHARED 兼容行为，不表示已实测确认它就是官网。新机场必须结合用户提供的实际用途登记，不根据域名长相自动分类。
 
-- 真实机场订阅端点只在私有目录维护，不回写公开仓库
-- 由单一源文件维护端点集合，避免五份客户端配置重复手改
-- 源文件只保存 Surge 与 Mihomo 都支持的规则本体，渲染策略由脚本的 `-Target` 分支决定
-- Surge 分支保持既有“Chrome 全地区自动选择例外 + 普通订阅连接直连”结构
-- Mihomo 分支把这些端点的普通流量统一交给全地区自动选择，不生成 `PROCESS-NAME` 或 `DIRECT` 规则
-- Mihomo 的机场订阅后台更新仍由 `proxy-providers.*.proxy: DIRECT` 独立控制，不能用普通流量规则替代
-- 用户明确排除某一客户端时，不得顺带改动该客户端
+Surge 的共用端点例外覆盖原 Chrome 进程及 Safari/WebKit、Edge、Firefox 的常见桌面进程名；其他浏览器需依据实际客户端进程记录补充。例外只匹配登记的精确端点，不扩大工作白名单。Mihomo 不复制这些进程规则，后台订阅更新由 provider 独立指定 DIRECT。
 
 ## 源文件写法
 
-- `private_subscription_direct.list` 每行只写规则本体，不附带策略名
-- 允许空行与中文注释；同步脚本会保留分组注释与顺序
-- 当前只允许 `DOMAIN`、`DOMAIN-SUFFIX`、`IP-CIDR`、`IP-CIDR6`
-- 机场入口主机与实际落地主机都应记录；默认优先使用精确 `DOMAIN`，只有确实需要覆盖整组子域时才使用 `DOMAIN-SUFFIX`
-- 单个 IPv4 / IPv6 主机可省略前缀，脚本会分别规范化为 `/32` 或 `/128`
-- 脚本会拒绝空源、异常字段数、不支持的规则类型与重复规则
-- 不要把订阅 URL 路径、查询参数、令牌、端口或认证信息写入该文件
+每行写 `规则类型,主机或网段,用途`，用途为 WEBSITE / SUBSCRIPTION / SHARED。为兼容旧数据，省略第三字段时按 SHARED 处理。
 
-## 同步方式
+```text
+# 官网与订阅共用
+DOMAIN,shared.example,SHARED
+# 独立订阅入口
+DOMAIN,subscription.example,SUBSCRIPTION
+# 独立官网
+DOMAIN,website.example,WEBSITE
+```
 
-1. 修改解析后的私人当前配置目录中的 `private_subscription_direct.list`。
-2. 解析实际目录并显式选择目标：
+- 允许中文注释和空行；只允许 DOMAIN、DOMAIN-SUFFIX、IP-CIDR、IP-CIDR6，默认使用精确 DOMAIN 或单 IP。
+- 中文域名转为 IDNA/Punycode 后生成规则；Unicode 和等价 ASCII 写法不能重复登记。
+- 单主机 IP 自动补 /32 或 /128，输出 IP 规则保留 no-resolve。
+- 入口与已确认的真实落地主机都应保留；官网入口另外登记，不能混进订阅专用分类。
+- 拒绝空源、错误字段数、未知用途和重复规则，错误只报告类别，不回显私人值。
 
-   ```powershell
-   $privateRepo = Join-Path $env:USERPROFILE "Desktop\rulemesh-local"
-   $privateCurrent = Join-Path $privateRepo "current"
-   if (-not (Test-Path -LiteralPath $privateCurrent -PathType Container)) { $privateCurrent = $privateRepo }
+## 执行与预检
 
-   # 只更新 Mihomo
-   powershell -ExecutionPolicy Bypass -File (Join-Path $privateCurrent "sync_private_subscription_direct.ps1") -Target mihomo
+修改源文件后，显式运行私人副本：
 
-   # 只更新 Surge
-   powershell -ExecutionPolicy Bypass -File (Join-Path $privateCurrent "sync_private_subscription_direct.ps1") -Target surge
-   ```
+```powershell
+$privateRepo = Join-Path $env:USERPROFILE "Desktop\rulemesh-local"
+$privateCurrent = Join-Path $privateRepo "current"
+if (-not (Test-Path -LiteralPath $privateCurrent -PathType Container)) { $privateCurrent = $privateRepo }
+# 只有用户授权两类客户端时才选择 all；单客户端使用 surge 或 mihomo。
+powershell -ExecutionPolicy Bypass -File (Join-Path $privateCurrent "sync_private_subscription_direct.ps1") -Target all
+```
 
-3. 只有用户明确要求两类客户端同时更新时，才使用 `-Target all`。
-4. 脚本使用既有的 `PRIVATE_SUBSCRIPTION_DIRECT_START` / `PRIVATE_SUBSCRIPTION_DIRECT_END` 标记段做原位替换；标记名称为历史兼容保留，不代表 Mihomo 分支仍然直连普通端点流量。
-5. 同一目标连续运行两次后，目标文件哈希应保持不变。
+脚本从唯一规则节的实际业务路由提取代理组，不在源码硬编码中文或 emoji 策略名。先预检所选目标的规则节、同步标记和策略锚点唯一性，全部通过才写入；最后一份配置无效不能导致前几份已经改动。`PRIVATE_SUBSCRIPTION_DIRECT_START/END` 是兼容标记，不代表整个块都直连。
 
-## 两种目标的语义
-
-### `-Target surge`
-
-- 同时更新三份 Surge 私有配置
-- 先为 Chrome 生成 `PROCESS-NAME + 端点` 的节点选择逻辑规则
-- 再为同一批端点生成普通 `DIRECT` 规则，供订阅更新连接使用
-- 整个同步块必须位于广谱代理规则前；工作白名单中它属于显式放行入口
-
-### `-Target mihomo`
-
-- 同时更新两份 Mihomo 私有配置
-- 每个端点只生成一条普通 `DOMAIN` / `IP-CIDR` 节点选择规则
-- 不生成 `PROCESS-NAME`，因此浏览器及其他普通流量都遵循相同策略
-- `IP-CIDR` / `IP-CIDR6` 自动附加 `no-resolve`
-- 同步块必须位于 `proxy_gfw` 前
+未授权的客户端不能改动。连续运行两次后哈希应一致。浏览器逻辑规则先于共用端点 DIRECT；纯官网输出普通代理规则，订阅专用端点不输出浏览器例外。同步块须早于广谱代理与最终兜底。
 
 ## Mihomo provider 更新边界
 
-- Mihomo 里有两类 provider：`proxy-providers` 拉机场订阅节点清单，`rule-providers` 拉 GitHub 规则集产物
-- `proxy-providers.*.proxy: DIRECT` 只表示后台下载 / 更新机场订阅 URL 时直连，不会覆盖 `rules` 对普通端点流量的节点选择结果
-- `rule-providers.*.proxy: "🚀 节点选择"` 是另一条链路；不要把它反向套到机场订阅 provider 上
-- 如果订阅服务按请求头协商格式，应先分别探测状态码与响应结构；只有实测需要时，才为对应 provider 显式设置 `header.User-Agent`
-- 同一个逻辑机场存在多个等价 URL 时，默认只保留一个 provider，避免节点重复；其余仍需保留的入口可以留在端点源中作为普通流量规则
-- 两份 Mihomo 文件的 provider 名称、URL、路径、更新出站、请求头、健康检查与代理组引用必须保持一致
+- proxy-providers 下载机场订阅，始终显式 `proxy: DIRECT`；rule-providers 拉规则集，两条链路不要混用。
+- 请求头按实际响应格式验证，同一机场不重复导入等价订阅。
+- 两份 Mihomo 的 provider 名称、URL、缓存路径、出站和请求头保持一致；健康检查分别使用桌面 300 秒、安卓 600 秒。
+- 本次修复保持国内默认 DNS、AI 专用解析和国内节点 bootstrap；订阅用途与 DNS 出口要分别验证，静态通过不能当作设备已经加载。
 
 ## Mihomo provider 有效性极速审计
 
@@ -125,7 +104,7 @@
 
 ## Surge 语法防回滚
 
-- Surge 的 Chrome 全地区自动选择例外属于逻辑规则，最终形态是 `AND,((PROCESS-NAME,...),(...)),策略名`
+- Surge 的共用端点浏览器代理例外属于逻辑规则，最终形态是 `AND,((PROCESS-NAME,...),(...)),策略名`
 - 逻辑规则末尾策略名必须裸写，不能额外套双引号。正确示例：
 
 ```conf
@@ -153,11 +132,11 @@ AND,((PROCESS-NAME,chrome.exe),(DOMAIN-SUFFIX,example.com)),"🚀 节点选择"
 
 - 运行 `-Target surge` 后：
   - 三份 Surge 配置都应包含完整端点集合
-  - Chrome 例外应是策略名裸写的 `AND` 规则，后续普通规则应为 `DIRECT`
-  - 两份文件的同步块顺序与源文件一致
+  - SHARED 浏览器例外应是策略名裸写的 `AND` 规则，随后 DIRECT；SUBSCRIPTION 只有 DIRECT，WEBSITE 只有普通代理规则
+  - 三份文件均保留用途、分组与完整端点集合
 - 运行 `-Target mihomo` 后：
-  - 两份 Mihomo 配置都应包含完整端点集合，普通端点策略全部为节点选择
-  - 同步块不得出现 `PROCESS-NAME` 或 `DIRECT`
+  - 两份 Mihomo 都包含完整端点集合：WEBSITE / SHARED 代理，SUBSCRIPTION 直连，provider 后台更新 DIRECT
+  - 同步块不出现 PROCESS-NAME；SUBSCRIPTION 必须 DIRECT
   - 每个 provider 都应被预期代理组引用，provider 名称与缓存路径不得重复
   - 两份配置分别通过当前官方 Mihomo 内核的 `-t` 检查
 - 任一目标都要确认另一客户端文件的哈希未变化，除非本次明确使用了 `-Target all`
@@ -172,7 +151,11 @@ AND,((PROCESS-NAME,chrome.exe),(DOMAIN-SUFFIX,example.com)),"🚀 节点选择"
 
 ## 新增机场接入
 
-- 三份私人 Surge 当前保留八个机场手动组；新增组必须可见并接入选择入口。若新增订阅尚未包含在旧聚合中，可通过 `include-other-group` 同时接入聚合手动节点列表及各自动组，沿用各组的地区过滤器。Surge 会按节点名去重，不重复添加独立直连订阅来源。
+- 三份私人 Surge 当前保留八个机场手动组；新增组须沿用 `✈️ 名称` 格式、可见并接入选择入口，重命名同步全部 include-other-group 引用。若新增订阅尚未包含在旧聚合中，可通过 `include-other-group` 同时接入聚合手动节点列表及各自动组，沿用各组的地区过滤器。Surge 会按节点名去重，不重复添加独立直连订阅来源。
 - Sub-Store 资源名和机场简称可以不同，必须使用用户确认的实际资源路径；不得从机场简称猜下载路径。`proxy-node-domains` 仍应从 Sub-Store 完整聚合的节点 server 提取。只能访问配置文件时，明确区分 DNS 静态检查与另一台设备上的聚合、清单和运行态验证。
 - 两份 Mihomo 新增同名 provider，保持后台 DIRECT、已验证的 User-Agent、独立缓存路径及机场前缀，补齐所有既有 use 列表。桌面健康检查 300 秒、安卓 600 秒；新增机场不改变地区例外、下载稳定组或业务放行范围。
 - 完整解析 YAML 顶层 `proxies` 后统计节点；全文文本计数可能把其他列表项误算为节点。独立节点存活和 DNS 出口需在实际客户端复测。
+
+## 错误根因与防复发
+
+旧格式只有规则类型与端点，无法区分官网和订阅专用域名，导致新订阅被自动套上浏览器代理例外。现改为显式用途；`tests/test_private_subscription_sync.py` 用脱敏夹具验证三类用途、中文域名、目标隔离、幂等、重复标记及末目标失败不部分写入。机场命名与悬空组引用由性能基线检查覆盖。测试孤立注释的旧夹具已改为包含规则的真实渲染场景，避免把过滤空分组误报为空字符串参数绑定错误。

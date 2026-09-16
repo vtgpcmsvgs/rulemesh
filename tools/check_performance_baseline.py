@@ -34,6 +34,13 @@ def check_airport_groups(lines: list[str]) -> list[str]:
         return ["机场手动组必须保留订阅来源与过滤条件。"]
     if not all(re.search(r"(?:^|,)\s*hidden=0(?:,|$)", line) for line in active):
         return ["机场手动组必须在界面中可见。"]
+    if not all(name.startswith("✈️ ") for name in groups):
+        return ["机场手动组须沿用飞机图标与空格的命名格式。"]
+    for line in section.values():
+        for match in re.finditer(r'(?:^|,)\s*include-other-group=("[^"]+"|[^,]+)', line):
+            included = [item.strip() for item in dns._scalar(match.group(1)).split(",")]
+            if not all(name in all_groups for name in included):
+                return ["include-other-group 存在未定义的策略组引用。"]
     return []
 REGIONAL = {
     "region/tw/crypto_tw": "tw", "region/jp/domains_to_jp": "jp",

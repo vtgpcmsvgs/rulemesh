@@ -132,8 +132,8 @@ class PerformanceBaselineTests(unittest.TestCase):
         self.assertTrue(any("同步块" in error for error in errors))
 
     def test_airport_manual_groups_are_not_rule_reachability_garbage(self):
-        groups = [f'机场{i} = select, policy-path=https://example.com/{i}, hidden=0, policy-regex-filter=^机场{i}' for i in range(8)]
-        owner = '手动入口 = select, ' + ', '.join(f'机场{i}' for i in range(8))
+        groups = [f'✈️ 机场{i} = select, policy-path=https://example.com/{i}, hidden=0, policy-regex-filter=^机场{i}' for i in range(8)]
+        owner = '手动入口 = select, ' + ', '.join(f'✈️ 机场{i}' for i in range(8))
         lines = ['[Proxy Group]', owner, baseline.AIRPORT_START, *groups, baseline.AIRPORT_END, '[Rule]', 'FINAL,DIRECT']
         self.assertEqual(baseline.check_airport_groups(lines), [])
         for changed in (
@@ -142,8 +142,12 @@ class PerformanceBaselineTests(unittest.TestCase):
             [line for line in lines if line != owner],
             [line.replace('hidden=0', 'hidden=1') for line in lines],
             [line.replace(' = select, policy-path=', ' = smart, policy-path=') for line in lines],
+            [line.replace('✈️ 机场7', '机场7') for line in lines],
+            lines[:2] + ['自动入口 = smart, include-other-group="不存在的组"'] + lines[2:],
         ):
             self.assertTrue(baseline.check_airport_groups(changed))
+        included = lines[:2] + ['自动入口 = smart, include-other-group="✈️ 机场7"'] + lines[2:]
+        self.assertEqual(baseline.check_airport_groups(included), [])
 
     def test_ai_dns_ruleset_must_keep_us_outbound_before_device_rules(self):
         path, text = self.fixture('surge')
@@ -174,7 +178,7 @@ class PerformanceBaselineTests(unittest.TestCase):
         powershell = shutil.which("powershell")
         if not powershell or not script.is_file():
             self.skipTest("仅在已登记私人脚本和 Windows PowerShell 可用时检查参数绑定")
-        # 只加载纯格式化函数，用合成注释验证空字符串绑定；不执行脚本顶层同步。
+        # 只加载纯格式化函数，用带规则的合成注释验证空字符串绑定；孤立注释应被过滤。
         command = r'''
 $ErrorActionPreference = 'Stop'
 $taskScript = Join-Path $env:USERPROFILE 'Desktop\rulemesh-local\sync_private_subscription_direct.ps1'
@@ -184,10 +188,12 @@ $taskAst = [System.Management.Automation.Language.Parser]::ParseFile($taskScript
 $taskFunction = $taskAst.Find({ param($taskNode) $taskNode -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $taskNode.Name -eq 'Add-SourceEntries' }, $true)
 if ($taskErrors.Count -ne 0 -or $null -eq $taskFunction) { throw 'Function parse failed' }
 . ([scriptblock]::Create($taskFunction.Extent.Text))
+$taskDirectFunction = $taskAst.Find({ param($taskNode) $taskNode -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $taskNode.Name -eq 'Get-DirectRuleText' }, $true)
+. ([scriptblock]::Create($taskDirectFunction.Extent.Text))
 $taskLines = [System.Collections.Generic.List[string]]::new()
-$taskEntries = @([pscustomobject]@{ Type = 'comment'; Text = 'test' })
+$taskEntries = @([pscustomobject]@{ Type = 'comment'; Text = 'test' }, [pscustomobject]@{ Type = 'rule'; Rule = 'DOMAIN,example.test'; Role = 'SUBSCRIPTION' })
 Add-SourceEntries -Lines $taskLines -Entries $taskEntries -Prefix '' -Style surge-direct -ProxyPolicy AUTO
-if ($taskLines.Count -ne 1 -or $taskLines[0] -ne '# test') { throw 'Unexpected formatting' }
+if ($taskLines.Count -ne 2 -or $taskLines[0] -ne '# test' -or $taskLines[1] -ne 'DOMAIN,example.test,DIRECT') { throw 'Unexpected formatting' }
 '''
         encoded = base64.b64encode(command.encode("utf-16-le")).decode("ascii")
         result = subprocess.run([powershell, "-NoProfile", "-EncodedCommand", encoded], capture_output=True, timeout=20)

@@ -159,7 +159,7 @@ python tools/build_rules.py
 - 阿里云 SSH 仅 TCP/22 的内联兜底必须先于远程规则；阿里控制面与出口探测精确直连保留。已登记设备的阿里业务条件仍保留源地址，普通代理策略改为自动组。
 - AdsPower 保留主清单与 reject/direct/proxy 产物，当前配置不再调用；Polygon、BSC 和可选 1Password 等上游持续更新，不直接替换掉本地定制规则。
 - Surge 测速保留 HTTP，Mihomo 保留 HTTPS；Surge 不写 dns-mode 或 proxy-server-nameserver。传统 DNS 接管、节点 bootstrap、IPv4 基线与微信本机回环例外继续保留。
-- 私有订阅下载后台 DIRECT 与普通端点自动代理是不同连接；同步脚本按明确 Target 执行，且必须保留同步块起止标记。
+- 机场官网访问与订阅下载必须按用途区分：官网访问代理、后台订阅 DIRECT；共用端点保持浏览器代理兼容行为，订阅专用端点直接 DIRECT；同步脚本按明确 Target 执行，且必须保留同步块起止标记。
 - 2026-05-07 下线的激进拒绝入口不恢复；本地只读监控仍使用 RM-INV / RM-EXEC 两阶段授权，不自动修改配置。
 
 构建、静态检查和原生语法检查分别执行。静态检查已通过不等于生产运行态生效；历史 v1.19.25 查询未命中模拟 resolver，当前 DNS 路由运行时仍未确认时必须明确说明，不宣称未经测量的性能提升。
@@ -221,8 +221,8 @@ ai_us 同时承接 OpenAI、Claude、Copilot、Cursor、Grok、Windsurf、Augmen
 - `.rulemesh.local.json` 只用于本地私有环境，已经被 `.gitignore` 忽略，不应提交到公开仓库
 - 缺少本地配置时，不影响本地构建与手工同步主流程，只会跳过本地 Feishu 告警发送；但 GitHub Actions 的每日 upstream 工作流会要求 webhook secrets 可用
 - 真实 Webhook、密钥、私有订阅地址、MITM 参数与本地长期使用配置应继续保留在公开仓库外部的私人 `rulemesh-local` 仓库中
-- 私有订阅端点同步块统一保留在解析后的私人当前配置目录中：使用 `private_subscription_direct.list` 作为单一源文件，运行 `sync_private_subscription_direct.ps1` 时显式选择 `-Target surge`、`-Target mihomo` 或 `-Target all`；不要在用户明确排除某一客户端时顺带更新它。目录解析见 [docs/private-repository-bootstrap.md](docs/private-repository-bootstrap.md)
-- 两份 Mihomo 私有配置里的机场 `proxy-providers` 默认必须保留 `proxy: DIRECT`，用于让后台订阅 URL 更新直连；订阅端点的普通流量由 Mihomo `rules` 中的精确 `DOMAIN` / `IP-CIDR` 规则交给节点选择。这和 `rule-providers` 拉 GitHub 规则集时可使用 `proxy: "🚀 节点选择"` 是三条彼此独立的链路
+- 私有订阅端点同步块统一保留在解析后的私人当前配置目录中：使用 `private_subscription_direct.list` 显式登记 WEBSITE / SUBSCRIPTION / SHARED 用途；公开通用渲染器 `tools/sync_private_subscription_direct.ps1` 与私人副本保持一致，运行 `sync_private_subscription_direct.ps1` 时显式选择 `-Target surge`、`-Target mihomo` 或 `-Target all`；不要在用户明确排除某一客户端时顺带更新它。目录解析见 [docs/private-repository-bootstrap.md](docs/private-repository-bootstrap.md)
+- 两份 Mihomo 私有配置里的机场 `proxy-providers` 默认必须保留 `proxy: DIRECT`，用于让后台订阅 URL 更新直连；官网与共用端点的普通访问由 Mihomo 精确规则交给节点选择，订阅专用端点则使用 DIRECT。这和 `rule-providers` 拉 GitHub 规则集时可使用 `proxy: "🚀 节点选择"` 是三条彼此独立的链路
 - 检查机场 provider 是否过期、流量耗尽或仍有存活节点时，统一按 [私有订阅端点同步约定](docs/private-subscription-direct-sync.md#mihomo-provider-有效性极速审计) 的 30 秒目标 / 60 秒硬上限只读路径执行：并发无代理探测直属订阅 URL，再通过实际已配置的 Mihomo 控制器单次读取运行态汇总。FlClash 默认私有 IPC 不是 HTTP 控制器；控制器未启用时报告运行态未知。分别报告端点、配额、有效期与近期健康历史；默认不强制 health-check、不启动隔离核心，也不依据旧缓存下结论
 - 四份本地私有配置里，所有基于 `policy-path` / provider 的代理组默认共用同一套排除条件：`剩余流量`、`套餐到期`、`距离下次重置`、`过滤掉`、`Expire Date`、`Traffic Reset` 这类状态/提示项按前缀匹配，`直接连接` 这类独立占位项按整行精确匹配，`联系我们` 与 `1.2 GB | 50 GB` 这类提示继续专项匹配
 - 如果某个 provider 会给真实节点名追加统一前缀，不要把供应商名或独立占位项写成宽匹配，否则可能误伤真实节点

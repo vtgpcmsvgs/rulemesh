@@ -42,7 +42,7 @@
 - 运行上述私有订阅同步脚本时必须显式传入 `-Target surge`、`-Target mihomo` 或 `-Target all`；用户明确要求只改某一客户端时，只运行对应目标，不得用共享源文件为理由顺带改动另一客户端
 - 上述私有订阅同步脚本在生成 Surge 的 `AND,((PROCESS-NAME,...),(...)),策略名` 逻辑规则时，末尾策略名必须裸写，不要再套双引号；`RULE-SET,...,"🚀 节点选择"` 这类普通规则允许带引号，但 `AND` 规则若写成 `...,"🚀 节点选择"`，Surge 会把引号算进策略名并报 `unknown policy`
 - 维护解析后的私人当前配置目录里的私有机场 provider 时，如果某个机场同时存在“入口域名”和“真实落地主机”，默认两者都要加入私有订阅端点源；优先使用精确 `DOMAIN` / `IP-CIDR`，不要用无必要的宽后缀覆盖，也不要只保留入口域名，否则 FlClash 桌面端 / Mihomo 可能在刷新 provider 时走偏、报 EOF，或把本地缓存刷成不完整内容
-- 维护两份 Mihomo 私有配置里的机场 `proxy-providers` 时，默认每个机场 provider 都要显式保留 `proxy: DIRECT`，表示 Mihomo 后台下载 / 更新订阅 URL 直连；普通流量访问这些订阅端点则由 `rules` 中的精确域名 / IP 规则统一交给节点选择，不使用 Surge 的 `PROCESS-NAME + 域名` 逻辑规则，也不要把 `rule-providers` 拉 GitHub 规则集用的代理出站逻辑套到机场订阅 provider 上
+- 维护两份 Mihomo 私有配置里的机场 `proxy-providers` 时，默认每个机场 provider 都要显式保留 `proxy: DIRECT`，表示 Mihomo 后台下载 / 更新订阅 URL 直连；普通流量按已确认用途区分：官网与官网/订阅共用端点由精确规则交给节点选择，订阅专用端点为 DIRECT；不使用 Surge 的 `PROCESS-NAME + 域名` 逻辑规则，也不要把 `rule-providers` 拉 GitHub 规则集用的代理出站逻辑套到机场订阅 provider 上
 - 对会按请求头协商响应格式的私有机场 provider，先实际探测返回内容；若通用 Mihomo 标识不能稳定返回 Clash YAML，可在该 provider 上显式使用已验证的 `header.User-Agent`，并让两份 Mihomo 配置保持一致
 - 检查当前全部机场 provider 的有效期与可用性时，默认采用 30 秒目标、60 秒上限的只读快速路径：
   - 仅以两份 Mihomo 配置 `proxy-providers` 下的二级键为当前清单，并先核对名称、直属 `url`、`proxy: DIRECT` 与 `header.User-Agent` 是否一致；任一不一致时停止外部探测并先报告配置漂移。解析直属四空格 `url`，不得把六空格的 `health-check.url` 当成订阅地址，也不得用运行目录中的旧缓存反推当前清单
@@ -218,3 +218,5 @@
 - 阅读第三方源码前先用 rg --files 确认路径，不能把旧文件布局当作当前事实；脚本依赖用明确运行时路径，临时 PyYAML 不假设系统环境全局可用。
 
 - 临时 Python 脚本必须使用任务专用名称，不得命名为 inspect.py、json.py、typing.py 等标准库模块名；先确认依赖可用，命令失败立即停止依赖步骤。订阅节点数量按解析后的顶层 proxies 计数，不以全文 name 文本命中数代替；Surge 组引用比较先去除成对引号。
+
+机场端点用途防回归：维护前区分 WEBSITE（官网代理）、SUBSCRIPTION（订阅专用直连）与 SHARED（兼容浏览器代理、客户端更新直连）。不能从订阅 URL 猜官网，也不能把用户确认的订阅专用域名加进浏览器代理例外。Surge 共用端点需覆盖实际使用的浏览器进程，Mihomo 后台更新依靠 provider 的 proxy: DIRECT；中文域名统一转 IDNA，机场组沿用飞机图标格式并校验所有引用。通用同步器源为 tools/sync_private_subscription_direct.ps1，私人副本同步维护；多目标写入前检查全部规则节与标记唯一性。回归夹具必须包含实际参与渲染的规则，不能依赖应被过滤的孤立注释。

@@ -34,7 +34,7 @@ GeoIP 使用 `geodata-mode: false`，`geox-url.mmdb` 直接引用 [MetaCubeX cou
 修改开关或恢复完整备份后，在仪表盘完整停止并启动 VPN，再验证 Android 当前 VPN 已无旧 HTTP 代理；仅核对保存值曾漏掉大智慧行情故障。可使用只读 `tools/check_android_vpn_runtime.py --adb <实际路径>`，然后复测多处原失败组件及应用重开。该运行态检查需要已授权的 USB 手机，不作为离线构建的强制步骤。
 
 
-私有订阅端点源修改后仅在已授权目标上运行 `sync_private_subscription_direct.ps1 -Target mihomo`；普通端点规则使用全地区自动组，后台订阅仍直连。不要输出真实 URL、token、节点名或 server。
+私有订阅端点源修改后仅在已授权目标上运行 `sync_private_subscription_direct.ps1 -Target mihomo`；官网和共用端点使用全地区自动组，订阅专用端点使用 DIRECT；后台订阅始终由 provider 的 `proxy: DIRECT` 保证直连。不要输出真实 URL、token、节点名或 server。
 
 规则更新执行 `tools/build_rules.ps1` 与 `tools/check.ps1`；原生语法检查的 `-d` 必须是任务临时目录下的专用路径。相关说明：[DNS/TUN](mihomo-tun-dns-methodology.md)、[过滤](proxy-group-filter-methodology.md)、[订阅同步](private-subscription-direct-sync.md)、[GeoIP](geoip-upstream.md)。
 

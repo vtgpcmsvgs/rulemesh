@@ -55,3 +55,5 @@ GitHub Raw 继续保留独立海外解析入口 `raw.githubusercontent.com = ser
 2026-09-12：`direct/ips5_direct` 以 DIRECT 覆盖 `ips5.vip` 主域及全部子域，位于 AI 之后、Google 广谱与拒绝之前，使用默认国内双 DoH；工作白名单仅增加该服务。AdsPower 停用范围、资产与定时任务处理见[规则停用与恢复](rule-deactivation.md)。
 
 2026-09-12 FlClash 迁移与优化以 [客户端性能基线](flclash-performance.md) 为准：桌面和安卓使用新文件名；通用末尾改为 cn_direct_light → gfw_precise → DIRECT，完整规则资产保留。工作白名单不接入新兜底，机场手动组保留。桌面 300 秒、安卓 600 秒，备用地区按需检测；以最终生成配置核对界面覆写。
+
+机场官网和订阅共用域名时，仅浏览器进程使用自动代理，客户端订阅连接 DIRECT；域名分开时，官网精确域名代理、订阅专用域名 DIRECT。同步源通过 WEBSITE / SUBSCRIPTION / SHARED 区分用途，不从订阅链接猜官网。中文域名转为 IDNA；机场组沿用 `✈️ 名称` 格式，重命名同步更新手动入口和 `include-other-group`。详见[端点同步约定](private-subscription-direct-sync.md)。
