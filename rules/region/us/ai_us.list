@@ -1,145 +1,116 @@
-# 海外 AI 平台美国分流规则：按“同平台聚合展示 + 上游优先 + 本地激进兜底”维护。
-# 维护约束：
-# 1) OpenAI / Google AI / Claude / Copilot / Cursor / Grok / Windsurf / Augment 等海外 AI 平台统一先走本文件，并固定绑定美国节点。
-# 2) 每个平台尽量把“上游 INCLUDE、显式域名、关键词兜底”放在同一小节，便于快速定位与补规则。
-# 3) Trae 只保留明确海外入口；中国大陆 AI（例如 DeepSeek、Trae 中国大陆入口）不并入本文件，应优先回到 direct/ai_cn_direct.list，再由其他直连规则兜底。
-# 4) Gemini / AI Studio / NotebookLM / DeepMind 由本文件前置美国分流；普通 Google 服务由后续 google_hk 兼容入口自动择优。
-# 5) 本规则集设计目标固定为美国节点，客户端请绑定 US-AUTO（或等价美国策略组），不要再沿用历史台湾入口命名。
+# 海外 AI 美国入口：只按已核对的服务域名边界匹配，同时用于 AI 专用 DNS。
+# 边界：不接管国内 AI、名字相似的网站、通用云平台、共享监控/支付平台或云厂商 IP/ASN。
+# 顺序：客户端第一条有效规则，绑定美国组；普通 Google 与 Microsoft 由后续规则承接。
+# 上游快照保留供审核参考，不直接整包 INCLUDE，防止上游关键词和共享基础设施重新扩围。
+# 新域名先核实服务归属；禁止 DOMAIN-KEYWORD、通配符和泛 IP 兜底。共享服务只接受已确认的租户入口。
 
-# ChatGPT / OpenAI：以上游主体为主，辅以品牌关键词兜底。
-INCLUDE,upstream/blackmatrix7/openai.list
-DOMAIN-KEYWORD,openai
-DOMAIN-KEYWORD,chatgpt
+# OpenAI / ChatGPT：官方域名、内容与已确认的服务专属认证/存储入口。
+DOMAIN-SUFFIX,openai.com
+DOMAIN-SUFFIX,chatgpt.com
+DOMAIN-SUFFIX,oaistatic.com
+DOMAIN-SUFFIX,oaiusercontent.com
+DOMAIN-SUFFIX,chatgpt.livekit.cloud
+DOMAIN,chat.openai.com.cdn.cloudflare.net
+DOMAIN,openai-api.arkoselabs.com
+DOMAIN,openaicom-api-bdcpf8c6d2e9atf6.z01.azurefd.net
+DOMAIN,openaicomproductionae4b.blob.core.windows.net
+DOMAIN,production-openaicom-storage.azureedge.net
+DOMAIN-SUFFIX,openaiapi-site.azureedge.net
+DOMAIN-SUFFIX,openaicom.imgix.net
 
-# Google AI：必须在包含 Google 通用域名和完整地址空间的 google_hk 前调用。
-INCLUDE,upstream/blackmatrix7/gemini.list
+# Google AI：仅产品入口与专用 API，不用 colab、gemini 等词匹配无关域名。
+DOMAIN,ai.google.dev
+DOMAIN,alkalimakersuite-pa.clients6.google.com
+DOMAIN-SUFFIX,makersuite.google.com
+DOMAIN-SUFFIX,bard.google.com
+DOMAIN-SUFFIX,gemini.google.com
 DOMAIN-SUFFIX,aistudio.google.com
 DOMAIN-SUFFIX,notebooklm.google.com
 DOMAIN-SUFFIX,notebooklm.google
+DOMAIN-SUFFIX,deepmind.com
+DOMAIN-SUFFIX,deepmind.google
+DOMAIN-SUFFIX,generativeai.google
 DOMAIN-SUFFIX,generativelanguage.googleapis.com
-DOMAIN-KEYWORD,gemini
-DOMAIN-KEYWORD,makersuite
-DOMAIN-KEYWORD,aistudio
-DOMAIN-KEYWORD,notebooklm
-DOMAIN-KEYWORD,deepmind
+DOMAIN-SUFFIX,proactivebackend-pa.googleapis.com
+DOMAIN-SUFFIX,colab.research.google.com
+DOMAIN-SUFFIX,colab.google
+DOMAIN-SUFFIX,colab.googleusercontent.com
 
-# Claude / Anthropic：补齐 Claude 品牌新入口，并保留客服/监控链路关键词兜底。
-INCLUDE,upstream/blackmatrix7/claude.list
+# Claude / Anthropic：官方站点和专用内容域名。
+DOMAIN-SUFFIX,anthropic.com
+DOMAIN-SUFFIX,claude.ai
 DOMAIN-SUFFIX,claude.com
 DOMAIN-SUFFIX,claudeusercontent.com
-DOMAIN-KEYWORD,anthropic
-DOMAIN-KEYWORD,claude
-DOMAIN-KEYWORD,intercom
-DOMAIN-KEYWORD,datadoghq
 
-# GitHub Copilot：以上游主体为主，补品牌关键词兜底。
-INCLUDE,upstream/blackmatrix7/copilot.list
-DOMAIN-KEYWORD,copilot
-DOMAIN-KEYWORD,githubcopilot
+# Copilot：专属入口；www.bing.com 为与搜索共用的已登记精确主机例外，不扩至 bing.com。
+DOMAIN-SUFFIX,copilot.microsoft.com
+DOMAIN-SUFFIX,githubcopilot.com
+DOMAIN-SUFFIX,copilot-proxy.githubusercontent.com
+DOMAIN,copilot-telemetry.githubusercontent.com
+DOMAIN,gateway.bingviz.microsoft.net
+DOMAIN,gateway.bingviz.microsoftapp.net
+DOMAIN,services.bingapis.com
+DOMAIN,sydney.bing.com
+DOMAIN,www.bing.com
+DOMAIN,r.bing.com
+DOMAIN-SUFFIX,edgeservices.bing.com
 
-# Cursor：以上游主体为主，补品牌关键词兜底。
-INCLUDE,upstream/skywalkerji/cursor.list
-DOMAIN-KEYWORD,cursor
+# Cursor：只覆盖产品域名，不把共享 WorkOS 平台整体送到美国。
+DOMAIN-SUFFIX,cursor.sh
+DOMAIN-SUFFIX,cursor-cdn.com
+DOMAIN-SUFFIX,cursorapi.com
+DOMAIN-SUFFIX,cursor.com
 
-# Grok / xAI：以上游主体为主，补品牌关键词兜底。
-INCLUDE,upstream/accademia/grok.list
-DOMAIN-KEYWORD,grok
-DOMAIN-KEYWORD,xai
+# Grok / xAI：按 x.ai 的域名边界匹配，不能使用 xai 字符串。
+DOMAIN-SUFFIX,x.ai
+DOMAIN-SUFFIX,grok.com
+DOMAIN-SUFFIX,xai.chronosphere.io
 
-# Windsurf / Codeium：以上游主体为主，补品牌关键词兜底。
-INCLUDE,upstream/skywalkerji/windsurf.list
-DOMAIN-KEYWORD,windsurf
-DOMAIN-KEYWORD,codeium
+# Windsurf / Codeium 与 Augment：官方产品域名。
+DOMAIN-SUFFIX,windsurf.com
+DOMAIN-SUFFIX,codeium.com
+DOMAIN-SUFFIX,augmentcode.com
 
-# Augment：以上游主体为主，补品牌关键词兜底。
-INCLUDE,upstream/skywalkerji/augmentcode.list
-DOMAIN-KEYWORD,augment
-
-# Trae 海外版：只保留明确海外域名，不并入中国大陆入口与共享国内基础设施。
+# Trae 海外版：保留已登记的海外产品入口，不覆盖整个 byteoversea.com 共享域。
 DOMAIN-SUFFIX,trae.ai
-DOMAIN-SUFFIX,byteoversea.com
 DOMAIN-SUFFIX,trae-api-sg.mchost.guru
 DOMAIN-SUFFIX,bytegate-sg.byteintlapi.com
 DOMAIN-SUFFIX,abtestvm-sg.bytedance.com
 DOMAIN-SUFFIX,tron-sg.bytelemon.com
 DOMAIN-SUFFIX,sf16-short-sg.bytedapm.com
 
-# Arc：保留 AI 浏览器入口域名。
+# Arc 与 Perplexity：产品和专用资源入口。
 DOMAIN-SUFFIX,arc.net
-
-# Perplexity：保留主域名与品牌关键词双兜底。
 DOMAIN-SUFFIX,perplexity.ai
 DOMAIN-SUFFIX,pplx.ai
-DOMAIN-KEYWORD,perplexity
-DOMAIN-KEYWORD,pplx
 
-# Poe：保留主站、静态资源与品牌关键词兜底。
+# Poe 与 OpenRouter：产品和专用资源入口。
 DOMAIN-SUFFIX,poe.com
 DOMAIN-SUFFIX,poecdn.net
-DOMAIN-KEYWORD,poe
-
-# OpenRouter：保留主域名与品牌关键词兜底。
 DOMAIN-SUFFIX,openrouter.ai
-DOMAIN-KEYWORD,openrouter
 
-# Hugging Face：保留主域名与品牌关键词兜底。
+# Hugging Face、Meta AI 与 Character.AI：官方产品入口。
 DOMAIN-SUFFIX,huggingface.co
 DOMAIN-SUFFIX,hf.co
-DOMAIN-KEYWORD,huggingface
-
-# Meta AI：保留主域名入口。
 DOMAIN-SUFFIX,meta.ai
-
-# Character.AI：保留主域名入口。
 DOMAIN-SUFFIX,character.ai
 
-# Midjourney：保留主域名与品牌关键词兜底。
+# 图像、视频与音频 AI：主域变更须明确登记，不用品牌词猜测其他网站。
 DOMAIN-SUFFIX,midjourney.com
-DOMAIN-KEYWORD,midjourney
-
-# Stability AI：保留主域名与品牌关键词兜底。
 DOMAIN-SUFFIX,stability.ai
-DOMAIN-KEYWORD,stability
-
-# Runway：保留主域名与品牌关键词兜底。
 DOMAIN-SUFFIX,runwayml.com
-DOMAIN-KEYWORD,runway
-
-# Suno：保留主域名与品牌关键词兜底。
 DOMAIN-SUFFIX,suno.ai
-DOMAIN-KEYWORD,suno
-
-# ElevenLabs：保留主域名与品牌关键词兜底。
+DOMAIN-SUFFIX,suno.com
 DOMAIN-SUFFIX,elevenlabs.io
-DOMAIN-KEYWORD,elevenlabs
 
-# Groq：保留主域名与品牌关键词兜底。
+# 推理和模型平台：保持产品域名边界。
 DOMAIN-SUFFIX,groq.com
-DOMAIN-KEYWORD,groq
-
-# Mistral：保留主域名与品牌关键词兜底。
 DOMAIN-SUFFIX,mistral.ai
-DOMAIN-KEYWORD,mistral
-
-# Cohere：保留主域名与品牌关键词兜底。
 DOMAIN-SUFFIX,cohere.com
-DOMAIN-KEYWORD,cohere
-
-# Fireworks：保留主域名与品牌关键词兜底。
 DOMAIN-SUFFIX,fireworks.ai
-DOMAIN-KEYWORD,fireworks
-
-# Together AI：保留主域名与品牌关键词兜底。
 DOMAIN-SUFFIX,together.ai
-DOMAIN-KEYWORD,together
-
-# Replicate：保留主域名与品牌关键词兜底。
 DOMAIN-SUFFIX,replicate.com
-DOMAIN-KEYWORD,replicate
 
-# Bolt：保留产品域名入口。
+# 应用生成工具：官方产品入口。
 DOMAIN-SUFFIX,bolt.new
-
-# Lovable：保留产品域名与品牌关键词兜底。
 DOMAIN-SUFFIX,lovable.dev
-DOMAIN-KEYWORD,lovable

@@ -16,6 +16,14 @@ defaults:
     manual_entries_first: true
 
 merge_plan:
+  - id: cn-services-direct
+    target: rules/direct/cn_services_direct.list
+    purpose: 国内 DNS 与新华三精选直连，防止前置代理遮蔽
+    strategy:
+      - manual_only
+      - exact_domestic_dns_and_h3c_scope
+    notes:
+      - 七份配置紧随 AI 调用；工作白名单仅精确放行，最终仍 REJECT
   - id: cn-direct-light
     target: rules/direct/cn_direct_light.list
     purpose: 最终 DIRECT 场景的中国域名冲突保护与原有中国 IP 直连
@@ -177,7 +185,7 @@ merge_plan:
       - include_complete_official_goog_json_ip_space
     notes:
       - Google AI 由前置 ai_us 美国入口承接，google_hk 保留通用域名和完整 IP 空间并自动择优
-      - 客户端必须把 google_hk 放在广告拒绝、ai_us、国内直连、海外 DNS IP 美国分流与所有广谱兜底之前
+      - 客户端必须先放 AI、国内精选和明确地区入口，再放 google_hk；广告拒绝与通用兜底后置
       - 官方 goog.json 地址空间动态变化；同步时拒绝空数据、重复前缀、非公网地址与异常 IP 版本
       - 完整保留 Google Cloud 客户地址，第三方 GCP 服务自动择优；明确地区业务必须前置
       - DNS 按已批准 2026-09-09 性能基线：普通业务默认国内双 DoH，Mihomo 仅 AI 使用专项 policy，地区必需业务优先保留出口
@@ -194,7 +202,7 @@ merge_plan:
 
   - id: us-microsoft-store
     target: rules/region/us/microsoft_store_us.list
-    purpose: Personal 激进配置的 Microsoft Store 与下载基础设施默认使用自动策略
+    purpose: Microsoft Store 与下载基础设施固定美国，满足美国地区应用的 IP 条件
     strategy:
       - manual_only
       - official_windows_store_and_delivery_optimization_endpoints
@@ -257,12 +265,12 @@ merge_plan:
 
   - id: hk-wps-kdocs
     target: rules/region/hk/wps_kdocs.list
-    purpose: WPS Office 与金山文档连接默认自动择优
+    purpose: WPS Office 与金山文档固定香港，保留公开文档地区展示的业务要求
     strategy:
       - manual_only
       - explicit_official_domains_first_then_brand_keyword_fallback
       - bind_to_hk_auto
-      - reuse_same_ruleset_for_surge_overseas_dns_override
+      - keep_default_domestic_dns
     notes:
       - 客户端顺序必须放在 direct/cn_direct 与工作白名单 FINAL,REJECT 前，避免 WPS 专用域名被通用大陆直连或最终拒绝抢先命中
       - DNS 按已批准 2026-09-09 性能基线：普通业务默认国内双 DoH，Mihomo 仅 AI 使用专项 policy，地区必需业务优先保留出口
@@ -383,15 +391,13 @@ merge_plan:
     target: rules/region/us/ai_us.list
     purpose: 海外 AI 平台走美国策略
     strategy:
-      - include_upstream_first_then_local_keyword_fallback
-      - include_blackmatrix7_openai_family
-      - include_skywalkerji_coding_ai
-      - include_accademia_grok
+      - reviewed_explicit_service_domains_only
+      - retain_upstream_snapshots_as_review_candidates
     notes:
       - 统一承接 OpenAI / Claude / Gemini / Copilot / Cursor / Grok / Windsurf / Augment 等海外 AI 平台
       - 客户端默认绑定美国地区策略，不再绑定台湾地区策略
       - Trae 只保留明确海外入口；DeepSeek、Trae 中国大陆入口与其他国内 AI 不并入该文件，而是优先交给 rules/direct/ai_cn_direct.list，再由直连兜底规则承接共享基础设施
-      - 本地额外保留更激进的 DOMAIN-KEYWORD 兜底，用于覆盖新前端、新二级域名与第三方聚合入口
+      - 禁止关键词、通配符、共享云根域与 IP/ASN 兜底；避免相似名称同时被误送美国与海外 DNS
 
   - id: tw-crypto
     target: rules/region/tw/crypto_tw.list

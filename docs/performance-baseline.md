@@ -1,5 +1,7 @@
 # 2026-09-09 性能基线
 
+2026-09-16 [出口修订](scoped-egress-repair.md) 优先：WPS 固定香港、Store 专项固定美国；AI 使用审核域名，国内 DNS 与新华三固定第二条直连；Surge 移除阿里设备/整设备代理与爱思/Apple 海外解析残留。通用 Microsoft 保留代理，工作白名单仍 REJECT。
+
 2026-09-16 两份 FlClash 的日常业务修订见 [常用业务连通性](common-network-reliability.md)：阿里系强制代理停用，安卓共享下载按目的地分流；Google 专属保护、AI 美国和其他地区要求继续保留。下文历史默认值不能覆盖此修订。
 
 本基线适用于两份公开模板与五份私有主配置，取代 2026-08-21 的默认海外 DNS、Google 全业务香港和全业务按地区名固定出口的方案。用户已接受普通业务使用国内 DNS；地区访问条件仍优先于测速结果。
@@ -10,6 +12,9 @@
 | Crypto，包括交易所、Polymarket、Polygon/BSC RPC | 台湾自动组 | 默认国内双 DoH |
 | 已登记的 `opinion.trade` 日本访问例外 | 日本自动组，优先于 Crypto 通用入口 | 默认国内双 DoH |
 | 香港券商、Personal 香港证券入口 | 香港自动组 | 默认国内双 DoH |
+| WPS / 金山文档公开发布 | 香港自动组，保留地区展示要求 | 默认国内双 DoH |
+| Microsoft Store 专项 | 美国自动组，保留地区 IP 要求 | 默认国内双 DoH |
+| 国内 DNS 精确入口、新华三 | DIRECT，紧随 AI | 国内双 DoH |
 | 抖音、小红书、微信 | DIRECT，前置于 Google 广谱与广告拒绝 | 国内双 DoH |
 | 其他既有直连业务 | 保持 DIRECT | 国内双 DoH |
 | 命中前置规则的其余海外代理业务 | 全地区自动组 | 默认国内 DNS；Surge 代理连接继续允许代理侧解析 |

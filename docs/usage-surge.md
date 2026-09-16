@@ -14,7 +14,7 @@
 ## 默认规则顺序
 
 1. 海外 AI 美国入口，包括 Google AI。
-2. 国内 AI、抖音、微信与小红书精选直连。
+2. 国内 DNS 与新华三精选直连固定第二条，再调用国内 AI、抖音、微信与小红书。
 3. 日本明确访问例外、Crypto 台湾、香港券商与 Personal 香港证券。
 4. Google 通用业务自动择优，保留官方完整地址空间。
 5. Personal 精选规则与既有拒绝规则；Apple / Outlook 直连及 Microsoft Store 优先入口保持各自边界。
@@ -24,7 +24,9 @@
 
 命中普通海外规则时使用全地区 smart 组，未命中规则的 `FINAL` 使用 DIRECT；AI 美国、Crypto/RPC 台湾、`opinion.trade` 日本、券商香港是明确例外。地区组仍可用于手动选择。AWS IP 规则和链式 SOCKS5 规则仅保留仓库源文件与产物，配置不再调用。
 
-`global_media` 承接 X / Twitter 和媒体服务；Polymarket 已移入 Crypto 台湾。WPS、Notion、Microsoft Store 等没有当前强制地区要求的业务自动择优；文件名中的旧地区只是兼容路径。国内 AI 由 `ai_cn_direct` 承接，不扩入海外 AI。
+`global_media` 承接 X / Twitter 和媒体服务；Polymarket 已移入 Crypto 台湾。WPS 固定香港以满足公开文档地区展示，Store 专项固定美国以满足地区 IP 要求；通用 Microsoft 保留代理，Notion 自动择优。国内 AI 由 `ai_cn_direct` 承接，不扩入海外 AI。AI 仅使用明确域名，详见[出口修订](scoped-egress-repair.md)。
+
+Surge 不再调用阿里设备代理或整设备代理，也不按 DOH/DOH3/DOQ 协议把所有解析器送海外。国内 DNS 精确入口前置直连，海外解析端点按既有域名/IP 规则处理。Personal 的爱思和 Apple 下载入口使用国内默认 DNS；AI、GitHub Raw 和节点自举各自保留已登记例外。
 
 ## DNS 与连接
 

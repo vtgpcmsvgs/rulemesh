@@ -3,7 +3,7 @@
 # 1) 本文件是用户批准的 Personal 激进直连入口，不使用 17.0.0.0/8，也不通过 Surge skip-proxy 绕过规则层。
 # 2) Personal 客户端必须把本入口放在 Apple 更新拒绝与 macOS 美国更新前，因此 Apple 更新也会直连。
 # 3) 只纳入 Apple 官方服务域名族，不使用 DOMAIN-KEYWORD,apple，避免误伤第三方同名站点。
-# 4) DNS 继续使用客户端既有海外解析与已批准性能型中国域名清单，不新增国内 DNS 泛化。
+# 4) DNS 使用默认国内双 DoH；不得为爱思或 Apple 下载入口残留海外 Host 解析例外。
 
 # Apple 核心、账户、设备管理、商店与更新。
 DOMAIN-SUFFIX,apple

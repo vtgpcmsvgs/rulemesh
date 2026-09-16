@@ -1,0 +1,21 @@
+# 国内基础服务精选直连：国内 DNS 端点与新华三官网。
+# 边界：只放行列出的解析服务和 h3c.com，不放行整个平台、设备或任意加密 DNS。
+# 顺序：AI 第一条之后立即调用，早于地区代理、Google IP、设备条件、拒绝和协议兜底。
+# 工作白名单只获得这些精确入口，最终仍为 REJECT；节点自举仍按客户端独立 DNS 设置。
+
+# AliDNS 与 DNSPod：域名入口和当前默认自举地址。
+DOMAIN,dns.alidns.com
+DOMAIN,doh.pub
+DOMAIN,dot.pub
+DOMAIN,dns.pub
+DOMAIN,sm2.doh.pub
+IP-CIDR,223.5.5.5/32,no-resolve
+IP-CIDR,223.6.6.6/32,no-resolve
+IP-CIDR,119.29.29.29/32,no-resolve
+
+# 360 安全 DNS：只匹配解析服务主机，不扩到整个 360 域名。
+DOMAIN,doh.360.cn
+DOMAIN,dot.360.cn
+
+# 新华三：官网与同一官方域名下的服务。
+DOMAIN-SUFFIX,h3c.com

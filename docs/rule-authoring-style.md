@@ -176,7 +176,7 @@ IP 类源规则可以只写主体字段；构建产物会自动补 `no-resolve`�
 
 例如：
 
-- `ai_us.list` 要明确“只负责海外 AI，不负责国内 AI，并默认绑定美国策略”
+- `ai_us.list` 要明确“只负责海外 AI，不负责国内 AI，并默认绑定美国策略”。2026-09-16 起只维护审核后的 DOMAIN/DOMAIN-SUFFIX，禁止关键词、通配符、共享云根域与 IP/ASN；上游快照作为候选，不能整包 INCLUDE 绕过审核。此项是一般“上游优先”编排的范围例外，按产品分组仍保留。
 - `ai_cn_direct.list` 要明确“显式国内 AI 在前，字节共享基础设施仍交给 bytedance_direct”
 - `google_hk.list` 保留 Google 通用域名与完整 IP 空间；Google AI 在 `ai_us`，客户端前置美国入口，普通 Google 默认自动择优、安卓下载保护使用稳定组。下载兼容性继续复用现有资产，进程和传输保护留在安卓配置，详见 [专项说明](android-network-repair.md)。
 - `cn_direct.list` 要明确“它是最宽泛的大陆通用兜底，应放在更细分规则之后”

@@ -46,11 +46,13 @@ REGIONAL = {
     "region/tw/crypto_tw": "tw", "region/jp/domains_to_jp": "jp",
     "region/hk/hk_brokers": "hk", "region/hk/hk_securities_aggressive": "hk",
     "proxy/polygon_rpc_proxy": "tw", "proxy/bsc_rpc_proxy": "tw",
+    "region/hk/wps_kdocs": "hk", "region/us/microsoft_store_us": "us",
 }
 PROVIDER_IDS = {
     "tw_crypto": "region/tw/crypto_tw", "jp_domains": "region/jp/domains_to_jp",
     "hk_brokers": "region/hk/hk_brokers", "hk_securities_aggressive": "region/hk/hk_securities_aggressive",
     "proxy_polygon_rpc": "proxy/polygon_rpc_proxy", "proxy_bsc_rpc": "proxy/bsc_rpc_proxy",
+    "hk_wps_kdocs": "region/hk/wps_kdocs", "us_microsoft_store": "region/us/microsoft_store_us",
 }
 
 
@@ -99,6 +101,7 @@ def check(path: Path, lines: list[str]) -> list[str]:
             rules.append((index, parts))
         identifiers = {
             BASE + "surge/rules/region/us/ai_us.list": "ai",
+            BASE + "surge/rules/direct/cn_services_direct.list": "domestic_services",
             BASE + "surge/rules/direct/ips5_direct.list": "ips5",
             BASE + "surge/rules/direct/bytedance_direct.list": "douyin",
             BASE + "surge/rules/direct/cn_social_direct.list": "social",
@@ -110,12 +113,14 @@ def check(path: Path, lines: list[str]) -> list[str]:
         groups = dns._parse_mihomo_groups(lines)
         auto_groups = [name for name, group in groups.items() if group.group_type == "url-test"]
         rules = dns._parse_mihomo_rules(lines)
-        identifiers = {"us_ai": "ai", "direct_ips5": "ips5", "direct_bytedance": "douyin", "direct_cn_social": "social", "hk_google": "google"}
+        identifiers = {"us_ai": "ai", "direct_cn_services": "domestic_services", "direct_ips5": "ips5", "direct_bytedance": "douyin", "direct_cn_social": "social", "hk_google": "google"}
         providers = dns._parse_mihomo_providers(lines)
         for name, identifier in {
             "us_ai": "region/us/ai_us", "direct_bytedance": "direct/bytedance_direct",
             "direct_cn_social": "direct/cn_social_direct", "hk_google": "region/hk/google_hk",
             "direct_ips5": "direct/ips5_direct",
+            "direct_cn_services": "direct/cn_services_direct",
+            "hk_wps_kdocs": "region/hk/wps_kdocs", "us_microsoft_store": "region/us/microsoft_store_us",
         }.items():
             require(name in providers and providers[name][1] == BASE + f"mihomo/classical/{identifier}.yaml", f"Mihomo {name} 必须引用规范公开产物。")
 
@@ -128,15 +133,20 @@ def check(path: Path, lines: list[str]) -> list[str]:
     for position, (_, parts) in enumerate(rules):
         if len(parts) >= 3 and parts[0] == "RULE-SET" and parts[1] in identifiers:
             selected.setdefault(identifiers[parts[1]], []).append((position, parts))
-    for identifier in ("ai", "douyin", "social", "ips5", "google"):
+    for identifier in ("ai", "domestic_services", "douyin", "social", "ips5", "google"):
         require(len(selected.get(identifier, [])) == 1, f"{identifier} 必须有且只有一个显式入口。")
-    if not all(len(selected.get(key, [])) == 1 for key in ("ai", "douyin", "social", "ips5", "google")):
+    if not all(len(selected.get(key, [])) == 1 for key in ("ai", "domestic_services", "douyin", "social", "ips5", "google")):
         return errors
     ai_position, ai_rule = selected["ai"][0]
     us = ai_rule[2]
     allowed = dns.APPROVED_SURGE_US_FILTERS | {PUBLIC_US_FILTER} if surge else dns.APPROVED_MIHOMO_US_FILTERS
     require(dns._group_has_us_semantics(us, groups, frozenset(allowed)), "AI 必须绑定实际具有美国节点过滤条件的组。")
     require(ai_position == 0, "AI 美国入口必须是第一条有效规则，防止 Google IP 或设备广谱规则抢先覆盖。")
+    domestic_position, domestic_rule = selected["domestic_services"][0]
+    require(domestic_position == 1 and domestic_rule[2] == "DIRECT", "国内 DNS 与新华三必须紧随 AI 直连，不能被设备、平台或协议规则遮蔽。")
+    active = [line for line in lines if line.strip() and not line.lstrip().startswith(("#", ";", "//"))]
+    require(not any("alibaba_hk" in line or "hk_alibaba" in line for line in active), "阿里系强制代理已停用，不得保留调用、注册或解析依赖。")
+    require(not any(parts[:1] == ["SRC-IP"] and parts[-1] in groups for _, parts in rules), "不得用整设备代理覆盖国内默认直连；地区要求按业务规则表达。")
     fixed_positions = {}
     for position, (_, parts) in enumerate(rules):
         if len(parts) < 3 or parts[0] != "RULE-SET":
@@ -145,10 +155,11 @@ def check(path: Path, lines: list[str]) -> list[str]:
         if identifier not in REGIONAL:
             continue
         fixed_positions[identifier] = position
-        require(dns._group_has_us_semantics(parts[2], groups, region_filters(REGIONAL[identifier], surge)), f"{identifier} 必须保留已登记地区出口。")
-        if identifier.startswith("region/"):
+        filters = frozenset(allowed) if REGIONAL[identifier] == "us" else region_filters(REGIONAL[identifier], surge)
+        require(dns._group_has_us_semantics(parts[2], groups, filters), f"{identifier} 必须保留已登记地区出口。")
+        if identifier.startswith("region/") and identifier != "region/us/microsoft_store_us":
             require(position < selected["google"][0][0], "地区必需入口必须早于 Google 完整 IP 地址空间。")
-    require(all(key in fixed_positions for key in ("region/tw/crypto_tw", "region/jp/domains_to_jp", "region/hk/hk_brokers")), "缺少 Crypto 台湾、日本明确入口或香港券商专项规则。")
+    require(all(key in fixed_positions for key in ("region/tw/crypto_tw", "region/jp/domains_to_jp", "region/hk/hk_brokers", "region/hk/wps_kdocs", "region/us/microsoft_store_us")), "缺少 Crypto、日本、券商、WPS 香港或 Store 美国专项规则。")
     for key in ("douyin", "social", "ips5"):
         position, parts = selected[key][0]
         require(parts[2] == "DIRECT", f"{key} 必须直连。")
@@ -207,8 +218,11 @@ def check(path: Path, lines: list[str]) -> list[str]:
         require(len(ai_dns_positions) == 1, "Surge AI DoH 缺少唯一规则集美国出站。")
         if len(ai_dns_positions) == 1:
             require(all(ai_dns_positions[0] < pos for pos, (_, parts) in enumerate(rules) if parts[0] in {"SRC-IP", "PROTOCOL", "FINAL"}), "AI DNS 美国出口必须早于设备、协议和最终兜底。")
-        for endpoint in ("dns.alidns.com", "doh.pub"):
-            require(any(parts[:3] == ["DOMAIN", endpoint, "DIRECT"] for _, parts in rules), "国内 DoH 端点必须显式直连。")
+        require(not any(parts[:1] == ["PROTOCOL"] and parts[1] in {"DOH", "DOH3", "DOQ"} for _, parts in rules), "加密 DNS 必须按端点分流，不得用协议兜底统一代理国内解析器。")
+        for item in host:
+            scope, _, value = item.partition("=")
+            if any(endpoint in value for endpoint in OVERSEAS):
+                require(scope.strip() in {ai_host.split(" = ")[0], "raw.githubusercontent.com"}, "海外 Host 解析只允许 AI 与 GitHub Raw 例外，爱思和 Apple 应使用国内默认 DNS。")
         node_entries = [line for line in host if "proxy-node-domains" in line]
         require(len(node_entries) == 1 and "DOMAIN-SET:" in node_entries[0] and "/api/file/" not in node_entries[0], "节点 bootstrap 必须使用唯一可分享的 DOMAIN-SET 入口。")
         require(not any("cn_performance_dns_domains" in line for line in host), "默认国内 DNS 后不应重复加载性能型 DNS 清单。")

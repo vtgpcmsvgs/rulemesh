@@ -1,11 +1,11 @@
 {
   "summary": {
-    "domain-only": 14,
+    "domain-only": 15,
     "ipcidr-only": 7,
     "classical/mixed": 27,
     "dns-domain-set": 2,
     "empty": 0,
-    "total_sources": 50,
+    "total_sources": 51,
     "total_warnings": 0
   },
   "sources": [
@@ -124,6 +124,19 @@
       "dist": {
         "surge_rules": "dist/surge/rules/direct/cn_direct_light.list",
         "mihomo_classical": "dist/mihomo/classical/direct/cn_direct_light.yaml"
+      }
+    },
+    {
+      "source": "rules/direct/cn_services_direct.list",
+      "category": "direct",
+      "classification": "classical/mixed",
+      "counts": {
+        "surge_rules": 11,
+        "mihomo_classical": 11
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/direct/cn_services_direct.list",
+        "mihomo_classical": "dist/mihomo/classical/direct/cn_services_direct.yaml"
       }
     },
     {
@@ -404,8 +417,8 @@
       "category": "region",
       "classification": "domain-only",
       "counts": {
-        "surge_rules": 3,
-        "mihomo_classical": 3
+        "surge_rules": 2,
+        "mihomo_classical": 2
       },
       "dist": {
         "surge_rules": "dist/surge/rules/region/hk/personal_priority_hk.list",
@@ -545,10 +558,10 @@
     {
       "source": "rules/region/us/ai_us.list",
       "category": "region",
-      "classification": "classical/mixed",
+      "classification": "domain-only",
       "counts": {
-        "surge_rules": 155,
-        "mihomo_classical": 155
+        "surge_rules": 83,
+        "mihomo_classical": 83
       },
       "dist": {
         "surge_rules": "dist/surge/rules/region/us/ai_us.list",

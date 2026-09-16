@@ -20,6 +20,10 @@ sources:
           note: 广告拦截继续保持小而可读，不引入额外大体量上游
 
   direct:
+    cn_services_direct.list:
+      preferred:
+        - repo: self
+          note: 国内 DNS 精确主机及默认自举地址、新华三官方域名；七份配置紧随 AI 直连，不扩大工作白名单
     cn_direct_light.list:
       preferred:
         - repo: self
@@ -160,7 +164,7 @@ sources:
     hk/wps_kdocs.list:
       preferred:
         - repo: self
-          note: WPS Office、金山文档、开放平台、云文档、资源分发与金山云旧存储连接默认自动择优，并保留 kdocs/kingsoft 关键词兜底
+          note: WPS Office、金山文档、开放平台、云文档、资源分发与金山云旧存储固定香港，保留既有业务范围
         - repo: WPS 官方文档
           note: 参考 WPS 开放平台公开的云文档存储网关根域与 openapi.wps.cn 等官方连接入口
         - repo: Loyalsoldier/surge-rules
@@ -174,7 +178,7 @@ sources:
     hk/personal_priority_hk.list:
       preferred:
         - repo: self
-          note: 只供 Surge Personal 激进配置使用，承接 doubleclick.net、xygj.pro 与 h3c.com 的香港优先覆盖，不接入工作白名单
+          note: 只供 Personal 配置使用，承接 doubleclick.net、xygj.pro 的优先代理；新华三改由 cn_services_direct 直连
     hk/notion_hk.list:
       preferred:
         - repo: self
@@ -208,13 +212,13 @@ sources:
     us/ai_us.list:
       preferred:
         - repo: self
-          note: 承接海外 AI 平台的更激进关键词与热门站点补充兜底，客户端默认绑定美国地区策略；国内 AI 优先走 ai_cn_direct，再由 bytedance_direct 与 cn_direct 兜底
+          note: 审核后的海外 AI 服务域名边界，禁止关键词、通配符、共享云根域与 IP/ASN 扩围；美国出口及专用 DNS 共用
         - repo: blackmatrix7/ios_rule_script
-          note: 负责 OpenAI / Claude / Gemini / Copilot 主体
+          note: OpenAI / Claude / Gemini / Copilot 候选来源，保留快照供审核，不再整包 INCLUDE
         - repo: SkywalkerJi/Clash-Rules
-          note: 负责 Cursor / Windsurf / AugmentCode 等编码 AI 平台补充；Trae 只参考其上游，不再整包并入
+          note: Cursor / Windsurf / AugmentCode / Trae 候选来源，只纳入确认的产品域名
         - repo: Accademia/Additional_Rule_For_Clash
-          note: 负责 Grok 补充，作为 blackmatrix7 缺口的补位来源
+          note: Grok 候选来源，排除共享 IP 与非专用基础设施
     tw/crypto_tw.list:
       preferred:
         - repo: self
@@ -226,7 +230,7 @@ sources:
         - repo: self
           note: Google 通用业务兼容入口，含完整域名、Play、YouTube、FCM 与官方完整公网地址空间；AI 美国入口优先
         - repo: blackmatrix7/ios_rule_script
-          note: 负责 Google.list、GoogleFCM.list、YouTube.list；Gemini.list 在 ai_us 单独 INCLUDE
+          note: 负责 Google.list、GoogleFCM.list、YouTube.list；Google AI 在 ai_us 审核后单独维护
         - repo: google/ipranges
           note: 负责 goog.json 完整 IPv4 / IPv6 地址空间；故意不扣除 Google Cloud 客户地址
     us/microsoft_us.list:
@@ -238,7 +242,7 @@ sources:
     us/microsoft_store_us.list:
       preferred:
         - repo: self
-          note: Personal 激进配置的 Microsoft Store 美国专项入口，先于 Outlook 直连与通用 Microsoft 美国规则
+          note: 七份配置的 Microsoft Store 美国专项，先于通用 Microsoft；Personal 先于 Outlook，工作与 FlClash 保留更新拒绝优先
         - repo: Microsoft Learn
           note: 参考 Windows connection endpoints、Intune Store API 与 Delivery Optimization 官方端点清单
     us/macos_update_us.list:

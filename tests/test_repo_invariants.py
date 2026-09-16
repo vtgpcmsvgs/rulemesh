@@ -212,8 +212,10 @@ class AggressivePersonalSourceTests(unittest.TestCase):
         outlook = source("rules/direct/outlook_direct.list")
         store = source("rules/region/us/microsoft_store_us.list")
 
-        for domain in ("doubleclick.net", "xygj.pro", "h3c.com"):
+        for domain in ("doubleclick.net", "xygj.pro"):
             self.assertIn(f"DOMAIN-SUFFIX,{domain}", priority)
+        self.assertNotIn("DOMAIN-SUFFIX,h3c.com", priority)
+        self.assertIn("DOMAIN-SUFFIX,h3c.com", source("rules/direct/cn_services_direct.list"))
 
         for domain in (
             "notion.com",
@@ -625,19 +627,19 @@ class RepoInvariantTests(unittest.TestCase):
         )
 
         self.assertLess(
-            surge.index("region/hk/wps_kdocs.list,\"♻️ 自动选择\""),
+            surge.index("region/hk/wps_kdocs.list,\"🇭🇰 香港-自动选择\""),
             surge.index("direct/cn_direct_light.list,DIRECT"),
         )
         self.assertLess(
-            surge.index("region/hk/wps_kdocs.list,\"♻️ 自动选择\""),
+            surge.index("region/hk/wps_kdocs.list,\"🇭🇰 香港-自动选择\""),
             surge.index("FINAL,DIRECT"),
         )
         self.assertLess(
-            mihomo.index("RULE-SET,hk_wps_kdocs,♻️ 自动选择"),
+            mihomo.index("RULE-SET,hk_wps_kdocs,🇭🇰 香港-自动选择"),
             mihomo.index("RULE-SET,direct_cn,DIRECT"),
         )
         self.assertLess(
-            mihomo.index("RULE-SET,hk_wps_kdocs,♻️ 自动选择"),
+            mihomo.index("RULE-SET,hk_wps_kdocs,🇭🇰 香港-自动选择"),
             mihomo.index("MATCH,DIRECT"),
         )
 

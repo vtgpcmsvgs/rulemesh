@@ -113,15 +113,15 @@
 - 若本次修改影响使用方式、规则组织、构建方式、产物结构或维护约定，必须同步更新相关文档
 - 2026-05-07 下线的两类激进 `reject` 入口不再恢复到源规则、公开模板或私有配置，除非用户明确要求重新启用
 - 私有 `rulemesh-substore-surge-work-whitelist.conf` 属于长期特化的工作路由白名单配置；它与两份 Surge Personal、`rulemesh-substore-mihomo-flclash-desktop.yaml`、`rulemesh-substore-mihomo-flclash-android.yaml` 从现在起允许永久不一致，不得因为“统一模板”或“对齐 personal 配置”而回滚
-- Surge Personal 固定维护家庭版 `rulemesh-substore-surge-personal.conf` 与公司版 `rulemesh-substore-surge-personal-company.conf`；两者只允许用途标识和 MITM 不同，路由与 DNS 结构必须同步。Personal 专用的 `personal_priority_hk`、`notion_hk`、`hk_securities_aggressive`、`apple_direct`、`outlook_direct` 与 `microsoft_store_us` 不得同步进工作白名单
+- Surge Personal 固定维护家庭版 `rulemesh-substore-surge-personal.conf` 与公司版 `rulemesh-substore-surge-personal-company.conf`；两者只允许用途标识和 MITM 不同，路由与 DNS 结构必须同步。Personal 专用的 `personal_priority_hk`、`notion_hk`、`hk_securities_aggressive`、`apple_direct`、`outlook_direct` 不得同步进工作白名单；2026-09-16 Store 美国专项是已批准例外，在工作配置中必须晚于更新拒绝。
 - 工作配置也使用默认国内 DNS；可保留小型 cn_dns_domains，不引用性能型清单，DNS 调整不授予流量放行。
 - 维护 `rulemesh-substore-surge-work-whitelist.conf` 时，默认应维持“仅放行明确白名单入口，其余流量对工作电脑统一 REJECT”的原则；若要恢复广谱放行（如 `proxy/gfw`、广谱 `direct`、`FINAL` 兜底放行），必须得到用户明确确认
 - 工作白名单保留既有精确放行、设备条件与观察规则，新增 cn_social_direct 精确直连；AI 美国、Crypto/RPC 台湾、明确日本入口与香港券商保留地区，其他代理自动择优。AWS IP 和链式 SOCKS5 调用停用；最终保持 FINAL,REJECT，不恢复 cn_direct 或 gfw 广谱放行。
-- region/hk/wps_kdocs 仍是工作白名单精确放行入口，位于 FINAL,REJECT 前；当前自动择优并使用默认国内 DNS，不再强制香港与海外解析。
+- region/hk/wps_kdocs 按 2026-09-16 用户说明固定香港，用于公开文档地区展示；七份配置均早于 Google 广谱，DNS 仍默认国内。工作白名单仅保留该精确放行入口。
 - GitHub 在该工作路由文件中除 `github_ssh_direct` 外，还允许紧随其后保留 `DOMAIN,raw.githubusercontent.com` 下载入口与一条广覆盖 `DOMAIN-KEYWORD,github` 观察兜底；它们用于显式放行 GitHub Raw 规则产物下载，并发现 SSH / Raw 之外的漏网之鱼，不得被“去重”或“收敛”掉
 - GitHub Raw 下载链路默认还应保留独立 `[Host]` 解析例外；当前私有配置使用 `raw.githubusercontent.com = server:https://cloudflare-dns.com/dns-query`，避免规则产物下载回落到本地/国内系统 DNS；但这不是代理节点 bootstrap，不能影响 `proxy-node-domains` 继续使用 AliDNS DoH
 - AdsPower 按 2026-09-12 用户要求在五份私有配置与两份公开模板停用：移除三类调用、专用 provider 和工作观察兜底，保留主清单、源规则、登记、派生器与产物；重新启用须用户明确要求。
-- Outlook 直连覆盖邮件、精确共享登录与认证资源，不扩大到 Microsoft 根域；共享认证也影响其他应用。默认国内 DNS 已获批准，Microsoft Store 使用自动代理，不再固定美国。
+- Outlook 直连覆盖邮件、精确共享登录与认证资源，不扩大到 Microsoft 根域；共享认证也影响其他应用。2026-09-16 Microsoft Store 专项固定美国以满足地区 IP 条件，通用 Microsoft（含中国服务）保留代理，默认国内 DNS 不变；工作及 FlClash 的既有更新拒绝仍优先。
 - 上述工作路由白名单特化只适用于工作路由文件本身，不自动扩散到两个 `personal` 配置，也不要把 `personal` 配置的通用结构反向覆盖到该工作路由文件
 - 只要工作路由白名单逻辑、适用范围、维护边界发生变化，必须同步更新 `docs/surge-work-cluster-whitelist.md`、`README.md` 与相关使用说明，避免后续失忆式回滚
 - 若本次任务产生了实际文件变更，且用户没有明确禁止提交，则默认在验证完成后提交 git commit
@@ -204,6 +204,11 @@
 - `tools/check.ps1` 包含重建和会暂时调整产物的测试；必须等待完整进程成功退出后再读取 `dist/`、构建报告或生成提交文件清单，避免并发审计把中间态误报为产物丢失。
 
 ## FlClash 迁移与极致优化
+
+- 2026-09-16 出口审计修订：AI 改为审核后的精确域名/后缀，不再整包 INCLUDE 含关键词、共享平台和 IP/ASN 的上游。上游快照继续保留作审核候选；AI 规则同时影响海外解析，负例和真实产品正例须一起通过 `test_scoped_egress.py`。
+- `direct/cn_services_direct` 在七份配置中固定第二条，保护国内 DNS 精确入口和新华三。Surge 停用阿里设备代理及整设备代理；移除通用 DOH/DOH3/DOQ 代理兜底，改按目的端点分流。Personal 删除爱思/Apple 的海外 Host 项，沿用国内 DNS；工作最终仍 REJECT，不增加 cn_direct/gfw 广谱放行。
+- 用户补充业务目的时，必须从实际出口核对地区要求，不能把此前“自动择优”误当作满足固定香港或美国；WPS 香港、Store 美国和既有 AI/Crypto/日本/券商例外由性能检查共同保护。
+- 一次补丁不能对同一文件同时 Delete/Add；整文件改写使用唯一预检后原子替换。PowerShell 搜索必须传真实目录并用 `--glob` 筛选，禁止拼接 `tools/check*` 这类未展开路径；所有选项必须放在 `--` 前，之后只能是模式和路径。失败后先纠正该命令再继续。
 
 - 2026-09-16 用户改为国内日常业务直连：两份 FlClash 停用阿里系强制代理调用及专用 provider，保留源规则、登记和产物；撤下已被正常直连取代的三个支付宝组件补丁。安卓系统下载管理器改按目的地分流，Google 三个专属进程、稳定组、QUIC、DNS 与地区例外保持。此项取代同日早先“必须保留三个支付宝条件规则”的临时约定，Surge 独立配置不机械同步。
 - 常用业务必须通过 `tools/check_common_routes.py` 的 TCP/UDP 域名首条命中检查；数据在 `tools/common_route_cases.json`，覆盖用户指定应用、资源和共享下载场景。静态域名检查没有真实 IP，不得称为设备网络验收；未知语法或缺失 provider 必须报错，不能跳过。手机验收要区分界面、实际返回流量、DNS 出口、网络类型与需要登录/真实订单的业务。

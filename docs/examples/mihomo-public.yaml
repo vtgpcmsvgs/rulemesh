@@ -298,6 +298,15 @@ proxy-groups:
     exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
 
 rule-providers:
+
+  direct_cn_services:
+    type: http
+    behavior: classical
+    format: yaml
+    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/direct/cn_services_direct.yaml"
+    path: ./ruleset/direct/cn_services_direct.yaml
+    interval: 86400
+    proxy: "♻️ 自动选择"
   direct_ips5:
     type: http
     behavior: classical
@@ -596,6 +605,7 @@ rule-providers:
 rules:
   # AI 美国、Crypto 台湾；已登记日本入口与香港券商保留地区，其余代理自动择优。
   - RULE-SET,us_ai,🇺🇸 美国-自动选择
+  - RULE-SET,direct_cn_services,DIRECT
   - RULE-SET,direct_ai_cn,DIRECT
   - RULE-SET,direct_bytedance,DIRECT
   - RULE-SET,direct_cn_social,DIRECT
@@ -604,11 +614,12 @@ rules:
   - RULE-SET,tw_crypto,🇨🇳 台湾-自动选择
   - RULE-SET,hk_securities_aggressive,🇭🇰 香港-自动选择
   - RULE-SET,hk_brokers,🇭🇰 香港-自动选择
+  - RULE-SET,hk_wps_kdocs,🇭🇰 香港-自动选择
   - RULE-SET,hk_google,♻️ 自动选择
   - RULE-SET,direct_apple,DIRECT
   - RULE-SET,hk_personal_priority,♻️ 自动选择
   - RULE-SET,hk_notion,♻️ 自动选择
-  - RULE-SET,us_microsoft_store,♻️ 自动选择
+  - RULE-SET,us_microsoft_store,🇺🇸 美国-自动选择
   - RULE-SET,direct_outlook,DIRECT
   - DOMAIN-SUFFIX,yikaiying.com,DIRECT
   - RULE-SET,reject_adblock,REJECT
@@ -616,7 +627,6 @@ rules:
   - RULE-SET,us_microsoft,♻️ 自动选择
   - RULE-SET,us_macos_update,♻️ 自动选择
   - RULE-SET,hk_telegram,♻️ 自动选择
-  - RULE-SET,hk_wps_kdocs,♻️ 自动选择
   - RULE-SET,hk_global_media,♻️ 自动选择
   - RULE-SET,direct_github_ssh,DIRECT
   - RULE-SET,proxy_github_core,♻️ 自动选择

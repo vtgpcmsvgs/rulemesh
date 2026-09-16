@@ -1,0 +1,15 @@
+# 生成来源：rules/direct/cn_services_direct.list
+# 类型：rules
+# 请勿直接编辑 dist。
+
+DOMAIN,dns.alidns.com
+DOMAIN,doh.pub
+DOMAIN,dot.pub
+DOMAIN,dns.pub
+DOMAIN,sm2.doh.pub
+IP-CIDR,223.5.5.5/32,no-resolve
+IP-CIDR,223.6.6.6/32,no-resolve
+IP-CIDR,119.29.29.29/32,no-resolve
+DOMAIN,doh.360.cn
+DOMAIN,dot.360.cn
+DOMAIN-SUFFIX,h3c.com
