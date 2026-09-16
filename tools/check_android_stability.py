@@ -1,9 +1,16 @@
-"""安卓 Google 下载保护；诊断只包含公开字段，不输出私人策略或订阅值。"""
+"""安卓 Google 下载与支付宝组件保护；诊断不输出私人策略或订阅值。"""
 from pathlib import Path
 import re
 
 MARKER = "# RuleMesh 安卓下载保护：2026-09-14"
 PROFILE = "rulemesh-substore-mihomo-flclash-android.yaml"
+ALIPAY_MARKER = "# RuleMesh 安卓支付宝组件保护：2026-09-16"
+ALIPAY_PACKAGE = "com.eg.android.AlipayGphone"
+ALIPAY_COMPONENT_HOSTS = (
+    "gw.alipayobjects.com",
+    "mdn.alipayobjects.com",
+    "mdn-js.alipayobjects.com",
+)
 PACKAGES = (
     "com.android.vending",
     "com.google.android.gms",
@@ -14,7 +21,12 @@ PACKAGES = (
 
 
 def active(path: Path, lines: list[str]) -> bool:
-    return path.name == PROFILE or MARKER in lines
+    return path.name == PROFILE or MARKER in lines or any(line.strip() == ALIPAY_MARKER for line in lines)
+
+
+def alipay_component_rules() -> list[str]:
+    return [f"AND,((PROCESS-NAME,{ALIPAY_PACKAGE}),(DOMAIN,{host})),DIRECT"
+            for host in ALIPAY_COMPONENT_HOSTS]
 
 
 def retired_quic_rules() -> list[str]:
@@ -67,6 +79,22 @@ def check(path: Path, lines: list[str]) -> list[str]:
     codes = [",".join(parts) for parts in rules]
     google = next((i for i, p in enumerate(rules) if p[:2] == ["RULE-SET", "hk_google"]), -1)
     reject = next((i for i, p in enumerate(rules) if p[:2] == ["RULE-SET", "reject_adblock"]), len(rules))
+    ai = next((i for i, p in enumerate(rules) if p[:2] == ["RULE-SET", "us_ai"]), -1)
+    alibaba = next((i for i, p in enumerate(rules) if p[:2] == ["RULE-SET", "hk_alibaba"]), len(rules))
+    require(sum(line.strip() == ALIPAY_MARKER for line in lines) == 1,
+            "安卓支付宝组件保护标记必须唯一保留。")
+    component_rules = alipay_component_rules()
+    for code in component_rules:
+        require(codes.count(code) == 1 and ai < codes.index(code) < min(google, reject, alibaba) if code in codes else False,
+                "支付宝三个组件域名必须各有一条应用限定的精确 DIRECT，位于 AI 后、Google 广谱与阿里系代理前。")
+    for code in codes:
+        compact = re.sub(r"\s+", "", code)
+        if "alipay" in compact.lower() and compact.endswith(",DIRECT"):
+            require(compact in component_rules,
+                    "支付宝组件修复不得扩大为整个应用、域名后缀或其他应用的直连。")
+        if ALIPAY_PACKAGE in compact:
+            require(compact in component_rules,
+                    "支付宝组件必须保留 TCP/UDP，不能用协议拒绝或整个应用规则替代精确例外。")
     for code in codes:
         compact = re.sub(r"\s+", "", code).lower()
         rejects_udp = "network,udp" in compact and compact.rsplit(",", 1)[-1].startswith("reject")

@@ -27,6 +27,10 @@ class AndroidStabilityTests(unittest.TestCase):
         rules = ["RULE-SET,hk_google," + stable]
         rules += [f"PROCESS-NAME,{package},{stable}" for package in android.PACKAGES]
         text = text.replace("  - RULE-SET,hk_google," + auto, "\n".join("  - " + rule for rule in rules), 1)
+        anchor = "  - RULE-SET,direct_ips5,DIRECT\n"
+        self.assertEqual(text.count(anchor), 1)
+        components = "  " + android.ALIPAY_MARKER + "\n" + "".join("  - " + rule + "\n" for rule in android.alipay_component_rules())
+        text = text.replace(anchor, anchor + components, 1)
         return Path(android.PROFILE), text
 
     def test_complete_profile_preserves_base_and_regional_contracts(self):
@@ -41,6 +45,35 @@ class AndroidStabilityTests(unittest.TestCase):
             for changed in (text.replace(line + "\n", ""), text.replace(line + "\n", "") + "\n" + line):
                 with self.subTest(rule=rule):
                     self.assertTrue(android.check(path, changed.splitlines()))
+
+    def test_alipay_components_cannot_be_removed_duplicated_or_shadowed(self):
+        path, text = self.fixture()
+        for rule in android.alipay_component_rules():
+            line = "  - " + rule + "\n"
+            for changed in (text.replace(line, ""), text.replace(line, line * 2),
+                            text.replace(line, "") + line,
+                            text.replace(line, "").replace("rules:\n", "rules:\n" + line)):
+                with self.subTest(rule=rule):
+                    self.assertTrue(android.check(path, changed.splitlines()))
+
+    def test_alipay_component_repair_cannot_expand_scope_or_reject_udp(self):
+        path, text = self.fixture()
+        broad = [
+            f"PROCESS-NAME,{android.ALIPAY_PACKAGE},DIRECT",
+            "DOMAIN-SUFFIX,alipayobjects.com,DIRECT",
+            "DOMAIN,gw.alipayobjects.com,DIRECT",
+            f"AND,((PROCESS-NAME,{android.ALIPAY_PACKAGE}),(DOMAIN-SUFFIX,alipayobjects.com)),DIRECT",
+            f"AND,((PROCESS-NAME,{android.ALIPAY_PACKAGE}),(NETWORK,udp)),REJECT",
+        ]
+        for rule in broad:
+            with self.subTest(rule=rule):
+                changed = text.replace("rules:\n", "rules:\n  - " + rule + "\n", 1)
+                self.assertTrue(android.check(path, changed.splitlines()))
+        changed = text.replace("  " + android.ALIPAY_MARKER + "\n", "")
+        self.assertTrue(android.check(path, changed.splitlines()))
+
+    def test_alipay_marker_alone_activates_android_boundary(self):
+        self.assertTrue(android.active(Path("mihomo-public.yaml"), ["  " + android.ALIPAY_MARKER]))
 
     def test_cronet_quic_rejection_cannot_return(self):
         path, text = self.fixture()

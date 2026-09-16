@@ -1,5 +1,5 @@
 {
-  "$comment": "客户端结构以 docs/examples/、docs/performance-baseline.md 为准；安卓 Google 下载专项稳定组、DNS 与进程保护见 docs/android-network-repair.md。国内 DNS、AI 美国、Crypto 台湾及其他地区例外保留。桌面与安卓分别使用 rulemesh-substore-mihomo-flclash-desktop.yaml 和 rulemesh-substore-mihomo-flclash-android.yaml；本 JSON 不覆盖客户端字段，不能把桌面模板反向覆盖安卓专项保护。",
+  "$comment": "客户端结构以 docs/examples/、docs/performance-baseline.md 为准；安卓 Google 下载专项稳定组、DNS 与进程保护，以及支付宝三个组件主机的应用条件直连见 docs/android-network-repair.md。国内 DNS、AI 美国、Crypto 台湾及其他地区例外保留。桌面与安卓分别使用 rulemesh-substore-mihomo-flclash-desktop.yaml 和 rulemesh-substore-mihomo-flclash-android.yaml；本 JSON 不覆盖客户端字段，不能把桌面模板反向覆盖安卓专项保护。",
   "upstream_alert": {
     "feishu_webhook_url": "https://open.feishu.cn/open-apis/bot/v2/hook/请替换为你自己的 webhook",
     "feishu_secret": "请替换为你自己的签名密钥"

@@ -235,6 +235,7 @@ ai_us 同时承接 OpenAI、Claude、Copilot、Cursor、Grok、Windsurf、Augmen
 - 如果某个 provider 在 FlClash 桌面端 私有链路里整批测速失败，但把同一订阅直接导入客户端又正常，默认先按 [docs/mihomo-tun-dns-methodology.md](docs/mihomo-tun-dns-methodology.md) 对比运行时 `dns:`，优先排查 DNS 链差异，不要先把问题归因到节点本身
 - Mihomo DNS 按现行性能基线检查：默认国内双 DoH、AI 专用美国 policy 和国内 `proxy-server-nameserver`；安卓可追加后置 Google policy。旧 `cn-performance-dns-domains` 镜像 policy、DNS `fallback` 和 `respect-rules: true` 不得恢复；代理组的 `type: fallback` 与 DNS `fallback` 是不同字段。
 - FlClash 安卓端在 2026-09-14 下载修复中采用独立 Google 稳定组、同组海外 DoH、进程兜底并保留 QUIC；这是用户授权的安卓例外，实机效果单独验收，不能自动扩散到其他配置。详见 [安卓网络修复](docs/android-network-repair.md)。
+- 2026-09-16 安卓支付宝组件修复仅将支付宝应用访问的三个精确资源主机直连，保留其他阿里系代理、国内 DNS 与 QUIC；检查防止扩大为整个应用或域名后缀直连。手机 Chrome 的 YouTube 前台刷新与视频预览已复测，桌面运行态未验收；细节及证据边界同见 [安卓网络修复](docs/android-network-repair.md)。
 - 这组私有订阅域名同步规则只记录在本地目录与私有文档约定中，不回写公开 `rules/`、`dist/` 或公开模板
 - 详细维护方式见 [docs/private-subscription-direct-sync.md](docs/private-subscription-direct-sync.md)
 - 若私有配置结构发生变化，必须同步更新 `.rulemesh.local.example.json` 与相关文档，但只能提交脱敏占位值

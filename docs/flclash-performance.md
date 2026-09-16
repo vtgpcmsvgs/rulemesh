@@ -8,6 +8,8 @@
 
 安卓开关修改或备份恢复后，还须完整停止并启动 VPN，用 `tools/check_android_vpn_runtime.py --adb <实际路径>` 核对系统层不再发布旧 HTTP 代理。大智慧补充复测曾出现界面已经关闭、运行态仍保留代理的情况，导致多个行情组件空白；保存的 `vpnProps` 不能代替这一步。
 
+2026-09-16 安卓支付宝追加三个组件主机的精确应用条件 DIRECT，保留阿里系其他请求的原出口、国内 DNS 和 QUIC。例外与手机复测详见 [安卓网络修复](android-network-repair.md)；不修改桌面/Surge 的路由或对本机 FlClash 执行操作。
+
 - 桌面：`rulemesh-substore-mihomo-flclash-desktop.yaml`。
 - 安卓：`rulemesh-substore-mihomo-flclash-android.yaml`。
 - 两份文件位于独立私人仓库根目录；同步脚本与公开检查使用新文件名。文件级分享链接也必须切换到新文件名。

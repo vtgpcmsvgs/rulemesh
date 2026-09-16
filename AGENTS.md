@@ -15,6 +15,7 @@
 ## 构建入口
 
 - Windows 本地与 Codex 会话统一优先使用 `tools/build_rules.ps1`
+- 构建会先删除再生成 `dist/` 产物与 `build-report.json`；全仓 BOM、文件读取和最终 Git 差异审计必须等待构建或 `tools/check.ps1` 完整退出后串行执行，避免把构建中间态误判为文件丢失或额外变更。
 - 不要默认直接跑 `python tools/build_rules.py`
 - 这个包装脚本会优先探测：
   - `$env:RULEMESH_PYTHON`
@@ -204,6 +205,8 @@
 
 ## FlClash 迁移与极致优化
 
+- 2026-09-16 安卓支付宝组件保护只允许包名 `com.eg.android.AlipayGphone` 与 `gw.alipayobjects.com`、`mdn.alipayobjects.com`、`mdn-js.alipayobjects.com` 三个精确主机的 AND 规则 DIRECT，位于 AI 后、Google 广谱与阿里系代理前。国内 DNS、Fake IP、QUIC 与其他阿里业务保留，不扩展为全应用/后缀直连，也不自动扩散到桌面或 Surge。
+- Android 自绘页面的空控件树不能证明页面空白；结合脱敏截图与网络返回验收。Chrome 页面复测必须确认手机 Chrome 在前台；ADB 点击同时断言目标包名和控件身份，前置命令非零时不执行后续点击。带性能基线标记的配置使用新版检查分派，不能直接调用历史 `validate_mihomo` 默认校验器。
 - 2026-09-14 安卓 Google 下载使用独立 fallback 稳定组，同组海外 DoH 在 AI policy 后；五个下载相关包保留进程兜底和 QUIC，AI 仍第一条。实机 Cronet 在 UDP/443 被拒绝时发生协议错误、1404 网络错误和重试，禁止恢复 Google/Play 定向拒绝或用 disable-udp 强制回退。默认国内 DNS、节点 bootstrap、其他地区例外不变；不得机械扩散到桌面或 Surge。配置及验收边界见 docs/android-network-repair.md，必须通过 check_android_stability.py。
 - ADB 读取、模拟点击、应用私有数据访问是三个独立能力；设备拒绝时按系统授权边界处理。UI/API 输出必须在输出前白名单脱敏。诊断复用解析器前检查字段定义，构建器传绝对源路径；第三方文件路径先枚举，任何错误立即中止依赖步骤。
 - 安卓 VPN 开关的保存值不等于生效值。修改或恢复后必须完整停止/启动 FlClash VPN，并用 tools/check_android_vpn_runtime.py 检查 Android 活动 VPN 不再携带旧 HTTP 代理；系统传输可能是 CELLULAR|VPN 或 WIFI|VPN，不能只匹配 Transports: VPN。业务验收覆盖用户实际失败的多个组件及应用重开，不能凭单页短暂成功宣称整个应用恢复。
