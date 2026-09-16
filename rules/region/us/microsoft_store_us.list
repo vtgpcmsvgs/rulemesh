@@ -6,6 +6,7 @@
 # 3) Windows 更新拒绝若仍位于本入口之前会继续拦截；Personal 激进配置应按用户批准顺序决定是否让 Store 下载先命中。
 
 # Store 目录、购买、授权与界面内容。
+DOMAIN,apps.microsoft.com
 DOMAIN-SUFFIX,displaycatalog.mp.microsoft.com
 DOMAIN-SUFFIX,purchase.md.mp.microsoft.com
 DOMAIN-SUFFIX,licensing.mp.microsoft.com

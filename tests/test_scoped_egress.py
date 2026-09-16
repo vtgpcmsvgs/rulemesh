@@ -75,6 +75,13 @@ class ScopedEgressTests(unittest.TestCase):
         for domain in ('www.360.cn', 'alibaba.com', 'example.cn', 'doh.pub.example.com'):
             self.assertFalse(any(common.matches(rule, domain, 'browser') for rule in rules), domain)
 
+    def test_store_web_entry_and_native_catalog_share_us_without_expanding_microsoft(self):
+        rules = build_rules.build_source(ROOT / 'rules/region/us/microsoft_store_us.list').outputs['surge_rules']
+        for domain in ('apps.microsoft.com', 'displaycatalog.mp.microsoft.com', 'licensing.mp.microsoft.com'):
+            self.assertTrue(any(common.matches(rule, domain, 'browser') for rule in rules), domain)
+        for domain in ('www.microsoft.com', 'login.microsoftonline.com', 'apps.microsoft.com.example.org'):
+            self.assertFalse(any(common.matches(rule, domain, 'browser') for rule in rules), domain)
+
 
 if __name__ == '__main__':
     unittest.main()

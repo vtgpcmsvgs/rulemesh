@@ -11,6 +11,7 @@
   {"service":"国内DNS","domain":"doh.360.cn","expected":"DIRECT"},
   {"service":"新华三","domain":"www.h3c.com","expected":"DIRECT"},
   {"service":"金山文档香港","domain":"365.kdocs.cn","expected":"hk_wps_kdocs"},
+  {"service":"Store美国网页入口","domain":"apps.microsoft.com","expected":"us_microsoft_store"},
   {"service":"Store美国","domain":"displaycatalog.mp.microsoft.com","expected":"us_microsoft_store"},
   {"service":"Store美国","domain":"licensing.mp.microsoft.com","expected":"us_microsoft_store"},
   {"service":"Google","domain":"www.google.com","expected":"hk_google"},

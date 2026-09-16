@@ -1,6 +1,7 @@
 # 生成来源：rules/region/us/microsoft_store_us.list
 # 行为：classical
 payload:
+  - "DOMAIN,apps.microsoft.com"
   - "DOMAIN-SUFFIX,displaycatalog.mp.microsoft.com"
   - "DOMAIN-SUFFIX,purchase.md.mp.microsoft.com"
   - "DOMAIN-SUFFIX,licensing.mp.microsoft.com"
