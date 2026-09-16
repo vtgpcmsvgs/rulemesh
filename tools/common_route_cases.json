@@ -28,6 +28,8 @@
   {"service":"ChatGPT","domain":"cdn.oaistatic.com","expected":"us_ai"},
   {"service":"ChatGPT","domain":"files.oaiusercontent.com","expected":"us_ai"},
   {"service":"Google AI","domain":"gemini.google.com","expected":"us_ai"},
+  {"service":"Gemini Notebook","domain":"notebook.google","expected":"us_ai"},
+  {"service":"Gemini Notebook","domain":"notebook.google.com","expected":"us_ai"},
   {"service":"Google AI","domain":"generativelanguage.googleapis.com","expected":"us_ai"},
   {"service":"Telegram","domain":"telegram.org","expected":"hk_telegram"},
   {"service":"Telegram","domain":"api.telegram.org","expected":"hk_telegram"},

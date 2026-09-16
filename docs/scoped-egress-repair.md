@@ -35,3 +35,5 @@ AI 旧规则的 `xai` 会匹配 `gxairlines.com`、`auxair.com`，`poe`、`suno`
 首次全量检查还发现旧回归断言仍要求 WPS 自动择优、新华三留在代理清单。已按新的业务目的更新断言，并保留“新华三必须在直连清单”和实际香港出口检查；测试不能继续固化已被用户修订的策略。
 
 手机运行验收进一步发现：Store 原生目录和授权接口已经绑定美国，网页入口 `apps.microsoft.com` 却遗漏在专项清单外，命中了通用 Microsoft。现以精确 DOMAIN 补齐，并同时检查网页、原生目录、授权接口与 Microsoft 根域反例；不能仅凭代表性 API 已走美国就认定整个商店入口都一致。
+
+桌面浏览器验收发现：`notebooklm.google` 已重定向到 Gemini Notebook 的 `notebook.google`，页面产品入口为 `notebook.google.com`。两者补入 AI 的 DOMAIN-SUFFIX 清单，让新入口继续使用美国出口和 AI 专用 DNS；不扩大 Google 根域。正例、伪后缀反例、Mihomo 常用业务首条命中与七份配置的 AI 优先检查覆盖这次变更。以后验收产品入口时应同时检查重定向目标，旧域名规则正确不代表最终页面仍采用同一策略。完整方法与未通过项见[桌面实测](flclash-desktop-validation-20260916.md)。

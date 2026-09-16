@@ -2,6 +2,8 @@
 
 2026-09-16 出口修订：海外 AI 仅匹配已审核域名，国内 DNS 与新华三紧随 AI 直连；Surge 清理阿里设备代理和爱思/Apple 海外解析。WPS/金山文档因公开文档地区展示固定香港，Microsoft Store 因美国地区应用要求固定美国；Microsoft 通用代理与其他既有地区例外保留。见[出口修订与防误伤](docs/scoped-egress-repair.md)。
 
+2026-09-16 [FlClash 桌面实测](docs/flclash-desktop-validation-20260916.md)补齐 Gemini Notebook 新域名，并区分规则正确、节点可达与业务可用；保留实测中仍出现的节点/站点异常，不以通用 204 测速宣称全部业务通过。
+
 这个仓库现在按“一份源规则，多端产物输出”的思路维护：
 
 - `rules/` 是源规则层，只放你自己审阅后的规则素材与维护元数据

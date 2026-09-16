@@ -38,6 +38,7 @@ class ScopedEgressTests(unittest.TestCase):
     def test_real_ai_products_and_tenant_dependencies_keep_us(self):
         for domain in ('chatgpt.com', 'auth.openai.com', 'cdn.oaistatic.com', 'files.oaiusercontent.com',
                        'gemini.google.com', 'aistudio.google.com', 'notebooklm.google',
+                       'notebook.google', 'notebook.google.com',
                        'generativelanguage.googleapis.com', 'claude.ai', 'claude.com', 'api.anthropic.com',
                        'api.x.ai', 'grok.com', 'api.githubcopilot.com', 'copilot.microsoft.com',
                        'cursor.com', 'cursor.sh', 'codeium.com', 'augmentcode.com', 'trae.ai',
@@ -46,6 +47,9 @@ class ScopedEgressTests(unittest.TestCase):
             self.assertTrue(self.ai_matches(domain), domain)
         self.assertFalse(self.ai_matches('openai.com.example.org'))
         self.assertFalse(self.ai_matches('notopenai.com'))
+        self.assertFalse(self.ai_matches('notebook.google.example.org'))
+        self.assertFalse(self.ai_matches('notebook.google.com.example.org'))
+        self.assertFalse(self.ai_matches('notebook.example.org'))
 
     def fixture(self, client):
         path = ROOT / 'docs/examples' / ('surge-public.conf' if client == 'surge' else 'mihomo-public.yaml')
