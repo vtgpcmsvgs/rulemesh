@@ -73,6 +73,7 @@ def check(path: Path, lines: list[str]) -> list[str]:
     import check_private_dns_precedence as dns
     import check_private_performance as performance
     import check_android_stability as android
+    import check_notion_routing as notion
 
     errors: list[str] = []
 
@@ -129,6 +130,8 @@ def check(path: Path, lines: list[str]) -> list[str]:
     if not auto_groups:
         return errors
     auto = auto_groups[0]
+    errors.extend(notion.check(path, lines, auto))
+    notion_target = notion.target(lines) if not surge else auto
     # 多个组可能复用美国过滤器；从实际 AI 路由解析目标，不能假定美国组唯一。
     selected: dict[str, list[tuple[int, list[str]]]] = {}
     for position, (_, parts) in enumerate(rules):
@@ -176,7 +179,14 @@ def check(path: Path, lines: list[str]) -> list[str]:
         is_ai_dns = surge and parts[:2] == ["RULE-SET", AI_DNS_RULE]
         if target in groups:
             if position not in fixed_positions.values():
-                expected_target = us if is_ai or is_ai_dns else google_stable if android_repair and android.allowed_stable_rule(parts) else auto
+                if is_ai or is_ai_dns:
+                    expected_target = us
+                elif not surge and parts[:2] == ["RULE-SET", "hk_notion"]:
+                    expected_target = notion_target
+                elif android_repair and android.allowed_stable_rule(parts):
+                    expected_target = google_stable
+                else:
+                    expected_target = auto
                 require(target == expected_target, "无明确地区要求的代理规则仍绑定地区或手动组。")
         else:
             require(target in {"DIRECT", "REJECT", "REJECT-DROP", "REJECT-TINYGIF"}, "规则引用未知策略。")

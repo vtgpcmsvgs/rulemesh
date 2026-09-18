@@ -242,7 +242,7 @@ merge_plan:
 
   - id: hk-notion
     target: rules/region/hk/notion_hk.list
-    purpose: Notion 全域名默认自动择优
+    purpose: Notion 全域名业务选点，Mihomo 专用测速、Surge 全地区 smart
     strategy:
       - official_domains_first
       - legacy_domain_then_brand_keyword_fallback

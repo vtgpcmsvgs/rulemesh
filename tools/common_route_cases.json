@@ -88,5 +88,13 @@
   {"service":"Discord","domain":"discord.com","expected":"proxy_gfw"},
   {"service":"Instagram","domain":"www.instagram.com","expected":"proxy_gfw"},
   {"service":"Facebook","domain":"www.facebook.com","expected":"proxy_gfw"},
-  {"service":"X","domain":"x.com","expected":"hk_global_media"}
+  {"service":"X","domain":"x.com","expected":"hk_global_media"},
+  {"service":"Notion","domain":"notion.com","expected":"hk_notion"},
+  {"service":"Notion","domain":"app.notion.com","expected":"hk_notion"},
+  {"service":"Notion","domain":"api.notion.com","expected":"hk_notion"},
+  {"service":"Notion","domain":"broker-guide.notion.site","expected":"hk_notion"},
+  {"service":"Notion","domain":"img.notionusercontent.com","expected":"hk_notion"},
+  {"service":"Notion","domain":"secure.notion-static.com","expected":"hk_notion"},
+  {"service":"Notion","domain":"www.notion.so","expected":"hk_notion"},
+  {"service":"Notion","domain":"msgstore.www.notion.so","expected":"hk_notion"}
 ]

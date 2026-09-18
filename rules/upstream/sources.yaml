@@ -182,7 +182,7 @@ sources:
     hk/notion_hk.list:
       preferred:
         - repo: self
-          note: Notion 官方域名族、历史 notion.so 与 notion 品牌关键词兜底默认使用全地区自动选择
+          note: Notion 官方域名族、历史 notion.so 与品牌兜底；Mihomo 专用业务测速，Surge 全地区 smart，均早于 Google 广谱
         - repo: Notion Help
           note: 参考 Notion IP addresses & domains to allowlist 的当前官方域名清单
     hk/hk_securities_aggressive.list:

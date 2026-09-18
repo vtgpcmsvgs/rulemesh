@@ -213,6 +213,22 @@ proxy-groups:
       - provider_c
     exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
 
+  # Notion 独立业务测速，避免通用测速与实际访问质量脱节。
+  - name: "📝 Notion-自动选择"
+    type: url-test
+    url: "https://app.notion.com/"
+    interval: 300
+    tolerance: 150
+    timeout: 5000
+    expected-status: 200
+    max-failed-times: 2
+    lazy: false
+    use:
+      - provider_a
+      - provider_b
+      - provider_c
+    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
+
   - name: "🇭🇰 香港-自动选择"
     type: url-test
     url: "https://www.google.com/generate_204"
@@ -615,10 +631,10 @@ rules:
   - RULE-SET,hk_securities_aggressive,🇭🇰 香港-自动选择
   - RULE-SET,hk_brokers,🇭🇰 香港-自动选择
   - RULE-SET,hk_wps_kdocs,DIRECT
+  - RULE-SET,hk_notion,📝 Notion-自动选择
   - RULE-SET,hk_google,♻️ 自动选择
   - RULE-SET,direct_apple,DIRECT
   - RULE-SET,hk_personal_priority,♻️ 自动选择
-  - RULE-SET,hk_notion,♻️ 自动选择
   - RULE-SET,us_microsoft_store,🇺🇸 美国-自动选择
   - RULE-SET,direct_outlook,DIRECT
   - DOMAIN-SUFFIX,yikaiying.com,DIRECT

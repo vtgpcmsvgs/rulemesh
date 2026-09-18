@@ -13,7 +13,7 @@
 
 海外 AI（含 Gemini）固定美国并作为第一条有效规则；国内 AI、抖音、小红书、微信前置直连。Crypto / Polygon / BSC RPC 固定台湾，`opinion.trade` 保留日本访问例外，香港券商和香港证券保留香港。这些地区入口都早于 Google 官方完整地址空间。
 
-WPS/金山文档按 2026-09-18 修订统一 DIRECT，继续使用默认国内 DNS，Microsoft Store 专项固定美国，通用 Microsoft 保留代理。Google 普通业务、流媒体、Notion、GitHub及其他精确代理规则使用全地区自动组；未命中前置规则时 `MATCH,DIRECT`。既有前置 DIRECT/REJECT 规则保持作用；Polymarket 从媒体入口移入 Crypto。AWS IP 与链式代理 provider 和调用均停用，仓库资产继续维护。
+WPS/金山文档按 2026-09-18 修订统一 DIRECT，继续使用默认国内 DNS，Microsoft Store 专项固定美国，通用 Microsoft 保留代理。Notion 在 Google 广谱前使用独立业务测速组，覆盖网页、API、公开页与图片，沿用国内 DNS；详见 [Notion 网页优化](notion-network-optimization.md)。Google 普通业务、流媒体、GitHub及其他精确代理规则使用全地区自动组；未命中前置规则时 `MATCH,DIRECT`。既有前置 DIRECT/REJECT 规则保持作用；Polymarket 从媒体入口移入 Crypto。AWS IP 与链式代理 provider 和调用均停用，仓库资产继续维护。
 
 `direct_cn_services` 固定第二条，保护国内 DNS 与新华三；AI 仅按审核后的域名边界匹配，避免名称相似网站同时进入美国出口与海外解析。Store 专项在两份 FlClash 中仍晚于既有更新拒绝。见[出口修订](scoped-egress-repair.md)。
 

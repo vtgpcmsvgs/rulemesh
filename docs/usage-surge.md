@@ -24,7 +24,7 @@
 
 命中普通海外规则时使用全地区 smart 组，未命中规则的 `FINAL` 使用 DIRECT；AI 美国、Crypto/RPC 台湾、`opinion.trade` 日本、券商香港是明确例外。地区组仍可用于手动选择。AWS IP 规则和链式 SOCKS5 规则仅保留仓库源文件与产物，配置不再调用。
 
-`global_media` 承接 X / Twitter 和媒体服务；Polymarket 已移入 Crypto 台湾。WPS/金山文档按 2026-09-18 修订统一 DIRECT，继续使用默认国内 DNS，Store 专项固定美国以满足地区 IP 要求；通用 Microsoft 保留代理，Notion 自动择优。国内 AI 由 `ai_cn_direct` 承接，不扩入海外 AI。AI 仅使用明确域名，详见[出口修订](scoped-egress-repair.md)。
+`global_media` 承接 X / Twitter 和媒体服务；Polymarket 已移入 Crypto 台湾。WPS/金山文档按 2026-09-18 修订统一 DIRECT，继续使用默认国内 DNS，Store 专项固定美国以满足地区 IP 要求；通用 Microsoft 保留代理；Notion 在 Google 广谱前使用全地区 smart，按实际连接质量选点，默认国内 DNS 保留，详见 [Notion 网页优化](notion-network-optimization.md)。国内 AI 由 `ai_cn_direct` 承接，不扩入海外 AI。AI 仅使用明确域名，详见[出口修订](scoped-egress-repair.md)。
 
 Surge 不再调用阿里设备代理或整设备代理，也不按 DOH/DOH3/DOQ 协议把所有解析器送海外。国内 DNS 精确入口前置直连，海外解析端点按既有域名/IP 规则处理。Personal 的爱思和 Apple 下载入口使用国内默认 DNS；AI、GitHub Raw 和节点自举各自保留已登记例外。
 

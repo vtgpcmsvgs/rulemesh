@@ -269,3 +269,5 @@ IP 类源规则可以只写主体字段；构建产物会自动补 `no-resolve`�
 精简兜底由完整 cn_direct 与仅含 DOMAIN/DOMAIN-SUFFIX 的 gfw_precise 自动推导；保留双向域名重叠与全部 IP 规则，不手写上游镜像。cn_direct_light → gfw_precise → DIRECT 三项必须相邻，工作白名单不适用；规则语法扩展必须先补等价证明与检查。
 
 兼容路径与出口分开维护：`region/hk/wps_kdocs` 按 2026-09-18 要求统一 DIRECT，路径保留以兼容已有订阅。文件头、上游登记和客户端必须明确当前语义；不得从目录或 provider 名推断香港出口。
+
+Notion 旧地区路径仅兼容：域名范围维持官方域名族与已授权品牌兜底，首条调用必须早于 Google 广谱；Mihomo 的业务测速与 Surge smart 分开表达，不把共享 CDN 或 IP 地址空间加入单一服务。详见 [Notion 网页优化](notion-network-optimization.md)。

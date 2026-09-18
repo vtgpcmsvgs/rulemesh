@@ -80,3 +80,5 @@ GeoIP 直接使用 `https://github.com/MetaCubeX/meta-rules-dat/releases/downloa
 AI、Crypto、其他明确地区、Google、gfw 等前置规则和机场组不变；默认国内 DNS、AI 专用美国 DoH 与节点 bootstrap 不变。检查器按当前基线拒绝把普通兜底改回自动组，历史无标记夹具继续保留历史校验语义。
 
 2026-09-12 FlClash 迁移与优化以 [客户端性能基线](flclash-performance.md) 为准：桌面和安卓使用新文件名；通用末尾改为 cn_direct_light → gfw_precise → DIRECT，完整规则资产保留。工作白名单不接入新兜底，机场手动组保留。桌面 300 秒、安卓 600 秒，备用地区按需检测；以最终生成配置核对界面覆写。
+
+2026-09-18 Notion 为独立业务测速的窄例外，新增一组而非更改地区限制；详见 [Notion 网页优化](notion-network-optimization.md)。
