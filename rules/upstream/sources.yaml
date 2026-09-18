@@ -164,11 +164,11 @@ sources:
     hk/wps_kdocs.list:
       preferred:
         - repo: self
-          note: WPS Office、金山文档、开放平台、云文档、资源分发与金山云旧存储固定香港，保留既有业务范围
+          note: WPS Office、金山文档、开放平台、云文档、资源分发与金山云旧存储统一直连（保留历史路径兼容），保留既有业务范围
         - repo: WPS 官方文档
           note: 参考 WPS 开放平台公开的云文档存储网关根域与 openapi.wps.cn 等官方连接入口
         - repo: Loyalsoldier/surge-rules
-          note: 仅用于交叉核对既有 WPS/Kingsoft 专用域名族；客户端仍应先命中本香港规则，再进入 cn_direct
+          note: 仅用于交叉核对既有 WPS/Kingsoft 专用域名族；客户端仍应先命中本直连规则，再进入 cn_direct
     hk/hk_brokers.list:
       preferred:
         - repo: self

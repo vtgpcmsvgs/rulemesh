@@ -46,7 +46,7 @@ REGIONAL = {
     "region/tw/crypto_tw": "tw", "region/jp/domains_to_jp": "jp",
     "region/hk/hk_brokers": "hk", "region/hk/hk_securities_aggressive": "hk",
     "proxy/polygon_rpc_proxy": "tw", "proxy/bsc_rpc_proxy": "tw",
-    "region/hk/wps_kdocs": "hk", "region/us/microsoft_store_us": "us",
+    "region/us/microsoft_store_us": "us",
 }
 PROVIDER_IDS = {
     "tw_crypto": "region/tw/crypto_tw", "jp_domains": "region/jp/domains_to_jp",
@@ -106,6 +106,7 @@ def check(path: Path, lines: list[str]) -> list[str]:
             BASE + "surge/rules/direct/bytedance_direct.list": "douyin",
             BASE + "surge/rules/direct/cn_social_direct.list": "social",
             BASE + "surge/rules/region/hk/google_hk.list": "google",
+            BASE + "surge/rules/region/hk/wps_kdocs.list": "wps",
         }
     else:
         for name in ("dns", "rules", "proxy-groups", "rule-providers", "proxy-providers"):
@@ -113,7 +114,7 @@ def check(path: Path, lines: list[str]) -> list[str]:
         groups = dns._parse_mihomo_groups(lines)
         auto_groups = [name for name, group in groups.items() if group.group_type == "url-test"]
         rules = dns._parse_mihomo_rules(lines)
-        identifiers = {"us_ai": "ai", "direct_cn_services": "domestic_services", "direct_ips5": "ips5", "direct_bytedance": "douyin", "direct_cn_social": "social", "hk_google": "google"}
+        identifiers = {"us_ai": "ai", "direct_cn_services": "domestic_services", "direct_ips5": "ips5", "direct_bytedance": "douyin", "direct_cn_social": "social", "hk_google": "google", "hk_wps_kdocs": "wps"}
         providers = dns._parse_mihomo_providers(lines)
         for name, identifier in {
             "us_ai": "region/us/ai_us", "direct_bytedance": "direct/bytedance_direct",
@@ -133,9 +134,9 @@ def check(path: Path, lines: list[str]) -> list[str]:
     for position, (_, parts) in enumerate(rules):
         if len(parts) >= 3 and parts[0] == "RULE-SET" and parts[1] in identifiers:
             selected.setdefault(identifiers[parts[1]], []).append((position, parts))
-    for identifier in ("ai", "domestic_services", "douyin", "social", "ips5", "google"):
+    for identifier in ("ai", "domestic_services", "douyin", "social", "ips5", "google", "wps"):
         require(len(selected.get(identifier, [])) == 1, f"{identifier} 必须有且只有一个显式入口。")
-    if not all(len(selected.get(key, [])) == 1 for key in ("ai", "domestic_services", "douyin", "social", "ips5", "google")):
+    if not all(len(selected.get(key, [])) == 1 for key in ("ai", "domestic_services", "douyin", "social", "ips5", "google", "wps")):
         return errors
     ai_position, ai_rule = selected["ai"][0]
     us = ai_rule[2]
@@ -159,8 +160,8 @@ def check(path: Path, lines: list[str]) -> list[str]:
         require(dns._group_has_us_semantics(parts[2], groups, filters), f"{identifier} 必须保留已登记地区出口。")
         if identifier.startswith("region/") and identifier != "region/us/microsoft_store_us":
             require(position < selected["google"][0][0], "地区必需入口必须早于 Google 完整 IP 地址空间。")
-    require(all(key in fixed_positions for key in ("region/tw/crypto_tw", "region/jp/domains_to_jp", "region/hk/hk_brokers", "region/hk/wps_kdocs", "region/us/microsoft_store_us")), "缺少 Crypto、日本、券商、WPS 香港或 Store 美国专项规则。")
-    for key in ("douyin", "social", "ips5"):
+    require(all(key in fixed_positions for key in ("region/tw/crypto_tw", "region/jp/domains_to_jp", "region/hk/hk_brokers", "region/us/microsoft_store_us")), "缺少 Crypto、日本、券商或 Store 美国专项规则。")
+    for key in ("douyin", "social", "ips5", "wps"):
         position, parts = selected[key][0]
         require(parts[2] == "DIRECT", f"{key} 必须直连。")
         require(ai_position < position < selected["google"][0][0], f"{key} 必须在 AI 之后、Google 广谱规则之前。")

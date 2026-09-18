@@ -1,6 +1,6 @@
 # Surge 工作路由白名单约定
 
-2026-09-16：撤销阿里设备条件代理；新增的 `cn_services_direct` 仅精确放行国内 DNS 端点及新华三。WPS 固定香港，Store 专项固定美国并位于既有更新拒绝之后；不改变最终 REJECT，不新增通用国内放行。详见[出口修订](scoped-egress-repair.md)。
+2026-09-16：撤销阿里设备条件代理；新增的 `cn_services_direct` 仅精确放行国内 DNS 端点及新华三。WPS 按 2026-09-18 修订统一直连，Store 专项固定美国并位于既有更新拒绝之后；不改变最终 REJECT，不新增通用国内放行。详见[出口修订](scoped-egress-repair.md)。
 
 仅适用于私有 `rulemesh-substore-surge-work-whitelist.conf`。它长期独立于两份 Surge Personal、两份 Mihomo 与公开模板；不得为了统一模板取消白名单。
 
@@ -11,7 +11,7 @@
 1. AI（含 Google AI）第一条规则固定美国。
 2. 抖音和新增微信、小红书精选入口前置 DIRECT，不增加整个腾讯或中国通用白名单。
 3. 日本明确访问例外、Crypto 台湾、香港券商香港先于 Google 通用入口。
-4. WPS 固定香港，Store 专项固定美国；Google 普通业务与完整地址空间和其他已批准代理入口自动择优。
+4. WPS 按 2026-09-18 修订统一直连，Store 专项固定美国；Google 普通业务与完整地址空间和其他已批准代理入口自动择优。
 5. 保留既有拒绝、设备条件、GitHub SSH/Raw/Core、1Password、订阅端点、Polygon/BSC RPC、DNS、LAN、系统时间和指定直连。
 6. 其余连接最终 `FINAL,REJECT`。
 
@@ -20,7 +20,7 @@ AWS IP 与链式 SOCKS5 设备分流调用已停用；仓库源规则与产物�
 ## 精确维护约定
 
 - 不接入 `proxy/gfw`、`direct/cn_direct`、网易或哔哩哔哩广谱直连。Personal 的 Apple、Outlook、Notion、personal_priority、香港证券增强和 Microsoft Store 专项不复制进工作文件。
-- WPS 保留显式香港入口，早于 Google 广谱和最终拒绝。`zsxq.com`、`yikaiying.com` 的既有精确 DIRECT 继续保留。
+- WPS 保留显式 DIRECT 入口，早于 Google 广谱和最终拒绝。`zsxq.com`、`yikaiying.com` 的既有精确 DIRECT 继续保留。
 - GitHub SSH carve-out、Raw 下载、Core 规则和已有 GitHub 广覆盖观察项独立保留；AdsPower 三类规则与观察兜底已按用户要求全部停用，仓库资产继续保留。GitHub 观察项仍不得因通用去重而删除。
 - 订阅源只在私人目录维护，起止标记必须保留。`-Target surge` 同步浏览器自动代理例外和普通订阅更新 DIRECT；其他客户端不因共享源顺带改动。
 - Polygon/BSC RPC 与 Crypto 同属台湾出站；1Password 和其他无地区要求的白名单代理用自动组。

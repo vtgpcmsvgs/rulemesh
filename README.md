@@ -1,6 +1,6 @@
 # RuleMesh
 
-2026-09-16 出口修订：海外 AI 仅匹配已审核域名，国内 DNS 与新华三紧随 AI 直连；Surge 清理阿里设备代理和爱思/Apple 海外解析。WPS/金山文档因公开文档地区展示固定香港，Microsoft Store 因美国地区应用要求固定美国；Microsoft 通用代理与其他既有地区例外保留。见[出口修订与防误伤](docs/scoped-egress-repair.md)。
+2026-09-16 出口修订：海外 AI 仅匹配已审核域名，国内 DNS 与新华三紧随 AI 直连；Surge 清理阿里设备代理和爱思/Apple 海外解析。WPS/金山文档按 2026-09-18 用户要求统一直连，Microsoft Store 因美国地区应用要求固定美国；Microsoft 通用代理与其他既有地区例外保留。见[出口修订与防误伤](docs/scoped-egress-repair.md)。
 
 2026-09-16 [FlClash 桌面实测](docs/flclash-desktop-validation-20260916.md)补齐 Gemini Notebook 新域名，并区分规则正确、节点可达与业务可用；保留实测中仍出现的节点/站点异常，不以通用 204 测速宣称全部业务通过。
 
@@ -159,7 +159,7 @@ python tools/build_rules.py
 - 工作白名单保持最终 `FINAL,REJECT` 和既有设备条件，只补充微信、小红书精选直连，不增加 cn_direct / gfw 广谱放行；Personal 专项入口不得复制进去。
 - 家庭和公司两份 Surge Personal 只允许用途说明与 MITM 不同，路由与 DNS 同步；两份 Mihomo 的 provider 和地区策略同步。
 - GitHub SSH 精确直连先于 Core / gfw；Raw 自举入口与海外 Host 解析独立保留。工作文件已有 GitHub 观察规则保留；AdsPower 观察规则已按用户要求停用。
-- Outlook 邮件、精确共享认证与资源直连，不放宽 Microsoft 根域。WPS 固定香港、Microsoft Store 固定美国，Notion 自动择优，香港证券保留香港。
+- Outlook 邮件、精确共享认证与资源直连，不放宽 Microsoft 根域。WPS 统一直连、Microsoft Store 固定美国，Notion 自动择优，香港证券保留香港。
 - 阿里云 SSH 仅 TCP/22 的内联兜底必须先于远程规则；阿里控制面与出口探测精确直连保留。已登记设备的阿里业务条件仍保留源地址，普通代理策略改为自动组。
 - AdsPower 保留主清单与 reject/direct/proxy 产物，当前配置不再调用；Polygon、BSC 和可选 1Password 等上游持续更新，不直接替换掉本地定制规则。
 - Surge 测速保留 HTTP，Mihomo 保留 HTTPS；Surge 不写 dns-mode 或 proxy-server-nameserver。传统 DNS 接管、节点 bootstrap、IPv4 基线与微信本机回环例外继续保留。

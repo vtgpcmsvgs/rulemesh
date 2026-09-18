@@ -117,7 +117,7 @@
 - 工作配置也使用默认国内 DNS；可保留小型 cn_dns_domains，不引用性能型清单，DNS 调整不授予流量放行。
 - 维护 `rulemesh-substore-surge-work-whitelist.conf` 时，默认应维持“仅放行明确白名单入口，其余流量对工作电脑统一 REJECT”的原则；若要恢复广谱放行（如 `proxy/gfw`、广谱 `direct`、`FINAL` 兜底放行），必须得到用户明确确认
 - 工作白名单保留既有精确放行、设备条件与观察规则，新增 cn_social_direct 精确直连；AI 美国、Crypto/RPC 台湾、明确日本入口与香港券商保留地区，其他代理自动择优。AWS IP 和链式 SOCKS5 调用停用；最终保持 FINAL,REJECT，不恢复 cn_direct 或 gfw 广谱放行。
-- region/hk/wps_kdocs 按 2026-09-16 用户说明固定香港，用于公开文档地区展示；七份配置均早于 Google 广谱，DNS 仍默认国内。工作白名单仅保留该精确放行入口。
+- region/hk/wps_kdocs 按 2026-09-18 用户要求统一 DIRECT，取消香港地区展示出口要求；历史路径与 hk_wps_kdocs provider 名仅作兼容，不代表出口。七份配置均早于 Google 广谱，DNS 保持默认国内；工作白名单仅保留该专项放行，最终 REJECT 不变。
 - GitHub 在该工作路由文件中除 `github_ssh_direct` 外，还允许紧随其后保留 `DOMAIN,raw.githubusercontent.com` 下载入口与一条广覆盖 `DOMAIN-KEYWORD,github` 观察兜底；它们用于显式放行 GitHub Raw 规则产物下载，并发现 SSH / Raw 之外的漏网之鱼，不得被“去重”或“收敛”掉
 - GitHub Raw 下载链路默认还应保留独立 `[Host]` 解析例外；当前私有配置使用 `raw.githubusercontent.com = server:https://cloudflare-dns.com/dns-query`，避免规则产物下载回落到本地/国内系统 DNS；但这不是代理节点 bootstrap，不能影响 `proxy-node-domains` 继续使用 AliDNS DoH
 - AdsPower 按 2026-09-12 用户要求在五份私有配置与两份公开模板停用：移除三类调用、专用 provider 和工作观察兜底，保留主清单、源规则、登记、派生器与产物；重新启用须用户明确要求。
@@ -143,7 +143,7 @@
   - 显式域名 / 网段 / IP 入口
   - `DOMAIN-KEYWORD` 或其他高价值兜底
 - `ai_us`、`ai_cn_direct`、`bytedance_direct`、`google_hk`、`crypto_tw` 这类多平台或多服务混合文件，优先按平台或服务分组
-- `wps_kdocs` 这类从大陆通用直连中切出的区域特化入口，客户端必须排在 `cn_direct` 前，并同时检查 DNS 清单是否存在更宽后缀覆盖
+- `wps_kdocs` 保留历史 region/hk 路径兼容，实际统一 DIRECT；客户端必须排在 Google 广谱及 `cn_direct` 前，并检查 DNS 不残留海外解析例外
 - region/hk/global_media 继续承接上游主体与 X/Twitter，默认自动择优；Polymarket 的显式后缀与关键词维护在 region/tw/crypto_tw，台湾出口优先于媒体广谱。
 - `cn_direct`、`telegram` 这类入口型或通用基础兜底文件，可以保持“上游主体 + 本地最高优先级兜底”的简单结构，但仍要把边界写清楚
 - 本地兜底只补“真实需要、上游暂未稳定覆盖、或需要更激进覆盖”的高价值入口，不要把本地规则膨胀成上游镜像
@@ -207,7 +207,7 @@
 
 - 2026-09-16 出口审计修订：AI 改为审核后的精确域名/后缀，不再整包 INCLUDE 含关键词、共享平台和 IP/ASN 的上游。上游快照继续保留作审核候选；AI 规则同时影响海外解析，负例和真实产品正例须一起通过 `test_scoped_egress.py`。
 - `direct/cn_services_direct` 在七份配置中固定第二条，保护国内 DNS 精确入口和新华三。Surge 停用阿里设备代理及整设备代理；移除通用 DOH/DOH3/DOQ 代理兜底，改按目的端点分流。Personal 删除爱思/Apple 的海外 Host 项，沿用国内 DNS；工作最终仍 REJECT，不增加 cn_direct/gfw 广谱放行。
-- 用户补充业务目的时，必须从实际出口核对地区要求，不能把此前“自动择优”误当作满足固定香港或美国；WPS 香港、Store 美国和既有 AI/Crypto/日本/券商例外由性能检查共同保护。
+- 用户补充业务目的时，必须从实际出口核对地区要求，不能把此前“自动择优”误当作满足固定香港或美国；WPS 直连、Store 美国和既有 AI/Crypto/日本/券商例外由性能检查共同保护。
 - 一次补丁不能对同一文件同时 Delete/Add；整文件改写使用唯一预检后原子替换。PowerShell 搜索必须传真实目录并用 `--glob` 筛选，禁止拼接 `tools/check*` 这类未展开路径；所有选项必须放在 `--` 前，之后只能是模式和路径。失败后先纠正该命令再继续。
 
 - 2026-09-16 用户改为国内日常业务直连：两份 FlClash 停用阿里系强制代理调用及专用 provider，保留源规则、登记和产物；撤下已被正常直连取代的三个支付宝组件补丁。安卓系统下载管理器改按目的地分流，Google 三个专属进程、稳定组、QUIC、DNS 与地区例外保持。此项取代同日早先“必须保留三个支付宝条件规则”的临时约定，Surge 独立配置不机械同步。

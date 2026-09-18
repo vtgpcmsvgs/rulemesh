@@ -265,15 +265,15 @@ merge_plan:
 
   - id: hk-wps-kdocs
     target: rules/region/hk/wps_kdocs.list
-    purpose: WPS Office 与金山文档固定香港，保留公开文档地区展示的业务要求
+    purpose: WPS Office 与金山文档统一直连，保留历史路径与既有业务覆盖
     strategy:
       - manual_only
       - explicit_official_domains_first_then_brand_keyword_fallback
-      - bind_to_hk_auto
+      - bind_to_direct
       - keep_default_domestic_dns
     notes:
-      - 客户端顺序必须放在 direct/cn_direct 与工作白名单 FINAL,REJECT 前，避免 WPS 专用域名被通用大陆直连或最终拒绝抢先命中
-      - DNS 按已批准 2026-09-09 性能基线：普通业务默认国内双 DoH，Mihomo 仅 AI 使用专项 policy，地区必需业务优先保留出口
+      - 客户端显式 DIRECT 必须早于 Google 广谱、direct/cn_direct 与工作白名单 FINAL,REJECT，避免被代理或拒绝抢先命中
+      - DNS 保持已批准的 2026-09-09 默认国内双 DoH 基线，Mihomo 不增加本业务专项 policy；按 2026-09-18 用户要求统一直连，历史路径与 provider 名仅作兼容，不恢复海外解析例外
       - 不使用 DOMAIN-KEYWORD,wps，避免误伤 jwpsrv.com 等无关域名；ksyun.com 是为旧文件和对象存储完整性接受的共享基础设施边界
 
   - id: hk-brokers

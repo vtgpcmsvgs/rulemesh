@@ -618,7 +618,7 @@ class RepoInvariantTests(unittest.TestCase):
         )
         self.assertEqual(findings, [])
 
-    def test_wps_kdocs_hk_route_precedes_cn_direct_and_final_fallbacks(self) -> None:
+    def test_wps_kdocs_direct_route_precedes_cn_direct_and_final_fallbacks(self) -> None:
         surge = (ROOT / "docs" / "examples" / "surge-public.conf").read_text(
             encoding="utf-8"
         )
@@ -627,19 +627,19 @@ class RepoInvariantTests(unittest.TestCase):
         )
 
         self.assertLess(
-            surge.index("region/hk/wps_kdocs.list,\"🇭🇰 香港-自动选择\""),
+            surge.index("region/hk/wps_kdocs.list,DIRECT"),
             surge.index("direct/cn_direct_light.list,DIRECT"),
         )
         self.assertLess(
-            surge.index("region/hk/wps_kdocs.list,\"🇭🇰 香港-自动选择\""),
+            surge.index("region/hk/wps_kdocs.list,DIRECT"),
             surge.index("FINAL,DIRECT"),
         )
         self.assertLess(
-            mihomo.index("RULE-SET,hk_wps_kdocs,🇭🇰 香港-自动选择"),
+            mihomo.index("RULE-SET,hk_wps_kdocs,DIRECT"),
             mihomo.index("RULE-SET,direct_cn,DIRECT"),
         )
         self.assertLess(
-            mihomo.index("RULE-SET,hk_wps_kdocs,🇭🇰 香港-自动选择"),
+            mihomo.index("RULE-SET,hk_wps_kdocs,DIRECT"),
             mihomo.index("MATCH,DIRECT"),
         )
 
@@ -719,6 +719,10 @@ class RepoInvariantTests(unittest.TestCase):
             "id: commit_changes",
         ):
             self.assertIn(needle, workflow)
+
+    def test_sync_workflow_commits_derived_direct_source_with_dist(self) -> None:
+        workflow = (ROOT / ".github/workflows/sync-upstream-rules.yml").read_text("utf-8")
+        self.assertIn("git add rules/upstream rules/direct/cn_direct_light.list dist", workflow)
 
 
 class MaintenanceDocumentationTests(unittest.TestCase):

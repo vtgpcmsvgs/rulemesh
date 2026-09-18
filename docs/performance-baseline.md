@@ -1,6 +1,6 @@
 # 2026-09-09 性能基线
 
-2026-09-16 [出口修订](scoped-egress-repair.md) 优先：WPS 固定香港、Store 专项固定美国；AI 使用审核域名，国内 DNS 与新华三固定第二条直连；Surge 移除阿里设备/整设备代理与爱思/Apple 海外解析残留。通用 Microsoft 保留代理，工作白名单仍 REJECT。
+2026-09-16 [出口修订](scoped-egress-repair.md) 优先：WPS 按 2026-09-18 修订统一直连、Store 专项固定美国；AI 使用审核域名，国内 DNS 与新华三固定第二条直连；Surge 移除阿里设备/整设备代理与爱思/Apple 海外解析残留。通用 Microsoft 保留代理，工作白名单仍 REJECT。
 
 2026-09-16 两份 FlClash 的日常业务修订见 [常用业务连通性](common-network-reliability.md)：阿里系强制代理停用，安卓共享下载按目的地分流；Google 专属保护、AI 美国和其他地区要求继续保留。下文历史默认值不能覆盖此修订。
 
@@ -12,7 +12,7 @@
 | Crypto，包括交易所、Polymarket、Polygon/BSC RPC | 台湾自动组 | 默认国内双 DoH |
 | 已登记的 `opinion.trade` 日本访问例外 | 日本自动组，优先于 Crypto 通用入口 | 默认国内双 DoH |
 | 香港券商、Personal 香港证券入口 | 香港自动组 | 默认国内双 DoH |
-| WPS / 金山文档公开发布 | 香港自动组，保留地区展示要求 | 默认国内双 DoH |
+| WPS / 金山文档全部既有业务 | DIRECT，取消香港地区展示出口要求 | 默认国内双 DoH |
 | Microsoft Store 专项 | 美国自动组，保留地区 IP 要求 | 默认国内双 DoH |
 | 国内 DNS 精确入口、新华三 | DIRECT，紧随 AI | 国内双 DoH |
 | 抖音、小红书、微信 | DIRECT，前置于 Google 广谱与广告拒绝 | 国内双 DoH |

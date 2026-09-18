@@ -55,13 +55,36 @@ class ScopedEgressTests(unittest.TestCase):
         path = ROOT / 'docs/examples' / ('surge-public.conf' if client == 'surge' else 'mihomo-public.yaml')
         return path, path.read_text('utf-8')
 
-    def test_wps_hk_and_store_us_cannot_fall_back_to_auto(self):
+    def test_store_us_cannot_fall_back_to_auto(self):
         for client in ('surge', 'mihomo'):
             path, text = self.fixture(client)
-            for suffix, alias in [('wps_kdocs', 'hk_wps_kdocs'), ('microsoft_store_us', 'us_microsoft_store')]:
+            for suffix, alias in [('microsoft_store_us', 'us_microsoft_store')]:
                 line = next(s for s in text.splitlines() if (s.startswith('RULE-SET,') and '/' + suffix + '.list,' in s) or s.startswith('  - RULE-SET,' + alias + ','))
                 changed = text.replace(line, line.rsplit(',', 1)[0] + ',"♻️ 自动选择"')
                 self.assertTrue(any('地区出口' in e for e in baseline.check(path, changed.splitlines())))
+
+    def test_wps_direct_unique_and_before_google(self):
+        for client in ('surge', 'mihomo'):
+            path, text = self.fixture(client)
+            line = next(s for s in text.splitlines() if (s.startswith('RULE-SET,') and '/wps_kdocs.list,' in s) or s.startswith('  - RULE-SET,hk_wps_kdocs,'))
+            self.assertTrue(line.endswith(',DIRECT'))
+            for target in ('"🇭🇰 香港-自动选择"', '"♻️ 自动选择"', 'REJECT'):
+                changed = text.replace(line, line.rsplit(',', 1)[0] + ',' + target)
+                self.assertTrue(any('wps 必须直连' in e for e in baseline.check(path, changed.splitlines())))
+            for replacement in ('', line + '\n' + line):
+                changed = text.replace(line, replacement)
+                self.assertTrue(any('wps 必须有且只有一个' in e for e in baseline.check(path, changed.splitlines())))
+            google = next(s for s in text.splitlines() if (s.startswith('RULE-SET,') and '/google_hk.list,' in s) or s.startswith('  - RULE-SET,hk_google,'))
+            changed = text.replace(line + '\n', '').replace(google, google + '\n' + line)
+            self.assertTrue(any('wps 必须在 AI 之后' in e for e in baseline.check(path, changed.splitlines())))
+
+    def test_wps_must_not_restore_overseas_dns(self):
+        path, text = self.fixture('surge')
+        changed = text.replace('\n[Host]\n', '\n[Host]\nRULE-SET:' + baseline.BASE + 'surge/rules/region/hk/wps_kdocs.list = server:https://cloudflare-dns.com/dns-query\n')
+        self.assertTrue(any('海外 Host' in e for e in baseline.check(path, changed.splitlines())))
+        path, text = self.fixture('mihomo')
+        changed = text.replace('  nameserver-policy:\n', '  nameserver-policy:\n    "rule-set:hk_wps_kdocs":\n      - https://cloudflare-dns.com/dns-query\n')
+        self.assertTrue(any('DNS policy' in e for e in baseline.check(path, changed.splitlines())))
 
     def test_domestic_protection_cannot_be_shadowed(self):
         path, text = self.fixture('surge')

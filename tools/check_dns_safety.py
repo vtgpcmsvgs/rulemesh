@@ -178,34 +178,16 @@ def validate_surge(path: Path, lines: list[str]) -> list[DnsSafetyFinding]:
         for index, line in host_section
         if not is_comment_or_blank(line)
     ]
-    cn_dns_entry = next(
-        (
-            (position, index, line)
-            for position, (index, line) in enumerate(active_host_lines)
-            if "cn_dns_domains" in line.lower()
-        ),
-        None,
-    )
-    wps_kdocs_entry = next(
-        (
-            (position, index, line)
-            for position, (index, line) in enumerate(active_host_lines)
-            if "rule-set:" in line.lower() and "wps_kdocs" in line.lower()
-        ),
-        None,
-    )
-    if cn_dns_entry and (
-        not wps_kdocs_entry or wps_kdocs_entry[0] > cn_dns_entry[0]
-    ):
-        findings.append(
-            DnsSafetyFinding(
-                "error",
-                path,
-                cn_dns_entry[1],
-                "Surge [Host] 的 cn_dns_domains 前缺少 WPS / 金山文档海外 DNS 覆盖，宽泛 .cn 会让香港流量继续使用国内解析。",
-                "在 cn_dns_domains 前加入 RULE-SET:<region/hk/wps_kdocs.list> = server:https://cloudflare-dns.com/dns-query。",
+    # 2026-09-18 已改为直连，不能再要求旧版香港业务的海外解析覆盖。
+    for index, line in active_host_lines:
+        if "wps_kdocs" in line.lower() and not domestic_needles_in(line.partition("=")[2]):
+            findings.append(
+                DnsSafetyFinding(
+                    "error", path, index,
+                    "WPS / 金山文档已统一直连，不得保留海外 DNS 覆盖。",
+                    "使用默认国内 DNS，移除旧的 WPS 海外解析例外。",
+                )
             )
-        )
     for index, line in host_section:
         lowered = line.lower()
         if (

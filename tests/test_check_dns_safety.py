@@ -62,7 +62,7 @@ DOMAIN-SET:https://example.com/share/file/proxy-node-domains = server:https://dn
 
         self.assertEqual(check_dns_safety.validate_path(path), [])
 
-    def test_surge_rejects_cn_dns_before_wps_kdocs_override(self) -> None:
+    def test_surge_rejects_wps_kdocs_overseas_dns_override(self) -> None:
         path = self.write_temp(
             "surge-public.conf",
             """[General]
@@ -81,7 +81,7 @@ DOMAIN-SET:https://example.com/share/file/proxy-node-domains = server:https://dn
 
         self.assertTrue(any("WPS / 金山文档" in finding.message for finding in findings))
 
-    def test_surge_accepts_wps_kdocs_override_before_cn_dns(self) -> None:
+    def test_surge_accepts_cn_dns_without_wps_kdocs_overseas_override(self) -> None:
         path = self.write_temp(
             "surge-public.conf",
             """[General]
@@ -90,7 +90,6 @@ dns-server = 1.1.1.1, 8.8.8.8, 9.9.9.9
 encrypted-dns-server = https://cloudflare-dns.com/dns-query
 
 [Host]
-RULE-SET:https://example.com/wps_kdocs.list = server:https://cloudflare-dns.com/dns-query
 DOMAIN-SET:https://example.com/cn_dns_domains.list = server:https://dns.alidns.com/dns-query
 DOMAIN-SET:https://example.com/share/file/proxy-node-domains = server:https://dns.alidns.com/dns-query
 """,

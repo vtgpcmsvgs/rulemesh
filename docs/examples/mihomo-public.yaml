@@ -614,7 +614,7 @@ rules:
   - RULE-SET,tw_crypto,🇨🇳 台湾-自动选择
   - RULE-SET,hk_securities_aggressive,🇭🇰 香港-自动选择
   - RULE-SET,hk_brokers,🇭🇰 香港-自动选择
-  - RULE-SET,hk_wps_kdocs,🇭🇰 香港-自动选择
+  - RULE-SET,hk_wps_kdocs,DIRECT
   - RULE-SET,hk_google,♻️ 自动选择
   - RULE-SET,direct_apple,DIRECT
   - RULE-SET,hk_personal_priority,♻️ 自动选择
