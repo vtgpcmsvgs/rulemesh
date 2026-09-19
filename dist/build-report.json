@@ -53,8 +53,8 @@
       "category": "direct",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 485,
-        "mihomo_classical": 485
+        "surge_rules": 484,
+        "mihomo_classical": 484
       },
       "dist": {
         "surge_rules": "dist/surge/rules/direct/alicloud_hk_ipv4_ssh22_direct.list",
@@ -495,8 +495,8 @@
       "category": "region",
       "classification": "ipcidr-only",
       "counts": {
-        "surge_rules": 188,
-        "mihomo_classical": 188
+        "surge_rules": 189,
+        "mihomo_classical": 189
       },
       "dist": {
         "surge_rules": "dist/surge/rules/region/kr/seoul_aws_ipv4.list",

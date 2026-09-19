@@ -127,6 +127,7 @@ IP-CIDR,3.38.131.192/26,no-resolve
 IP-CIDR,43.202.70.0/23,no-resolve
 IP-CIDR,43.202.72.0/22,no-resolve
 IP-CIDR,54.116.70.0/23,no-resolve
+IP-CIDR,54.117.38.0/23,no-resolve
 IP-CIDR,54.180.184.0/23,no-resolve
 IP-CIDR,3.36.167.64/28,no-resolve
 IP-CIDR,3.36.167.80/28,no-resolve
