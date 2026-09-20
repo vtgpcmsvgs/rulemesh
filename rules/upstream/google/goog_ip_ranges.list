@@ -1,7 +1,7 @@
 # 来源: https://www.gstatic.com/ipranges/goog.json
 # 标题: Google 官方完整公网地址空间
-# 同步令牌: 1789783543116
-# 上游创建时间: 2026-09-18T19:05:43.116024
+# 同步令牌: 1789872113273
+# 上游创建时间: 2026-09-19T19:41:53.273088
 # 范围: goog.json 公布的完整地址空间，故意包含 Google Cloud 客户地址以实现激进覆盖。
 # IPv4 前缀数量: 130
 # IPv6 前缀数量: 15
@@ -139,7 +139,7 @@ IP-CIDR,216.252.220.0/22,no-resolve
 IP-CIDR6,2001:4860::/32,no-resolve
 IP-CIDR6,2404:6800::/32,no-resolve
 IP-CIDR6,2404:f340::/32,no-resolve
-IP-CIDR6,2600:1900::/28,no-resolve
+IP-CIDR6,2600:1900::/29,no-resolve
 IP-CIDR6,2605:ef80::/32,no-resolve
 IP-CIDR6,2606:40::/32,no-resolve
 IP-CIDR6,2606:73c0::/32,no-resolve
