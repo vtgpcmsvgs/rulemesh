@@ -1,0 +1,13 @@
+# 生成来源：rules/proxy/youtube.list
+# 类型：rules
+# 请勿直接编辑 dist。
+
+DOMAIN-SUFFIX,youtube.com
+DOMAIN-SUFFIX,youtube-nocookie.com
+DOMAIN-SUFFIX,youtu.be
+DOMAIN-SUFFIX,yt.be
+DOMAIN-SUFFIX,ytimg.com
+DOMAIN-SUFFIX,googlevideo.com
+DOMAIN,video.google.com
+DOMAIN-KEYWORD,youtube
+DOMAIN-KEYWORD,googlevideo

@@ -22,10 +22,10 @@
   {"service":"Store美国","domain":"licensing.mp.microsoft.com","expected":"us_microsoft_store"},
   {"service":"Google","domain":"www.google.com","expected":"hk_google"},
   {"service":"Google","domain":"accounts.google.com","expected":"hk_google"},
-  {"service":"YouTube","domain":"www.youtube.com","expected":"hk_google"},
-  {"service":"YouTube","domain":"m.youtube.com","expected":"hk_google"},
-  {"service":"YouTube","domain":"i.ytimg.com","expected":"hk_google"},
-  {"service":"YouTube","domain":"redirector.googlevideo.com","expected":"hk_google"},
+  {"service":"YouTube","domain":"www.youtube.com","expected":"proxy_youtube"},
+  {"service":"YouTube","domain":"m.youtube.com","expected":"proxy_youtube"},
+  {"service":"YouTube","domain":"i.ytimg.com","expected":"proxy_youtube"},
+  {"service":"YouTube","domain":"redirector.googlevideo.com","expected":"proxy_youtube"},
   {"service":"Google Play","domain":"play.googleapis.com","process":"com.android.vending","expected":"hk_google"},
   {"service":"Google Play","domain":"android.clients.google.com","process":"com.google.android.gms","expected":"hk_google"},
   {"service":"Google Play","domain":"redirector.gvt1.com","process":"com.android.providers.downloads","expected":"hk_google"},
@@ -96,5 +96,11 @@
   {"service":"Notion","domain":"img.notionusercontent.com","expected":"hk_notion"},
   {"service":"Notion","domain":"secure.notion-static.com","expected":"hk_notion"},
   {"service":"Notion","domain":"www.notion.so","expected":"hk_notion"},
-  {"service":"Notion","domain":"msgstore.www.notion.so","expected":"hk_notion"}
+  {"service":"Notion","domain":"msgstore.www.notion.so","expected":"hk_notion"},
+  {"service":"Apple","domain":"www.apple.com","expected":"direct_apple"},
+  {"service":"Apple","domain":"www.icloud.com","expected":"direct_apple"},
+  {"service":"Microsoft","domain":"www.microsoft.com","expected":"us_microsoft"},
+  {"service":"Microsoft Store","domain":"apps.microsoft.com","expected":"us_microsoft_store"},
+  {"service":"Google 共享下载","domain":"redirector.gvt2.com","expected":"hk_google"},
+  {"service":"Google 共享头像","domain":"lh3.ggpht.com","expected":"hk_google"}
 ]

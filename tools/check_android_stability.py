@@ -37,9 +37,11 @@ def retired_quic_rules() -> list[str]:
 
 def stable_target(lines: list[str]) -> str:
     import check_private_dns_precedence as parser
+    import check_service_groups as service
     targets = [parts[2] for _, parts in parser._parse_mihomo_rules(lines)
                if len(parts) == 3 and parts[:2] == ["RULE-SET", "hk_google"]]
-    return targets[0] if len(targets) == 1 else ""
+    target = targets[0] if len(targets) == 1 else ""
+    return service.default_target(target, parser._parse_mihomo_groups(lines)) if service.MARKER in lines else target
 
 
 def allowed_stable_rule(parts: list[str]) -> bool:
@@ -51,6 +53,8 @@ def check(path: Path, lines: list[str]) -> list[str]:
     import check_private_dns_precedence as parser
     import check_private_performance as performance
     import check_common_routes as common
+    import check_service_groups as service
+    business = service.MARKER in lines
     daily = common.MARKER in lines
     errors = []
 
@@ -109,16 +113,21 @@ def check(path: Path, lines: list[str]) -> list[str]:
         require(not (rejects_udp and (google_scope or global_quic)),
                 "不得恢复 Google/Play UDP/443 拒绝：实机 Cronet 会发生协议错误及下载重试。")
     for package in (PACKAGES[:3] if daily else PACKAGES):
-        rule = f"PROCESS-NAME,{package},{target}"
+        rule = f"PROCESS-NAME,{package},{'Google' if business else target}"
         require(codes.count(rule) == 1 and google < codes.index(rule) < reject if rule in codes else False,
                 "Google 专属进程必须在广告拒绝前使用同一稳定组；历史配置另保留旧下载管理器保护。")
     require(not any(p[:2] == ["NETWORK", "udp"] and p[-1].startswith("REJECT") for p in rules), "不得用全局 UDP 拒绝代替 Google 定向保护。")
     _, policies = parser._parse_mihomo_dns(lines)
-    require(len(policies) == 2 and policies[0].providers == ("us_ai",) and policies[1].providers == ("hk_google",),
-            "安卓 DNS 必须先 AI、后 Google，仅允许这两个专项 policy。")
-    if len(policies) == 2:
-        expected = tuple(f"{endpoint}#{target}" for endpoint in ("https://cloudflare-dns.com/dns-query", "https://dns.google/dns-query"))
-        require(policies[1].nameservers == expected, "Google 海外 DoH 必须与 Google 下载使用同一稳定组。")
+    expected_ids = [("us_ai",), ("proxy_youtube",), ("hk_google",)] if business else [("us_ai",), ("hk_google",)]
+    require([p.providers for p in policies] == expected_ids,
+            "安卓 DNS 必须先 AI、再 YouTube 独立业务、最后 Google；仅允许已登记专项 policy。")
+    if [p.providers for p in policies] == expected_ids:
+        pairs = [(policies[-1], "Google" if business else target)]
+        if business:
+            pairs.append((policies[1], "YouTube"))
+        for policy, outbound in pairs:
+            expected = tuple(f"{endpoint}#{outbound}" for endpoint in ("https://cloudflare-dns.com/dns-query", "https://dns.google/dns-query"))
+            require(policy.nameservers == expected, "Google / YouTube 海外 DoH 必须跟随对应业务选择；默认仍是下载稳定组。")
     require(not any(re.fullmatch(r'\s*-\s*[\"\']?(android\.clients\.google\.com|clients4\.google\.com)[\"\']?\s*', s) for s in lines),
             "Play API 不能被误当作联网探测主机加入 fake-ip-filter。")
     return list(dict.fromkeys(errors))

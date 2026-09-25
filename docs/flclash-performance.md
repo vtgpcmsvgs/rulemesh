@@ -1,5 +1,7 @@
 # FlClash 客户端与性能基线
 
+2026-09-25 当前业务选择层以 [七个业务组与 DNS 联动](service-groups-refactor.md) 为准；下文保留历史基线及实测记录。
+
 2026-09-16 用户已另外授权本机 FlClash 深度验收，记录见[桌面实测](flclash-desktop-validation-20260916.md)。下文早前“本次不操作桌面”和历史数量只描述各自迁移批次，不能覆盖本次桌面实测结论。
 
 2026-09-12 用户批准一次完成迁移和优化。桌面与安卓统一使用 FlClash，Mihomo 是协议内核名称；不得把节点订阅协商所需的 `clash.meta` User-Agent 改成产品名。
@@ -65,3 +67,7 @@
 - 上述 DNS 出口证据来自隔离内核。桌面 App 的控制器默认未启用，本轮核对了其生成配置，但未通过生产控制器独立确认 DNS 连接；国内 DoH 的内部直连未出现在连接清单，不能仅凭该清单为空宣称没有 DNS 请求。
 
 参考：[FlClash 源码](https://github.com/chen08209/FlClash)、[Mihomo 策略组](https://wiki.metacubex.one/config/proxy-groups/)、[TUN](https://wiki.metacubex.one/config/inbound/tun/)、[DNS](https://wiki.metacubex.one/config/dns/)。
+
+## 2026-09-25 七个业务入口
+
+新增 Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple select，保持底层测速任务数量、周期、容差和 Notion 检测。AI/Crypto 提供受地区过滤的手动节点。两份 FlClash 新增 Apple 服务入口并置于系统更新拒绝之后；安卓的 Google fallback 通过业务层引用且默认不变。同步源文件后需由客户端更新 profile，核验实际生成配置与 DNS 出口；详见 [重构报告](service-groups-refactor.md)。

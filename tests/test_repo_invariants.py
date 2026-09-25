@@ -139,14 +139,14 @@ class GoogleHongKongRoutingTests(unittest.TestCase):
         surge = (ROOT / "docs" / "examples" / "surge-public.conf").read_text(encoding="utf-8")
         mihomo = (ROOT / "docs" / "examples" / "mihomo-public.yaml").read_text(encoding="utf-8")
 
-        surge_google = 'region/hk/google_hk.list,"♻️ 自动选择"'
-        mihomo_google = "RULE-SET,hk_google,♻️ 自动选择"
+        surge_google = 'region/hk/google_hk.list,"Google"'
+        mihomo_google = "RULE-SET,hk_google,Google"
         self.assertEqual(surge.count(surge_google), 1)
         self.assertEqual(mihomo.count(mihomo_google), 1)
         self.assertLess(surge.index(surge_google), surge.index("reject/adblock_reject.list,REJECT"))
-        self.assertGreater(surge.index(surge_google), surge.index('region/us/ai_us.list,"🇺🇸 美国-自动选择"'))
+        self.assertGreater(surge.index(surge_google), surge.index('region/us/ai_us.list,"AI"'))
         self.assertLess(mihomo.index(mihomo_google), mihomo.index("RULE-SET,reject_adblock,REJECT"))
-        self.assertGreater(mihomo.index(mihomo_google), mihomo.index("RULE-SET,us_ai,🇺🇸 美国-自动选择"))
+        self.assertGreater(mihomo.index(mihomo_google), mihomo.index("RULE-SET,us_ai,AI"))
 
     def test_us_ai_rule_covers_google_ai_products(self) -> None:
         result = build_rules.build_source(ROOT / "rules" / "region" / "us" / "ai_us.list")

@@ -5,6 +5,7 @@
 # 3) Google AI 专项维护在 region/us/ai_us.list，必须先匹配美国入口。
 # 4) 官方 goog.json 地址空间完整纳入，不扣除 Google Cloud 客户地址；第三方 GCP 服务也交给本入口的目标组。
 # 5) 安卓 Google DNS 与下载使用同一稳定组，其他客户端遵循各自性能基线；AI DNS 独立使用美国出口。
+# 6) 新版客户端以前置 proxy/youtube 展示独立视频组；这里保留完整 YouTube 覆盖供旧订阅兼容。
 
 # Google 通用服务：完整上游主体优先，覆盖搜索、账号、Gmail、Workspace、静态资源与公共接口。
 INCLUDE,upstream/blackmatrix7/google.list

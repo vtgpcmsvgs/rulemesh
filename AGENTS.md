@@ -231,3 +231,12 @@
 机场端点用途防回归：维护前区分 WEBSITE（官网代理）、SUBSCRIPTION（订阅专用直连）与 SHARED（兼容浏览器代理、客户端更新直连）。不能从订阅 URL 猜官网，也不能把用户确认的订阅专用域名加进浏览器代理例外。Surge 共用端点需覆盖实际使用的浏览器进程，Mihomo 后台更新依靠 provider 的 proxy: DIRECT；中文域名统一转 IDNA，机场组沿用飞机图标格式并校验所有引用。通用同步器源为 tools/sync_private_subscription_direct.ps1，私人副本同步维护；多目标写入前检查全部规则节与标记唯一性。回归夹具必须包含实际参与渲染的规则，不能依赖应被过滤的孤立注释。
 
 2026-09-18 Notion 网页专项：六份适用配置须保留唯一 Notion 入口并早于 Google 广谱；工作白名单不接入。Mihomo 使用复用全部 provider 的独立业务测速组（app.notion.com、200、容差 150、失败阈值 2、桌面 300 秒/安卓 600 秒、主动检测）；其余组和 provider 保持 Google HTTPS。Surge 使用全地区 smart；默认国内 DNS 不变。必须检查真实私有配置和 URL 专属健康历史，不能以公开模板或通用 alive 推断生效。详见 docs/notion-network-optimization.md。
+
+## 2026-09-25 业务选择层
+
+- 七份配置展示 Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple，均为 select，复用原自动引擎与机场手动入口。AI 所有候选限美国、Crypto 限台湾，DNS 必须跟随对应业务组。此项取代通用业务只能直接引用自动组的旧检查，不取消地区约束。
+- proxy/youtube 使用审核后的专用域名，不能整包 INCLUDE 含 gvt1/gvt2、ggpht 和 IP 的上游；先于 Google 广谱，旧 google_hk 保留完整兼容。新增业务规则须测正例和共享 CDN 负例。
+- 安卓默认 Google 稳定引擎、三个 Google 专属进程和 QUIC 保留；DNS policy 按 AI、YouTube、Google 顺序分别绑定业务 select。普通桌面仅 AI policy，不机械扩散安卓策略。
+- Apple 普通配置默认 DIRECT；两份 FlClash 的更新拒绝必须先于 Apple。工作只重绑既有 macOS 更新入口，禁止增加 Apple 全域放行。原机场手动组与 Notion 专项保留。
+- 第三方配置的 DNS/hosts 也可能含凭证；只允许 tools/audit_reference_profile.py 白名单统计，不输出整节或解析异常原文。先准备任务专用依赖，不假设系统或捆绑 Python 自带 PyYAML。
+- 详见 docs/service-groups-refactor.md；组默认值、保存选择、文件发布和设备生效必须分开报告。

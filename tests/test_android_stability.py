@@ -18,15 +18,25 @@ class AndroidStabilityTests(unittest.TestCase):
         text = text.replace("interval: 300", "interval: 600")
         text = text.replace("\n", "\n" + android.MARKER + "\n", 1)
         text += "\n# PRIVATE_SUBSCRIPTION_DIRECT_START\n# PRIVATE_SUBSCRIPTION_DIRECT_END\n"
-        auto = android.stable_target(text.splitlines())
         stable = "下载稳定"
         group = '\n  - name: "下载稳定"\n    type: fallback\n    interval: 600\n    lazy: false\n    url: "https://www.google.com/generate_204"\n    use:\n      - provider_a\n      - provider_b\n      - provider_c\n\n'
         text = text.replace("rule-providers:\n", group + "rule-providers:\n", 1)
-        policy = '    "rule-set:hk_google":\n' + "".join(f'      - "{url}#{stable}"\n' for url in baseline.OVERSEAS)
+        # 先验证新业务层的唯一锚点，避免模板变更后替换静默无效，导致坏夹具掩盖负例。
+        for name, target in (("Google", stable), ("YouTube", "Google")):
+            anchor = f'  - name: "{name}"\n    type: select\n    hidden: false\n    proxies:\n      - "♻️ 自动选择"'
+            self.assertEqual(text.count(anchor), 1)
+            text = text.replace(anchor, anchor.rsplit('"♻️ 自动选择"', 1)[0] + f'"{target}"', 1)
+        policy = ''.join(f'    "rule-set:{key}":\n' + ''.join(f'      - "{url}#{outbound}"\n' for url in baseline.OVERSEAS)
+                         for key, outbound in (("proxy_youtube", "YouTube"), ("hk_google", "Google")))
         text = text.replace("  fake-ip-filter:\n", policy + "  fake-ip-filter:\n", 1)
-        rules = ["RULE-SET,hk_google," + stable]
-        rules += [f"PROCESS-NAME,{package},{stable}" for package in android.PACKAGES]
-        text = text.replace("  - RULE-SET,hk_google," + auto, "\n".join("  - " + rule for rule in rules), 1)
+        rules = ["RULE-SET,hk_google,Google"]
+        rules += [f"PROCESS-NAME,{package},Google" for package in android.PACKAGES]
+        self.assertEqual(text.count("  - RULE-SET,hk_google,Google"), 1)
+        text = text.replace("  - RULE-SET,hk_google,Google", "\n".join("  - " + rule for rule in rules), 1)
+        apple = "  - RULE-SET,direct_apple,Apple\n"
+        self.assertEqual(text.count(apple), 1)
+        text = text.replace(apple, "")
+        text = text.replace("  - RULE-SET,reject_os_update,REJECT\n", "  - RULE-SET,reject_os_update,REJECT\n" + apple, 1)
         anchor = "  - RULE-SET,direct_ips5,DIRECT\n"
         self.assertEqual(text.count(anchor), 1)
         components = "  " + android.ALIPAY_MARKER + "\n" + "".join("  - " + rule + "\n" for rule in android.alipay_component_rules())
@@ -39,7 +49,7 @@ class AndroidStabilityTests(unittest.TestCase):
 
     def test_download_processes_cannot_be_removed_or_shadowed(self):
         path, text = self.fixture()
-        protected = [f"PROCESS-NAME,{p},下载稳定" for p in android.PACKAGES]
+        protected = [f"PROCESS-NAME,{p},Google" for p in android.PACKAGES]
         for rule in protected:
             line = "  - " + rule
             for changed in (text.replace(line + "\n", ""), text.replace(line + "\n", "") + "\n" + line):
@@ -83,7 +93,7 @@ class AndroidStabilityTests(unittest.TestCase):
         for rule in android.alipay_component_rules():
             text = text.replace("  - " + rule + "\n", "")
         for package in android.PACKAGES[3:]:
-            text = text.replace(f"  - PROCESS-NAME,{package},下载稳定\n", "")
+            text = text.replace(f"  - PROCESS-NAME,{package},Google\n", "")
         self.assertEqual(baseline.check(path, text.splitlines()), [])
         for package in android.PACKAGES[3:]:
             changed = text.replace("rules:\n", f"rules:\n  - PROCESS-NAME,{package},下载稳定\n", 1)
@@ -109,8 +119,11 @@ class AndroidStabilityTests(unittest.TestCase):
         start = policies.index('    "rule-set:hk_google":')
         changed = text.replace(policies, policies[start:] + policies[:start])
         self.assertTrue(android.check(path, changed.splitlines()))
-        self.assertTrue(android.check(path, text.replace("#下载稳定", "#DIRECT").splitlines()))
-        self.assertTrue(baseline.check(path, text.replace("#🇺🇸 美国-自动选择", "#下载稳定").splitlines()))
+        for business in ("Google", "YouTube"):
+            changed = text.replace("#" + business, "#DIRECT")
+            self.assertNotEqual(changed, text)
+            self.assertTrue(android.check(path, changed.splitlines()))
+        self.assertTrue(baseline.check(path, text.replace("#AI", "#下载稳定").splitlines()))
 
     def test_stable_group_cannot_become_fastest_or_nested_auto(self):
         path, text = self.fixture()

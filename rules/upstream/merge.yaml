@@ -16,6 +16,15 @@ defaults:
     manual_entries_first: true
 
 merge_plan:
+  - id: youtube
+    target: rules/proxy/youtube.list
+    purpose: YouTube 视频及资源独立选点，不被 Google 完整地址空间提前吞并
+    strategy:
+      - reviewed_youtube_dedicated_domains_only
+      - local_brand_and_video_keywords
+    notes:
+      - 新配置在 Google 与国际媒体前调用；google_hk 的旧覆盖保留兼容
+      - 上游混有 Google Play 下载及共享头像域，不能整包 INCLUDE；负例由业务路由测试保护
   - id: cn-services-direct
     target: rules/direct/cn_services_direct.list
     purpose: 国内 DNS 与新华三精选直连，防止前置代理遮蔽

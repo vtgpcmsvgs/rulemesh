@@ -94,8 +94,8 @@ dns:
   # AI 专用 DoH 显式指定美国组；节点域名独立直连解析，避免循环依赖。
   nameserver-policy:
     "rule-set:us_ai":
-      - "https://cloudflare-dns.com/dns-query#🇺🇸 美国-自动选择"
-      - "https://dns.google/dns-query#🇺🇸 美国-自动选择"
+      - "https://cloudflare-dns.com/dns-query#AI"
+      - "https://dns.google/dns-query#AI"
   fake-ip-filter:
     - "+.lan"
     - "+.local"
@@ -177,6 +177,104 @@ proxy-providers:
       additional-prefix: "C | "
 
 proxy-groups:
+# RuleMesh 业务策略组：2026-09-25
+  # 七个可见业务入口；select 复用既有 provider，不增加周期测速任务。
+  - name: "Google"
+    type: select
+    hidden: false
+    proxies:
+      - "♻️ 自动选择"
+      - "🚀 节点选择"
+      - "🇭🇰 香港-自动选择"
+      - "🇨🇳 台湾-自动选择"
+      - "🇯🇵 日本-自动选择"
+      - "🇰🇷 韩国-自动选择"
+      - "🇸🇬 新加坡-自动选择"
+      - "🇺🇸 美国-自动选择"
+      - "👋 手动切换"
+
+  - name: "YouTube"
+    type: select
+    hidden: false
+    proxies:
+      - "♻️ 自动选择"
+      - "🚀 节点选择"
+      - "🇭🇰 香港-自动选择"
+      - "🇨🇳 台湾-自动选择"
+      - "🇯🇵 日本-自动选择"
+      - "🇰🇷 韩国-自动选择"
+      - "🇸🇬 新加坡-自动选择"
+      - "🇺🇸 美国-自动选择"
+      - "👋 手动切换"
+
+  - name: "AI"
+    type: select
+    hidden: false
+    proxies:
+      - "🇺🇸 美国-自动选择"
+    use:
+      - provider_a
+      - provider_b
+      - provider_c
+    filter: "(?i)🇺🇸|美国|united states|\\bus\\b"
+    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
+
+  - name: "Telegram"
+    type: select
+    hidden: false
+    proxies:
+      - "♻️ 自动选择"
+      - "🚀 节点选择"
+      - "🇭🇰 香港-自动选择"
+      - "🇨🇳 台湾-自动选择"
+      - "🇯🇵 日本-自动选择"
+      - "🇰🇷 韩国-自动选择"
+      - "🇸🇬 新加坡-自动选择"
+      - "🇺🇸 美国-自动选择"
+      - "👋 手动切换"
+
+  - name: "Crypto"
+    type: select
+    hidden: false
+    proxies:
+      - "🇨🇳 台湾-自动选择"
+    use:
+      - provider_a
+      - provider_b
+      - provider_c
+    filter: "(?i)🇨🇳|台湾|taiwan|\\btw\\b"
+    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
+
+  - name: "Microsoft"
+    type: select
+    hidden: false
+    proxies:
+      - "♻️ 自动选择"
+      - "🚀 节点选择"
+      - "🇭🇰 香港-自动选择"
+      - "🇨🇳 台湾-自动选择"
+      - "🇯🇵 日本-自动选择"
+      - "🇰🇷 韩国-自动选择"
+      - "🇸🇬 新加坡-自动选择"
+      - "🇺🇸 美国-自动选择"
+      - "👋 手动切换"
+
+  - name: "Apple"
+    type: select
+    hidden: false
+    proxies:
+      - "DIRECT"
+      - "♻️ 自动选择"
+      - "🚀 节点选择"
+      - "🇭🇰 香港-自动选择"
+      - "🇨🇳 台湾-自动选择"
+      - "🇯🇵 日本-自动选择"
+      - "🇰🇷 韩国-自动选择"
+      - "🇸🇬 新加坡-自动选择"
+      - "🇺🇸 美国-自动选择"
+      - "👋 手动切换"
+
+
   # 说明：本段自动组里的 interval: 300 = 每 5 分钟重新测速并择优一次，不是更新订阅。
   # 新手说明：这是总开关。日常只需要选它，内部再选“自动”或“手动”。
   - name: "🚀 节点选择"
@@ -314,6 +412,16 @@ proxy-groups:
     exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
 
 rule-providers:
+  proxy_youtube:
+    type: http
+    behavior: classical
+    format: yaml
+    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/proxy/youtube.yaml"
+    path: ./ruleset/proxy/youtube.yaml
+    interval: 86400
+    proxy: "♻️ 自动选择"
+
+
 
   direct_cn_services:
     type: http
@@ -620,34 +728,35 @@ rule-providers:
 
 rules:
   # AI 美国、Crypto 台湾；已登记日本入口与香港券商保留地区，其余代理自动择优。
-  - RULE-SET,us_ai,🇺🇸 美国-自动选择
+  - RULE-SET,us_ai,AI
   - RULE-SET,direct_cn_services,DIRECT
   - RULE-SET,direct_ai_cn,DIRECT
   - RULE-SET,direct_bytedance,DIRECT
   - RULE-SET,direct_cn_social,DIRECT
   - RULE-SET,direct_ips5,DIRECT
   - RULE-SET,jp_domains,🇯🇵 日本-自动选择
-  - RULE-SET,tw_crypto,🇨🇳 台湾-自动选择
+  - RULE-SET,tw_crypto,Crypto
   - RULE-SET,hk_securities_aggressive,🇭🇰 香港-自动选择
   - RULE-SET,hk_brokers,🇭🇰 香港-自动选择
   - RULE-SET,hk_wps_kdocs,DIRECT
   - RULE-SET,hk_notion,📝 Notion-自动选择
-  - RULE-SET,hk_google,♻️ 自动选择
-  - RULE-SET,direct_apple,DIRECT
+  - RULE-SET,proxy_youtube,YouTube
+  - RULE-SET,hk_google,Google
+  - RULE-SET,direct_apple,Apple
   - RULE-SET,hk_personal_priority,♻️ 自动选择
   - RULE-SET,us_microsoft_store,🇺🇸 美国-自动选择
   - RULE-SET,direct_outlook,DIRECT
   - DOMAIN-SUFFIX,yikaiying.com,DIRECT
   - RULE-SET,reject_adblock,REJECT
   - RULE-SET,reject_os_update,REJECT
-  - RULE-SET,us_microsoft,♻️ 自动选择
-  - RULE-SET,us_macos_update,♻️ 自动选择
-  - RULE-SET,hk_telegram,♻️ 自动选择
+  - RULE-SET,us_microsoft,Microsoft
+  - RULE-SET,us_macos_update,Apple
+  - RULE-SET,hk_telegram,Telegram
   - RULE-SET,hk_global_media,♻️ 自动选择
   - RULE-SET,direct_github_ssh,DIRECT
   - RULE-SET,proxy_github_core,♻️ 自动选择
-  - RULE-SET,proxy_polygon_rpc,🇨🇳 台湾-自动选择
-  - RULE-SET,proxy_bsc_rpc,🇨🇳 台湾-自动选择
+  - RULE-SET,proxy_polygon_rpc,Crypto
+  - RULE-SET,proxy_bsc_rpc,Crypto
   - RULE-SET,proxy_overseas_dns_ipv4,♻️ 自动选择,no-resolve
   - DOMAIN,localhost,DIRECT
   - DOMAIN-SUFFIX,local,DIRECT

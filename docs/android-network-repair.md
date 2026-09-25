@@ -1,5 +1,7 @@
 # 安卓 FlClash 网络与 Google Play 下载修复
 
+2026-09-25 当前业务选择层以 [七个业务组与 DNS 联动](service-groups-refactor.md) 为准；下文保留历史基线及实测记录。
+
 当前生效方案以 [2026-09-16 常用业务连通性](common-network-reliability.md) 为准：用户已取消两份 FlClash 的阿里系强制代理，三个临时支付宝条件规则撤下；安卓共享下载管理器按目的地分流。下文保留各次故障的历史证据，不能把旧的 70/73 条规则数、五进程保护或临时支付宝补丁恢复为当前约束。
 
 2026-09-14 用户报告安卓 Google/YouTube 网页不可达、Play 商店可浏览但下载反复转圈、大智慧行情/K 线空白及滴滴订单状态更新延迟，并授权优先修复下载稳定性。本次对安卓配置实施专项保护；桌面和 Surge 不自动继承这一例外。
@@ -108,3 +110,7 @@ DNS 复测中，`chatgpt.com`、`play.googleapis.com`、`www.gw.com.cn`、`dsp.d
 - ADB 启动应用先解析当前 launcher activity；自绘图表标签可能不在 UI 文本树中，应以当前截图确定位置。截图生成命令返回运行中会话时，必须等其成功退出后再读取文件，不能把尚未生成误报为丢失。
 
 参考：[Mihomo 路由规则](https://wiki.metacubex.one/config/rules/)、[DNS](https://wiki.metacubex.one/config/dns/)、[Fallback](https://wiki.metacubex.one/config/proxy-groups/fallback/)、[内置策略](https://wiki.metacubex.one/config/proxies/built-in/)、[FlClash 源码](https://github.com/chen08209/FlClash)、[大智慧官网](https://www.gw.com.cn/)。
+
+## 2026-09-25 业务选择层
+
+Google 规则、三个专属进程与 DNS 改接可见 Google select，默认首项仍是原 fallback；保留 QUIC 与 600 秒主动检测。YouTube 专用域名前置且可独立切换，其共享 Play CDN 仍归 Google。DNS policy 变为 AI → YouTube → Google，分别绑定业务 select，避免切换视频出口后 DNS 仍固定旧组。手动改 Google 会覆盖默认稳定行为，保存选择须在设备核验。详见 [业务组说明](service-groups-refactor.md)。

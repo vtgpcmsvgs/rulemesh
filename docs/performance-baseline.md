@@ -1,5 +1,7 @@
 # 2026-09-09 性能基线
 
+2026-09-25 当前业务选择层以 [七个业务组与 DNS 联动](service-groups-refactor.md) 为准；下文保留历史基线及实测记录。
+
 2026-09-16 [出口修订](scoped-egress-repair.md) 优先：WPS 按 2026-09-18 修订统一直连、Store 专项固定美国；AI 使用审核域名，国内 DNS 与新华三固定第二条直连；Surge 移除阿里设备/整设备代理与爱思/Apple 海外解析残留。通用 Microsoft 保留代理，工作白名单仍 REJECT。
 
 2026-09-16 两份 FlClash 的日常业务修订见 [常用业务连通性](common-network-reliability.md)：阿里系强制代理停用，安卓共享下载按目的地分流；Google 专属保护、AI 美国和其他地区要求继续保留。下文历史默认值不能覆盖此修订。
@@ -42,7 +44,7 @@
 
 Surge 保留 `use-local-host-item-for-proxy = false`、`hijack-dns = *:53` 与 `encrypted-dns-follow-outbound-mode = true`。`[Host]` 第一项将 `ai_us` 指定到 Cloudflare DoH，独立 `region/us/ai_dns_us` 规则集使用相同美国组；GitHub Raw 规则下载保留同一解析例外。节点域名仍通过 Sub-Store 的 `proxy-node-domains` 分享文件单独 bootstrap，不能写入订阅域名或 IP。
 
-Mihomo 的 `nameserver` 使用国内双 DoH；唯一 `nameserver-policy` 为 `rule-set:us_ai`，将 Cloudflare 和 Google DoH 都显式附加 `#美国组名`。按 Mihomo 原生语义，同时配置国内 `proxy-server-nameserver` 解析节点域名，避免指定代理的 AI DNS 形成自举循环。`respect-rules`、`use-hosts`、`use-system-hosts`、`ipv6` 保持 false；不引入 `fallback`、`direct-nameserver` 或第二层节点 DNS policy。
+Mihomo 的 `nameserver` 使用国内双 DoH；桌面与公开模板的 `nameserver-policy` 为 `rule-set:us_ai`，将 Cloudflare 和 Google DoH 都显式附加 `#AI`；安卓按本轮修订追加 YouTube、Google 业务 policy。按 Mihomo 原生语义，同时配置国内 `proxy-server-nameserver` 解析节点域名，避免指定代理的 AI DNS 形成自举循环。`respect-rules`、`use-hosts`、`use-system-hosts`、`ipv6` 保持 false；不引入 `fallback`、`direct-nameserver` 或第二层节点 DNS policy。
 
 依据：[Mihomo DNS 文档](https://wiki.metacubex.one/config/dns/)与 [TCP 并发说明](https://wiki.metacubex.one/config/general/)。此处的 `proxy-server-nameserver` 是本次明确采用的自举依赖，旧版禁止该字段的说明不再适用于这版基线。
 
@@ -82,3 +84,7 @@ AI、Crypto、其他明确地区、Google、gfw 等前置规则和机场组不�
 2026-09-12 FlClash 迁移与优化以 [客户端性能基线](flclash-performance.md) 为准：桌面和安卓使用新文件名；通用末尾改为 cn_direct_light → gfw_precise → DIRECT，完整规则资产保留。工作白名单不接入新兜底，机场手动组保留。桌面 300 秒、安卓 600 秒，备用地区按需检测；以最终生成配置核对界面覆写。
 
 2026-09-18 Notion 为独立业务测速的窄例外，新增一组而非更改地区限制；详见 [Notion 网页优化](notion-network-optimization.md)。
+
+## 2026-09-25 业务选择层修订
+
+当前配置在自动引擎之上增加七个可见 select。基线继续检查所有 AI/Crypto 候选的地区约束、默认引擎的主动检测及切换容差，允许无固定地区的业务经选择层切换。AI DNS 跟随 AI；安卓仅增加前置 YouTube policy，与 Google 分别跟随自己的业务组，默认稳定引擎保持。Apple 普通配置默认 DIRECT、工作沿用旧更新出口，FlClash 更新拒绝仍优先。以 [业务策略组重构](service-groups-refactor.md) 为本轮差异依据。

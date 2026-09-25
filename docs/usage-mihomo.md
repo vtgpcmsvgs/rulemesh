@@ -22,7 +22,7 @@ GitHub SSH 精确直连在 Core / gfw 前；国内通用直连在 gfw 前。阿�
 ## DNS、测速与连接
 
 - `nameserver` 使用国内 AliDNS / DNSPod 双 DoH，减少国内 CDN 调度偏差。
-- 默认 `nameserver-policy` 为 `rule-set:us_ai`，两个海外 DoH 显式使用 `#美国组名`。2026-09-14 安卓下载保护在其后追加 `rule-set:hk_google`，通过独立 Google 稳定组解析；桌面与公开模板仍只保留 AI policy。节点域名由国内 `proxy-server-nameserver` 独立 bootstrap，避免解析循环。
+- 默认 `nameserver-policy` 为 `rule-set:us_ai`，两个海外 DoH 显式使用 `#AI`。安卓依次追加 `rule-set:proxy_youtube` 与 `rule-set:hk_google`，分别绑定 `#YouTube`、`#Google`，默认最终仍使用原下载稳定引擎；桌面与公开模板仍只保留 AI policy。节点域名由国内 `proxy-server-nameserver` 独立 bootstrap，避免解析循环。
 - 保持 `respect-rules: false`、`use-hosts: false`、`use-system-hosts: false`、IPv4、fake-ip 和 ARC 缓存，不引入 fallback 或二级 policy。
 - `tcp-concurrent: true` 并发尝试多个目标 IP。全地区自动组不限制地区标签，套餐占位项仍由 `exclude-filter` 排除；桌面提供方与自动组每 300 秒检测、安卓每 600 秒；实际业务组主动检测，备用地区组按需检测。全地区容差 50、美国容差 100，使用 HTTPS generate_204。
 - 保留局域网、系统连通性探测和游戏所需 `fake-ip-filter`；不同终端可保留 `listen` 等运行字段差异。
@@ -45,3 +45,9 @@ GeoIP 使用 `geodata-mode: false`，`geox-url.mmdb` 直接引用 [MetaCubeX cou
 2026-09-12：`direct/ips5_direct` 以 DIRECT 覆盖 `ips5.vip` 主域及全部子域，位于 AI 之后、Google 广谱与拒绝之前，使用默认国内双 DoH；工作白名单仅增加该服务。AdsPower 停用范围、资产与定时任务处理见[规则停用与恢复](rule-deactivation.md)。
 
 2026-09-12 FlClash 迁移与优化以 [客户端性能基线](flclash-performance.md) 为准：桌面和安卓使用新文件名；通用末尾改为 cn_direct_light → gfw_precise → DIRECT，完整规则资产保留。工作白名单不接入新兜底，机场手动组保留。桌面 300 秒、安卓 600 秒，备用地区按需检测；以最终生成配置核对界面覆写。
+
+## 业务组选择（2026-09-25）
+
+Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple 可独立选择出口。新增 select 只复用原自动引擎，AI/台湾 Crypto 可手选限定地区节点；provider 更新仍 DIRECT。Apple 默认直连，私人 FlClash 保持更新拒绝优先。Store 美国与已有 Outlook 直连例外不受 Microsoft 通用选择覆盖。
+
+AI DoH 使用 #AI；安卓额外按 YouTube → Google 配置各自 DNS 出口，Google 默认仍是原 fallback。桌面不新增视频 DNS policy。新组第一项是初始默认，保存选择可能覆盖；下载速度与 204 延迟须分别验收。详见 [重构说明](service-groups-refactor.md)。

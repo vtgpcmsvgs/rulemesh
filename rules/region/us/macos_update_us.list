@@ -3,7 +3,7 @@
 # 维护原则：
 # 1) 仅保留 Apple 官方标注为 macOS only 的系统更新主机，避免误伤 App Store / Apple TV 等其他 Apple 服务。
 # 2) 这条规则默认放在 reject/os_update_reject.list 之后；平时由拒绝规则先拦截，临时升级时注释对应 reject 入口后再命中这里。
-# 3) 命中本文件后默认绑定全地区自动组，不再使用 DIRECT，也不要通过 Surge skip-proxy 放行 Apple 17.0.0.0/8。
+# 3) 新版业务分组交给 Apple：普通配置默认直连，工作白名单沿用自动出口；不得通过 skip-proxy 放行 Apple 17.0.0.0/8 绕过拒绝。
 DOMAIN,ig.apple.com
 DOMAIN,skl.apple.com
 DOMAIN,swscan.apple.com

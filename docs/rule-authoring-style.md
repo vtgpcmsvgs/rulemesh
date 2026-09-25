@@ -21,7 +21,7 @@
 - 上游精细规则优先，本地只做高价值兜底
 - 文件头先写清“它负责什么、不负责什么、顺序上放在哪里”
 - 涉及代理节点端点或链式拨号时，文件头还要写清客户端能力边界；Surge 的端点规则分流不能被描述成 Mihomo `dialer-proxy` 的等价实现
-- DNS 按已批准性能基线：普通业务默认国内双 DoH；桌面与公开 Mihomo 仅 AI 使用专项 policy，2026-09-14 安卓下载保护可在 AI 后追加 Google 同组海外解析，地区必需业务优先保留出口
+- DNS 按已批准性能基线：普通业务默认国内双 DoH；桌面与公开 Mihomo 仅 AI 使用专项 policy，安卓在 AI 后按 YouTube、Google 顺序追加同业务组海外解析，地区必需业务优先保留出口
 - 从官方目录分页生成的大型机构域名快照应保留为独立上游文件，由同步器完成并发抓取、重试、页数与条目数阈值校验；本地规则只通过 `INCLUDE` 聚合该快照并补少量高价值品牌域名。不得用 `broker`、`securities`、`capital`、`finance` 这类通用关键词冒充机构穷举
 - Personal 专用激进入口必须在文件头明确“不扩散到工作白名单”，并在调用层同时处理 DNS 优先级；不能因为公开产物可用就机械替换工作白名单已有的精确入口
 - 邮箱等带登录流程的服务要分别检查邮件连接、共享认证与认证资源；`outlook_direct` 按邮件、登录、认证资源分组维护。精确共享登录直连会同时影响其他应用对同一域名的访问，必须说明这个边界，按当前性能基线选择 DNS，不能用平台根域兜底代替端点检查。
@@ -93,7 +93,7 @@ DOMAIN-KEYWORD,...
 例如：
 
 - `ai_us.list` 适合按 `ChatGPT / OpenAI`、`Claude / Anthropic`、`Copilot`、`Perplexity` 这类非 Google 平台分组
-- `google_hk.list` 适合按 `Google 通用服务`、`Google FCM`、`Google Play`、`YouTube`、`Gemini / Google AI`、官方 IP 地址空间这类服务分组
+- `google_hk.list` 按 Google 通用服务、FCM、Play、YouTube 兼容覆盖与官方 IP 地址空间分组；Google AI 单独位于前置 `ai_us`，独立视频入口位于 `proxy/youtube`
 - `crypto_tw.list` 适合按 `交易所 / 接入基础设施`、`链上数据 / 区块浏览器`、`预测市场` 这类类别分组
 - `bytedance_direct.list` 适合按 `字节跳动 / ByteDance` 与 `抖音 / Douyin` 分组
 - `global_media.list` 按上游主体与 X/Twitter 分组；Polymarket 独立归入 `crypto_tw` 台湾入口。
@@ -271,3 +271,7 @@ IP 类源规则可以只写主体字段；构建产物会自动补 `no-resolve`�
 兼容路径与出口分开维护：`region/hk/wps_kdocs` 按 2026-09-18 要求统一 DIRECT，路径保留以兼容已有订阅。文件头、上游登记和客户端必须明确当前语义；不得从目录或 provider 名推断香港出口。
 
 Notion 旧地区路径仅兼容：域名范围维持官方域名族与已授权品牌兜底，首条调用必须早于 Google 广谱；Mihomo 的业务测速与 Surge smart 分开表达，不把共享 CDN 或 IP 地址空间加入单一服务。详见 [Notion 网页优化](notion-network-optimization.md)。
+
+## 独立业务与共享 CDN 边界
+
+2026-09-25 新增 proxy/youtube：当上游清单混入其他产品的下载 CDN 或共享 IP 时，应审核提取专用域名，不能因名称相同就整包 INCLUDE。YouTube 使用专用域名加原品牌兜底；gvt1/gvt2、ggpht 和共享地址仍由 Google 承接。正例与共享资源负例一起检查，google_hk 保留旧覆盖兼容。新业务入口须同步七份配置的调用、DNS 依赖和策略组，明确工作白名单边界，见 [重构说明](service-groups-refactor.md)。

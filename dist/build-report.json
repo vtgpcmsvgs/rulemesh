@@ -2,10 +2,10 @@
   "summary": {
     "domain-only": 15,
     "ipcidr-only": 7,
-    "classical/mixed": 27,
+    "classical/mixed": 28,
     "dns-domain-set": 2,
     "empty": 0,
-    "total_sources": 51,
+    "total_sources": 52,
     "total_warnings": 0
   },
   "sources": [
@@ -319,6 +319,19 @@
       "dist": {
         "surge_rules": "dist/surge/rules/proxy/polygon_rpc_proxy.list",
         "mihomo_classical": "dist/mihomo/classical/proxy/polygon_rpc_proxy.yaml"
+      }
+    },
+    {
+      "source": "rules/proxy/youtube.list",
+      "category": "proxy",
+      "classification": "classical/mixed",
+      "counts": {
+        "surge_rules": 9,
+        "mihomo_classical": 9
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/proxy/youtube.list",
+        "mihomo_classical": "dist/mihomo/classical/proxy/youtube.yaml"
       }
     },
     {

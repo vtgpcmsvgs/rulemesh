@@ -91,7 +91,7 @@ class PerformanceBaselineTests(unittest.TestCase):
             prefix = "region/tw/crypto_tw.list," if client == "surge" else "RULE-SET,tw_crypto,"
             line = next(x for x in text.splitlines() if prefix in x)
             for target in ("♻️ 自动选择", "🇺🇸 美国-自动选择"):
-                changed = text.replace(line, line.replace("🇨🇳 台湾-自动选择", target))
+                changed = text.replace(line, line.replace("Crypto", target))
                 with self.subTest(client=client, target=target):
                     self.assertTrue(any("crypto_tw" in error for error in baseline.check(path, changed.splitlines())))
 
@@ -106,7 +106,7 @@ class PerformanceBaselineTests(unittest.TestCase):
 
     def test_ai_dns_requires_explicit_us_outbound_and_node_bootstrap(self):
         path, text = self.fixture("mihomo")
-        changed = text.replace("#🇺🇸 美国-自动选择", "")
+        changed = text.replace("#AI", "")
         self.assertTrue(any("DoH" in error for error in baseline.check(path, changed.splitlines())))
         changed = text.replace("  proxy-server-nameserver:", "  ignored-node-dns:")
         self.assertTrue(any("bootstrap" in error for error in baseline.check(path, changed.splitlines())))
@@ -153,7 +153,7 @@ class PerformanceBaselineTests(unittest.TestCase):
         path, text = self.fixture('surge')
         line = next(x for x in text.splitlines() if x.startswith('RULE-SET,' + baseline.AI_DNS_RULE + ','))
         self.assertTrue(baseline.check(path, text.replace(line, '').splitlines()))
-        changed = text.replace(line, line.replace('🇺🇸 美国-自动选择', '♻️ 自动选择'))
+        changed = text.replace(line, line.replace('"AI"', '"♻️ 自动选择"'))
         self.assertTrue(any('DoH' in error for error in baseline.check(path, changed.splitlines())))
         changed = text.replace(line, 'SRC-IP,192.0.2.1,"♻️ 自动选择"\n' + line)
         self.assertTrue(any('设备' in error for error in baseline.check(path, changed.splitlines())))
@@ -224,17 +224,17 @@ if ($taskLines.Count -ne 2 -or $taskLines[0] -ne '# test' -or $taskLines[1] -ne 
 
         cases = {
             "download.i4.cn": "DIRECT", "www.i5.cn": "DIRECT",
-            "secure-appldnld.apple.com": "DIRECT", "updates.cdn-apple.com": "DIRECT",
-            "cloudflare-dns.com": "🇺🇸 美国-自动选择",
-            **{domain: "♻️ 自动选择" for domain in ("googleplay.com", "googleusercontent.com", "android.com", "gvt3.com", "xn--ngstr-lra8j.com")},
+            "secure-appldnld.apple.com": "Apple", "updates.cdn-apple.com": "Apple",
+            "cloudflare-dns.com": "AI",
+            **{domain: "Google" for domain in ("googleplay.com", "googleusercontent.com", "android.com", "gvt3.com", "xn--ngstr-lra8j.com")},
             "www.douyin.com": "DIRECT", "www.xiaohongshu.com": "DIRECT",
             "sns-webpic-qc.xhscdn.com": "DIRECT", "login.weixin.qq.com": "DIRECT",
-            "servicewechat.com": "DIRECT", "chatgpt.com": "🇺🇸 美国-自动选择",
-            "gemini.google.com": "🇺🇸 美国-自动选择", "notebooklm.google": "🇺🇸 美国-自动选择",
-            "generativelanguage.googleapis.com": "🇺🇸 美国-自动选择",
-            "www.binance.com": "🇨🇳 台湾-自动选择", "polymarket.com": "🇨🇳 台湾-自动选择",
+            "servicewechat.com": "DIRECT", "chatgpt.com": "AI",
+            "gemini.google.com": "AI", "notebooklm.google": "AI",
+            "generativelanguage.googleapis.com": "AI",
+            "www.binance.com": "Crypto", "polymarket.com": "Crypto",
             "opinion.trade": "🇯🇵 日本-自动选择", "futuhk.com": "🇭🇰 香港-自动选择",
-            "www.google.com": "♻️ 自动选择", "www.youtube.com": "♻️ 自动选择",
+            "www.google.com": "Google", "www.youtube.com": "YouTube",
         }
         for domain, expected in cases.items():
             with self.subTest(domain=domain):

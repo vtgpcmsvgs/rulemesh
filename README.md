@@ -1,5 +1,7 @@
 # RuleMesh
 
+2026-09-25 当前业务选择层以 [七个业务组与 DNS 联动](docs/service-groups-refactor.md) 为准；下文保留历史基线及实测记录。
+
 2026-09-16 出口修订：海外 AI 仅匹配已审核域名，国内 DNS 与新华三紧随 AI 直连；Surge 清理阿里设备代理和爱思/Apple 海外解析。WPS/金山文档按 2026-09-18 用户要求统一直连，Microsoft Store 因美国地区应用要求固定美国；Microsoft 通用代理与其他既有地区例外保留。见[出口修订与防误伤](docs/scoped-egress-repair.md)。
 
 2026-09-16 [FlClash 桌面实测](docs/flclash-desktop-validation-20260916.md)补齐 Gemini Notebook 新域名，并区分规则正确、节点可达与业务可用；保留实测中仍出现的节点/站点异常，不以通用 204 测速宣称全部业务通过。
@@ -292,3 +294,9 @@ ai_us 同时承接 OpenAI、Claude、Copilot、Cursor、Grok、Windsurf、Augmen
 2026-09-14 安卓下载保护继续复用 `google_hk`，AI 美国入口保持第一。Google/Play 使用稳定优先的 fallback 组，DNS 与下载使用同组；按 2026-09-16 修订，仅三个 Google 专属进程提供兜底，共享下载管理器按目的地分流，保留 QUIC。实机 Cronet 在 UDP/443 被拒绝时出现协议错误和反复重试，已撤销这项拒绝并加入防回归检查。国内解析不变，Mac/桌面不机械继承安卓 Google 专项。客户端接管设置、大智慧/滴滴结果和下载验收见 [安卓网络修复](docs/android-network-repair.md)。
 
 大智慧补充复测发现：关闭系统代理的保存值没有让旧 VPN 的 HTTP 代理立即消失，完整停止并启动 VPN 后多个空白行情组件才恢复。迁移、恢复或修改 VPN 设置后，用 `tools/check_android_vpn_runtime.py --adb <实际路径>` 只读核对系统运行态，并复测实际失败页面；不能只凭 YAML、备份或开关状态验收。
+
+## 可见业务策略组
+
+2026-09-25 起，两份公开模板和五份私人配置展示 Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple。业务 select 复用底层自动/地区/手动组，不新增周期测速；AI 美国、Crypto 台湾、Store 美国及工作白名单保持。YouTube 专用域名先于 Google，Play 共用 CDN 仍归 Google。Apple 普通配置默认直连，FlClash 更新拒绝仍优先；工作只沿用已有入口。
+
+参考 naiixi 的配置分析、默认选择、DNS 出口及验证边界见 [业务策略组重构](docs/service-groups-refactor.md)。安卓 DNS policy 现为 AI → YouTube → Google，分别跟随业务选择，默认下载稳定引擎不变。

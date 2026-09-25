@@ -59,3 +59,9 @@ GitHub Raw 继续保留独立海外解析入口 `raw.githubusercontent.com = ser
 2026-09-12 FlClash 迁移与优化以 [客户端性能基线](flclash-performance.md) 为准：桌面和安卓使用新文件名；通用末尾改为 cn_direct_light → gfw_precise → DIRECT，完整规则资产保留。工作白名单不接入新兜底，机场手动组保留。桌面 300 秒、安卓 600 秒，备用地区按需检测；以最终生成配置核对界面覆写。
 
 机场官网和订阅共用域名时，仅浏览器进程使用自动代理，客户端订阅连接 DIRECT；域名分开时，官网精确域名代理、订阅专用域名 DIRECT。同步源通过 WEBSITE / SUBSCRIPTION / SHARED 区分用途，不从订阅链接猜官网。中文域名转为 IDNA；机场组沿用 `✈️ 名称` 格式，重命名同步更新手动入口和 `include-other-group`。详见[端点同步约定](private-subscription-direct-sync.md)。
+
+## 业务组选择（2026-09-25）
+
+Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple 作为可见 select 入口；选择自动、地区或手动出口。AI 仅提供美国候选，Crypto 仅台湾候选；ai_dns_us 与 AI 共用出口。YouTube 前置独立分流，Google 保留共享下载域和完整 IP。Apple Personal 默认 DIRECT，工作只沿用既有更新白名单，最终仍 REJECT。
+
+原机场手动组、节点 bootstrap、Notion smart 和 Raw DNS 例外保留。导入后核对实际选择与 DNS 出口；参见 [完整说明](service-groups-refactor.md)。

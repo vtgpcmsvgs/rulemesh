@@ -1,0 +1,17 @@
+# YouTube 独立业务入口：负责视频、图片、短链与媒体分发，不接管通用 Google 或 Google AI。
+# 客户端顺序：AI、国内精选和地区例外之后，Google 完整地址空间与国际媒体之前。
+# google_hk 继续保留相同覆盖以兼容旧订阅；新配置以前置本入口实现独立选点。
+
+# YouTube 官方产品及分发域名：从既有上游审核提取，完整快照仍由 google_hk 承接。
+# 不整包纳入共享 gvt1/gvt2 下载域、ggpht 头像域或 IP，避免把 Google Play 抢到视频组。
+DOMAIN-SUFFIX,youtube.com
+DOMAIN-SUFFIX,youtube-nocookie.com
+DOMAIN-SUFFIX,youtu.be
+DOMAIN-SUFFIX,yt.be
+DOMAIN-SUFFIX,ytimg.com
+DOMAIN-SUFFIX,googlevideo.com
+DOMAIN,video.google.com
+
+# 品牌与视频分发兜底：沿用 Google 兼容入口的既有边界，不扩入共享云地址空间。
+DOMAIN-KEYWORD,youtube
+DOMAIN-KEYWORD,googlevideo

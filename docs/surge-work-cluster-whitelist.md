@@ -44,3 +44,7 @@ Surge Enhanced Mode 由客户端启用，profile 不写 dns-mode；保留 localh
 2026-09-12：`direct/ips5_direct` 以 DIRECT 覆盖 `ips5.vip` 主域及全部子域，位于 AI 之后、Google 广谱与拒绝之前，使用默认国内双 DoH；工作白名单仅增加该服务。AdsPower 停用范围、资产与定时任务处理见[规则停用与恢复](rule-deactivation.md)。
 
 机场端点只按确认的用途精确放行：官网访问走既有自动组，订阅专用域名 DIRECT，共用域名仅浏览器进程代理、其他订阅连接直连。新增官网不会扩大为平台根后缀或广谱代理；最终仍为 FINAL,REJECT。
+
+## 2026-09-25 可见业务入口
+
+工作配置展示七个 select，只替换已放行业务的策略目标。YouTube 从原 Google 覆盖中提取专用域名并前置；Apple 仅承接原 macOS 更新入口，不接入 Personal 的 Apple 全域规则。更新拒绝、设备条件、GitHub 观察及 FINAL,REJECT 保持，DNS 变更不授予额外放行。详见 [业务组说明](service-groups-refactor.md)。

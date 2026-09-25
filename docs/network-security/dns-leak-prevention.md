@@ -8,7 +8,7 @@ DNS 服务域名 bootstrap、代理节点 server 域名、普通目标网站是�
 
 Surge 使用国内全局 DNS，Host 第一项为 ai_us 的 Cloudflare DoH，Cloudflare 连接固定美国；节点域名继续由 DOMAIN-SET 分享文件单独引导。保留代理侧解析、传统 DNS 接管及加密 DNS 遵守出站，不伪造 proxy-server-nameserver 或 dns-mode 字段。
 
-Mihomo 普通 nameserver 使用国内双 DoH，AI policy 指定两个海外 DoH 和美国组；安卓 Google policy 位于 AI 后并使用下载稳定组。proxy-server-nameserver 使用国内双 DoH，避免节点解析与专项 DNS 循环。respect-rules、hosts 混入和 IPv6 保持关闭。
+Mihomo 普通 nameserver 使用国内双 DoH，AI policy 指定两个海外 DoH 和 AI 业务组，其所有候选限定美国；安卓在 AI 后依次设置 YouTube、Google policy，分别跟随业务选择，默认最终使用原下载稳定组。proxy-server-nameserver 使用国内双 DoH，避免节点解析与专项 DNS 循环。respect-rules、hosts 混入和 IPv6 保持关闭。详见 [业务组与 DNS 联动](../service-groups-refactor.md)。
 
 ## DNS 不决定流量放行
 

@@ -109,6 +109,10 @@ sources:
         - repo: GitHub Docs
           note: 参考 github.com:22 与 ssh.github.com:443 的 SSH 接入说明，避免把网页流量误放直连
   proxy:
+    youtube.list:
+      preferred:
+        - repo: blackmatrix7/ios_rule_script
+          note: 审核提取既有 YouTube 快照的专用域名与品牌兜底，排除共享 gvt1/gvt2、ggpht 与 IP；旧 Google 入口保留完整兼容覆盖
     gfw_precise.list:
       preferred:
         - repo: Loyalsoldier/surge-rules

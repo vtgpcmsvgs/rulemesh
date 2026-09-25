@@ -74,6 +74,7 @@ def check(path: Path, lines: list[str]) -> list[str]:
     import check_private_performance as performance
     import check_android_stability as android
     import check_notion_routing as notion
+    import check_service_groups as service
 
     errors: list[str] = []
 
@@ -130,6 +131,9 @@ def check(path: Path, lines: list[str]) -> list[str]:
     if not auto_groups:
         return errors
     auto = auto_groups[0]
+    business = service.MARKER in lines
+    if business:
+        errors.extend(service.check(path, lines, groups, rules, auto))
     errors.extend(notion.check(path, lines, auto))
     notion_target = notion.target(lines) if not surge else auto
     # 多个组可能复用美国过滤器；从实际 AI 路由解析目标，不能假定美国组唯一。
@@ -183,8 +187,10 @@ def check(path: Path, lines: list[str]) -> list[str]:
                     expected_target = us
                 elif not surge and parts[:2] == ["RULE-SET", "hk_notion"]:
                     expected_target = notion_target
+                elif business and service.expected_service(parts, surge):
+                    expected_target = service.expected_service(parts, surge)
                 elif android_repair and android.allowed_stable_rule(parts):
-                    expected_target = google_stable
+                    expected_target = "Google" if business else google_stable
                 else:
                     expected_target = auto
                 require(target == expected_target, "无明确地区要求的代理规则仍绑定地区或手动组。")
@@ -243,7 +249,7 @@ def check(path: Path, lines: list[str]) -> list[str]:
         require("find-process-mode: strict" in lines, "Mihomo 源文件应保留按需识别进程；FlClash 界面覆写能力需另行实机验证。")
         values, policies = dns._parse_mihomo_dns(lines)
         require(values == DOMESTIC, "Mihomo 默认业务 DNS 应为国内双 DoH。")
-        require(len(policies) == (2 if android_repair else 1) and policies[0].providers == ("us_ai",), "Mihomo 仅保留 AI 专用 DNS policy；安卓下载保护可追加 Google 专项。")
+        require(len(policies) == ((3 if business else 2) if android_repair else 1) and policies[0].providers == ("us_ai",), "Mihomo 仅保留 AI 专用 DNS policy；安卓业务分组可追加 YouTube 与 Google 专项。")
         expected = tuple(f"{endpoint}#{us}" for endpoint in OVERSEAS)
         require(bool(policies) and policies[0].nameservers == expected, "AI 的两个海外 DoH 必须显式指定实际美国组。")
         block = []
@@ -271,9 +277,10 @@ def check(path: Path, lines: list[str]) -> list[str]:
         require(bool(health) and all(item.interval == health_interval and item.lazy == "false" for item in health), "机场健康检查应为桌面 300 秒、安卓 600 秒主动检测。")
         for name, group in parsed_groups.items():
             if group.group_type == "url-test":
-                used = any(name in parts[2:3] for _, parts in rules)
+                used = any(name in service.default_chain(parts[2], groups) for _, parts in rules if len(parts) >= 3) if business else any(name in parts[2:3] for _, parts in rules)
                 require(group.interval == health_interval and group.lazy == ('false' if used else 'true'), "自动组须采用客户端检测周期，实际业务组主动检测，备用地区组按需检测。")
-                require(group.tolerance == ("100" if name == us else "50") if name in {us, auto} else True, "全地区/美国组切换容差应为 50/100。")
+                us_engine = service.default_target(us, groups) if business else us
+                require(group.tolerance == ("100" if name == us_engine else "50") if name in {us_engine, auto} else True, "全地区/美国组切换容差应为 50/100。")
         # 只检查字段和值，不在错误中输出机场标识、订阅地址或 header。
         active = False
         provider_count = direct_count = 0
