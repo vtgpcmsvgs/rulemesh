@@ -1,0 +1,9 @@
+# 生成来源：rules/region/hk/hk_user_priority.list
+# 类型：rules
+# 请勿直接编辑 dist。
+
+DOMAIN-SUFFIX,godaddy.com
+DOMAIN-KEYWORD,godaddy
+DOMAIN-SUFFIX,zvsthk.com
+DOMAIN-KEYWORD,zvsthk
+DOMAIN-SUFFIX,supado.com

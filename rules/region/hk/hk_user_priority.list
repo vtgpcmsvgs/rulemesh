@@ -1,0 +1,16 @@
+# 用户指定的香港优先业务规则：仅承接 GoDaddy、尊嘉证券与 supado.com。
+# 维护边界：
+# 1) 本文件负责用户明确要求的香港优先站点，不承接通用券商、广谱金融或其他注册商域名。
+# 2) GoDaddy 使用官方主域后缀与关键词兜底；尊嘉证券使用用户提供的品牌关键词兜底；supado.com 覆盖主域及全部子域。
+# 3) 客户端须在 Google 广谱、通用代理与最终兜底前调用，并绑定香港自动选择策略组。
+
+# GoDaddy 官方域名与品牌关键词。
+DOMAIN-SUFFIX,godaddy.com
+DOMAIN-KEYWORD,godaddy
+
+# 尊嘉证券：官方主域与品牌关键词覆盖登录、交易与静态资源入口。
+DOMAIN-SUFFIX,zvsthk.com
+DOMAIN-KEYWORD,zvsthk
+
+# Supado 主域及子域。
+DOMAIN-SUFFIX,supado.com

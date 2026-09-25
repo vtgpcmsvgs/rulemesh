@@ -251,12 +251,22 @@ merge_plan:
 
   - id: hk-notion
     target: rules/region/hk/notion_hk.list
-    purpose: Notion 全域名业务选点，Mihomo 专用测速、Surge 全地区 smart
+    purpose: Notion 全域名香港优先入口，复用香港自动选择
     strategy:
       - official_domains_first
       - legacy_domain_then_brand_keyword_fallback
     notes:
       - notion 品牌关键词是用户批准的激进兜底
+
+  - id: hk-user-priority
+    target: rules/region/hk/hk_user_priority.list
+    purpose: 用户指定 GoDaddy、尊嘉证券与 supado.com 的香港优先入口
+    strategy:
+      - explicit_domain_suffixes_first
+      - brand_keyword_fallbacks
+      - bind_to_hk_auto_only
+    notes:
+      - 不替代通用券商规则，也不扩大到注册商或金融行业广谱域名
 
   - id: hk-alibaba
     target: rules/region/hk/alibaba_hk.list

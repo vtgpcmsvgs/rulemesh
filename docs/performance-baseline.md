@@ -83,7 +83,7 @@ AI、Crypto、其他明确地区、Google、gfw 等前置规则和机场组不�
 
 2026-09-12 FlClash 迁移与优化以 [客户端性能基线](flclash-performance.md) 为准：桌面和安卓使用新文件名；通用末尾改为 cn_direct_light → gfw_precise → DIRECT，完整规则资产保留。工作白名单不接入新兜底，机场手动组保留。桌面 300 秒、安卓 600 秒，备用地区按需检测；以最终生成配置核对界面覆写。
 
-2026-09-18 Notion 为独立业务测速的窄例外，新增一组而非更改地区限制；详见 [Notion 网页优化](notion-network-optimization.md)。
+2026-09-18 Notion 保留独立规则集但复用香港自动选择，不再新增专用策略组；详见 [Notion 网页优化](notion-network-optimization.md)。
 
 ## 2026-09-25 业务选择层修订
 

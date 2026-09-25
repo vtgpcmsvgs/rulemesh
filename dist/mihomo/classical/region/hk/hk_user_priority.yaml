@@ -1,0 +1,8 @@
+# 生成来源：rules/region/hk/hk_user_priority.list
+# 行为：classical
+payload:
+  - "DOMAIN-SUFFIX,godaddy.com"
+  - "DOMAIN-KEYWORD,godaddy"
+  - "DOMAIN-SUFFIX,zvsthk.com"
+  - "DOMAIN-KEYWORD,zvsthk"
+  - "DOMAIN-SUFFIX,supado.com"

@@ -1,4 +1,4 @@
-"""保护真实配置中的 Notion 入口、业务测速与工作白名单边界。"""
+"""保护真实配置中的 Notion 香港入口与工作白名单边界。"""
 from pathlib import Path
 import re
 
@@ -6,29 +6,14 @@ import check_private_dns_precedence as parser
 
 BASE = "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/"
 RULE = BASE + "surge/rules/region/hk/notion_hk.list"
-URL = "https://app.notion.com/"
+HK_GROUP = "🇭🇰 香港-自动选择"
+LEGACY_GROUP = "📝 Notion-自动选择"
 
 
 def target(lines: list[str]) -> str:
     hits = [p[2] for _, p in parser._parse_mihomo_rules(lines)
             if len(p) == 3 and p[:2] == ["RULE-SET", "hk_notion"]]
     return hits[0] if len(hits) == 1 else ""
-
-
-def group_fields(lines: list[str], name: str) -> dict[str, str]:
-    fields = {}
-    active = section = False
-    for line in lines:
-        if re.match(r"^[\w-]+:", line):
-            section = line == "proxy-groups:"
-            active = False
-        match = re.match(r"^  - name:\s*(.+)$", line)
-        if section and match:
-            active = parser._scalar(match[1]) == name
-        field = re.match(r"^    ([\w-]+):\s*(.+)$", line)
-        if active and field:
-            fields[field[1]] = parser._scalar(field[2])
-    return fields
 
 
 def check(path: Path, lines: list[str], auto: str) -> list[str]:
@@ -56,25 +41,20 @@ def check(path: Path, lines: list[str], auto: str) -> list[str]:
     if not before or position >= min(before):
         errors.append("Notion 必须早于 Google 广谱入口。")
     destination = rule[2] if len(rule) == 3 else ""
+    if destination != HK_GROUP:
+        errors.append("Notion 必须绑定香港自动选择组。")
+    if LEGACY_GROUP in groups:
+        errors.append("不得保留 Notion 专用策略组。")
+    hk = groups.get(HK_GROUP)
+    if hk is None or not re.search(r"香港|hong kong|(?:^|[^a-z])hk(?:$|[^a-z])", hk.filter_text, re.IGNORECASE):
+        errors.append("Notion 目标组必须具有香港节点过滤条件。")
     if surge:
-        if destination != auto or auto not in groups or groups[auto].group_type != "smart":
-            errors.append("Notion 在 Surge 必须使用全地区 smart。")
+        if hk is None or hk.group_type != "smart":
+            errors.append("Notion 的香港目标组必须是 Surge smart。")
         return errors
     providers = parser._parse_mihomo_providers(lines)
     if identifier not in providers or providers[identifier][1] != BASE + "mihomo/classical/region/hk/notion_hk.yaml":
         errors.append("Notion provider 必须引用规范公开产物。")
-    if destination not in groups or destination == auto:
-        return errors + ["Notion 必须绑定独立业务测速组。"]
-    group = groups[destination]
-    fields = group_fields(lines, destination)
-    expected = {"type": "url-test", "url": URL, "expected-status": "200",
-                "interval": "600" if "flclash-android" in path.name else "300",
-                "tolerance": "150", "timeout": "5000", "lazy": "false", "max-failed-times": "2"}
-    if any(fields.get(k) != v for k, v in expected.items()):
-        errors.append("Notion 专用测速字段偏离已验证的主动检测与稳定选点配置。")
-    if (group.filter_text or group.members or not group.source_references
-            or set(group.source_references) != set(groups[auto].source_references)
-            or set(group.source_references) != set(parser._parse_mihomo_proxy_provider_names(lines))
-            or fields.get("exclude-filter") != group_fields(lines, auto).get("exclude-filter")):
-        errors.append("Notion 必须复用全部机场 provider 与占位过滤，不能缩限地区或嵌套通用测速组。")
+    if hk is None or hk.group_type != "url-test":
+        errors.append("Notion 的香港目标组必须是 Mihomo url-test。")
     return errors

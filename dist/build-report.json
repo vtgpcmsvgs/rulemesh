@@ -2,10 +2,10 @@
   "summary": {
     "domain-only": 15,
     "ipcidr-only": 7,
-    "classical/mixed": 28,
+    "classical/mixed": 29,
     "dns-domain-set": 2,
     "empty": 0,
-    "total_sources": 52,
+    "total_sources": 53,
     "total_warnings": 0
   },
   "sources": [
@@ -410,6 +410,19 @@
       "dist": {
         "surge_rules": "dist/surge/rules/region/hk/hk_securities_aggressive.list",
         "mihomo_classical": "dist/mihomo/classical/region/hk/hk_securities_aggressive.yaml"
+      }
+    },
+    {
+      "source": "rules/region/hk/hk_user_priority.list",
+      "category": "region",
+      "classification": "classical/mixed",
+      "counts": {
+        "surge_rules": 5,
+        "mihomo_classical": 5
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/region/hk/hk_user_priority.list",
+        "mihomo_classical": "dist/mihomo/classical/region/hk/hk_user_priority.yaml"
       }
     },
     {

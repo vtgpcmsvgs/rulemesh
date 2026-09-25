@@ -1,4 +1,4 @@
-"""防止模板正常、私人配置却遗漏 Notion，以及无效的专用测速。"""
+"""防止模板正常、私人配置却遗漏 Notion 香港入口。"""
 from pathlib import Path
 import sys
 import unittest
@@ -38,29 +38,33 @@ class NotionRoutingTests(unittest.TestCase):
                             lines[:index]+[line.rsplit(",",1)[0]+",DIRECT"]+lines[index+1:]):
                 self.assertTrue(notion.check(path, changed, auto))
 
-    def test_health_url_and_direct_provider_membership_are_required(self):
+    def test_hong_kong_group_is_required_and_legacy_group_is_rejected(self):
         path, lines, auto = self.fixture()
-        dest = notion.target(lines)
-        start = next(i for i, s in enumerate(lines) if s == f'  - name: "{dest}"')
-        end = next(i for i in range(start+1,len(lines)) if lines[i].startswith('  - name:'))
-        block = "\n".join(lines[start:end])
-        for old, new in ((notion.URL,"https://www.google.com/generate_204"),
-                         ("tolerance: 150","tolerance: 0"),
-                         ("lazy: false","lazy: true"),
-                         ("    use:","    proxies:"),
-                         ("      - provider_a", "")):
-            changed = lines[:start]+block.replace(old,new).splitlines()+lines[end:]
-            self.assertTrue(notion.check(path,changed,auto))
+        self.assertEqual(notion.target(lines), notion.HK_GROUP)
+        changed = [line.replace(notion.HK_GROUP, auto, 1) if "RULE-SET,hk_notion," in line else line for line in lines]
+        self.assertTrue(notion.check(path, changed, auto))
+        legacy = lines.copy()
+        insert = next(i for i, s in enumerate(legacy) if s.startswith('  - name: "🇭🇰 香港-自动选择"'))
+        legacy[insert:insert] = [
+            '  - name: "📝 Notion-自动选择"',
+            '    type: url-test',
+            '    url: "https://app.notion.com/"',
+            '    interval: 300',
+            '    lazy: false',
+            '    use:',
+            '      - provider_a',
+        ]
+        self.assertTrue(notion.check(path, legacy, auto))
 
     def test_website_api_public_assets_share_exact_first_match(self):
         path, lines, _ = self.fixture()
         for domain in ("notion.com", "app.notion.com", "api.notion.com", "broker-guide.notion.site",
                        "img.notionusercontent.com", "secure.notion-static.com", "www.notion.so", "msgstore.www.notion.so"):
             for network in ("tcp", "udp"):
-                self.assertEqual(common.route(lines,domain,"browser",network),(notion.target(lines),"hk_notion"))
+                self.assertEqual(common.route(lines,domain,"browser",network),(notion.HK_GROUP,"hk_notion"))
         shadowed=lines.copy()
         shadowed.insert(next(i for i,s in enumerate(lines) if s.startswith('  - RULE-SET,hk_notion,')), '  - DOMAIN-SUFFIX,notion.site,DIRECT')
-        self.assertNotEqual(common.route(shadowed,'broker-guide.notion.site','browser')[0], notion.target(lines))
+        self.assertNotEqual(common.route(shadowed,'broker-guide.notion.site','browser')[0], notion.HK_GROUP)
 
     def test_work_whitelist_does_not_gain_notion(self):
         _, lines, auto = self.fixture("surge")

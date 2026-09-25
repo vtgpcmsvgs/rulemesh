@@ -63,7 +63,7 @@
 - 新版静态检查与生产运行态必须分别报告。历史 v1.19.25 查询未命中模拟 resolver；即使静态检查已通过，DNS 路由运行时仍未确认时也不得声称已经生效。
 - 两份 Surge Personal、两份 Mihomo 与公开模板的通用 FINAL/MATCH 按 2026-09-12 用户要求使用 DIRECT；仅工作白名单保持 FINAL,REJECT，前置代理规则继续使用指定组；FlClash 桌面 provider 与 url-test 使用 interval: 300、安卓使用 600；provider 与实际业务组 lazy: false，备用地区组 lazy: true，全地区 tolerance: 50、美国 tolerance: 100。全地区组只排除套餐占位项，不限制地区标签。
 - 七份配置的 ai_us 必须为第一条有效规则并包含 Google AI；国内精选直连、日本精确入口、Crypto 台湾和香港券商在 google_hk 完整 IP 规则前。google_hk 兼容路径和官方完整地址空间保留；Google、YouTube、Telegram 业务组只展示香港节点，Microsoft 业务组只展示美国节点并保留 DIRECT。
-- Mihomo 私有文件里的机场 provider `health-check.url` 与通用 `url-test` 组测速 URL 使用 HTTPS `https://www.google.com/generate_204`；Notion 独立业务组使用本文末尾登记的专项 HTTPS URL，不要改回 HTTP
+- Mihomo 私有文件里的机场 provider `health-check.url` 与通用 `url-test` 组测速 URL 使用 HTTPS `https://www.google.com/generate_204`；Notion 规则复用香港自动选择组，不得恢复独立 Notion 策略组
 - `proxy-node-domains` 必须是从 Sub-Store 聚合订阅提取的节点 `server` 域名清单，且必须过滤 IP 并按一行一个域名输出；不得包含订阅链接域名、机场面板域名或普通目标网站域名，也不得输出逗号分隔清单
 - Surge `[Host]` 引用 `proxy-node-domains` 时，必须使用 Surge 生产设备可直接访问的 Sub-Store 分享文件 URL；不要把未经同网络验证的 `https://sub.store/api/file/proxy-node-domains` 写进生产配置
 - 涉及代理、旁路由、Surge、Mihomo、Sub-Store、DNS、DoH、fake-ip、mapping、Tun、透明代理或规则分流时，默认同时检查 DNS 出口；不能只验证“网页能打开”
@@ -230,13 +230,13 @@
 
 机场端点用途防回归：维护前区分 WEBSITE（官网代理）、SUBSCRIPTION（订阅专用直连）与 SHARED（兼容浏览器代理、客户端更新直连）。不能从订阅 URL 猜官网，也不能把用户确认的订阅专用域名加进浏览器代理例外。Surge 共用端点需覆盖实际使用的浏览器进程，Mihomo 后台更新依靠 provider 的 proxy: DIRECT；中文域名统一转 IDNA，机场组沿用飞机图标格式并校验所有引用。通用同步器源为 tools/sync_private_subscription_direct.ps1，私人副本同步维护；多目标写入前检查全部规则节与标记唯一性。回归夹具必须包含实际参与渲染的规则，不能依赖应被过滤的孤立注释。
 
-2026-09-18 Notion 网页专项：六份适用配置须保留唯一 Notion 入口并早于 Google 广谱；工作白名单不接入。Mihomo 使用复用全部 provider 的独立业务测速组（app.notion.com、200、容差 150、失败阈值 2、桌面 300 秒/安卓 600 秒、主动检测）；其余组和 provider 保持 Google HTTPS。Surge 使用全地区 smart；默认国内 DNS 不变。必须检查真实私有配置和 URL 专属健康历史，不能以公开模板或通用 alive 推断生效。详见 docs/notion-network-optimization.md。
+2026-09-18 Notion 网页专项：六份适用配置须保留唯一 Notion 入口并早于 Google 广谱；工作白名单不接入。Notion 统一复用香港自动选择组，保留 `hk_notion` provider 与规则集，不再维护独立 Notion 策略组或专用测速 URL；默认国内 DNS 不变。必须检查真实私有配置与香港过滤条件，不能以公开模板推断设备已加载。详见 docs/notion-network-optimization.md。
 
 ## 2026-09-25 业务选择层
 
 - 七份配置展示 Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple，均为 select，复用机场 provider 与底层检测能力。Google、YouTube、Telegram 所有候选限香港，Microsoft 所有节点候选限美国并额外保留 DIRECT，AI 所有候选限美国、Crypto 限台湾，DNS 必须跟随对应业务组。此项取代通用业务只能直接引用自动组的旧检查，不取消地区约束。
 - proxy/youtube 使用审核后的专用域名，不能整包 INCLUDE 含 gvt1/gvt2、ggpht 和 IP 的上游；先于 Google 广谱，旧 google_hk 保留完整兼容。新增业务规则须测正例和共享 CDN 负例。
 - 安卓 Google 使用香港节点选择组，三个 Google 专属进程和 QUIC 保留；DNS policy 按 AI、YouTube、Google 顺序分别绑定业务 select。普通桌面仅 AI policy，不机械扩散安卓策略。
-- Apple 普通配置默认 DIRECT；两份 FlClash 的更新拒绝必须先于 Apple。工作只重绑既有 macOS 更新入口，禁止增加 Apple 全域放行。原机场手动组与 Notion 专项保留。
+- Apple 普通配置默认 DIRECT；两份 FlClash 的更新拒绝必须先于 Apple。工作只重绑既有 macOS 更新入口，禁止增加 Apple 全域放行。原机场手动组保留，Notion 统一复用香港自动选择。
 - 第三方配置的 DNS/hosts 也可能含凭证；只允许 tools/audit_reference_profile.py 白名单统计，不输出整节或解析异常原文。先准备任务专用依赖，不假设系统或捆绑 Python 自带 PyYAML。
 - 详见 docs/service-groups-refactor.md；组默认值、保存选择、文件发布和设备生效必须分开报告。

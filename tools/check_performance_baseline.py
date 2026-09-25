@@ -44,13 +44,15 @@ def check_airport_groups(lines: list[str]) -> list[str]:
     return []
 REGIONAL = {
     "region/tw/crypto_tw": "tw", "region/jp/domains_to_jp": "jp",
-    "region/hk/hk_brokers": "hk", "region/hk/hk_securities_aggressive": "hk",
+    "region/hk/hk_brokers": "hk", "region/hk/hk_user_priority": "hk",
+    "region/hk/hk_securities_aggressive": "hk",
     "proxy/polygon_rpc_proxy": "tw", "proxy/bsc_rpc_proxy": "tw",
     "region/us/microsoft_store_us": "us",
 }
 PROVIDER_IDS = {
     "tw_crypto": "region/tw/crypto_tw", "jp_domains": "region/jp/domains_to_jp",
-    "hk_brokers": "region/hk/hk_brokers", "hk_securities_aggressive": "region/hk/hk_securities_aggressive",
+    "hk_brokers": "region/hk/hk_brokers", "hk_user_priority": "region/hk/hk_user_priority",
+    "hk_securities_aggressive": "region/hk/hk_securities_aggressive",
     "proxy_polygon_rpc": "proxy/polygon_rpc_proxy", "proxy_bsc_rpc": "proxy/bsc_rpc_proxy",
     "hk_wps_kdocs": "region/hk/wps_kdocs", "us_microsoft_store": "region/us/microsoft_store_us",
 }
@@ -135,7 +137,7 @@ def check(path: Path, lines: list[str]) -> list[str]:
     if business:
         errors.extend(service.check(path, lines, groups, rules, auto))
     errors.extend(notion.check(path, lines, auto))
-    notion_target = notion.target(lines) if not surge else auto
+    notion_target = notion.target(lines) if not surge else notion.HK_GROUP
     # 多个组可能复用美国过滤器；从实际 AI 路由解析目标，不能假定美国组唯一。
     selected: dict[str, list[tuple[int, list[str]]]] = {}
     for position, (_, parts) in enumerate(rules):
@@ -185,7 +187,7 @@ def check(path: Path, lines: list[str]) -> list[str]:
             if position not in fixed_positions.values():
                 if is_ai or is_ai_dns:
                     expected_target = us
-                elif not surge and parts[:2] == ["RULE-SET", "hk_notion"]:
+                elif parts[:2] == (["RULE-SET", "hk_notion"] if not surge else ["RULE-SET", BASE + "surge/rules/region/hk/notion_hk.list"]):
                     expected_target = notion_target
                 elif business and service.expected_service(parts, surge):
                     expected_target = service.expected_service(parts, surge)

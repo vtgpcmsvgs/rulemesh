@@ -19,7 +19,7 @@ AWS IP 与链式 SOCKS5 设备分流调用已停用；仓库源规则与产物�
 
 ## 精确维护约定
 
-- 不接入 `proxy/gfw`、`direct/cn_direct`、网易或哔哩哔哩广谱直连。Personal 的 Apple、Outlook、Notion、personal_priority、香港证券增强和 Microsoft Store 专项不复制进工作文件。
+- 不接入 `proxy/gfw`、`direct/cn_direct`、网易或哔哩哔哩广谱直连。Personal 的 Apple、Outlook、Notion、personal_priority、香港证券增强和 Microsoft Store 专项不复制进工作文件；用户指定的 GoDaddy、尊嘉证券与 supado.com 仅作为本文件的精确香港白名单入口。
 - WPS 保留显式 DIRECT 入口，早于 Google 广谱和最终拒绝。`zsxq.com`、`yikaiying.com` 的既有精确 DIRECT 继续保留。
 - GitHub SSH carve-out、Raw 下载、Core 规则和已有 GitHub 广覆盖观察项独立保留；AdsPower 三类规则与观察兜底已按用户要求全部停用，仓库资产继续保留。GitHub 观察项仍不得因通用去重而删除。
 - 订阅源只在私人目录维护，起止标记必须保留。`-Target surge` 同步浏览器自动代理例外和普通订阅更新 DIRECT；其他客户端不因共享源顺带改动。
