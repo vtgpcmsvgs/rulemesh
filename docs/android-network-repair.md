@@ -113,4 +113,4 @@ DNS 复测中，`chatgpt.com`、`play.googleapis.com`、`www.gw.com.cn`、`dsp.d
 
 ## 2026-09-25 业务选择层
 
-Google 规则、三个专属进程与 DNS 改接可见 Google select，默认首项仍是原 fallback；保留 QUIC 与 600 秒主动检测。YouTube 专用域名前置且可独立切换，其共享 Play CDN 仍归 Google。DNS policy 变为 AI → YouTube → Google，分别绑定业务 select，避免切换视频出口后 DNS 仍固定旧组。手动改 Google 会覆盖默认稳定行为，保存选择须在设备核验。详见 [业务组说明](service-groups-refactor.md)。
+Google 规则、三个专属进程与 DNS 改接可见 Google select，候选只来自全部机场来源中的香港节点；保留 QUIC 与 600 秒主动检测。YouTube 专用域名前置且可独立切换，候选同样只来自香港节点，其共享 Play CDN 仍归 Google。DNS policy 变为 AI → YouTube → Google，分别绑定业务 select，避免切换视频出口后 DNS 仍固定旧组。保存选择须在设备核验。详见 [业务组说明](service-groups-refactor.md)。

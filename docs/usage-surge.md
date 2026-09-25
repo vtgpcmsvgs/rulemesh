@@ -16,7 +16,7 @@
 1. 海外 AI 美国入口，包括 Google AI。
 2. 国内 DNS 与新华三精选直连固定第二条，再调用国内 AI、抖音、微信与小红书。
 3. 日本明确访问例外、Crypto 台湾、香港券商与 Personal 香港证券。
-4. Google 通用业务自动择优，保留官方完整地址空间。
+4. Google、YouTube、Telegram 仅显示香港节点；Microsoft 仅显示美国节点并保留 DIRECT，Google 保留官方完整地址空间。
 5. Personal 精选规则与既有拒绝规则；Apple / Outlook 直连及 Microsoft Store 优先入口保持各自边界。
 6. 其他精确业务、GitHub SSH/Raw/Core、Polygon/BSC RPC、订阅端点与 DNS 出口。
 7. LAN、系统时间、阿里云 TCP/22 和其他国内直连。
@@ -62,6 +62,6 @@ GitHub Raw 继续保留独立海外解析入口 `raw.githubusercontent.com = ser
 
 ## 业务组选择（2026-09-25）
 
-Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple 作为可见 select 入口；选择自动、地区或手动出口。AI 仅提供美国候选，Crypto 仅台湾候选；ai_dns_us 与 AI 共用出口。YouTube 前置独立分流，Google 保留共享下载域和完整 IP。Apple Personal 默认 DIRECT，工作只沿用既有更新白名单，最终仍 REJECT。
+Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple 作为可见 select 入口；Google/YouTube/Telegram 仅展示香港节点，Microsoft 仅展示美国节点并保留 DIRECT。AI 仅提供美国候选，Crypto 仅台湾候选；ai_dns_us 与 AI 共用出口。YouTube 前置独立分流，Google 保留共享下载域和完整 IP。Apple Personal 默认 DIRECT，工作只沿用既有更新白名单，最终仍 REJECT。
 
 原机场手动组、节点 bootstrap、Notion smart 和 Raw DNS 例外保留。导入后核对实际选择与 DNS 出口；参见 [完整说明](service-groups-refactor.md)。

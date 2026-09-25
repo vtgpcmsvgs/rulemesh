@@ -18,14 +18,10 @@ class AndroidStabilityTests(unittest.TestCase):
         text = text.replace("interval: 300", "interval: 600")
         text = text.replace("\n", "\n" + android.MARKER + "\n", 1)
         text += "\n# PRIVATE_SUBSCRIPTION_DIRECT_START\n# PRIVATE_SUBSCRIPTION_DIRECT_END\n"
-        stable = "下载稳定"
-        group = '\n  - name: "下载稳定"\n    type: fallback\n    interval: 600\n    lazy: false\n    url: "https://www.google.com/generate_204"\n    use:\n      - provider_a\n      - provider_b\n      - provider_c\n\n'
-        text = text.replace("rule-providers:\n", group + "rule-providers:\n", 1)
-        # 先验证新业务层的唯一锚点，避免模板变更后替换静默无效，导致坏夹具掩盖负例。
-        for name, target in (("Google", stable), ("YouTube", "Google")):
-            anchor = f'  - name: "{name}"\n    type: select\n    hidden: false\n    proxies:\n      - "♻️ 自动选择"'
+        # 业务层已由 Google/YouTube 香港节点筛选组承接；夹具只补安卓专属规则。
+        for name in ("Google", "YouTube"):
+            anchor = f'  - name: "{name}"\n    type: select\n    hidden: false\n'
             self.assertEqual(text.count(anchor), 1)
-            text = text.replace(anchor, anchor.rsplit('"♻️ 自动选择"', 1)[0] + f'"{target}"', 1)
         policy = ''.join(f'    "rule-set:{key}":\n' + ''.join(f'      - "{url}#{outbound}"\n' for url in baseline.OVERSEAS)
                          for key, outbound in (("proxy_youtube", "YouTube"), ("hk_google", "Google")))
         text = text.replace("  fake-ip-filter:\n", policy + "  fake-ip-filter:\n", 1)
@@ -96,7 +92,7 @@ class AndroidStabilityTests(unittest.TestCase):
             text = text.replace(f"  - PROCESS-NAME,{package},Google\n", "")
         self.assertEqual(baseline.check(path, text.splitlines()), [])
         for package in android.PACKAGES[3:]:
-            changed = text.replace("rules:\n", f"rules:\n  - PROCESS-NAME,{package},下载稳定\n", 1)
+            changed = text.replace("rules:\n", f"rules:\n  - PROCESS-NAME,{package},Google\n", 1)
             self.assertTrue(android.check(path, changed.splitlines()))
 
     def test_cronet_quic_rejection_cannot_return(self):
@@ -110,7 +106,9 @@ class AndroidStabilityTests(unittest.TestCase):
                 changed = text.replace("rules:\n", "rules:\n  - " + rule.replace("REJECT", reject) + "\n")
                 with self.subTest(rule=rule, reject=reject):
                     self.assertTrue(android.check(path, changed.splitlines()))
-        disabled = text.replace("type: fallback", "type: fallback\n    disable-udp: true")
+        google = '  - name: "Google"\n    type: select\n    hidden: false\n'
+        self.assertEqual(text.count(google), 1)
+        disabled = text.replace(google, google + "    disable-udp: true\n", 1)
         self.assertTrue(android.check(path, disabled.splitlines()))
 
     def test_google_dns_must_follow_ai_and_use_same_download_group(self):
@@ -127,9 +125,11 @@ class AndroidStabilityTests(unittest.TestCase):
 
     def test_stable_group_cannot_become_fastest_or_nested_auto(self):
         path, text = self.fixture()
-        for changed in (text.replace("type: fallback", "type: url-test"),
-                        text.replace("type: fallback", "type: fallback\n    proxies: [DIRECT]"),
-                        text.replace("type: fallback", "type: fallback\n    filter: US")):
+        google = '  - name: "Google"\n    type: select\n    hidden: false\n'
+        self.assertEqual(text.count(google), 1)
+        for changed in (text.replace(google, google.replace("type: select", "type: url-test"), 1),
+                        text.replace(google, google + "    proxies: [DIRECT]\n", 1),
+                        text.replace('    filter: "(?i)🇭🇰|香港|hong kong|\\\\bhk\\\\b"', '    filter: US', 1)):
             self.assertTrue(android.check(path, changed.splitlines()))
 
     def test_play_api_real_ip_and_global_udp_rejection_are_not_reintroduced(self):

@@ -4,6 +4,10 @@ import re
 
 MARKER = "# RuleMesh 业务策略组：2026-09-25"
 SERVICES = ("Google", "YouTube", "AI", "Telegram", "Crypto", "Microsoft", "Apple")
+NODE_FILTERS = {
+    "Google": ("hk", "香港节点"), "YouTube": ("hk", "香港节点"),
+    "Telegram": ("hk", "香港节点"), "Microsoft": ("us", "美国节点"),
+}
 ROUTES = {
     "region/us/ai_us": "AI", "region/us/ai_dns_us": "AI",
     "region/hk/google_hk": "Google", "proxy/youtube": "YouTube",
@@ -25,6 +29,8 @@ def default_chain(name, groups):
     """只遍历 select 的首项默认值；自动组是终点，环和空组不能当作有效默认值。"""
     chain = []
     while name in groups and groups[name].group_type == "select":
+        if groups[name].has_external_source and not groups[name].members:
+            return tuple(chain + [name])
         if name in chain or not groups[name].members:
             return ()
         chain.append(name)
@@ -77,9 +83,20 @@ def check(path: Path, lines, groups, rules, auto):
             block = lines[group.line:end]
             require("    hidden: false" in block, f"{name} 必须显式可见。")
             require(not any(re.match(r'^    (url|interval|lazy|tolerance):', s) for s in block), f"{name} 选择层不得重复建立测速任务。")
-        require(bool(group.members) and all(m in groups or m == "DIRECT" for m in group.members), f"{name} 存在空候选或未知组引用。")
+        require((bool(group.members) or group.has_external_source) and all(m in groups or m == "DIRECT" for m in group.members), f"{name} 存在空候选或未知组引用。")
         require(bool(default_chain(name, groups)), f"{name} 默认选择链存在环或空组。")
-        if name not in {"AI", "Crypto"}:
+        if name in NODE_FILTERS:
+            region, label = NODE_FILTERS[name]
+            approved = baseline.region_filters(region, surge)
+            require(group.has_external_source, f"{name} 必须直接展示{label}。")
+            require(group.filter_text in approved, f"{name} 必须只保留{label}过滤器。")
+            if region == "hk":
+                require(not group.members, f"{name} 不得混入自动组、其他地区或 DIRECT。")
+            else:
+                require(group.members == ["DIRECT"], f"{name} 只能额外保留 DIRECT。")
+            if not surge:
+                require(set(group.source_references) == set(parser._parse_mihomo_proxy_provider_names(lines)), f"{name} 必须展示全部机场 provider 的{label}节点。")
+        elif name not in {"AI", "Crypto"}:
             require(not group.has_external_source, f"{name} 应复用底层引擎和手动组，不复制订阅列表。")
         else:
             approved = baseline.region_filters("tw", surge) if name == "Crypto" else (parser.APPROVED_SURGE_US_FILTERS | {baseline.PUBLIC_US_FILTER} if surge else parser.APPROVED_MIHOMO_US_FILTERS)
@@ -97,12 +114,12 @@ def check(path: Path, lines, groups, rules, auto):
         return group is None or all(acyclic(m, seen | {name}) for m in group.members if m in groups)
 
     require(all(acyclic(s, set()) for s in SERVICES), "业务策略组的候选引用存在循环。")
-    for name in ("Telegram", "Microsoft"):
-        require(default_target(name, groups) == auto, f"{name} 默认必须为全地区自动选择。")
+    for name in NODE_FILTERS:
+        allowed_default = {"Microsoft", "DIRECT"} if name == "Microsoft" else {name}
+        require(default_target(name, groups) in allowed_default, f"{name} 默认入口必须停留在限定地区节点列表。")
     google = default_target("Google", groups)
-    require((google in groups and groups[google].group_type == "fallback") if android else google == auto,
-            "Google 默认必须保留自动选择，安卓必须保留下载稳定引擎。")
-    require(default_target("YouTube", groups) == (google if android else auto), "YouTube 默认应继承原有引擎，允许独立手动切换。")
+    require(google == "Google", "Google 默认必须停留在香港节点选择层。")
+    require(default_target("YouTube", groups) == "YouTube", "YouTube 默认必须停留在香港节点选择层。")
     require(default_target("Apple", groups) == (auto if work else "DIRECT"), "Apple 默认直连；工作只沿用已有更新白名单的自动出口。")
     positions = {}
     for pos, (_, parts) in enumerate(rules):

@@ -151,7 +151,7 @@ python tools/build_rules.py
 - 海外 AI（含 Gemini、AI Studio、NotebookLM）固定美国，第一条规则优先匹配；国内 AI、抖音、小红书、微信直连。
 - Crypto、Polymarket、Polygon/BSC RPC 固定台湾；`opinion.trade` 保留日本访问例外，香港券商与 Personal 证券入口保留香港。明确地区要求优先于测速结果。
 - 命中前置规则的其余海外代理业务使用全地区自动组；未命中规则的 FINAL/MATCH 按 2026-09-12 用户要求使用 DIRECT，仅工作白名单保持 REJECT，不再按国家标签限制候选节点；套餐占位项继续过滤。前置 DIRECT/REJECT 行为继续保留。
-- Google 的 google_hk 兼容路径和完整官方 IP 地址空间保留，普通 Google 默认自动择优，安卓下载保护使用独立稳定组；AI、国内精选及地区必需规则都在它前面。
+- Google、YouTube、Telegram 的业务组只展示全部机场来源中的香港节点；Microsoft 只展示美国节点并保留 DIRECT。google_hk 兼容路径和完整官方 IP 地址空间保留，AI、国内精选及地区必需规则都在它前面。
 - 国内默认双 DoH，AI 单独通过美国解析；Mihomo 开启 TCP 并发，保留 ARC、fake-ip，桌面 300 秒、安卓 600 秒主动测速。默认国内 DNS 后不再重复加载十万条 DNS 专用清单。
 - AWS IP 和链式 SOCKS5 的源规则、快照与构建产物保留；当前配置不再注册或调用。
 - GeoIP 直接使用 [MetaCubeX country.mmdb](https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/country.mmdb)，停止本仓库二次 Release 发布。未定制的公共资源优先活跃上游，自定义规则继续引用 dist。
@@ -297,6 +297,6 @@ ai_us 同时承接 OpenAI、Claude、Copilot、Cursor、Grok、Windsurf、Augmen
 
 ## 可见业务策略组
 
-2026-09-25 起，两份公开模板和五份私人配置展示 Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple。业务 select 复用底层自动/地区/手动组，不新增周期测速；AI 美国、Crypto 台湾、Store 美国及工作白名单保持。YouTube 专用域名先于 Google，Play 共用 CDN 仍归 Google。Apple 普通配置默认直连，FlClash 更新拒绝仍优先；工作只沿用已有入口。
+2026-09-25 起，两份公开模板和五份私人配置展示 Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple。Google、YouTube、Telegram 只展示香港节点，Microsoft 只展示美国节点并保留 DIRECT；业务 select 不新增周期测速。AI 美国、Crypto 台湾、Store 美国及工作白名单保持。YouTube 专用域名先于 Google，Play 共用 CDN 仍归 Google。Apple 普通配置默认直连，FlClash 更新拒绝仍优先；工作只沿用已有入口。
 
-参考 naiixi 的配置分析、默认选择、DNS 出口及验证边界见 [业务策略组重构](docs/service-groups-refactor.md)。安卓 DNS policy 现为 AI → YouTube → Google，分别跟随业务选择，默认下载稳定引擎不变。
+参考 naiixi 的配置分析、默认选择、DNS 出口及验证边界见 [业务策略组重构](docs/service-groups-refactor.md)。安卓 DNS policy 现为 AI → YouTube → Google，分别跟随美国、香港、香港业务选择。

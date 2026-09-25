@@ -70,17 +70,27 @@ def check(path: Path, lines: list[str]) -> list[str]:
     groups = parser._parse_mihomo_groups(lines)
     _, health_groups, _ = performance.parse_mihomo(lines)
     stable = groups.get(target)
-    require(stable is not None and stable.group_type == "fallback", "安卓 Google 必须使用稳定优先的 fallback 组。")
-    if stable:
-        require(not stable.filter_text and not stable.members, "Google 稳定组应直接使用机场节点，不嵌套测速组或加入 DIRECT。")
-        require(stable.has_external_source and not stable.has_invalid_external_source and set(stable.source_references) == set(parser._parse_mihomo_proxy_provider_names(lines)), "Google 稳定组必须保留全部当前机场来源。")
-        start = stable.line
-        end = next((i for i in range(start, len(lines)) if lines[i].startswith("  - name:") or re.match(r"^[\w-]+:", lines[i])), len(lines))
-        block = lines[start:end]
-        require(any(re.fullmatch(r'    url:\s*[\"\']?https://www\.google\.com/generate_204[\"\']?', s) for s in block), "Google 稳定组必须使用 HTTPS 连通性检查。")
-        require(not any(re.match(r"    disable-udp:\s*true", s) for s in block), "Google 稳定组必须保留 UDP 能力，不能强制 Cronet 回退或跳过代理规则。")
-    health = health_groups.get(target)
-    require(health is not None and health.interval == "600" and health.lazy == "false", "Google 稳定组必须每 600 秒主动检查。")
+    if business:
+        require(stable is not None and stable.group_type == "select", "安卓 Google 必须使用香港节点选择组。")
+        if stable:
+            require(stable.filter_text and "香港" in stable.filter_text and not stable.members, "安卓 Google 只能展示香港机场节点，不能混入其他地区或 DIRECT。")
+            require(stable.has_external_source and not stable.has_invalid_external_source and set(stable.source_references) == set(parser._parse_mihomo_proxy_provider_names(lines)), "安卓 Google 必须保留全部机场来源的香港节点。")
+            start = stable.line
+            end = next((i for i in range(start, len(lines)) if lines[i].startswith("  - name:") or re.match(r"^[\w-]+:", lines[i])), len(lines))
+            block = lines[start:end]
+            require(not any(re.match(r"    disable-udp:\s*true", s) for s in block), "Google 香港节点组必须保留 UDP 能力，不能强制 Cronet 回退。")
+    else:
+        require(stable is not None and stable.group_type == "fallback", "安卓 Google 必须使用稳定优先的 fallback 组。")
+        if stable:
+            require(not stable.filter_text and not stable.members, "Google 稳定组应直接使用机场节点，不嵌套测速组或加入 DIRECT。")
+            require(stable.has_external_source and not stable.has_invalid_external_source and set(stable.source_references) == set(parser._parse_mihomo_proxy_provider_names(lines)), "Google 稳定组必须保留全部当前机场来源。")
+            start = stable.line
+            end = next((i for i in range(start, len(lines)) if lines[i].startswith("  - name:") or re.match(r"^[\w-]+:", lines[i])), len(lines))
+            block = lines[start:end]
+            require(any(re.fullmatch(r'    url:\s*[\"\']?https://www\.google\.com/generate_204[\"\']?', s) for s in block), "Google 稳定组必须使用 HTTPS 连通性检查。")
+            require(not any(re.match(r"    disable-udp:\s*true", s) for s in block), "Google 稳定组必须保留 UDP 能力，不能强制 Cronet 回退或跳过代理规则。")
+        health = health_groups.get(target)
+        require(health is not None and health.interval == "600" and health.lazy == "false", "Google 稳定组必须每 600 秒主动检查。")
     rules = [parts for _, parts in parser._parse_mihomo_rules(lines)]
     codes = [",".join(parts) for parts in rules]
     google = next((i for i, p in enumerate(rules) if p[:2] == ["RULE-SET", "hk_google"]), -1)

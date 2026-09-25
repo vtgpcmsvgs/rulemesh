@@ -22,12 +22,12 @@
 
 | 业务组 | 默认选择 | 可手动调整及边界 |
 | --- | --- | --- |
-| Google | 桌面与 Surge 全地区自动；安卓为原下载稳定引擎 | 可选原自动、地区或手动入口；Google Play 与三个专属进程仍接 Google，默认 QUIC、600 秒检测保持 |
-| YouTube | 桌面与 Surge 全地区自动；安卓默认跟随 Google | 可独立切换；专用规则早于 Google 完整 IP 和全球媒体，gvt1/gvt2、ggpht 共享资源仍归 Google |
+| Google | 仅显示全部机场来源中的香港节点 | Google Play 与三个专属进程仍接 Google，保留 QUIC；选择层不再混入自动组、其他地区或 DIRECT |
+| YouTube | 仅显示全部机场来源中的香港节点 | 可独立选择香港节点；专用规则早于 Google 完整 IP 和全球媒体，gvt1/gvt2、ggpht 共享资源仍归 Google |
 | AI | 美国自动 | 可从全部现有机场中手选经过美国过滤的节点；不提供其他地区或 DIRECT，Google AI 仍是第一条有效规则 |
-| Telegram | 全地区自动 | 可独立切换地区或手动节点 |
+| Telegram | 仅显示全部机场来源中的香港节点 | 可独立选择香港节点，不混入其他地区或 DIRECT |
 | Crypto | 台湾自动 | 台湾过滤后的手动节点；交易所、Polymarket 与 Polygon/BSC RPC 共用；日本精确入口仍优先 |
-| Microsoft | 全地区自动 | Store 美国、已有 Outlook 直连与更新拒绝仍在前面，不被通用开关覆盖 |
+| Microsoft | 美国节点 + DIRECT | 仅显示全部机场来源中的美国节点，并保留 DIRECT；Store 美国、已有 Outlook 直连与更新拒绝仍在前面 |
 | Apple | 普通配置 DIRECT；工作配置沿用已有更新入口的自动出口 | Surge Personal 保持既有 Apple 范围；两份 FlClash 在更新拒绝之后增加 Apple 服务入口。工作不增加 Apple 全域放行，FINAL 仍 REJECT |
 
 `select` 的第一项只是新组初始默认值；客户端保存过的选择仍可能覆盖默认。手动切换会影响新连接，已有长连接不保证立即迁移。Google 或 YouTube 的共享账号/CDN 不能做到按页面完全隔离；不把共享 Google IP 强行划给 YouTube。
@@ -35,7 +35,7 @@
 ## DNS 必须与业务选择相符
 
 - Mihomo AI 的两个海外 DoH 改为 `#AI`，让手动选定的美国节点同时承接业务和 DNS。节点域名继续走国内 `proxy-server-nameserver`，避免依赖循环。
-- 安卓按 AI → YouTube → Google 的顺序维护三个精确 rule-set policy。YouTube 与 Google 分别使用 `#YouTube`、`#Google`，避免视频组独立切换后 DNS 仍固定旧组。二者默认最终仍落到原 Google fallback 引擎。
+- 安卓按 AI → YouTube → Google 的顺序维护三个精确 rule-set policy。YouTube 与 Google 分别使用 `#YouTube`、`#Google`，并跟随各自的香港节点选择组；DNS 不再指向已移除的下载稳定 fallback。
 - 桌面与公开 Mihomo 仍只有 AI 专项 policy；普通业务默认国内双 DoH。Surge 继续 `[Host]` 的 AI 解析与 `ai_dns_us → AI` 出站，不伪造 Mihomo DNS 字段。
 - 国内 DNS、节点 bootstrap、Raw 下载例外、地区限制及 Notion 独立测速均保留；Surge 公司/家庭版的路由与 DNS 保持一致。
 

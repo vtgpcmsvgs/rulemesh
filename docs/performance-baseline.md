@@ -28,7 +28,7 @@
 
 - AI 入口放在第一条有效规则，避免 Google 完整 IP 地址空间和其他广谱规则抢先匹配；国内 AI 继续使用 `ai_cn_direct` 直连。
 - 抖音复用 `bytedance_direct`；新增 `cn_social_direct` 仅维护微信、小红书及专用 CDN 域名，不放宽整个腾讯或通用云服务。
-- 日本精确例外、Crypto 和香港券商都早于 Google 广谱规则。`google_hk`、`global_media` 等旧路径保留以兼容已有订阅，但一般业务默认自动择优。
+- 日本精确例外、Crypto 和香港券商都早于 Google 广谱规则。`google_hk`、`global_media` 等旧路径保留以兼容已有订阅；Google/YouTube/Telegram 业务组只显示香港节点，Microsoft 业务组只显示美国节点并保留 DIRECT。
 - 全地区组去掉国家标签筛选，只排除套餐占位项，允许没有地区标签的有效节点参与。FlClash 桌面使用 300 秒主动测速、安卓使用 600 秒；实际业务组主动、备用地区按需检测、全地区容差 50、美国容差 100；测速只衡量连接延迟，不等同于下载吞吐。
 - Mihomo 开启 `tcp-concurrent`，并发尝试目标的多个 IP，采用先成功的连接；保持 IPv4、ARC 缓存和 fake-ip。Surge 保持原有 smart 组与客户端自身连接机制，不机械移植同名字段。
 - AWS IP 区域组和 `chain_socks5_ipcidr` 不再注册或调用于配置；`rules/`、上游登记与 `dist/` 产物继续保留，暂停使用不等于删除维护资产。
@@ -36,7 +36,7 @@
 
 ## DNS
 
-2026-09-14 安卓下载修复是本基线的窄例外：Google/Play 使用独立 fallback 稳定组，同组海外 DoH 的 `rule-set:hk_google` 位于 AI policy 后，并使用进程兜底。保留 QUIC，禁止恢复已导致实机 Cronet 重试的 Google/Play UDP/443 拒绝。国内默认、节点 bootstrap、AI 美国与其他地区约束仍保留。下文“唯一 AI policy”和普通 Google 自动组默认值适用于桌面与公开模板；安卓以 [专项保护](android-network-repair.md) 为准。
+2026-09-14 安卓下载修复是本基线的窄例外：Google/Play 使用香港业务选择组，同组海外 DoH 的 `rule-set:hk_google` 位于 AI policy 后，并使用进程兜底。保留 QUIC，禁止恢复已导致实机 Cronet 重试的 Google/Play UDP/443 拒绝。国内默认、节点 bootstrap、AI 美国与其他地区约束仍保留。
 
 2026-09-12 补充：AdsPower 在全部当前配置中停用，保留仓库规则资产；`direct/ips5_direct` 以 DIRECT 覆盖 `ips5.vip` 及全部子域，位于 AI 之后、Google 广谱与拒绝之前。停用流程见 [规则停用与恢复](rule-deactivation.md)，校验同时防止残留 provider、观察兜底和新直连入口被抢先覆盖。
 
@@ -87,4 +87,4 @@ AI、Crypto、其他明确地区、Google、gfw 等前置规则和机场组不�
 
 ## 2026-09-25 业务选择层修订
 
-当前配置在自动引擎之上增加七个可见 select。基线继续检查所有 AI/Crypto 候选的地区约束、默认引擎的主动检测及切换容差，允许无固定地区的业务经选择层切换。AI DNS 跟随 AI；安卓仅增加前置 YouTube policy，与 Google 分别跟随自己的业务组，默认稳定引擎保持。Apple 普通配置默认 DIRECT、工作沿用旧更新出口，FlClash 更新拒绝仍优先。以 [业务策略组重构](service-groups-refactor.md) 为本轮差异依据。
+当前配置在自动引擎之上增加七个可见 select。基线继续检查所有 AI/Crypto 候选的地区约束、默认引擎的主动检测及切换容差；Google/YouTube/Telegram 限定香港，Microsoft 限定美国并保留 DIRECT。AI DNS 跟随 AI；安卓前置 YouTube policy 与 Google policy 分别跟随香港业务组。Apple 普通配置默认 DIRECT、工作沿用旧更新出口，FlClash 更新拒绝仍优先。以 [业务策略组重构](service-groups-refactor.md) 为本轮差异依据。

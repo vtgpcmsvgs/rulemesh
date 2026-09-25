@@ -70,4 +70,4 @@
 
 ## 2026-09-25 七个业务入口
 
-新增 Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple select，保持底层测速任务数量、周期、容差和 Notion 检测。AI/Crypto 提供受地区过滤的手动节点。两份 FlClash 新增 Apple 服务入口并置于系统更新拒绝之后；安卓的 Google fallback 通过业务层引用且默认不变。同步源文件后需由客户端更新 profile，核验实际生成配置与 DNS 出口；详见 [重构报告](service-groups-refactor.md)。
+新增 Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple select，保持底层测速任务数量、周期、容差和 Notion 检测。Google/YouTube/Telegram 只展示香港节点，Microsoft 只展示美国节点并保留 DIRECT；AI/Crypto 提供受地区过滤的手动节点。两份 FlClash 新增 Apple 服务入口并置于系统更新拒绝之后；安卓 Google 通过香港业务层引用并保留 QUIC。同步源文件后需由客户端更新 profile，核验实际生成配置与 DNS 出口；详见 [重构报告](service-groups-refactor.md)。

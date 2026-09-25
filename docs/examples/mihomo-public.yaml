@@ -182,30 +182,22 @@ proxy-groups:
   - name: "Google"
     type: select
     hidden: false
-    proxies:
-      - "♻️ 自动选择"
-      - "🚀 节点选择"
-      - "🇭🇰 香港-自动选择"
-      - "🇨🇳 台湾-自动选择"
-      - "🇯🇵 日本-自动选择"
-      - "🇰🇷 韩国-自动选择"
-      - "🇸🇬 新加坡-自动选择"
-      - "🇺🇸 美国-自动选择"
-      - "👋 手动切换"
+    use:
+      - provider_a
+      - provider_b
+      - provider_c
+    filter: "(?i)🇭🇰|香港|hong kong|\\bhk\\b"
+    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
 
   - name: "YouTube"
     type: select
     hidden: false
-    proxies:
-      - "♻️ 自动选择"
-      - "🚀 节点选择"
-      - "🇭🇰 香港-自动选择"
-      - "🇨🇳 台湾-自动选择"
-      - "🇯🇵 日本-自动选择"
-      - "🇰🇷 韩国-自动选择"
-      - "🇸🇬 新加坡-自动选择"
-      - "🇺🇸 美国-自动选择"
-      - "👋 手动切换"
+    use:
+      - provider_a
+      - provider_b
+      - provider_c
+    filter: "(?i)🇭🇰|香港|hong kong|\\bhk\\b"
+    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
 
   - name: "AI"
     type: select
@@ -222,16 +214,12 @@ proxy-groups:
   - name: "Telegram"
     type: select
     hidden: false
-    proxies:
-      - "♻️ 自动选择"
-      - "🚀 节点选择"
-      - "🇭🇰 香港-自动选择"
-      - "🇨🇳 台湾-自动选择"
-      - "🇯🇵 日本-自动选择"
-      - "🇰🇷 韩国-自动选择"
-      - "🇸🇬 新加坡-自动选择"
-      - "🇺🇸 美国-自动选择"
-      - "👋 手动切换"
+    use:
+      - provider_a
+      - provider_b
+      - provider_c
+    filter: "(?i)🇭🇰|香港|hong kong|\\bhk\\b"
+    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
 
   - name: "Crypto"
     type: select
@@ -249,15 +237,13 @@ proxy-groups:
     type: select
     hidden: false
     proxies:
-      - "♻️ 自动选择"
-      - "🚀 节点选择"
-      - "🇭🇰 香港-自动选择"
-      - "🇨🇳 台湾-自动选择"
-      - "🇯🇵 日本-自动选择"
-      - "🇰🇷 韩国-自动选择"
-      - "🇸🇬 新加坡-自动选择"
-      - "🇺🇸 美国-自动选择"
-      - "👋 手动切换"
+      - "DIRECT"
+    use:
+      - provider_a
+      - provider_b
+      - provider_c
+    filter: "(?i)🇺🇸|美国|united states|\\bus\\b"
+    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
 
   - name: "Apple"
     type: select

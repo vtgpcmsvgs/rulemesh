@@ -62,7 +62,7 @@
 - 两份 Mihomo 与公开模板采用国内 nameserver + AI 专用 nameserver-policy + 国内 proxy-server-nameserver bootstrap；ipv6、use-hosts、use-system-hosts、respect-rules 均为 false，开启 tcp-concurrent，保留 ARC 与 fake-ip。
 - 新版静态检查与生产运行态必须分别报告。历史 v1.19.25 查询未命中模拟 resolver；即使静态检查已通过，DNS 路由运行时仍未确认时也不得声称已经生效。
 - 两份 Surge Personal、两份 Mihomo 与公开模板的通用 FINAL/MATCH 按 2026-09-12 用户要求使用 DIRECT；仅工作白名单保持 FINAL,REJECT，前置代理规则继续使用指定组；FlClash 桌面 provider 与 url-test 使用 interval: 300、安卓使用 600；provider 与实际业务组 lazy: false，备用地区组 lazy: true，全地区 tolerance: 50、美国 tolerance: 100。全地区组只排除套餐占位项，不限制地区标签。
-- 七份配置的 ai_us 必须为第一条有效规则并包含 Google AI；国内精选直连、日本精确入口、Crypto 台湾和香港券商在 google_hk 完整 IP 规则前。google_hk 兼容路径和官方完整地址空间保留，普通 Google 默认自动择优，安卓按 2026-09-14 下载保护使用独立稳定组。
+- 七份配置的 ai_us 必须为第一条有效规则并包含 Google AI；国内精选直连、日本精确入口、Crypto 台湾和香港券商在 google_hk 完整 IP 规则前。google_hk 兼容路径和官方完整地址空间保留；Google、YouTube、Telegram 业务组只展示香港节点，Microsoft 业务组只展示美国节点并保留 DIRECT。
 - Mihomo 私有文件里的机场 provider `health-check.url` 与通用 `url-test` 组测速 URL 使用 HTTPS `https://www.google.com/generate_204`；Notion 独立业务组使用本文末尾登记的专项 HTTPS URL，不要改回 HTTP
 - `proxy-node-domains` 必须是从 Sub-Store 聚合订阅提取的节点 `server` 域名清单，且必须过滤 IP 并按一行一个域名输出；不得包含订阅链接域名、机场面板域名或普通目标网站域名，也不得输出逗号分隔清单
 - Surge `[Host]` 引用 `proxy-node-domains` 时，必须使用 Surge 生产设备可直接访问的 Sub-Store 分享文件 URL；不要把未经同网络验证的 `https://sub.store/api/file/proxy-node-domains` 写进生产配置
@@ -234,7 +234,7 @@
 
 ## 2026-09-25 业务选择层
 
-- 七份配置展示 Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple，均为 select，复用原自动引擎与机场手动入口。AI 所有候选限美国、Crypto 限台湾，DNS 必须跟随对应业务组。此项取代通用业务只能直接引用自动组的旧检查，不取消地区约束。
+- 七份配置展示 Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple，均为 select，复用机场 provider 与底层检测能力。Google、YouTube、Telegram 所有候选限香港，Microsoft 所有节点候选限美国并额外保留 DIRECT，AI 所有候选限美国、Crypto 限台湾，DNS 必须跟随对应业务组。此项取代通用业务只能直接引用自动组的旧检查，不取消地区约束。
 - proxy/youtube 使用审核后的专用域名，不能整包 INCLUDE 含 gvt1/gvt2、ggpht 和 IP 的上游；先于 Google 广谱，旧 google_hk 保留完整兼容。新增业务规则须测正例和共享 CDN 负例。
 - 安卓默认 Google 稳定引擎、三个 Google 专属进程和 QUIC 保留；DNS policy 按 AI、YouTube、Google 顺序分别绑定业务 select。普通桌面仅 AI policy，不机械扩散安卓策略。
 - Apple 普通配置默认 DIRECT；两份 FlClash 的更新拒绝必须先于 Apple。工作只重绑既有 macOS 更新入口，禁止增加 Apple 全域放行。原机场手动组与 Notion 专项保留。

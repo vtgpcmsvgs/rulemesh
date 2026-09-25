@@ -11,7 +11,7 @@
 1. AI（含 Google AI）第一条规则固定美国。
 2. 抖音和新增微信、小红书精选入口前置 DIRECT，不增加整个腾讯或中国通用白名单。
 3. 日本明确访问例外、Crypto 台湾、香港券商香港先于 Google 通用入口。
-4. WPS 按 2026-09-18 修订统一直连，Store 专项固定美国；Google 普通业务与完整地址空间和其他已批准代理入口自动择优。
+4. WPS 按 2026-09-18 修订统一直连，Store 专项固定美国；Google、YouTube、Telegram 仅展示香港节点，Microsoft 仅展示美国节点并保留 DIRECT。
 5. 保留既有拒绝、设备条件、GitHub SSH/Raw/Core、1Password、订阅端点、Polygon/BSC RPC、DNS、LAN、系统时间和指定直连。
 6. 其余连接最终 `FINAL,REJECT`。
 

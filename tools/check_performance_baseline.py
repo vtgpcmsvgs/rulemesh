@@ -57,7 +57,7 @@ PROVIDER_IDS = {
 
 
 def region_filters(region: str, surge: bool) -> frozenset[str]:
-    tags = {"tw": ("🇨🇳", "台湾", "Taiwan", "TW"), "jp": ("🇯🇵", "日本", "Japan", "JP"), "hk": ("🇭🇰", "香港", "Hong Kong", "HK")}[region]
+    tags = {"tw": ("🇨🇳", "台湾", "Taiwan", "TW"), "jp": ("🇯🇵", "日本", "Japan", "JP"), "hk": ("🇭🇰", "香港", "Hong Kong", "HK"), "us": ("🇺🇸", "美国", "United States", "US")}[region]
     if surge:
         simple = "(" + "|".join(f"({tag})" for tag in tags) + ")"
         return frozenset({simple, METADATA_FILTER[:-3] + ".*" + simple + ".*$"})

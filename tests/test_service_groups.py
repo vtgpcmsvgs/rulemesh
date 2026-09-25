@@ -54,9 +54,21 @@ class ServiceGroupTests(unittest.TestCase):
         changed = text.replace('#AI"', '#🇺🇸 美国-自动选择"')
         self.assertTrue(any('DoH' in e for e in baseline.check(path, changed.splitlines())))
         groups = parser._parse_mihomo_groups(text.splitlines())
-        self.assertEqual(service.default_target('AI', groups), '🇺🇸 美国-自动选择')
-        self.assertEqual(service.default_target('Crypto', groups), '🇨🇳 台湾-自动选择')
-        self.assertEqual(service.default_target('Apple', groups), 'DIRECT')
+        self.assertEqual(service.default_target('Google', groups), 'Google')
+        self.assertEqual(service.default_target('YouTube', groups), 'YouTube')
+        self.assertEqual(service.default_target('Telegram', groups), 'Telegram')
+        self.assertEqual(service.default_target('Microsoft', groups), 'DIRECT')
+
+    def test_business_groups_expose_only_the_requested_regions(self):
+        path, text = self.fixture()
+        groups = parser._parse_mihomo_groups(text.splitlines())
+        for name in ('Google', 'YouTube', 'Telegram'):
+            self.assertTrue(groups[name].has_external_source)
+            self.assertIn('香港', groups[name].filter_text)
+            self.assertFalse(groups[name].members)
+        self.assertTrue(groups['Microsoft'].has_external_source)
+        self.assertIn('美国', groups['Microsoft'].filter_text)
+        self.assertEqual(groups['Microsoft'].members, ['DIRECT'])
 
     def test_youtube_must_precede_google_and_remain_independent(self):
         for client in ('mihomo','surge'):
@@ -69,7 +81,7 @@ class ServiceGroupTests(unittest.TestCase):
 
     def test_cycles_are_rejected_even_in_non_default_candidates(self):
         path,text=self.fixture()
-        old='  - name: "Google"\n    type: select\n    hidden: false\n    proxies:\n'
+        old='  - name: "Google"\n    type: select\n    hidden: false\n    use:\n'
         self.assertEqual(text.count(old),1)
         changed=text.replace(old,old+'      - Google\n')
         self.assertTrue(any('环' in e for e in baseline.check(path,changed.splitlines())))
