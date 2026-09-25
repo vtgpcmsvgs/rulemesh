@@ -142,6 +142,7 @@ def check(path: Path, lines, groups, rules, auto):
             reject = [i for i, (_, p) in enumerate(rules) if p[:2] == ["RULE-SET", "reject_os_update"]]
             require(bool(reject) and bool(positions.get("direct/apple_direct")) and reject[0] < positions["direct/apple_direct"][0], "FlClash 的更新拒绝必须早于 Apple 业务入口。")
     if not surge:
+        require(not any(re.match(r"^\s+-\s+(['\"])(['\"]).+\2\1\s*$", line) for line in lines), "Mihomo provider 引用不得嵌套两层 YAML 引号。")
         providers = parser._parse_mihomo_providers(lines)
         for name, ident in (("proxy_youtube", "proxy/youtube"), ("direct_apple", "direct/apple_direct")):
             require(name in providers and providers[name][1] == baseline.BASE + "mihomo/classical/" + ident + ".yaml", f"{name} 必须引用配套公开产物。")

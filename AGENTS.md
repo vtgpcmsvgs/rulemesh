@@ -156,7 +156,7 @@
 - 默认不要把私有文件内容或敏感值写回公开仓库，也不要在回复中完整回显真实密钥、签名、订阅 URL 或其他敏感参数
 - 即使需要在公开仓库里记录工作路由白名单维护约定，也只允许写“固定工作电脑”“白名单模式”“与 personal 永久不一致”这类抽象说明；不要把真实 `SRC-IP` 范围、私有设备标识、订阅地址或本地策略分组细节写回公开仓库
 - 若 `rulemesh-substore-mihomo-flclash-desktop.yaml` 出现“某个 provider 全部测速失败，但同一订阅直导 FlClash 桌面端 正常”的现象，默认先对比运行时 `dns:`，并通过 Mihomo API / 命名管道与日志确认实际生效配置；不要先把问题归因到节点失效，也不要只停留在更换测速 URL 这一层
-- 新版 Mihomo 默认只允许 AI 专用 policy 与国内节点 bootstrap；2026-09-14 安卓下载保护额外允许后置 hk_google policy 与独立稳定组，详见 docs/android-network-repair.md。respect-rules: true、DNS fallback、direct-nameserver、proxy-server-nameserver-policy 继续禁止。不要把当前已批准 proxy-server-nameserver 误判为旧版回滚。
+- 新版 Mihomo 默认只允许 AI 专用 policy 与国内节点 bootstrap；安卓额外允许后置 hk_google policy，并跟随香港业务选择组，详见 docs/android-network-repair.md。respect-rules: true、DNS fallback、direct-nameserver、proxy-server-nameserver-policy 继续禁止。不要把当前已批准 proxy-server-nameserver 误判为旧版回滚。
 - 若本地私有配置结构发生变化，必须同步更新 `.rulemesh.local.example.json` 与相关文档，但只允许写入脱敏占位值
 - 若任务需要参考私有配置，默认只说明字段名、用途与是否生效，不直接暴露真实值
 
@@ -236,7 +236,7 @@
 
 - 七份配置展示 Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple，均为 select，复用机场 provider 与底层检测能力。Google、YouTube、Telegram 所有候选限香港，Microsoft 所有节点候选限美国并额外保留 DIRECT，AI 所有候选限美国、Crypto 限台湾，DNS 必须跟随对应业务组。此项取代通用业务只能直接引用自动组的旧检查，不取消地区约束。
 - proxy/youtube 使用审核后的专用域名，不能整包 INCLUDE 含 gvt1/gvt2、ggpht 和 IP 的上游；先于 Google 广谱，旧 google_hk 保留完整兼容。新增业务规则须测正例和共享 CDN 负例。
-- 安卓默认 Google 稳定引擎、三个 Google 专属进程和 QUIC 保留；DNS policy 按 AI、YouTube、Google 顺序分别绑定业务 select。普通桌面仅 AI policy，不机械扩散安卓策略。
+- 安卓 Google 使用香港节点选择组，三个 Google 专属进程和 QUIC 保留；DNS policy 按 AI、YouTube、Google 顺序分别绑定业务 select。普通桌面仅 AI policy，不机械扩散安卓策略。
 - Apple 普通配置默认 DIRECT；两份 FlClash 的更新拒绝必须先于 Apple。工作只重绑既有 macOS 更新入口，禁止增加 Apple 全域放行。原机场手动组与 Notion 专项保留。
 - 第三方配置的 DNS/hosts 也可能含凭证；只允许 tools/audit_reference_profile.py 白名单统计，不输出整节或解析异常原文。先准备任务专用依赖，不假设系统或捆绑 Python 自带 PyYAML。
 - 详见 docs/service-groups-refactor.md；组默认值、保存选择、文件发布和设备生效必须分开报告。

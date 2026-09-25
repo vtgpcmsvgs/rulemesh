@@ -70,6 +70,12 @@ class ServiceGroupTests(unittest.TestCase):
         self.assertIn('美国', groups['Microsoft'].filter_text)
         self.assertEqual(groups['Microsoft'].members, ['DIRECT'])
 
+    def test_mihomo_rejects_nested_provider_quotes(self):
+        path, text = self.fixture()
+        changed = text.replace('      - provider_a', '      - \'"provider_a"\'', 1)
+        errors = baseline.check(path, changed.splitlines())
+        self.assertTrue(any('嵌套两层' in error for error in errors))
+
     def test_youtube_must_precede_google_and_remain_independent(self):
         for client in ('mihomo','surge'):
             path, text = self.fixture(client)
