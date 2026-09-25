@@ -46,6 +46,7 @@ REGIONAL = {
     "region/tw/crypto_tw": "tw", "region/jp/domains_to_jp": "jp",
     "region/hk/hk_brokers": "hk", "region/hk/hk_user_priority": "hk",
     "region/hk/hk_securities_aggressive": "hk",
+    "region/hk/android_brokers_aggressive": "hk",
     "proxy/polygon_rpc_proxy": "tw", "proxy/bsc_rpc_proxy": "tw",
     "region/us/microsoft_store_us": "us",
 }
@@ -53,6 +54,7 @@ PROVIDER_IDS = {
     "tw_crypto": "region/tw/crypto_tw", "jp_domains": "region/jp/domains_to_jp",
     "hk_brokers": "region/hk/hk_brokers", "hk_user_priority": "region/hk/hk_user_priority",
     "hk_securities_aggressive": "region/hk/hk_securities_aggressive",
+    "android_brokers_aggressive": "region/hk/android_brokers_aggressive",
     "proxy_polygon_rpc": "proxy/polygon_rpc_proxy", "proxy_bsc_rpc": "proxy/bsc_rpc_proxy",
     "hk_wps_kdocs": "region/hk/wps_kdocs", "us_microsoft_store": "region/us/microsoft_store_us",
 }
@@ -138,6 +140,16 @@ def check(path: Path, lines: list[str]) -> list[str]:
         errors.extend(service.check(path, lines, groups, rules, auto))
     errors.extend(notion.check(path, lines, auto))
     notion_target = notion.target(lines) if not surge else notion.HK_GROUP
+    android_broker_target = android.broker_target([parts for _, parts in rules]) if android_repair else ""
+    if android_repair and android_broker_target:
+        require(
+            dns._group_has_us_semantics(
+                android_broker_target,
+                groups,
+                region_filters("hk", surge),
+            ),
+            "安卓券商进程兜底必须绑定香港节点组。",
+        )
     # 多个组可能复用美国过滤器；从实际 AI 路由解析目标，不能假定美国组唯一。
     selected: dict[str, list[tuple[int, list[str]]]] = {}
     for position, (_, parts) in enumerate(rules):
@@ -153,7 +165,10 @@ def check(path: Path, lines: list[str]) -> list[str]:
     require(dns._group_has_us_semantics(us, groups, frozenset(allowed)), "AI 必须绑定实际具有美国节点过滤条件的组。")
     require(ai_position == 0, "AI 美国入口必须是第一条有效规则，防止 Google IP 或设备广谱规则抢先覆盖。")
     domestic_position, domestic_rule = selected["domestic_services"][0]
-    require(domestic_position == 1 and domestic_rule[2] == "DIRECT", "国内 DNS 与新华三必须紧随 AI 直连，不能被设备、平台或协议规则遮蔽。")
+    require(
+        domestic_position == 1 and domestic_rule[2] == "DIRECT",
+        "国内 DNS 与新华三必须紧随 AI 直连，安卓券商进程级香港兜底应置于其后。",
+    )
     active = [line for line in lines if line.strip() and not line.lstrip().startswith(("#", ";", "//"))]
     require(not any("alibaba_hk" in line or "hk_alibaba" in line for line in active), "阿里系强制代理已停用，不得保留调用、注册或解析依赖。")
     require(not any(parts[:1] == ["SRC-IP"] and parts[-1] in groups for _, parts in rules), "不得用整设备代理覆盖国内默认直连；地区要求按业务规则表达。")
@@ -191,6 +206,8 @@ def check(path: Path, lines: list[str]) -> list[str]:
                     expected_target = notion_target
                 elif business and service.expected_service(parts, surge):
                     expected_target = service.expected_service(parts, surge)
+                elif android_repair and android.allowed_hk_broker_rule(parts):
+                    expected_target = android_broker_target
                 elif android_repair and android.allowed_stable_rule(parts):
                     expected_target = "Google" if business else google_stable
                 else:

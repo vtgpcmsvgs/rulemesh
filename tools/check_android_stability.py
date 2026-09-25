@@ -19,6 +19,40 @@ PACKAGES = (
     "com.android.providers.downloads.ui",
 )
 
+# 安卓券商进程级香港兜底：覆盖硬编码 IP、未登记 API 与静态资源。
+# 这些包名只允许在安卓私有配置中绑定香港自动选择，不得扩散到桌面或 Surge。
+BROKER_PACKAGES = (
+    "com.tigerbrokers.stock",
+    "com.ruifusoft.finance.app",
+    "com.usmart.stock",
+    "com.zhuorui.securities",
+    "com.juniorchina.jcstock",
+    "com.fosunhani.stock",
+    "com.app.chief",
+    "eddid.international",
+    "lb.whale.hkwinner.android",
+)
+
+
+def allowed_hk_broker_rule(parts: list[str]) -> bool:
+    """判断是否为已登记的安卓券商进程香港兜底。"""
+    return (
+        len(parts) == 3
+        and parts[0] == "PROCESS-NAME"
+        and parts[1] in BROKER_PACKAGES
+    )
+
+
+def broker_target(rules: list[list[str]]) -> str:
+    """返回安卓券商规则集当前绑定的策略组。"""
+    targets = [
+        parts[2]
+        for parts in rules
+        if len(parts) >= 3
+        and parts[:2] == ["RULE-SET", "android_brokers_aggressive"]
+    ]
+    return targets[0] if len(targets) == 1 else ""
+
 
 def active(path: Path, lines: list[str]) -> bool:
     return path.name == PROFILE or MARKER in lines or any(line.strip() == ALIPAY_MARKER for line in lines)
@@ -51,6 +85,7 @@ def allowed_stable_rule(parts: list[str]) -> bool:
 
 def check(path: Path, lines: list[str]) -> list[str]:
     import check_private_dns_precedence as parser
+    import check_performance_baseline as baseline
     import check_private_performance as performance
     import check_common_routes as common
     import check_service_groups as service
@@ -93,6 +128,26 @@ def check(path: Path, lines: list[str]) -> list[str]:
         require(health is not None and health.interval == "600" and health.lazy == "false", "Google 稳定组必须每 600 秒主动检查。")
     rules = [parts for _, parts in parser._parse_mihomo_rules(lines)]
     codes = [",".join(parts) for parts in rules]
+    broker_processes = [parts for parts in rules if allowed_hk_broker_rule(parts)]
+    broker = broker_target(rules)
+    if broker_processes or broker:
+        broker_group = groups.get(broker)
+        hk_filters = baseline.region_filters("hk", False)
+        require(
+            len([parts for parts in rules if parts[:2] == ["RULE-SET", "android_brokers_aggressive"]]) == 1,
+            "安卓券商香港规则集必须保留唯一入口。",
+        )
+        require(
+            bool(broker_group)
+            and parser._group_has_us_semantics(broker, groups, hk_filters),
+            "安卓券商进程兜底必须绑定香港节点组。",
+        )
+        for package in BROKER_PACKAGES:
+            rule = f"PROCESS-NAME,{package},{broker}"
+            require(
+                codes.count(rule) == 1,
+                "安卓券商进程兜底必须逐项保留并统一绑定香港组。",
+            )
     google = next((i for i, p in enumerate(rules) if p[:2] == ["RULE-SET", "hk_google"]), -1)
     reject = next((i for i, p in enumerate(rules) if p[:2] == ["RULE-SET", "reject_adblock"]), len(rules))
     ai = next((i for i, p in enumerate(rules) if p[:2] == ["RULE-SET", "us_ai"]), -1)

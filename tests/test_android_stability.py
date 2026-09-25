@@ -143,6 +143,17 @@ class AndroidStabilityTests(unittest.TestCase):
         for name in ("mihomo-public.yaml", "rulemesh-substore-mihomo-flclash-desktop.yaml"):
             self.assertTrue(any("不得自动扩散" in x for x in android.check(Path(name), text.splitlines())))
 
+    def test_broker_process_allowlist_is_exact_and_private_profile_passes(self):
+        self.assertEqual(len(android.BROKER_PACKAGES), 9)
+        self.assertTrue(all(android.allowed_hk_broker_rule(["PROCESS-NAME", package, "HK"]) for package in android.BROKER_PACKAGES))
+        self.assertFalse(android.allowed_hk_broker_rule(["PROCESS-NAME", "com.example.other", "HK"]))
+        private = Path.home() / "Desktop" / "rulemesh-local" / "rulemesh-substore-mihomo-flclash-android.yaml"
+        if not private.is_file():
+            self.skipTest("未发现本机私人安卓配置")
+        lines = private.read_text(encoding="utf-8").splitlines()
+        self.assertEqual(baseline.check(private, lines), [])
+        self.assertEqual(android.check(private, lines), [])
+
     def test_google_download_domains_remain_in_existing_public_asset(self):
         compiled = build_rules.build_source(ROOT / "rules/region/hk/google_hk.list").outputs["surge_rules"]
         def matches(domain, rule):
