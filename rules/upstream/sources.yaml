@@ -179,6 +179,10 @@ sources:
           note: 专门承接复星证券/复星财富、致富证券、辉立证券与富途，默认用品牌关键词激进匹配并固定绑定香港自动选择
         - repo: official broker websites
           note: 参考 fotechwealth / fosunwealth / chiefgroup / chieftrade / poems / phillip / futuhk / futunn / futuholdings 等官方入口与交易平台域名
+    hk/android_brokers_aggressive.list:
+      preferred:
+        - repo: self
+          note: 仅供安卓 FlClash 私有配置使用，承接实机观测到的云锋有鱼、腾达/投资助手、致富、艾德、老虎基础设施与卓锐后端，不接入工作白名单或通用 hk_brokers
     hk/hk_user_priority.list:
       preferred:
         - repo: self

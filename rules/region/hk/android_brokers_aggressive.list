@@ -1,0 +1,23 @@
+# 安卓券商应用香港激进规则：仅覆盖已实机观测到的交易与行情后端。
+# 维护边界：
+# 1) 本文件只供安卓 FlClash 私有配置调用，不接入工作白名单，也不替换通用 hk_brokers。
+# 2) 这些域名来自当前手机上已安装券商应用的公开请求主机；应用级 PROCESS-NAME 兜底由私有安卓配置单独维护。
+# 3) 统一绑定香港自动选择，放在国内直连、广告拒绝与通用海外兜底前，优先保证登录、行情和交易接口不漏直连。
+
+# 云锋有鱼
+DOMAIN-SUFFIX,youyu.cn
+
+# 腾达 / 投资助手行情与账户接口
+DOMAIN-SUFFIX,investassistant.com
+
+# 致富证券交易与实时连接
+DOMAIN-SUFFIX,toptrader1979.com
+
+# 艾德国际移动端接口
+DOMAIN-SUFFIX,eddidapp.com
+
+# 老虎证券港股交易基础设施
+DOMAIN-SUFFIX,iotaskyt.com
+
+# 卓锐证券
+DOMAIN-SUFFIX,zr.hk

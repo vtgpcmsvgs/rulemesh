@@ -307,6 +307,18 @@ merge_plan:
       - 客户端顺序应放在 region/hk/global_media 与 proxy/gfw 前，避免登录、开户、行情与交易接口被后续规则吞掉
       - 允许品牌词级别误伤，优先保证相关域名全部命中香港自动选择
 
+  - id: hk-android-brokers-aggressive
+    target: rules/region/hk/android_brokers_aggressive.list
+    purpose: 安卓 FlClash 已观测券商应用后端的香港激进入口
+    strategy:
+      - explicit_observed_app_backend_suffixes
+      - android_private_profile_only
+      - bind_to_hk_auto
+    notes:
+      - 只供安卓私有配置调用，不接入工作白名单，也不扩大通用 hk_brokers
+      - 进程级兜底由安卓私有配置维护，规则集只保存公开后端域名
+      - 新增域名必须来自实机请求日志或官方公开接口，并保持中文分组说明
+
   - id: hk-securities-aggressive
     target: rules/region/hk/hk_securities_aggressive.list
     purpose: Personal 激进配置的香港证券公司与老虎证券香港出口

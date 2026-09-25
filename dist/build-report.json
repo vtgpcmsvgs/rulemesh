@@ -1,11 +1,11 @@
 {
   "summary": {
-    "domain-only": 15,
+    "domain-only": 16,
     "ipcidr-only": 7,
     "classical/mixed": 29,
     "dns-domain-set": 2,
     "empty": 0,
-    "total_sources": 53,
+    "total_sources": 54,
     "total_warnings": 0
   },
   "sources": [
@@ -345,6 +345,19 @@
       "dist": {
         "surge_rules": "dist/surge/rules/region/hk/alibaba_hk.list",
         "mihomo_classical": "dist/mihomo/classical/region/hk/alibaba_hk.yaml"
+      }
+    },
+    {
+      "source": "rules/region/hk/android_brokers_aggressive.list",
+      "category": "region",
+      "classification": "domain-only",
+      "counts": {
+        "surge_rules": 6,
+        "mihomo_classical": 6
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/region/hk/android_brokers_aggressive.list",
+        "mihomo_classical": "dist/mihomo/classical/region/hk/android_brokers_aggressive.yaml"
       }
     },
     {

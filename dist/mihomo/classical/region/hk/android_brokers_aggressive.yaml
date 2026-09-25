@@ -1,0 +1,9 @@
+# 生成来源：rules/region/hk/android_brokers_aggressive.list
+# 行为：classical
+payload:
+  - "DOMAIN-SUFFIX,youyu.cn"
+  - "DOMAIN-SUFFIX,investassistant.com"
+  - "DOMAIN-SUFFIX,toptrader1979.com"
+  - "DOMAIN-SUFFIX,eddidapp.com"
+  - "DOMAIN-SUFFIX,iotaskyt.com"
+  - "DOMAIN-SUFFIX,zr.hk"
