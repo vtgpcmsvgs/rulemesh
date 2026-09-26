@@ -1,6 +1,7 @@
 """业务入口必须真正可控，且不能通过手动选项绕过地区和下载约束。"""
 from pathlib import Path
 import sys
+import re
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -13,6 +14,82 @@ import check_service_groups as service
 
 
 class ServiceGroupTests(unittest.TestCase):
+    def test_unified_broker_scope_includes_priority_broker_only(self):
+        rules = build_rules.build_source(ROOT / 'rules/region/hk/hk_securities.list').outputs['surge_rules']
+        for domain in ('zvsthk.com', 'api.zvsthk.com', 'api-zvsthk.example'):
+            self.assertTrue(any(common.matches(r, domain, 'browser') for r in rules))
+        for domain in ('godaddy.com', 'supado.com'):
+            self.assertFalse(any(common.matches(r, domain, 'browser') for r in rules))
+
+    def test_provider_partition_is_complete_unique_and_region_locked(self):
+        path, text = self.fixture()
+        self.assertEqual(baseline.check(path, text.splitlines()), [])
+        for name in service.FIXED:
+            candidate = f'      - "{name}-provider_b"\n'
+            for changed in (
+                text.replace(candidate, ''),
+                text.replace(candidate, f'      - "{name}-provider_a"\n'),
+                text.replace(candidate, '      - DIRECT\n'),
+                text.replace(candidate, '      - "🇯🇵 日本-自动选择"\n'),
+            ):
+                self.assertNotEqual(changed, text)
+                self.assertTrue(any(name in e for e in baseline.check(path, changed.splitlines())))
+
+    def test_provider_children_cannot_include_all_or_duplicate_definitions(self):
+        path, text = self.fixture()
+        anchor = '  - name: "AI-provider_a"\n    type: url-test\n'
+        self.assertEqual(text.count(anchor), 1)
+        for field in ('include-all', 'include-all-providers', 'include-all-proxies'):
+            changed = text.replace(anchor, anchor + f'    {field}: true\n')
+            self.assertTrue(any('聚合全部机场' in e for e in baseline.check(path, changed.splitlines())))
+        changed = text.replace('  - name: "AI-provider_b"', '  - name: "AI-provider_a"')
+        self.assertTrue(any('定义必须唯一' in e for e in baseline.check(path, changed.splitlines())))
+
+    def test_numeric_provider_references_remain_yaml_strings(self):
+        path, text = self.fixture()
+        changed = text.replace('  provider_a:', '  "123":').replace('      - provider_a', '      - 123')
+        self.assertTrue(any('数字 provider 引用必须加引号' in e for e in baseline.check(path, changed.splitlines())))
+        fixed = changed.replace('      - 123', '      - "123"')
+        self.assertEqual(baseline.check(path, fixed.splitlines()), [])
+
+    def test_surge_children_reuse_exact_manual_provider_sources(self):
+        path, text = self.fixture('surge')
+        self.assertEqual(baseline.check(path, text.splitlines()), [])
+        for name in service.FIXED:
+            old = next(s for s in text.splitlines() if s.startswith(name + '-provider_a ='))
+            new = re.sub(r'policy-path=[^,]+', 'policy-path=https://example.com/wrong-source', old)
+            errors = baseline.check(path, text.replace(old, new).splitlines())
+            self.assertTrue(any('provider' in e for e in errors))
+
+    def test_regions_must_be_hidden_and_complete(self):
+        path, text = self.fixture()
+        self.assertEqual(baseline.check(path, text.splitlines()), [])
+        for name in service.REGIONS:
+            anchor = f'  - name: "{name}"\n    type: url-test\n    hidden: true'
+            self.assertEqual(text.count(anchor), 1)
+            changed = text.replace(anchor, anchor.replace('hidden: true', 'hidden: false'))
+            self.assertTrue(any('必须隐藏' in e for e in baseline.check(path, changed.splitlines())))
+            changed = text.replace(f'      - "{name}"\n', '', 1)
+            self.assertTrue(any('完整展示' in e for e in baseline.check(path, changed.splitlines())))
+
+    def test_unified_broker_rule_is_unique_and_canonical(self):
+        path, text = self.fixture()
+        rule = '  - RULE-SET,hk_securities,香港券商\n'
+        self.assertEqual(text.count(rule), 1)
+        for changed in (text.replace(rule, ''), text.replace(rule, rule * 2),
+                        text.replace('/hk_securities.yaml', '/hk_brokers.yaml')):
+            self.assertTrue(any('hk_securities' in e for e in baseline.check(path, changed.splitlines())))
+
+    def test_business_marker_does_not_bypass_baseline_guards(self):
+        for client in ('mihomo', 'surge'):
+            path, text = self.fixture(client)
+            self.assertIn(service.MARKER, text)
+            self.assertEqual(baseline.check(path, text.splitlines()), [])
+            changed = text.replace(baseline.DOMESTIC[0], 'https://example.com/dns-query')
+            self.assertTrue(any('DoH' in e for e in baseline.check(path, changed.splitlines())))
+            changed = text.replace('FINAL,DIRECT', 'FINAL,REJECT') if client == 'surge' else text.replace('MATCH,DIRECT', 'MATCH,REJECT')
+            self.assertTrue(any('最终兜底' in e for e in baseline.check(path, changed.splitlines())))
+
     def fixture(self, client="mihomo"):
         path = ROOT / "docs/examples" / ("surge-public.conf" if client == "surge" else "mihomo-public.yaml")
         return path, path.read_text("utf-8")
@@ -38,15 +115,15 @@ class ServiceGroupTests(unittest.TestCase):
 
     def test_region_wrapper_cannot_hide_unfiltered_external_nodes(self):
         path, text = self.fixture()
-        for name in ("AI", "Crypto"):
+        for name in service.FIXED:
             groups = parser._parse_mihomo_groups(text.splitlines())
-            start = text.index(f'  - name: "{name}"')
+            start = text.index(f'  - name: "{groups[name].members[0]}"')
             end = text.index('  - name:', start+1)
             block = text[start:end]
             filtered = next(line for line in block.splitlines() if line.startswith("    filter:"))
             changed = text[:start] + block.replace(filtered, '') + text[end:]
             self.assertTrue(any("地区过滤器" in e for e in baseline.check(path, changed.splitlines())))
-            bad = block.replace('    proxies:\n', '    proxies:\n      - DIRECT\n')
+            bad = block.replace('    use:\n', '    proxies:\n      - DIRECT\n    use:\n')
             self.assertTrue(any("地区约束" in e for e in baseline.check(path, (text[:start]+bad+text[end:]).splitlines())))
 
     def test_dns_follows_ai_selector_and_default_engines_stay_active(self):
@@ -54,21 +131,23 @@ class ServiceGroupTests(unittest.TestCase):
         changed = text.replace('#AI"', '#🇺🇸 美国-自动选择"')
         self.assertTrue(any('DoH' in e for e in baseline.check(path, changed.splitlines())))
         groups = parser._parse_mihomo_groups(text.splitlines())
-        self.assertEqual(service.default_target('Google', groups), 'Google')
-        self.assertEqual(service.default_target('YouTube', groups), 'YouTube')
-        self.assertEqual(service.default_target('Telegram', groups), 'Telegram')
-        self.assertEqual(service.default_target('Microsoft', groups), 'DIRECT')
+        for name in ('Google', 'YouTube', 'Telegram'):
+            self.assertEqual(service.default_target(name, groups), '🇭🇰 香港-自动选择')
+        self.assertEqual(service.default_target('Microsoft', groups), 'Microsoft-provider_a')
 
     def test_business_groups_expose_only_the_requested_regions(self):
         path, text = self.fixture()
         groups = parser._parse_mihomo_groups(text.splitlines())
         for name in ('Google', 'YouTube', 'Telegram'):
-            self.assertTrue(groups[name].has_external_source)
-            self.assertIn('香港', groups[name].filter_text)
-            self.assertFalse(groups[name].members)
-        self.assertTrue(groups['Microsoft'].has_external_source)
-        self.assertIn('美国', groups['Microsoft'].filter_text)
-        self.assertEqual(groups['Microsoft'].members, ['DIRECT'])
+            self.assertFalse(groups[name].has_external_source)
+            self.assertEqual(set(groups[name].members), set(service.REGIONS))
+        for name, region in service.FIXED.items():
+            self.assertFalse(groups[name].has_external_source)
+            self.assertEqual(len(groups[name].members), 3)
+            for child in groups[name].members:
+                self.assertEqual(groups[child].group_type, 'url-test')
+                self.assertEqual(len(groups[child].source_references), 1)
+                self.assertIn(groups[child].filter_text, baseline.region_filters(region, False))
 
     def test_mihomo_rejects_nested_provider_quotes(self):
         path, text = self.fixture()
@@ -87,7 +166,7 @@ class ServiceGroupTests(unittest.TestCase):
 
     def test_cycles_are_rejected_even_in_non_default_candidates(self):
         path,text=self.fixture()
-        old='  - name: "Google"\n    type: select\n    hidden: false\n    use:\n'
+        old='  - name: "Google"\n    type: select\n    hidden: false\n    proxies:\n'
         self.assertEqual(text.count(old),1)
         changed=text.replace(old,old+'      - Google\n')
         self.assertTrue(any('环' in e for e in baseline.check(path,changed.splitlines())))

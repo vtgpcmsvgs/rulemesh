@@ -593,7 +593,7 @@ def validate_mihomo(path: Path, lines: list[str]) -> list[PerformanceFinding]:
             PerformanceFinding(
                 path,
                 1,
-                "Mihomo 缺少 hk_securities 香港证券规则入口。",
+                "Mihomo 缺少 hk_securities 香港证券规则入口（历史配置为 hk_securities_aggressive）。",
                 "在广告拒绝、中国直连与 MATCH 前加入香港证券 RULE-SET。",
             )
         )

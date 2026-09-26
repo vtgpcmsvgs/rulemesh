@@ -43,6 +43,7 @@ def check_airport_groups(lines: list[str]) -> list[str]:
                 return ["include-other-group 存在未定义的策略组引用。"]
     return []
 REGIONAL = {
+    "region/hk/hk_securities": "hk",
     "region/tw/crypto_tw": "tw", "region/jp/domains_to_jp": "jp",
     "region/hk/hk_brokers": "hk", "region/hk/hk_user_priority": "hk",
     "region/hk/hk_securities_aggressive": "hk",
@@ -51,6 +52,7 @@ REGIONAL = {
     "region/us/microsoft_store_us": "us",
 }
 PROVIDER_IDS = {
+    "hk_securities": "region/hk/hk_securities",
     "tw_crypto": "region/tw/crypto_tw", "jp_domains": "region/jp/domains_to_jp",
     "hk_brokers": "region/hk/hk_brokers", "hk_user_priority": "region/hk/hk_user_priority",
     "hk_securities_aggressive": "region/hk/hk_securities_aggressive",
@@ -61,7 +63,7 @@ PROVIDER_IDS = {
 
 
 def region_filters(region: str, surge: bool) -> frozenset[str]:
-    tags = {"tw": ("🇨🇳", "台湾", "Taiwan", "TW"), "jp": ("🇯🇵", "日本", "Japan", "JP"), "hk": ("🇭🇰", "香港", "Hong Kong", "HK"), "us": ("🇺🇸", "美国", "United States", "US")}[region]
+    tags = {"kr": ("🇰🇷", "韩国", "Korea", "KR"), "sg": ("🇸🇬", "新加坡", "Singapore", "SG"), "tw": ("🇨🇳", "台湾", "Taiwan", "TW"), "jp": ("🇯🇵", "日本", "Japan", "JP"), "hk": ("🇭🇰", "香港", "Hong Kong", "HK"), "us": ("🇺🇸", "美国", "United States", "US")}[region]
     if surge:
         simple = "(" + "|".join(f"({tag})" for tag in tags) + ")"
         return frozenset({simple, METADATA_FILTER[:-3] + ".*" + simple + ".*$"})
@@ -134,11 +136,9 @@ def check(path: Path, lines: list[str]) -> list[str]:
     require(bool(auto_groups), "缺少全地区自动组。")
     if not auto_groups:
         return errors
-    auto = auto_groups[0]
+    # 子组可以排在全地区组前；不得依赖文件中的首个自动组。
+    auto = "♻️ 自动选择" if "♻️ 自动选择" in auto_groups else auto_groups[0]
     business = service.MARKER in lines
-    if business:
-        # 新业务选择层由 check_service_groups 负责完整结构校验；旧版地区直出约束不再适用。
-        return list(dict.fromkeys(service.check(path, lines, groups, rules, auto)))
     if business:
         errors.extend(service.check(path, lines, groups, rules, auto))
     errors.extend(notion.check(path, lines, auto))
@@ -187,7 +187,8 @@ def check(path: Path, lines: list[str]) -> list[str]:
         require(dns._group_has_us_semantics(parts[2], groups, filters), f"{identifier} 必须保留已登记地区出口。")
         if identifier.startswith("region/") and identifier != "region/us/microsoft_store_us":
             require(position < selected["google"][0][0], "地区必需入口必须早于 Google 完整 IP 地址空间。")
-    require(all(key in fixed_positions for key in ("region/tw/crypto_tw", "region/jp/domains_to_jp", "region/hk/hk_brokers", "region/us/microsoft_store_us")), "缺少 Crypto、日本、券商或 Store 美国专项规则。")
+    broker_key = "region/hk/hk_securities" if business else "region/hk/hk_brokers"
+    require(all(key in fixed_positions for key in ("region/tw/crypto_tw", "region/jp/domains_to_jp", broker_key, "region/us/microsoft_store_us")), "缺少 Crypto、日本、券商或 Store 美国专项规则。")
     for key in ("douyin", "social", "ips5", "wps"):
         position, parts = selected[key][0]
         require(parts[2] == "DIRECT", f"{key} 必须直连。")
@@ -300,9 +301,11 @@ def check(path: Path, lines: list[str]) -> list[str]:
         for name, group in parsed_groups.items():
             if group.group_type == "url-test":
                 used = any(name in service.default_chain(parts[2], groups) for _, parts in rules if len(parts) >= 3) if business else any(name in parts[2:3] for _, parts in rules)
+                if business:
+                    used |= any(name in groups[s].members for s in service.FIXED if s in groups)
                 require(group.interval == health_interval and group.lazy == ('false' if used else 'true'), "自动组须采用客户端检测周期，实际业务组主动检测，备用地区组按需检测。")
-                us_engine = service.default_target(us, groups) if business else us
-                require(group.tolerance == ("100" if name == us_engine else "50") if name in {us_engine, auto} else True, "全地区/美国组切换容差应为 50/100。")
+                is_us = groups[name].filter_text in region_filters("us", False)
+                require(group.tolerance == ("100" if is_us else "50"), "全地区/美国组切换容差应为 50/100。")
         # 只检查字段和值，不在错误中输出机场标识、订阅地址或 header。
         active = False
         provider_count = direct_count = 0

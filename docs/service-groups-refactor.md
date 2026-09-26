@@ -13,7 +13,7 @@
 | 项目 | 附件中的事实 | RuleMesh 的采用方式 |
 | --- | --- | --- |
 | 节点协议 | 141 个节点全部为 AnyTLS；空闲检查及超时均为 30 秒，最少空闲会话为 0 | 会话复用可能减少连续连接开销；是否更快仍取决于线路、核心和服务端。不强改其他机场协议或统一套用节点参数 |
-| 选择方式 | 22 个组全部是 `select`，没有 `url-test` 或 `fallback` | 学习独立业务入口；选择层复用现有自动引擎，新增七组不增加周期测速任务 |
+| 选择方式 | 22 个组全部是 `select`，没有 `url-test` 或 `fallback` | 学习独立业务入口；选择层复用现有自动引擎，选择层不直接测速；固定地区业务按 provider 建立自动子组 |
 | DNS | 三个机场自有 DoH，节点 bootstrap 指向本地 DNS 监听地址，启用 hosts | 可能依赖机场节点与解析的配套设计；不复制私人端点或回环。保留国内默认、独立节点 bootstrap、AI 美国解析 |
 | Fake IP | 配了范围和过滤表，但没有显式 `enhanced-mode: fake-ip` | 不能仅凭范围判断实际启用。RuleMesh 继续明确启用 fake-ip、ARC 与缓存持久化 |
 | UDP 与 TFO | 全部节点 UDP 开启、TFO 关闭 | 保留 UDP/QUIC；TFO 不是这份附件速度优势的证据，不盲目添加 |
@@ -22,7 +22,7 @@
 
 用户的使用体验说明这家机场值得作为线路候选；附件本身无法区分线路带宽、拥塞、路由质量与配置参数的贡献。没有同节点、同时间窗口的对照测试，不能声称重构后已获得同样吞吐。
 
-## 七个入口如何工作
+## 八个入口如何工作
 
 ### 2026-09-26 业务出口调整
 
@@ -32,37 +32,39 @@ AI、Crypto、Microsoft 同样按 provider 拆分自动测速：AI 与 Microsoft
 
 安卓不再维护独立的“Google 下载稳定”策略组，Google 专属进程、Google 规则集和对应 DNS 统一使用 Google 业务组。
 
-界面前部依次展示 Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple。上层 `select` 决定业务使用哪个出口，下层继续承担自动选点和机场手动选择。原机场组保持可见，订阅与过滤器保留；不因为增加业务入口再建立七套自动检测。
+界面前部展示 Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple、香港券商。上层 `select` 决定业务使用哪个出口，下层继续承担自动选点和机场手动选择。原机场组保持可见，订阅与过滤器保留；固定地区业务的 provider 子组各自自动测速，选择层不直接测速。
 
 | 业务组 | 默认选择 | 可手动调整及边界 |
 | --- | --- | --- |
-| Google | 仅显示全部机场来源中的香港节点 | Google Play 与三个专属进程仍接 Google，保留 QUIC；选择层不再混入自动组、其他地区或 DIRECT |
-| YouTube | 仅显示全部机场来源中的香港节点 | 可独立选择香港节点；专用规则早于 Google 完整 IP 和全球媒体，gvt1/gvt2、ggpht 共享资源仍归 Google |
-| AI | 美国自动 | 可从全部现有机场中手选经过美国过滤的节点；不提供其他地区或 DIRECT，Google AI 仍是第一条有效规则 |
-| Telegram | 仅显示全部机场来源中的香港节点 | 可独立选择香港节点，不混入其他地区或 DIRECT |
-| Crypto | 台湾自动 | 台湾过滤后的手动节点；交易所、Polymarket 与 Polygon/BSC RPC 共用；日本精确入口仍优先 |
-| Microsoft | 美国节点 + DIRECT | 仅显示全部机场来源中的美国节点，并保留 DIRECT；Store 美国、已有 Outlook 直连与更新拒绝仍在前面 |
-| Apple | 普通配置 DIRECT；工作配置沿用已有更新入口的自动出口 | Surge Personal 保持既有 Apple 范围；两份 FlClash 在更新拒绝之后增加 Apple 服务入口。工作不增加 Apple 全域放行，FINAL 仍 REJECT |
+| Google | 香港自动 | 六地区可选；Google Play 与三个专属进程接 Google，保留 QUIC |
+| YouTube | 香港自动 | 六地区可选；专用规则早于 Google，共享 Play CDN 仍归 Google |
+| AI | 首个 provider 的美国自动组 | 每个 provider 一个美国自动子组；不提供其他地区或 DIRECT |
+| Telegram | 香港自动 | 六地区可选 |
+| Crypto | 首个 provider 的台湾自动组 | 每个 provider 一个台湾自动子组；日本精确入口仍优先 |
+| Microsoft | 首个 provider 的美国自动组 | 每个 provider 一个美国自动子组，无 DIRECT；Store、Outlook 与更新拒绝等前置例外保留 |
+| Apple | DIRECT | 另有六地区选项；FlClash 更新拒绝优先，工作仅承接原更新入口，不增加全域白名单 |
+| 香港券商 | 首个 provider 的香港自动组 | 每个 provider 一个香港自动子组；统一规则唯一调用，补齐尊嘉品牌兜底 |
+
 
 `select` 的第一项只是新组初始默认值；客户端保存过的选择仍可能覆盖默认。手动切换会影响新连接，已有长连接不保证立即迁移。Google 或 YouTube 的共享账号/CDN 不能做到按页面完全隔离；不把共享 Google IP 强行划给 YouTube。
 
 ## DNS 必须与业务选择相符
 
 - Mihomo AI 的两个海外 DoH 改为 `#AI`，让手动选定的美国节点同时承接业务和 DNS。节点域名继续走国内 `proxy-server-nameserver`，避免依赖循环。
-- 安卓按 AI → YouTube → Google 的顺序维护三个精确 rule-set policy。YouTube 与 Google 分别使用 `#YouTube`、`#Google`，并跟随各自的香港节点选择组；DNS 不再指向已移除的下载稳定 fallback。
+- 安卓按 AI → YouTube → Google 的顺序维护三个精确 rule-set policy。YouTube 与 Google 分别使用 `#YouTube`、`#Google`，并跟随各自的六地区选择组；DNS 不再指向已移除的下载稳定 fallback。
 - 桌面与公开 Mihomo 仍只有 AI 专项 policy；普通业务默认国内双 DoH。Surge 继续 `[Host]` 的 AI 解析与 `ai_dns_us → AI` 出站，不伪造 Mihomo DNS 字段。
 - 国内 DNS、节点 bootstrap、Raw 下载例外、地区限制及 Notion 香港规则均保留；Surge 公司/家庭版的路由与 DNS 保持一致。
 
 ## 性能与后续优先级
 
-1. 本轮的可证明收益是业务选择解耦、避免 YouTube 遮蔽 Play，以及新增界面组不增加周期测速。现有 TCP 并发、统一延迟、缓存、主动检测和切换容差已经比附件更完整，保留这些能力。
+1. 本轮的可证明收益是业务选择解耦、避免 YouTube 遮蔽 Play，以及选择层不直接测速；按 provider 的自动子组需要周期探测。现有 TCP 并发、统一延迟、缓存、主动检测和切换容差已经比附件更完整，保留这些能力。
 2. 真正的带宽优化应比较相同业务的首字节、连续下载吞吐、失败率、重试与出口稳定性，至少覆盖忙时和闲时；204 延迟只反映轻量连接，不能替代 YouTube 吞吐或 AI 流式响应表现。
 3. 如果用户后续提供可持续更新的 naiixi 订阅，可把它作为现有多机场体系的一员；本次不从静态附件推测订阅地址，也不复制其节点凭证到公开仓库。
-4. 不按一次测速删除机场、不把所有节点强制改成 AnyTLS、不激进关闭 QUIC，也不为每项业务新增一套周期探测。Notion 复用香港自动选择，避免额外周期探测。
+4. 不按一次测速删除机场、不把所有节点强制改成 AnyTLS、不激进关闭 QUIC，保持固定业务按 provider 检测和备用地区按需检测。Notion 复用香港自动选择，避免额外周期探测。
 
 ## 检查、发布与回滚
 
-`check_service_groups.py` 接入性能基线，检查七组唯一且可见、候选图无环、所有 AI/Crypto 手动出口地区正确、业务规则实际接入、YouTube 顺序和 Apple 白名单边界。常用业务检查覆盖 TCP/UDP 首条命中；测试专门拒绝 YouTube 抢走 Play CDN、AI DNS 绕过业务组，以及选择层误改自动测速。
+`check_service_groups.py` 接入性能基线，检查八组唯一且可见、候选图无环、四个固定地区业务的所有 provider 子组来源和地区正确、业务规则实际接入、YouTube 顺序和 Apple 白名单边界。常用业务检查覆盖 TCP/UDP 首条命中；测试专门拒绝 YouTube 抢走 Play CDN、AI DNS 绕过业务组，以及选择层误改自动测速。
 
 本轮发现历史安卓夹具通过字符串替换模板生成，业务组改名后替换可以静默不命中；已更新为先断言唯一锚点，再构造 Google/YouTube 选择层、DNS 和 Apple 更新拒绝顺序。安卓结构判断复用既有能力标记，不根据文件名片段猜测。负例必须确认实际发生变更，避免用原本不合法的夹具掩盖缺陷。
 
@@ -73,3 +75,11 @@ AI、Crypto、Microsoft 同样按 provider 拆分自动测速：AI 与 Microsoft
 依据：[Mihomo AnyTLS](https://wiki.metacubex.one/config/proxies/anytls/)、[代理组与过滤器](https://wiki.metacubex.one/config/proxy-groups/)、[手动选择](https://wiki.metacubex.one/config/proxy-groups/select/)、[DNS](https://wiki.metacubex.one/config/dns/)、[Surge select](https://manual.nssurge.com/policy-groups/select.html)。
 
 本轮离线核心验证使用 Mihomo v1.19.31，使用临时目录内的合成文件 provider 和本地规则产物，只执行 `-t`，不启动监听、TUN 或探测私人机场。三份 Mihomo 配置均通过；此结果不代表其他版本或生产设备已加载。当前桌面运行配置的 141 个节点、22 个组及规则与附件体系一致，HTTP 控制器未配置；未切换它，也未测得新版 RuleMesh 的生产 DNS 出口或吞吐。Surge 官方手册本次网络访问返回 HTTP 错误，采用现有已用 select / policy-path / 过滤器语义并做结构检查，Mac 原生加载仍待设备验证。
+
+## 2026-09-26 全量失败根因与防复发
+
+39 项失败包含有效安全负例：业务标记曾触发提前返回，使 DNS、规则顺序、地区与最终兜底检查失效。现已移除该捷径，业务结构检查与性能基线累计执行；旧的“直接手选节点”断言改为 provider 自动子组断言，其他负例继续保留。
+
+公开模板必须使用占位 provider，Surge 子组逐字复用既有机场手动组 policy-path，不能用机场别名拼接路径。两份 FlClash 子组周期分别为 300/600 秒，固定业务所有子组主动检测；全地区及其他地区容差 50，美国 100。六个地区组隐藏，仍可由业务选择及规则引用。
+
+统一券商规则只能调用一次，并清理被替代的孤立 provider；旧源规则和派生产物继续保留。`hk_user_priority` 中的尊嘉兜底由统一券商入口前置覆盖，不把 GoDaddy 和 Supado 合并进券商规则。回归测试保护唯一性、完整 provider 覆盖、准确订阅来源、地区正负例、隐藏状态和 DNS/最终兜底保护。

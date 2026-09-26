@@ -204,13 +204,9 @@ proxy-groups:
     type: select
     hidden: false
     proxies:
-      - "🇺🇸 美国-自动选择"
-    use:
-      - provider_a
-      - provider_b
-      - provider_c
-    filter: "(?i)🇺🇸|美国|united states|\\bus\\b"
-    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
+      - "AI-provider_a"
+      - "AI-provider_b"
+      - "AI-provider_c"
 
   - name: "Telegram"
     type: select
@@ -227,25 +223,17 @@ proxy-groups:
     type: select
     hidden: false
     proxies:
-      - "🇨🇳 台湾-自动选择"
-    use:
-      - provider_a
-      - provider_b
-      - provider_c
-    filter: "(?i)🇨🇳|台湾|taiwan|\\btw\\b"
-    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
+      - "Crypto-provider_a"
+      - "Crypto-provider_b"
+      - "Crypto-provider_c"
 
   - name: "Microsoft"
     type: select
     hidden: false
     proxies:
-      - "DIRECT"
-    use:
-      - provider_a
-      - provider_b
-      - provider_c
-    filter: "(?i)🇺🇸|美国|united states|\\bus\\b"
-    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
+      - "Microsoft-provider_a"
+      - "Microsoft-provider_b"
+      - "Microsoft-provider_c"
 
   - name: "Apple"
     type: select
@@ -263,12 +251,9 @@ proxy-groups:
     type: select
     hidden: false
     proxies:
-      - "🇭🇰 香港-自动选择"
-      - "🇨🇳 台湾-自动选择"
-      - "🇯🇵 日本-自动选择"
-      - "🇰🇷 韩国-自动选择"
-      - "🇸🇬 新加坡-自动选择"
-      - "🇺🇸 美国-自动选择"
+      - "香港券商-provider_a"
+      - "香港券商-provider_b"
+      - "香港券商-provider_c"
 
   - name: "🚀 节点选择"
     type: select
@@ -309,7 +294,7 @@ proxy-groups:
     hidden: true
     url: "https://www.google.com/generate_204"
     interval: 300
-    tolerance: 100
+    tolerance: 50
     timeout: 5000
     lazy: false
     use:
@@ -324,9 +309,9 @@ proxy-groups:
     hidden: true
     url: "https://www.google.com/generate_204"
     interval: 300
-    tolerance: 100
+    tolerance: 50
     timeout: 5000
-    lazy: false
+    lazy: true
     use:
       - provider_a
       - provider_b
@@ -339,7 +324,7 @@ proxy-groups:
     hidden: true
     url: "https://www.google.com/generate_204"
     interval: 300
-    tolerance: 150
+    tolerance: 50
     timeout: 5000
     lazy: false
     use:
@@ -354,14 +339,14 @@ proxy-groups:
     hidden: true
     url: "https://www.google.com/generate_204"
     interval: 300
-    tolerance: 150
+    tolerance: 50
     timeout: 5000
     lazy: true
     use:
       - provider_a
       - provider_b
       - provider_c
-    filter: "(?i)🇰🇷|韩|korea|\\bkr\\b"
+    filter: "(?i)🇰🇷|韩国|korea|\\bkr\\b"
     exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
 
   - name: "🇸🇬 新加坡-自动选择"
@@ -369,7 +354,7 @@ proxy-groups:
     hidden: true
     url: "https://www.google.com/generate_204"
     interval: 300
-    tolerance: 150
+    tolerance: 50
     timeout: 5000
     lazy: true
     use:
@@ -392,6 +377,162 @@ proxy-groups:
       - provider_b
       - provider_c
     filter: "(?i)🇺🇸|美国|united states|\\bus\\b"
+    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
+
+  - name: "AI-provider_a"
+    type: url-test
+    hidden: true
+    url: "https://www.google.com/generate_204"
+    interval: 300
+    tolerance: 100
+    timeout: 5000
+    lazy: false
+    use:
+      - provider_a
+    filter: "(?i)🇺🇸|美国|united states|\\bus\\b"
+    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
+
+  - name: "AI-provider_b"
+    type: url-test
+    hidden: true
+    url: "https://www.google.com/generate_204"
+    interval: 300
+    tolerance: 100
+    timeout: 5000
+    lazy: false
+    use:
+      - provider_b
+    filter: "(?i)🇺🇸|美国|united states|\\bus\\b"
+    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
+
+  - name: "AI-provider_c"
+    type: url-test
+    hidden: true
+    url: "https://www.google.com/generate_204"
+    interval: 300
+    tolerance: 100
+    timeout: 5000
+    lazy: false
+    use:
+      - provider_c
+    filter: "(?i)🇺🇸|美国|united states|\\bus\\b"
+    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
+
+  - name: "Crypto-provider_a"
+    type: url-test
+    hidden: true
+    url: "https://www.google.com/generate_204"
+    interval: 300
+    tolerance: 50
+    timeout: 5000
+    lazy: false
+    use:
+      - provider_a
+    filter: "(?i)🇨🇳|台湾|taiwan|\\btw\\b"
+    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
+
+  - name: "Crypto-provider_b"
+    type: url-test
+    hidden: true
+    url: "https://www.google.com/generate_204"
+    interval: 300
+    tolerance: 50
+    timeout: 5000
+    lazy: false
+    use:
+      - provider_b
+    filter: "(?i)🇨🇳|台湾|taiwan|\\btw\\b"
+    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
+
+  - name: "Crypto-provider_c"
+    type: url-test
+    hidden: true
+    url: "https://www.google.com/generate_204"
+    interval: 300
+    tolerance: 50
+    timeout: 5000
+    lazy: false
+    use:
+      - provider_c
+    filter: "(?i)🇨🇳|台湾|taiwan|\\btw\\b"
+    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
+
+  - name: "Microsoft-provider_a"
+    type: url-test
+    hidden: true
+    url: "https://www.google.com/generate_204"
+    interval: 300
+    tolerance: 100
+    timeout: 5000
+    lazy: false
+    use:
+      - provider_a
+    filter: "(?i)🇺🇸|美国|united states|\\bus\\b"
+    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
+
+  - name: "Microsoft-provider_b"
+    type: url-test
+    hidden: true
+    url: "https://www.google.com/generate_204"
+    interval: 300
+    tolerance: 100
+    timeout: 5000
+    lazy: false
+    use:
+      - provider_b
+    filter: "(?i)🇺🇸|美国|united states|\\bus\\b"
+    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
+
+  - name: "Microsoft-provider_c"
+    type: url-test
+    hidden: true
+    url: "https://www.google.com/generate_204"
+    interval: 300
+    tolerance: 100
+    timeout: 5000
+    lazy: false
+    use:
+      - provider_c
+    filter: "(?i)🇺🇸|美国|united states|\\bus\\b"
+    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
+
+  - name: "香港券商-provider_a"
+    type: url-test
+    hidden: true
+    url: "https://www.google.com/generate_204"
+    interval: 300
+    tolerance: 50
+    timeout: 5000
+    lazy: false
+    use:
+      - provider_a
+    filter: "(?i)🇭🇰|香港|hong kong|\\bhk\\b"
+    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
+
+  - name: "香港券商-provider_b"
+    type: url-test
+    hidden: true
+    url: "https://www.google.com/generate_204"
+    interval: 300
+    tolerance: 50
+    timeout: 5000
+    lazy: false
+    use:
+      - provider_b
+    filter: "(?i)🇭🇰|香港|hong kong|\\bhk\\b"
+    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
+
+  - name: "香港券商-provider_c"
+    type: url-test
+    hidden: true
+    url: "https://www.google.com/generate_204"
+    interval: 300
+    tolerance: 50
+    timeout: 5000
+    lazy: false
+    use:
+      - provider_c
+    filter: "(?i)🇭🇰|香港|hong kong|\\bhk\\b"
     exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
 
 rule-providers:
@@ -499,15 +640,6 @@ rule-providers:
     format: yaml
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/hk/wps_kdocs.yaml"
     path: ./ruleset/region/hk/wps_kdocs.yaml
-    interval: 86400
-    proxy: "♻️ 自动选择"
-
-  hk_brokers:
-    type: http
-    behavior: classical
-    format: yaml
-    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/hk/hk_brokers.yaml"
-    path: ./ruleset/region/hk/hk_brokers.yaml
     interval: 86400
     proxy: "♻️ 自动选择"
 
@@ -728,7 +860,6 @@ rules:
   - RULE-SET,direct_ips5,DIRECT
   - RULE-SET,jp_domains,🇯🇵 日本-自动选择
   - RULE-SET,tw_crypto,Crypto
-  - RULE-SET,hk_securities,香港券商
   - RULE-SET,hk_securities,香港券商
   - RULE-SET,hk_user_priority,🇭🇰 香港-自动选择
   - RULE-SET,hk_wps_kdocs,DIRECT

@@ -20,7 +20,7 @@ PACKAGES = (
 )
 
 # 安卓券商进程级香港兜底：覆盖硬编码 IP、未登记 API 与静态资源。
-# 这些包名只允许在安卓私有配置中绑定香港自动选择，不得扩散到桌面或 Surge。
+# 这些包名只允许在安卓私有配置中绑定香港券商组，不得扩散到桌面或 Surge。
 BROKER_PACKAGES = (
     "com.tigerbrokers.stock",
     "com.ruifusoft.finance.app",
@@ -49,7 +49,7 @@ def broker_target(rules: list[list[str]]) -> str:
         parts[2]
         for parts in rules
         if len(parts) >= 3
-        and parts[:2] == ["RULE-SET", "android_brokers_aggressive"]
+        and parts[0] == "RULE-SET" and parts[1] in {"hk_securities", "android_brokers_aggressive"}
     ]
     return targets[0] if len(targets) == 1 else ""
 
@@ -106,14 +106,17 @@ def check(path: Path, lines: list[str]) -> list[str]:
     _, health_groups, _ = performance.parse_mihomo(lines)
     stable = groups.get(target)
     if business:
-        require(stable is not None and stable.group_type == "select", "安卓 Google 必须使用香港节点选择组。")
-        if stable:
-            require(stable.filter_text and "香港" in stable.filter_text and not stable.members, "安卓 Google 只能展示香港机场节点，不能混入其他地区或 DIRECT。")
-            require(stable.has_external_source and not stable.has_invalid_external_source and set(stable.source_references) == set(parser._parse_mihomo_proxy_provider_names(lines)), "安卓 Google 必须保留全部机场来源的香港节点。")
-            start = stable.line
-            end = next((i for i in range(start, len(lines)) if lines[i].startswith("  - name:") or re.match(r"^[\w-]+:", lines[i])), len(lines))
-            block = lines[start:end]
-            require(not any(re.match(r"    disable-udp:\s*true", s) for s in block), "Google 香港节点组必须保留 UDP 能力，不能强制 Cronet 回退。")
+        google = groups.get("Google")
+        require(google is not None and google.group_type == "select" and set(google.members) == set(service.REGIONS), "安卓 Google 必须保留六地区选择组。")
+        require(target == next(iter(service.REGIONS)) and stable is not None and stable.group_type == "url-test", "安卓 Google 默认必须使用香港自动组。")
+        for name in ("Google", *service.REGIONS):
+            candidate = groups.get(name)
+            if candidate is None:
+                continue
+            if name != "Google":
+                require(candidate.filter_text in baseline.region_filters(service.REGIONS[name], False) and not candidate.members and candidate.has_external_source and not candidate.has_invalid_external_source and set(candidate.source_references) == set(parser._parse_mihomo_proxy_provider_names(lines)), "安卓 Google 地区过滤器与机场来源必须完整。")
+            end = next((i for i in range(candidate.line, len(lines)) if lines[i].startswith("  - name:") or re.match(r"^[\w-]+:", lines[i])), len(lines))
+            require(not any(re.match(r"    disable-udp:\s*true", s) for s in lines[candidate.line:end]), "Google 必须保留 UDP 能力，不能强制 Cronet 回退。")
     else:
         require(stable is not None and stable.group_type == "fallback", "安卓 Google 必须使用稳定优先的 fallback 组。")
         if stable:
@@ -134,7 +137,7 @@ def check(path: Path, lines: list[str]) -> list[str]:
         broker_group = groups.get(broker)
         hk_filters = baseline.region_filters("hk", False)
         require(
-            len([parts for parts in rules if parts[:2] == ["RULE-SET", "android_brokers_aggressive"]]) == 1,
+            len([parts for parts in rules if parts[0] == "RULE-SET" and parts[1] in {"hk_securities", "android_brokers_aggressive"}]) == 1,
             "安卓券商香港规则集必须保留唯一入口。",
         )
         require(
@@ -192,7 +195,7 @@ def check(path: Path, lines: list[str]) -> list[str]:
             pairs.append((policies[1], "YouTube"))
         for policy, outbound in pairs:
             expected = tuple(f"{endpoint}#{outbound}" for endpoint in ("https://cloudflare-dns.com/dns-query", "https://dns.google/dns-query"))
-            require(policy.nameservers == expected, "Google / YouTube 海外 DoH 必须跟随对应业务选择；默认仍是下载稳定组。")
+            require(policy.nameservers == expected, "Google / YouTube 海外 DoH 必须跟随对应业务选择；默认使用香港自动组。")
     require(not any(re.fullmatch(r'\s*-\s*[\"\']?(android\.clients\.google\.com|clients4\.google\.com)[\"\']?\s*', s) for s in lines),
             "Play API 不能被误当作联网探测主机加入 fake-ip-filter。")
     return list(dict.fromkeys(errors))

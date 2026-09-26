@@ -18,6 +18,9 @@ class AndroidStabilityTests(unittest.TestCase):
         text = text.replace("interval: 300", "interval: 600")
         text = text.replace("\n", "\n" + android.MARKER + "\n", 1)
         text += "\n# PRIVATE_SUBSCRIPTION_DIRECT_START\n# PRIVATE_SUBSCRIPTION_DIRECT_END\n"
+        broker_rule = '  - RULE-SET,hk_securities,香港券商\n'
+        self.assertEqual(text.count(broker_rule), 1)
+        text = text.replace(broker_rule, broker_rule + ''.join(f'  - PROCESS-NAME,{p},香港券商\n' for p in android.BROKER_PACKAGES))
         # 业务层已由 Google/YouTube 香港节点筛选组承接；夹具只补安卓专属规则。
         for name in ("Google", "YouTube"):
             anchor = f'  - name: "{name}"\n    type: select\n    hidden: false\n'
@@ -153,6 +156,15 @@ class AndroidStabilityTests(unittest.TestCase):
         lines = private.read_text(encoding="utf-8").splitlines()
         self.assertEqual(baseline.check(private, lines), [])
         self.assertEqual(android.check(private, lines), [])
+
+    def test_unified_broker_process_guards_cannot_all_disappear(self):
+        path, text = self.fixture()
+        self.assertEqual(android.check(path, text.splitlines()), [])
+        changed = text
+        for package in android.BROKER_PACKAGES:
+            changed = changed.replace(f'  - PROCESS-NAME,{package},香港券商\n', '')
+        self.assertNotEqual(changed, text)
+        self.assertTrue(any('逐项保留' in e for e in android.check(path, changed.splitlines())))
 
     def test_google_download_domains_remain_in_existing_public_asset(self):
         compiled = build_rules.build_source(ROOT / "rules/region/hk/google_hk.list").outputs["surge_rules"]

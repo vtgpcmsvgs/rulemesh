@@ -99,7 +99,7 @@
   {"service":"Notion","domain":"msgstore.www.notion.so","expected":"hk_notion"},
   {"service":"GoDaddy","domain":"www.godaddy.com","expected":"hk_user_priority"},
   {"service":"GoDaddy","domain":"img.godaddy-cdn.com","expected":"hk_user_priority"},
-  {"service":"尊嘉证券","domain":"api.zvsthk.example","expected":"hk_user_priority"},
+  {"service":"尊嘉证券","domain":"api.zvsthk.example","expected":"hk_securities"},
   {"service":"Supado","domain":"supado.com","expected":"hk_user_priority"},
   {"service":"Supado","domain":"portal.supado.com","expected":"hk_user_priority"},
   {"service":"Apple","domain":"www.apple.com","expected":"direct_apple"},

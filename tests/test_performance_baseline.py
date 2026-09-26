@@ -233,7 +233,7 @@ if ($taskLines.Count -ne 2 -or $taskLines[0] -ne '# test' -or $taskLines[1] -ne 
             "gemini.google.com": "AI", "notebooklm.google": "AI",
             "generativelanguage.googleapis.com": "AI",
             "www.binance.com": "Crypto", "polymarket.com": "Crypto",
-            "opinion.trade": "🇯🇵 日本-自动选择", "futuhk.com": "🇭🇰 香港-自动选择",
+            "opinion.trade": "🇯🇵 日本-自动选择", "futuhk.com": "香港券商",
             "www.google.com": "Google", "www.youtube.com": "YouTube",
         }
         for domain, expected in cases.items():

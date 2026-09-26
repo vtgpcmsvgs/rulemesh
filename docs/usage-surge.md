@@ -18,7 +18,7 @@
 3. 日本明确访问例外、Crypto 台湾、香港券商与 Personal 香港证券。
 
 香港券商统一使用“香港券商”策略组；Google、YouTube、Telegram、Apple 可从六个地区自动选择中切换。地区自动组隐藏在界面中，仅由业务组调用。AI、Crypto、Microsoft 与香港券商均按 provider 拆分自动测速。
-4. Google、YouTube、Telegram 仅显示香港节点；Microsoft 仅显示美国节点并保留 DIRECT，Google 保留官方完整地址空间。
+4. Google、YouTube、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个隐藏自动组；Apple 另保留 DIRECT。AI 与 Microsoft 按 provider 自动选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，固定地区业务不提供 DIRECT。Google 保留官方完整地址空间。
 5. Personal 精选规则与既有拒绝规则；Apple / Outlook 直连及 Microsoft Store 优先入口保持各自边界。
 6. 其他精确业务、GitHub SSH/Raw/Core、Polygon/BSC RPC、订阅端点与 DNS 出口。
 7. LAN、系统时间、阿里云 TCP/22 和其他国内直连。
@@ -26,7 +26,7 @@
 
 命中普通海外规则时使用全地区 smart 组，未命中规则的 `FINAL` 使用 DIRECT；AI 美国、Crypto/RPC 台湾、`opinion.trade` 日本、券商香港是明确例外。地区组仍可用于手动选择。AWS IP 规则和链式 SOCKS5 规则仅保留仓库源文件与产物，配置不再调用。
 
-`global_media` 承接 X / Twitter 和媒体服务；Polymarket 已移入 Crypto 台湾。WPS/金山文档按 2026-09-18 修订统一 DIRECT，继续使用默认国内 DNS，Store 专项固定美国以满足地区 IP 要求；通用 Microsoft 保留代理；Notion 在 Google 广谱前使用香港自动选择，默认国内 DNS 保留，详见 [Notion 网页优化](notion-network-optimization.md)。GoDaddy、尊嘉证券与 supado.com 由香港优先规则集承接。国内 AI 由 `ai_cn_direct` 承接，不扩入海外 AI。AI 仅使用明确域名，详见[出口修订](scoped-egress-repair.md)。
+`global_media` 承接 X / Twitter 和媒体服务；Polymarket 已移入 Crypto 台湾。WPS/金山文档按 2026-09-18 修订统一 DIRECT，继续使用默认国内 DNS，Store 专项固定美国以满足地区 IP 要求；通用 Microsoft 保留代理；Notion 在 Google 广谱前使用香港自动选择，默认国内 DNS 保留，详见 [Notion 网页优化](notion-network-optimization.md)。GoDaddy 与 supado.com 由香港优先规则集承接；尊嘉证券优先命中统一香港券商规则集。国内 AI 由 `ai_cn_direct` 承接，不扩入海外 AI。AI 仅使用明确域名，详见[出口修订](scoped-egress-repair.md)。
 
 Surge 不再调用阿里设备代理或整设备代理，也不按 DOH/DOH3/DOQ 协议把所有解析器送海外。国内 DNS 精确入口前置直连，海外解析端点按既有域名/IP 规则处理。Personal 的爱思和 Apple 下载入口使用国内默认 DNS；AI、GitHub Raw 和节点自举各自保留已登记例外。
 
@@ -64,6 +64,6 @@ GitHub Raw 继续保留独立海外解析入口 `raw.githubusercontent.com = ser
 
 ## 业务组选择（2026-09-25）
 
-Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple 作为可见 select 入口；Google/YouTube/Telegram 仅展示香港节点，Microsoft 仅展示美国节点并保留 DIRECT。AI 仅提供美国候选，Crypto 仅台湾候选；ai_dns_us 与 AI 共用出口。YouTube 前置独立分流，Google 保留共享下载域和完整 IP。Apple Personal 默认 DIRECT，工作只沿用既有更新白名单，最终仍 REJECT。
+Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple、香港券商 作为可见 select 入口；Google、YouTube、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个隐藏自动组；Apple 另保留 DIRECT。AI 与 Microsoft 按 provider 自动选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，固定地区业务不提供 DIRECT。AI 仅提供美国候选，Crypto 仅台湾候选；ai_dns_us 与 AI 共用出口。YouTube 前置独立分流，Google 保留共享下载域和完整 IP。Apple Personal 默认 DIRECT，工作只沿用既有更新白名单，最终仍 REJECT。
 
 原机场手动组、节点 bootstrap、香港 Notion 规则和 Raw DNS 例外保留。导入后核对实际选择与 DNS 出口；参见 [完整说明](service-groups-refactor.md)。

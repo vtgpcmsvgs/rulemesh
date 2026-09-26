@@ -11,7 +11,7 @@
 1. AI（含 Google AI）第一条规则固定美国。
 2. 抖音和新增微信、小红书精选入口前置 DIRECT，不增加整个腾讯或中国通用白名单。
 3. 日本明确访问例外、Crypto 台湾、香港券商香港先于 Google 通用入口。
-4. WPS 按 2026-09-18 修订统一直连，Store 专项固定美国；Google、YouTube、Telegram 仅展示香港节点，Microsoft 仅展示美国节点并保留 DIRECT。
+4. WPS 按 2026-09-18 修订统一直连，Store 专项固定美国；Google、YouTube、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个隐藏自动组；Apple 另保留 DIRECT。AI 与 Microsoft 按 provider 自动选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，固定地区业务不提供 DIRECT。
 5. 保留既有拒绝、设备条件、GitHub SSH/Raw/Core、1Password、订阅端点、Polygon/BSC RPC、DNS、LAN、系统时间和指定直连。
 6. 其余连接最终 `FINAL,REJECT`。
 
@@ -47,4 +47,4 @@ Surge Enhanced Mode 由客户端启用，profile 不写 dns-mode；保留 localh
 
 ## 2026-09-25 可见业务入口
 
-工作配置展示七个 select，只替换已放行业务的策略目标。YouTube 从原 Google 覆盖中提取专用域名并前置；Apple 仅承接原 macOS 更新入口，不接入 Personal 的 Apple 全域规则。更新拒绝、设备条件、GitHub 观察及 FINAL,REJECT 保持，DNS 变更不授予额外放行。详见 [业务组说明](service-groups-refactor.md)。
+工作配置展示八个 select，只替换已放行业务的策略目标。YouTube 从原 Google 覆盖中提取专用域名并前置；Apple 仅承接原 macOS 更新入口，不接入 Personal 的 Apple 全域规则。更新拒绝、设备条件、GitHub 观察及 FINAL,REJECT 保持，DNS 变更不授予额外放行。详见 [业务组说明](service-groups-refactor.md)。

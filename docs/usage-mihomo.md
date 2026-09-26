@@ -15,7 +15,7 @@
 
 香港券商统一由 `hk_securities` 规则集和“香港券商”策略组承接；AI、Crypto、Microsoft、香港券商按 provider 使用独立 `url-test` 组。Google、YouTube、Telegram、Apple 复用六个隐藏的地区自动组。安卓已移除“Google 下载稳定”组，Google 下载相关规则统一进入 Google 业务组。
 
-WPS/金山文档按 2026-09-18 修订统一 DIRECT，继续使用默认国内 DNS，Microsoft Store 专项固定美国，通用 Microsoft 保留代理。Notion 在 Google 广谱前使用 `hk_notion` 规则集并复用香港自动选择，覆盖网页、API、公开页与图片，沿用国内 DNS；详见 [Notion 网页优化](notion-network-optimization.md)。Google、YouTube、Telegram 业务组只显示全部机场来源中的香港节点；Microsoft 业务组只显示美国节点并保留 DIRECT。GoDaddy、尊嘉证券与 supado.com 由香港优先规则集承接。未命中前置规则时 `MATCH,DIRECT`。既有前置 DIRECT/REJECT 规则保持作用；Polymarket 从媒体入口移入 Crypto。AWS IP 与链式代理 provider 和调用均停用，仓库资产继续维护。
+WPS/金山文档按 2026-09-18 修订统一 DIRECT，继续使用默认国内 DNS，Microsoft Store 专项固定美国，通用 Microsoft 保留代理。Notion 在 Google 广谱前使用 `hk_notion` 规则集并复用香港自动选择，覆盖网页、API、公开页与图片，沿用国内 DNS；详见 [Notion 网页优化](notion-network-optimization.md)。Google、YouTube、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个隐藏自动组；Apple 另保留 DIRECT。AI 与 Microsoft 按 provider 自动选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，固定地区业务不提供 DIRECT。GoDaddy 与 supado.com 由香港优先规则集承接；尊嘉证券优先命中统一香港券商规则集。未命中前置规则时 `MATCH,DIRECT`。既有前置 DIRECT/REJECT 规则保持作用；Polymarket 从媒体入口移入 Crypto。AWS IP 与链式代理 provider 和调用均停用，仓库资产继续维护。
 
 `direct_cn_services` 固定第二条，保护国内 DNS 与新华三；AI 仅按审核后的域名边界匹配，避免名称相似网站同时进入美国出口与海外解析。Store 专项在两份 FlClash 中仍晚于既有更新拒绝。见[出口修订](scoped-egress-repair.md)。
 
@@ -33,7 +33,7 @@ GeoIP 使用 `geodata-mode: false`，`geox-url.mmdb` 直接引用 [MetaCubeX cou
 
 ## 客户端与维护
 
-安卓反复出现 Play 下载转圈时，采用 [安卓下载保护](android-network-repair.md)：Google 香港节点选择组、同组海外 DNS、三个 Google 专属进程兜底，并保留 QUIC。实机已发现拒绝 UDP/443 会导致 Cronet 协议错误及下载重试，不能强制其回退 TCP。手机使用全应用 VPN，关闭系统代理与允许绕过，开启 DNS 劫持；这些开关须在 FlClash 界面设置，不能仅导入 YAML。按 [2026-09-16 修订](common-network-reliability.md)，两份 FlClash 停用阿里系强制代理，安卓共享下载管理器按目的地分流，避免其他应用的国内下载绕海外；必须实机完成整包安装，不能只测商店首页。
+安卓反复出现 Play 下载转圈时，采用 [安卓下载保护](android-network-repair.md)：Google 六地区选择组（默认香港自动）、同组海外 DNS、三个 Google 专属进程兜底，并保留 QUIC。实机已发现拒绝 UDP/443 会导致 Cronet 协议错误及下载重试，不能强制其回退 TCP。手机使用全应用 VPN，关闭系统代理与允许绕过，开启 DNS 劫持；这些开关须在 FlClash 界面设置，不能仅导入 YAML。按 [2026-09-16 修订](common-network-reliability.md)，两份 FlClash 停用阿里系强制代理，安卓共享下载管理器按目的地分流，避免其他应用的国内下载绕海外；必须实机完成整包安装，不能只测商店首页。
 
 修改开关或恢复完整备份后，在仪表盘完整停止并启动 VPN，再验证 Android 当前 VPN 已无旧 HTTP 代理；仅核对保存值曾漏掉大智慧行情故障。可使用只读 `tools/check_android_vpn_runtime.py --adb <实际路径>`，然后复测多处原失败组件及应用重开。该运行态检查需要已授权的 USB 手机，不作为离线构建的强制步骤。
 
@@ -50,6 +50,6 @@ GeoIP 使用 `geodata-mode: false`，`geox-url.mmdb` 直接引用 [MetaCubeX cou
 
 ## 业务组选择（2026-09-25）
 
-Google、YouTube、Telegram、AI、Crypto、Microsoft、Apple 可独立选择出口。Google/YouTube/Telegram 只展示香港节点，Microsoft 只展示美国节点并保留 DIRECT；AI/台湾 Crypto 可手选限定地区节点。provider 更新仍 DIRECT。Apple 默认直连，私人 FlClash 保持更新拒绝优先。Store 美国与已有 Outlook 直连例外不受 Microsoft 通用选择覆盖。
+Google、YouTube、Telegram、AI、Crypto、Microsoft、Apple、香港券商 可独立选择出口。Google/YouTube/Telegram/Apple 提供六地区自动组，Microsoft 仅提供按 provider 划分的美国自动组；AI/Crypto 可手选限定地区的 provider 自动组。provider 更新仍 DIRECT。Apple 默认直连，私人 FlClash 保持更新拒绝优先。Store 美国与已有 Outlook 直连例外不受 Microsoft 通用选择覆盖。
 
-AI DoH 使用 #AI；安卓额外按 YouTube → Google 配置各自 DNS 出口，分别跟随香港业务组。桌面不新增视频 DNS policy。新组第一项是初始默认，保存选择可能覆盖；下载速度与 204 延迟须分别验收。详见 [重构说明](service-groups-refactor.md)。
+AI DoH 使用 #AI；安卓额外按 YouTube → Google 配置各自 DNS 出口，分别跟随对应业务组。桌面不新增视频 DNS policy。新组第一项是初始默认，保存选择可能覆盖；下载速度与 204 延迟须分别验收。详见 [重构说明](service-groups-refactor.md)。

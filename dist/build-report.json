@@ -417,8 +417,8 @@
       "category": "region",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 539,
-        "mihomo_classical": 539
+        "surge_rules": 541,
+        "mihomo_classical": 541
       },
       "dist": {
         "surge_rules": "dist/surge/rules/region/hk/hk_securities.list",
