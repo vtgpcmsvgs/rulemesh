@@ -17,7 +17,7 @@ AIRPORT_END = "# AIRPORT_MANUAL_GROUPS_END"
 
 
 def check_airport_groups(lines: list[str]) -> list[str]:
-    """当前私人 Surge 的八个机场手动入口属于用户功能，不能按规则引用数清理。"""
+    """当前私人 Surge 的七个机场手动入口属于用户功能，不能按规则引用数清理。"""
     import check_private_dns_precedence as dns
 
     if lines.count(AIRPORT_START) != 1 or lines.count(AIRPORT_END) != 1:
@@ -28,8 +28,8 @@ def check_airport_groups(lines: list[str]) -> list[str]:
     groups = dns._parse_surge_groups(["[Proxy Group]", *active])
     all_groups = dns._parse_surge_groups(lines)
     owners = [g for g in all_groups.values() if g.group_type == "select" and set(groups).issubset(g.members)]
-    if start >= end or len(active) != 8 or len(groups) != 8 or not owners:
-        return ["必须保留八个独立机场手动组并接入手动选择入口。"]
+    if start >= end or len(active) != 7 or len(groups) != 7 or not owners:
+        return ["必须保留七个独立机场手动组并接入手动选择入口。"]
     if not all(g.group_type == "select" and g.has_external_source and g.filter_text for g in groups.values()):
         return ["机场手动组必须保留订阅来源与过滤条件。"]
     if not all(re.search(r"(?:^|,)\s*hidden=0(?:,|$)", line) for line in active):
