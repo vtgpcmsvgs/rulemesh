@@ -4,9 +4,9 @@
 # chainId: 137
 # 维护策略: 只增不减；保留历史已收录主机名，避免上游日常波动导致覆盖面回撤。
 # 规则展开: 每个主机名同时生成 DOMAIN 与 DOMAIN-WILDCARD，统一收敛为节点选择入口。
-# 本次抓取主机数: 38
-# 累计主机数: 43
-# 同步时间: 2026-09-25T06:27:29+00:00
+# 本次抓取主机数: 39
+# 累计主机数: 44
+# 同步时间: 2026-09-26T06:29:08+00:00
 
 DOMAIN,137.rpc.thirdweb.com
 DOMAIN-WILDCARD,*.137.rpc.thirdweb.com
@@ -76,6 +76,8 @@ DOMAIN,rpc-polygon.blockmachine.io
 DOMAIN-WILDCARD,*.rpc-polygon.blockmachine.io
 DOMAIN,rpc.ankr.com
 DOMAIN-WILDCARD,*.rpc.ankr.com
+DOMAIN,rpc.hostdefi.com
+DOMAIN-WILDCARD,*.rpc.hostdefi.com
 DOMAIN,rpc.nodeflare.app
 DOMAIN-WILDCARD,*.rpc.nodeflare.app
 DOMAIN,rpc.owlracle.info

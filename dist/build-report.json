@@ -235,8 +235,8 @@
       "category": "proxy",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 128,
-        "mihomo_classical": 128
+        "surge_rules": 130,
+        "mihomo_classical": 130
       },
       "dist": {
         "surge_rules": "dist/surge/rules/proxy/bsc_rpc_proxy.list",
@@ -313,8 +313,8 @@
       "category": "proxy",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 86,
-        "mihomo_classical": 86
+        "surge_rules": 88,
+        "mihomo_classical": 88
       },
       "dist": {
         "surge_rules": "dist/surge/rules/proxy/polygon_rpc_proxy.list",

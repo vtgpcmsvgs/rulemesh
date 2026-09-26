@@ -1,5 +1,5 @@
 {
-  "syncToken": "2026-09-25T06:28:33+00:00",
+  "syncToken": "2026-09-26T06:30:08+00:00",
   "source": {
     "api": "RIPEstat announced-prefixes",
     "docUrl": "https://stat.ripe.net/docs/data-api/api-endpoints/announced-prefixes",
@@ -13,17 +13,17 @@
   "perAsn": [
     {
       "asn": 45102,
-      "queryStartTime": "2026-09-11T00:00:00",
-      "queryEndTime": "2026-09-25T00:00:00",
-      "reportedPrefixCount": 1335,
-      "reportedIpv4PrefixCount": 1212,
-      "uniqueIpv4PrefixCount": 1212,
+      "queryStartTime": "2026-09-12T00:00:00",
+      "queryEndTime": "2026-09-26T00:00:00",
+      "reportedPrefixCount": 1334,
+      "reportedIpv4PrefixCount": 1211,
+      "uniqueIpv4PrefixCount": 1211,
       "collapsedIpv4PrefixCount": 200
     },
     {
       "asn": 134963,
-      "queryStartTime": "2026-09-11T00:00:00",
-      "queryEndTime": "2026-09-25T00:00:00",
+      "queryStartTime": "2026-09-12T00:00:00",
+      "queryEndTime": "2026-09-26T00:00:00",
       "reportedPrefixCount": 307,
       "reportedIpv4PrefixCount": 302,
       "uniqueIpv4PrefixCount": 302,
@@ -31,8 +31,8 @@
     },
     {
       "asn": 24429,
-      "queryStartTime": "2026-09-11T00:00:00",
-      "queryEndTime": "2026-09-25T00:00:00",
+      "queryStartTime": "2026-09-12T00:00:00",
+      "queryEndTime": "2026-09-26T00:00:00",
       "reportedPrefixCount": 1127,
       "reportedIpv4PrefixCount": 688,
       "uniqueIpv4PrefixCount": 688,
@@ -41,7 +41,7 @@
   ],
   "collapsedIpv4PrefixCount": 470,
   "uniqueIpv4AddressCount": 5874180,
-  "syncedAt": "2026-09-25T06:28:33+00:00",
+  "syncedAt": "2026-09-26T06:30:08+00:00",
   "ipv4Prefix": [
     "5.181.224.0/23",
     "8.25.82.0/24",

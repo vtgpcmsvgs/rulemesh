@@ -69,6 +69,8 @@ payload:
   - "DOMAIN-WILDCARD,*.rpc-polygon.blockmachine.io"
   - "DOMAIN,rpc.ankr.com"
   - "DOMAIN-WILDCARD,*.rpc.ankr.com"
+  - "DOMAIN,rpc.hostdefi.com"
+  - "DOMAIN-WILDCARD,*.rpc.hostdefi.com"
   - "DOMAIN,rpc.nodeflare.app"
   - "DOMAIN-WILDCARD,*.rpc.nodeflare.app"
   - "DOMAIN,rpc.owlracle.info"
