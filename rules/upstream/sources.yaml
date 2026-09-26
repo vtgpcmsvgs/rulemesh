@@ -182,7 +182,7 @@ sources:
     hk/android_brokers_aggressive.list:
       preferred:
         - repo: self
-          note: 仅供安卓 FlClash 私有配置使用，承接实机观测到的云锋有鱼、腾达/投资助手、致富、艾德、老虎基础设施与卓锐后端，不接入工作白名单或通用 hk_brokers
+          note: 仅供安卓 FlClash 私有配置使用，承接实机观测到的云锋有鱼、腾达（Gigamoney）/投资助手、致富、艾德、老虎基础设施与卓锐后端，不接入工作白名单或通用 hk_brokers
     hk/hk_user_priority.list:
       preferred:
         - repo: self
