@@ -150,6 +150,7 @@ python tools/build_rules.py
 
 - 海外 AI（含 Gemini、AI Studio、NotebookLM）固定美国，第一条规则优先匹配；国内 AI、抖音、小红书、微信直连。
 - Crypto、Polymarket、Polygon/BSC RPC 固定台湾；`opinion.trade` 保留日本访问例外，香港券商与 Personal 证券入口保留香港。明确地区要求优先于测速结果。
+- 香港券商统一使用 `region/hk/hk_securities` 规则集和“香港券商”策略组；AI、Crypto、Microsoft、香港券商按 provider 分组自动测速。Google、YouTube、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个隐藏地区自动组；安卓不再单独维护“Google 下载稳定”策略组。
 - 命中前置规则的其余海外代理业务使用全地区自动组；未命中规则的 FINAL/MATCH 按 2026-09-12 用户要求使用 DIRECT，仅工作白名单保持 REJECT，不再按国家标签限制候选节点；套餐占位项继续过滤。前置 DIRECT/REJECT 行为继续保留。
 - Google、YouTube、Telegram 的业务组只展示全部机场来源中的香港节点；Microsoft 只展示美国节点并保留 DIRECT。google_hk 兼容路径和完整官方 IP 地址空间保留，AI、国内精选及地区必需规则都在它前面。
 - 国内默认双 DoH，AI 单独通过美国解析；Mihomo 开启 TCP 并发，保留 ARC、fake-ip，桌面 300 秒、安卓 600 秒主动测速。默认国内 DNS 后不再重复加载十万条 DNS 专用清单。

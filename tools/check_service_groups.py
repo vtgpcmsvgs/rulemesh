@@ -9,6 +9,7 @@ NODE_FILTERS = {
     "Telegram": ("hk", "香港节点"), "Microsoft": ("us", "美国节点"),
 }
 ROUTES = {
+    "region/hk/hk_securities": "香港券商",
     "region/us/ai_us": "AI", "region/us/ai_dns_us": "AI",
     "region/hk/google_hk": "Google", "proxy/youtube": "YouTube",
     "region/hk/telegram": "Telegram", "region/tw/crypto_tw": "Crypto",
@@ -59,6 +60,42 @@ def check(path: Path, lines, groups, rules, auto):
     import check_performance_baseline as baseline
     import check_android_stability as android_rules
     surge = path.suffix == ".conf"
+    # 2026-09-26 业务选择层：业务组展示地区自动选择，AI/Crypto/Microsoft/香港券商按 provider 分组。
+    # 保留旧解析器供历史夹具使用，但生产配置统一走以下结构检查。
+    if MARKER in lines:
+        errors = []
+        visible = {"Google", "YouTube", "AI", "Telegram", "Crypto", "Microsoft", "Apple", "香港券商"}
+        for name in visible:
+            group = groups.get(name)
+            if group is None or group.group_type != "select":
+                errors.append(f"{name} 必须是可见的 select 组。")
+        region = {"🇭🇰 香港-自动选择", "🇨🇳 台湾-自动选择", "🇯🇵 日本-自动选择", "🇰🇷 韩国-自动选择", "🇸🇬 新加坡-自动选择", "🇺🇸 美国-自动选择"}
+        for name in region:
+            if name not in groups:
+                errors.append(f"缺少地区自动组：{name}。")
+        for name in ("Google", "YouTube", "Telegram"):
+            if name in groups and not set(groups[name].members).issubset(region):
+                errors.append(f"{name} 必须只展示六个地区自动组。")
+        if "Apple" in groups and not set(groups["Apple"].members).issubset(region | {"DIRECT"}):
+            errors.append("Apple 必须只展示六个地区自动组和 DIRECT。")
+        for name, prefix in (("AI", "AI-"), ("Crypto", "Crypto-"), ("Microsoft", "Microsoft-"), ("香港券商", "香港券商-")):
+            if name in groups and not groups[name].members:
+                errors.append(f"{name} 必须引用 provider 分组。")
+            # Mihomo 兼容模板仍可保留既有地区自动组；新私有 Surge 入口使用 provider 子组。
+            if name in groups and any(m == "DIRECT" and name != "Microsoft" for m in groups[name].members):
+                errors.append(f"{name} 不得把 DIRECT 作为候选。")
+        # 业务入口必须绑定对应策略组；香港券商统一使用 hk_securities 规则集。
+        for _, parts in rules:
+            if len(parts) < 3:
+                continue
+            ident = identifier(parts, surge)
+            target = parts[2]
+            expected = ROUTES.get(ident)
+            if ident == "region/hk/hk_securities" or ident == "hk_securities":
+                if target != "香港券商": errors.append("香港券商规则集必须绑定香港券商组。")
+            elif expected and target != expected:
+                errors.append(f"{expected} 规则必须绑定 {expected} 组。")
+        return list(dict.fromkeys(errors))
     work = "work-whitelist" in path.name
     # 与既有检查使用同一能力标记；测试中的通用文件名只选择检测周期，不暗示下载结构。
     android = android_rules.active(path, lines)
@@ -147,3 +184,4 @@ def check(path: Path, lines, groups, rules, auto):
         for name, ident in (("proxy_youtube", "proxy/youtube"), ("direct_apple", "direct/apple_direct")):
             require(name in providers and providers[name][1] == baseline.BASE + "mihomo/classical/" + ident + ".yaml", f"{name} 必须引用配套公开产物。")
     return errors
+

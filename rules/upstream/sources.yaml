@@ -173,6 +173,10 @@ sources:
           note: 参考 WPS 开放平台公开的云文档存储网关根域与 openapi.wps.cn 等官方连接入口
         - repo: Loyalsoldier/surge-rules
           note: 仅用于交叉核对既有 WPS/Kingsoft 专用域名族；客户端仍应先命中本直连规则，再进入 cn_direct
+    hk/hk_securities.list:
+      preferred:
+        - repo: self
+          note: 香港券商统一规则入口，聚合公开券商、港交所参与者与安卓券商后端，客户端统一绑定香港券商策略组
     hk/hk_brokers.list:
       preferred:
         - repo: self

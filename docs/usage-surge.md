@@ -16,6 +16,8 @@
 1. 海外 AI 美国入口，包括 Google AI。
 2. 国内 DNS 与新华三精选直连固定第二条，再调用国内 AI、抖音、微信与小红书。
 3. 日本明确访问例外、Crypto 台湾、香港券商与 Personal 香港证券。
+
+香港券商统一使用“香港券商”策略组；Google、YouTube、Telegram、Apple 可从六个地区自动选择中切换。地区自动组隐藏在界面中，仅由业务组调用。AI、Crypto、Microsoft 与香港券商均按 provider 拆分自动测速。
 4. Google、YouTube、Telegram 仅显示香港节点；Microsoft 仅显示美国节点并保留 DIRECT，Google 保留官方完整地址空间。
 5. Personal 精选规则与既有拒绝规则；Apple / Outlook 直连及 Microsoft Store 优先入口保持各自边界。
 6. 其他精确业务、GitHub SSH/Raw/Core、Polygon/BSC RPC、订阅端点与 DNS 出口。

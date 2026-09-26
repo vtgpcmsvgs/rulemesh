@@ -564,12 +564,16 @@ def validate_mihomo(path: Path, lines: list[str]) -> list[PerformanceFinding]:
             )
 
     hk_provider = rule_providers.get(HK_SECURITIES_RULE_PROVIDER)
-    if hk_provider is None or hk_provider.url != HK_SECURITIES_RULE_URL:
+    hk_provider_url = HK_SECURITIES_RULE_URL
+    if hk_provider is None:
+        hk_provider = rule_providers.get("hk_securities")
+        hk_provider_url = "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/hk/hk_securities.yaml"
+    if hk_provider is None or hk_provider.url != hk_provider_url:
         findings.append(
             PerformanceFinding(
                 path,
                 hk_provider.line if hk_provider else 1,
-                "Mihomo 缺少规范的 hk_securities_aggressive provider。",
+                "Mihomo 缺少规范的 hk_securities provider。",
                 "注册规范的香港证券规则 URL，并保持两份 Mihomo 配置一致。",
             )
         )
@@ -580,7 +584,7 @@ def validate_mihomo(path: Path, lines: list[str]) -> list[PerformanceFinding]:
             for position, (line, parts) in enumerate(rules)
             if len(parts) >= 3
             and parts[0].upper() == "RULE-SET"
-            and parts[1] == HK_SECURITIES_RULE_PROVIDER
+            and parts[1] in {HK_SECURITIES_RULE_PROVIDER, "hk_securities"}
         ),
         None,
     )
@@ -589,7 +593,7 @@ def validate_mihomo(path: Path, lines: list[str]) -> list[PerformanceFinding]:
             PerformanceFinding(
                 path,
                 1,
-                "Mihomo 缺少 hk_securities_aggressive 香港证券规则入口。",
+                "Mihomo 缺少 hk_securities 香港证券规则入口。",
                 "在广告拒绝、中国直连与 MATCH 前加入香港证券 RULE-SET。",
             )
         )
@@ -601,7 +605,7 @@ def validate_mihomo(path: Path, lines: list[str]) -> list[PerformanceFinding]:
                 PerformanceFinding(
                     path,
                     hk_line,
-                    "Mihomo 的 hk_securities_aggressive 未绑定香港组。",
+                    "Mihomo 的 hk_securities 未绑定香港组。",
                     "把香港证券 RULE-SET 恢复到香港自动选择组。",
                 )
             )
@@ -619,7 +623,7 @@ def validate_mihomo(path: Path, lines: list[str]) -> list[PerformanceFinding]:
                     PerformanceFinding(
                         path,
                         hk_line,
-                        f"Mihomo 的 hk_securities_aggressive 必须早于 {anchor}。",
+                        f"Mihomo 的 hk_securities 必须早于 {anchor}。",
                         "前置香港证券规则，避免广告拒绝或中国直连抢先命中。",
                     )
                 )
@@ -682,3 +686,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+

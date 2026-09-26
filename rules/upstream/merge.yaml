@@ -295,6 +295,18 @@ merge_plan:
       - DNS 保持已批准的 2026-09-09 默认国内双 DoH 基线，Mihomo 不增加本业务专项 policy；按 2026-09-18 用户要求统一直连，历史路径与 provider 名仅作兼容，不恢复海外解析例外
       - 不使用 DOMAIN-KEYWORD,wps，避免误伤 jwpsrv.com 等无关域名；ksyun.com 是为旧文件和对象存储完整性接受的共享基础设施边界
 
+  - id: hk-securities
+    target: rules/region/hk/hk_securities.list
+    purpose: 香港券商统一规则入口
+    strategy:
+      - include_hk_brokers
+      - include_hkex_and_tiger_securities
+      - include_android_broker_backends
+      - bind_to_hk_securities_group
+    notes:
+      - 公开客户端与私有客户端统一调用此规则集；子规则保留独立维护与来源登记
+      - 规则集只承接香港券商，不扩展到通用金融或其他地区业务
+
   - id: hk-brokers
     target: rules/region/hk/hk_brokers.list
     purpose: 复星证券、致富证券、辉立证券与富途走香港区域策略

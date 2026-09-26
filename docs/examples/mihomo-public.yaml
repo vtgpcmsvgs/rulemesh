@@ -178,26 +178,27 @@ proxy-providers:
 
 proxy-groups:
 # RuleMesh 业务策略组：2026-09-25
-  # 七个可见业务入口；select 复用既有 provider，不增加周期测速任务。
   - name: "Google"
     type: select
     hidden: false
-    use:
-      - provider_a
-      - provider_b
-      - provider_c
-    filter: "(?i)🇭🇰|香港|hong kong|\\bhk\\b"
-    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
+    proxies:
+      - "🇭🇰 香港-自动选择"
+      - "🇨🇳 台湾-自动选择"
+      - "🇯🇵 日本-自动选择"
+      - "🇰🇷 韩国-自动选择"
+      - "🇸🇬 新加坡-自动选择"
+      - "🇺🇸 美国-自动选择"
 
   - name: "YouTube"
     type: select
     hidden: false
-    use:
-      - provider_a
-      - provider_b
-      - provider_c
-    filter: "(?i)🇭🇰|香港|hong kong|\\bhk\\b"
-    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
+    proxies:
+      - "🇭🇰 香港-自动选择"
+      - "🇨🇳 台湾-自动选择"
+      - "🇯🇵 日本-自动选择"
+      - "🇰🇷 韩国-自动选择"
+      - "🇸🇬 新加坡-自动选择"
+      - "🇺🇸 美国-自动选择"
 
   - name: "AI"
     type: select
@@ -214,12 +215,13 @@ proxy-groups:
   - name: "Telegram"
     type: select
     hidden: false
-    use:
-      - provider_a
-      - provider_b
-      - provider_c
-    filter: "(?i)🇭🇰|香港|hong kong|\\bhk\\b"
-    exclude-filter: "(?i)^(剩余流量|套餐到期|距离下次重置|过滤掉|expire date|traffic reset)|^(直接连接)$|联系我们|\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)\\s*\\|\\s*\\d+(?:\\.\\d+)?\\s*(?:[kmgt]b?|b)"
+    proxies:
+      - "🇭🇰 香港-自动选择"
+      - "🇨🇳 台湾-自动选择"
+      - "🇯🇵 日本-自动选择"
+      - "🇰🇷 韩国-自动选择"
+      - "🇸🇬 新加坡-自动选择"
+      - "🇺🇸 美国-自动选择"
 
   - name: "Crypto"
     type: select
@@ -250,19 +252,24 @@ proxy-groups:
     hidden: false
     proxies:
       - "DIRECT"
-      - "♻️ 自动选择"
-      - "🚀 节点选择"
       - "🇭🇰 香港-自动选择"
       - "🇨🇳 台湾-自动选择"
       - "🇯🇵 日本-自动选择"
       - "🇰🇷 韩国-自动选择"
       - "🇸🇬 新加坡-自动选择"
       - "🇺🇸 美国-自动选择"
-      - "👋 手动切换"
 
+  - name: "香港券商"
+    type: select
+    hidden: false
+    proxies:
+      - "🇭🇰 香港-自动选择"
+      - "🇨🇳 台湾-自动选择"
+      - "🇯🇵 日本-自动选择"
+      - "🇰🇷 韩国-自动选择"
+      - "🇸🇬 新加坡-自动选择"
+      - "🇺🇸 美国-自动选择"
 
-  # 说明：本段自动组里的 interval: 300 = 每 5 分钟重新测速并择优一次，不是更新订阅。
-  # 新手说明：这是总开关。日常只需要选它，内部再选“自动”或“手动”。
   - name: "🚀 节点选择"
     type: select
     proxies:
@@ -299,6 +306,7 @@ proxy-groups:
 
   - name: "🇭🇰 香港-自动选择"
     type: url-test
+    hidden: true
     url: "https://www.google.com/generate_204"
     interval: 300
     tolerance: 100
@@ -313,6 +321,7 @@ proxy-groups:
 
   - name: "🇨🇳 台湾-自动选择"
     type: url-test
+    hidden: true
     url: "https://www.google.com/generate_204"
     interval: 300
     tolerance: 100
@@ -327,6 +336,7 @@ proxy-groups:
 
   - name: "🇯🇵 日本-自动选择"
     type: url-test
+    hidden: true
     url: "https://www.google.com/generate_204"
     interval: 300
     tolerance: 150
@@ -341,6 +351,7 @@ proxy-groups:
 
   - name: "🇰🇷 韩国-自动选择"
     type: url-test
+    hidden: true
     url: "https://www.google.com/generate_204"
     interval: 300
     tolerance: 150
@@ -355,6 +366,7 @@ proxy-groups:
 
   - name: "🇸🇬 新加坡-自动选择"
     type: url-test
+    hidden: true
     url: "https://www.google.com/generate_204"
     interval: 300
     tolerance: 150
@@ -369,6 +381,7 @@ proxy-groups:
 
   - name: "🇺🇸 美国-自动选择"
     type: url-test
+    hidden: true
     url: "https://www.google.com/generate_204"
     interval: 300
     tolerance: 100
@@ -525,12 +538,12 @@ rule-providers:
     interval: 86400
     proxy: "♻️ 自动选择"
 
-  hk_securities_aggressive:
+  hk_securities:
     type: http
     behavior: classical
     format: yaml
-    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/hk/hk_securities_aggressive.yaml"
-    path: ./ruleset/region/hk/hk_securities_aggressive.yaml
+    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/hk/hk_securities.yaml"
+    path: ./ruleset/region/hk/hk_securities.yaml
     interval: 86400
     proxy: "♻️ 自动选择"
 
@@ -715,8 +728,8 @@ rules:
   - RULE-SET,direct_ips5,DIRECT
   - RULE-SET,jp_domains,🇯🇵 日本-自动选择
   - RULE-SET,tw_crypto,Crypto
-  - RULE-SET,hk_securities_aggressive,🇭🇰 香港-自动选择
-  - RULE-SET,hk_brokers,🇭🇰 香港-自动选择
+  - RULE-SET,hk_securities,香港券商
+  - RULE-SET,hk_securities,香港券商
   - RULE-SET,hk_user_priority,🇭🇰 香港-自动选择
   - RULE-SET,hk_wps_kdocs,DIRECT
   - RULE-SET,hk_notion,🇭🇰 香港-自动选择
@@ -769,3 +782,6 @@ rules:
 
 # 归并约定：Google Play 复用 hk_google；AI DNS 用上述 DoH 美国代理参数。
 # Surge 专用 ai_dns_us 与 Personal 爱思入口不机械注册到本配置；机场手动功能不可按规则引用数删除。
+
+
+

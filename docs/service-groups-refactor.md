@@ -18,6 +18,14 @@
 
 ## 七个入口如何工作
 
+### 2026-09-26 业务出口调整
+
+香港券商统一由 `region/hk/hk_securities.list` 规则集承接，策略组命名为“香港券商”。该入口按机场 provider 拆分为独立自动测速组，所有候选均使用香港过滤器。
+
+AI、Crypto、Microsoft 同样按 provider 拆分自动测速：AI 与 Microsoft 只收美国节点，Crypto 只收台湾节点。Google、YouTube、Telegram、Apple 的选择层改为展示香港、台湾、日本、韩国、新加坡、美国六个地区自动选择；这些地区自动组在界面中隐藏，只作为业务组的底层候选。
+
+安卓不再维护独立的“Google 下载稳定”策略组，Google 专属进程、Google 规则集和对应 DNS 统一使用 Google 业务组。
+
 界面前部依次展示 Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple。上层 `select` 决定业务使用哪个出口，下层继续承担自动选点和机场手动选择。原机场组保持可见，订阅与过滤器保留；不因为增加业务入口再建立七套自动检测。
 
 | 业务组 | 默认选择 | 可手动调整及边界 |

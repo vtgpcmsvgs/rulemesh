@@ -137,6 +137,9 @@ def check(path: Path, lines: list[str]) -> list[str]:
     auto = auto_groups[0]
     business = service.MARKER in lines
     if business:
+        # 新业务选择层由 check_service_groups 负责完整结构校验；旧版地区直出约束不再适用。
+        return list(dict.fromkeys(service.check(path, lines, groups, rules, auto)))
+    if business:
         errors.extend(service.check(path, lines, groups, rules, auto))
     errors.extend(notion.check(path, lines, auto))
     notion_target = notion.target(lines) if not surge else notion.HK_GROUP

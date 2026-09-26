@@ -1,0 +1,5 @@
+# 香港券商统一规则集：聚合公开券商、港交所参与者与安卓券商后端规则。
+# 只负责香港券商相关域名，不负责通用金融、交易所或其他地区业务；客户端应绑定香港券商策略组。
+INCLUDE,region/hk/hk_brokers.list
+INCLUDE,region/hk/hk_securities_aggressive.list
+INCLUDE,region/hk/android_brokers_aggressive.list
