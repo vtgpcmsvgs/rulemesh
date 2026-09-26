@@ -491,6 +491,11 @@ def validate_mihomo(path: Path, lines: list[str]) -> list[DnsSafetyFinding]:
 
     return findings
 def validate_path(path: Path) -> list[DnsSafetyFinding]:
+    if path.suffix in {'.yaml', '.yml'}:
+        from check_yaml_controls import check as check_controls
+        issues = check_controls(path.read_text(encoding='utf-8'))
+        if issues:
+            return [DnsSafetyFinding('error', path, number, message, '修正 YAML 转义后重新执行原生核心语法检查。') for number, message in issues]
     lines = read_lines(path)
     from check_performance_baseline import applies, check
     if applies(lines):
