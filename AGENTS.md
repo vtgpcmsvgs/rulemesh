@@ -62,7 +62,7 @@
 - 两份 Mihomo 与公开模板采用国内 nameserver + AI 专用 nameserver-policy + 国内 proxy-server-nameserver bootstrap；ipv6、use-hosts、use-system-hosts、respect-rules 均为 false，开启 tcp-concurrent，保留 ARC 与 fake-ip。
 - 新版静态检查与生产运行态必须分别报告。历史 v1.19.25 查询未命中模拟 resolver；即使静态检查已通过，DNS 路由运行时仍未确认时也不得声称已经生效。
 - 两份 Surge Personal、两份 Mihomo 与公开模板的通用 FINAL/MATCH 按 2026-09-12 用户要求使用 DIRECT；仅工作白名单保持 FINAL,REJECT，前置代理规则继续使用指定组；FlClash 桌面 provider 与 url-test 使用 interval: 300、安卓使用 600；provider 与实际业务组 lazy: false，备用地区组 lazy: true，全地区 tolerance: 50、美国 tolerance: 100。全地区组只排除套餐占位项，不限制地区标签。
-- 七份配置的 ai_us 必须为第一条有效规则并包含 Google AI；国内精选直连、日本精确入口、Crypto 台湾和香港券商在 google_hk 完整 IP 规则前。google_hk 兼容路径和官方完整地址空间保留；Google、YouTube、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个隐藏自动组；Apple 另保留 DIRECT。AI 与 Microsoft 按 provider 自动选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，固定地区业务不提供 DIRECT。
+- 七份配置的 ai_us 必须为第一条有效规则并包含 Google AI；国内精选直连、日本精确入口、Crypto 台湾和香港券商在 google_hk 完整 IP 规则前。google_hk 兼容路径和官方完整地址空间保留；Google、YouTube、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个隐藏自动组；Apple 另保留 DIRECT。Surge 的 AI、Microsoft、Crypto、香港券商直接从聚合订阅按地区过滤自动测速；Mihomo/FlClash 继续按 provider 建立内部自动组，固定地区业务不提供 DIRECT。
 - Mihomo 私有文件里的机场 provider `health-check.url` 与通用 `url-test` 组测速 URL 使用 HTTPS `https://www.google.com/generate_204`；Notion 规则复用香港自动选择组，不得恢复独立 Notion 策略组
 - `proxy-node-domains` 必须是从 Sub-Store 聚合订阅提取的节点 `server` 域名清单，且必须过滤 IP 并按一行一个域名输出；不得包含订阅链接域名、机场面板域名或普通目标网站域名，也不得输出逗号分隔清单
 - Surge `[Host]` 引用 `proxy-node-domains` 时，必须使用 Surge 生产设备可直接访问的 Sub-Store 分享文件 URL；不要把未经同网络验证的 `https://sub.store/api/file/proxy-node-domains` 写进生产配置
@@ -235,7 +235,7 @@
 
 ## 2026-09-25 业务选择层
 
-- 七份配置展示 Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple、香港券商；Surge 的可见业务入口使用 smart 聚合内部成员（Apple 因保留 DIRECT 使用 select），底层地区/provider 子组使用 smart，Mihomo/FlClash 使用 url-test，复用机场 provider 与底层检测能力。Google、YouTube、Telegram、Apple 通过六个隐藏地区自动组测速；AI 与 Microsoft 按 provider 自动选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，固定地区业务不提供 DIRECT。DNS 必须跟随对应业务组。
+- 七份配置展示 Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple、香港券商；Surge 的可见业务入口使用 smart 聚合内部成员（Apple 因保留 DIRECT 使用 select），底层地区/provider 子组使用 smart，Mihomo/FlClash 使用 url-test，复用机场 provider 与底层检测能力。Google、YouTube、Telegram、Apple 通过六个隐藏地区自动组测速；Surge 的 AI、Microsoft、Crypto、香港券商直接从聚合订阅按地区过滤自动测速；Mihomo/FlClash 继续按 provider 建立内部自动组，固定地区业务不提供 DIRECT。DNS 必须跟随对应业务组。
 - Surge 策略组的隐藏参数沿用客户端兼容写法 `hidden=1/0`；检查器同时接受 `true/false`，但生产私有配置优先使用 `1/0`。
 - proxy/youtube 使用审核后的专用域名，不能整包 INCLUDE 含 gvt1/gvt2、ggpht 和 IP 的上游；先于 Google 广谱，旧 google_hk 保留完整兼容。新增业务规则须测正例和共享 CDN 负例。
 - 安卓 Google 使用六地区自动测速组，默认香港自动，三个 Google 专属进程和 QUIC 保留；DNS policy 按 AI、YouTube、Google 顺序分别绑定业务自动组。普通桌面仅 AI policy，不机械扩散安卓策略。
