@@ -32,7 +32,7 @@ def check_airport_groups(lines: list[str]) -> list[str]:
         return ["必须保留七个独立机场手动组并接入手动选择入口。"]
     if not all(g.group_type == "select" and g.has_external_source and g.filter_text for g in groups.values()):
         return ["机场手动组必须保留订阅来源与过滤条件。"]
-    if not all(re.search(r"(?:^|,)\s*hidden=false(?:,|$)", line, re.I) for line in active):
+    if not all(re.search(r"(?:^|,)\s*hidden=(?:false|0)(?:,|$)", line, re.I) for line in active):
         return ["机场手动组必须在界面中可见。"]
     if not all(name.startswith("✈️ ") for name in groups):
         return ["机场手动组须沿用飞机图标与空格的命名格式。"]
