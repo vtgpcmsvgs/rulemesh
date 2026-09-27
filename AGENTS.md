@@ -236,6 +236,7 @@
 ## 2026-09-25 业务选择层
 
 - 七份配置展示 Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple、香港券商；Surge 的可见业务入口使用 select，底层地区/provider 子组使用 smart，Mihomo/FlClash 使用 url-test，复用机场 provider 与底层检测能力。Google、YouTube、Telegram、Apple 通过六个隐藏地区自动组测速；AI 与 Microsoft 按 provider 自动选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，固定地区业务不提供 DIRECT。DNS 必须跟随对应业务组。
+- Surge 策略组的布尔参数统一使用 `hidden=true/false`；不要写 `hidden=1/0`，否则隐藏的 provider 子组可能继续出现在界面中。
 - proxy/youtube 使用审核后的专用域名，不能整包 INCLUDE 含 gvt1/gvt2、ggpht 和 IP 的上游；先于 Google 广谱，旧 google_hk 保留完整兼容。新增业务规则须测正例和共享 CDN 负例。
 - 安卓 Google 使用六地区自动测速组，默认香港自动，三个 Google 专属进程和 QUIC 保留；DNS policy 按 AI、YouTube、Google 顺序分别绑定业务自动组。普通桌面仅 AI policy，不机械扩散安卓策略。
 - Apple 普通配置默认 DIRECT；两份 FlClash 的更新拒绝必须先于 Apple。工作只重绑既有 macOS 更新入口，禁止增加 Apple 全域放行。原机场手动组保留，Notion 统一复用香港自动选择。

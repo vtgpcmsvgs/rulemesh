@@ -78,7 +78,7 @@ def check(path: Path, lines, groups, rules, auto):
     def hidden(name):
         group = groups[name]
         if surge:
-            return bool(re.search(r'(?:^|,)\s*hidden=1(?:,|$)', lines[group.line-1]))
+            return bool(re.search(r'(?:^|,)\s*hidden=true(?:,|$)', lines[group.line-1], re.I))
         return "    hidden: true" in group_block(group)
 
     expected_sources = ({source(g) for n, g in groups.items() if g.group_type == "select" and g.has_external_source and (n.startswith("✈️ ") or n.startswith("机场 "))}
@@ -99,7 +99,7 @@ def check(path: Path, lines, groups, rules, auto):
         pattern = r'^' + re.escape(name) + r'\s*=' if surge else r'^  - name:\s*[\"\']?' + name + r'[\"\']?\s*$'
         require(sum(bool(re.match(pattern, line)) for line in lines) == 1, f"{name} 组定义必须唯一。")
         if surge:
-            require(bool(re.search(r'(?:^|,)\s*hidden=0(?:,|$)', lines[group.line-1])), f"{name} 必须显式可见。")
+            require(bool(re.search(r'(?:^|,)\s*hidden=false(?:,|$)', lines[group.line-1], re.I)), f"{name} 必须显式可见。")
         else:
             end = next((i for i in range(group.line, len(lines)) if lines[i].startswith("  - name:") or re.match(r'^[\w-]+:', lines[i])), len(lines))
             block = lines[group.line:end]
