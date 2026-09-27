@@ -76,6 +76,17 @@ class ServiceGroupTests(unittest.TestCase):
             self.assertEqual([m for m in groups['Microsoft'].members if m != 'DIRECT'], groups['AI'].members)
             self.assertEqual(baseline.check(path, text.splitlines()), [])
 
+    def test_microsoft_direct_uses_reachable_https_probe(self):
+        path, text = self.fixture()
+        self.assertEqual(baseline.check(path, text.splitlines()), [])
+        changed = text.replace('https://www.apple.com/library/test/success.html', 'https://www.google.com/generate_204', 1)
+        self.assertTrue(any('混合 DIRECT 组' in e for e in baseline.check(path, changed.splitlines())))
+        anchor = '    url: "https://www.apple.com/library/test/success.html"\n    expected-status: 200\n'
+        self.assertEqual(text.count(anchor), 1)
+        for replacement in (anchor.replace('200', '204'), anchor.split('    expected-status:')[0]):
+            changed = text.replace(anchor, replacement)
+            self.assertTrue(any('校验 200' in e for e in baseline.check(path, changed.splitlines())))
+
     def test_all_business_entries_have_valid_automatic_selection(self):
         for client in ('mihomo', 'surge'):
             path, text = self.fixture(client)

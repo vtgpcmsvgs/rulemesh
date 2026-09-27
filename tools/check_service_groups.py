@@ -104,6 +104,11 @@ def check(path: Path, lines, groups, rules, auto):
                 require(any(re.match(r'^    url:', s) for s in block), f"{name} 自动测速组必须配置探测地址。")
                 expected_interval = "600" if "android" in path.name else "300"
                 require(any(re.fullmatch(rf'    interval:\s*{expected_interval}', s) for s in block), f"{name} 自动测速组必须配置正确检测周期。")
+                if name == "Microsoft":
+                    require('    url: "https://www.apple.com/library/test/success.html"' in block, "Microsoft 混合 DIRECT 组必须使用可直连的 HTTPS 连通性探测地址。")
+                    require('    expected-status: 200' in block, "Microsoft 混合 DIRECT 组必须校验 200 响应。")
+                else:
+                    require(any('    url: "https://www.google.com/generate_204"' in s for s in block), f"{name} 自动测速组必须使用标准 HTTPS 探测地址。")
             else:
                 require(not any(re.match(r'^    (url|interval|tolerance|lazy):', s) for s in block), f"{name} 手动组不得增加周期测速字段。")
         require((bool(group.members) or group.has_external_source) and all(m in groups or m == "DIRECT" for m in group.members), f"{name} 存在空候选或未知组引用。")

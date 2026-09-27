@@ -67,3 +67,5 @@ GitHub Raw 继续保留独立海外解析入口 `raw.githubusercontent.com = ser
 2026-09-27 业务选择约定：Google、YouTube、Telegram、Apple 使用 select，手动选择香港、台湾、日本、韩国、新加坡、美国六个地区自动组，Apple 另追加 DIRECT。六地区组均为 url-test，覆盖所有 provider 的对应地区节点。AI 与 Microsoft 使用 url-test，显式引用并共享“美国-provider”子组，Microsoft 父组另追加 DIRECT 参与自动测速；Crypto 引用“台湾-provider”，香港券商引用“香港-provider”。这些子组均为 url-test，逐一对应机场来源；私人配置每个固定地区业务有七个子组。Surge 父组必须用显式成员名称，不能用 include-other-group 代替，否则会展开为节点列表。隐藏状态不再作为功能验收条件。DNS、规则顺序、Store 美国及工作白名单边界保持。
 
 原机场手动组、节点 bootstrap、香港 Notion 规则和 Raw DNS 例外保留。导入后核对实际选择与 DNS 出口；参见 [完整说明](service-groups-refactor.md)。
+
+FlClash 的 Microsoft 混合 DIRECT 组采用 Apple HTTPS 连通性页并校验 200；纯代理子组测速和 Surge 配置保持原状。原因与运行态验证边界见 [客户端性能说明](flclash-performance.md)。

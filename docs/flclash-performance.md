@@ -39,6 +39,8 @@
 
 ## 测速与连接
 
+- Microsoft 父组包含 DIRECT，使用 `https://www.apple.com/library/test/success.html` 并设置 `expected-status: 200`；纯代理子组与机场 provider 继续使用 Google HTTPS 204。Apple 是 select，界面测速可使用 FlClash 默认地址，不能用两组的延迟显示直接判断 DIRECT 出站是否相同。新增 DIRECT 时必须同时检查探测地址在直连场景下是否适用。
+- 本次读取的客户端生成配置保留国内默认 DNS、国内节点 bootstrap 和 AI 专用解析；HTTP 控制器与命名管道为空，无法读取内核 DIRECT 测速历史。绕过系统代理的命令仍可能经过 TUN，因此外部 HTTPS 请求成功不算生产 DIRECT 或 DNS 出口已验证。
 - 桌面 provider 与自动组间隔 300 秒；安卓为 600 秒。订阅下载周期仍为 21,600 秒，规则下载周期保持原配置。
 - 实际承担流量的自动组保持 `lazy: false`；仅供手动备用的地区组使用 `lazy: true`。provider 保持主动检测。使用 provider 节点时，不能把 provider 数和组数相加推断实际重复请求次数。
 - 美国切换容差 100、全地区 50 保留。所有机场和有效节点仍可手动选择；单次短测不能证明晚高峰质量，不能据此永久删除节点或只留下少数节点。

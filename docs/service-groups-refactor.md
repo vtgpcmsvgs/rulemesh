@@ -39,7 +39,7 @@
 
 Surge 官方手册明确：smart 忽略嵌套策略组与内置策略；url-test 支持嵌套；include-other-group 递归导入成员节点。因此 `AI = url-test, "美国-provider_a", ...` 才能保留子组候选层级。六地区组可以使用 include-other-group 收集全部机场手动组的节点，然后统一执行地区过滤。当前通用全地区 smart 组只展开真实节点，可以继续保留。
 
-Surge url-test 的 interval 是测试结果有效期，使用且结果过期时触发重测，不等于固定后台周期；新版组级 url 参数无效，实际测速依赖 [General] 的 proxy-test-url 或节点 test-url。本次沿用既有全局 HTTP 测速地址。Mihomo 父子组沿用 url-test、HTTPS 测速及桌面 300 秒/安卓 600 秒周期，固定地区子组主动检测。
+Surge url-test 的 interval 是测试结果有效期，使用且结果过期时触发重测，不等于固定后台周期；新版组级 url 参数无效，实际测速依赖 [General] 的 proxy-test-url 或节点 test-url。本次沿用既有全局 HTTP 测速地址。Mihomo 父子组沿用 url-test、HTTPS 测速及桌面 300 秒/安卓 600 秒周期，固定地区子组主动检测；Microsoft 因包含 DIRECT 改用 Apple HTTPS 成功页并校验 200，避免 Google 探测地址导致直连误报。
 
 依据：[Surge 嵌套组](https://manual.nssurge.com/policy-groups/overview.html)、[smart 限制](https://manual.nssurge.com/policy-groups/smart.html)、[自动测试](https://manual.nssurge.com/policy-groups/url-test.html)、[导入成员语义](https://manual.nssurge.com/policy-groups/policy-including.html)。
 

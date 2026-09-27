@@ -63,7 +63,7 @@
 - 新版静态检查与生产运行态必须分别报告。历史 v1.19.25 查询未命中模拟 resolver；即使静态检查已通过，DNS 路由运行时仍未确认时也不得声称已经生效。
 - 两份 Surge Personal、两份 Mihomo 与公开模板的通用 FINAL/MATCH 按 2026-09-12 用户要求使用 DIRECT；仅工作白名单保持 FINAL,REJECT，前置代理规则继续使用指定组；FlClash 桌面 provider 与 url-test 使用 interval: 300、安卓使用 600；provider 与实际业务组 lazy: false，备用地区组 lazy: true，全地区 tolerance: 50、美国 tolerance: 100。全地区组只排除套餐占位项，不限制地区标签。
 - 七份配置的 ai_us 必须为第一条有效规则并包含 Google AI；国内精选直连、日本精确入口、Crypto 台湾和香港券商在 google_hk 完整 IP 规则前。google_hk 兼容路径和官方完整地址空间保留；Google、YouTube、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个地区自动组；Apple 在六地区选项后追加 DIRECT。AI 与 Microsoft 按 provider 自动选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，AI、Crypto、香港券商不提供 DIRECT；Microsoft 父组另追加 DIRECT 参与自动测速，代理候选仍限定美国。
-- Mihomo 私有文件里的机场 provider `health-check.url` 与通用 `url-test` 组测速 URL 使用 HTTPS `https://www.google.com/generate_204`；Notion 规则复用香港自动选择组，不得恢复独立 Notion 策略组
+- Mihomo 私有文件里的机场 provider `health-check.url` 与纯代理 `url-test` 组测速 URL 使用 HTTPS `https://www.google.com/generate_204`；含 DIRECT 的 Microsoft 混合组改用 `https://www.apple.com/library/test/success.html` 并校验 200；Notion 规则复用香港自动选择组，不得恢复独立 Notion 策略组
 - `proxy-node-domains` 必须是从 Sub-Store 聚合订阅提取的节点 `server` 域名清单，且必须过滤 IP 并按一行一个域名输出；不得包含订阅链接域名、机场面板域名或普通目标网站域名，也不得输出逗号分隔清单
 - Surge `[Host]` 引用 `proxy-node-domains` 时，必须使用 Surge 生产设备可直接访问的 Sub-Store 分享文件 URL；不要把未经同网络验证的 `https://sub.store/api/file/proxy-node-domains` 写进生产配置
 - 涉及代理、旁路由、Surge、Mihomo、Sub-Store、DNS、DoH、fake-ip、mapping、Tun、透明代理或规则分流时，默认同时检查 DNS 出口；不能只验证“网页能打开”
@@ -159,6 +159,7 @@
 - 新版 Mihomo 默认只允许 AI 专用 policy 与国内节点 bootstrap；安卓额外允许 YouTube、hk_google policy，并分别跟随对应业务选择组，详见 docs/android-network-repair.md。respect-rules: true、DNS fallback、direct-nameserver、proxy-server-nameserver-policy 继续禁止。不要把当前已批准 proxy-server-nameserver 误判为旧版回滚。
 - 若本地私有配置结构发生变化，必须同步更新 `.rulemesh.local.example.json` 与相关文档，但只允许写入脱敏占位值
 - 若任务需要参考私有配置，默认只说明字段名、用途与是否生效，不直接暴露真实值
+- 私有配置诊断不得用猜测行号的 `Select-Object -Skip` 或原始 diff 输出片段；先在内存定位唯一节/组，再输出白名单字段、计数或布尔结论。组成员只输出数量，不能批量输出历史 profile 的真实节点名。
 
 ## 验证步骤
 

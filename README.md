@@ -303,3 +303,5 @@ ai_us 同时承接 OpenAI、Claude、Copilot、Cursor、Grok、Windsurf、Augmen
 参考 naiixi 的配置分析、默认选择、DNS 出口及验证边界见 [业务策略组重构](docs/service-groups-refactor.md)。安卓 DNS policy 现为 AI → YouTube → Google，分别跟随美国、香港、香港业务选择。
 
 2026-09-26 检查修复：业务组结构检查与原性能/DNS 基线同时执行，按 provider 核对来源、地区与主动测速，拒绝券商重复入口。香港券商统一规则补齐尊嘉精确域名与品牌兜底，不扩大到非券商香港优先站点。负向回归继续覆盖 DNS、顺序、兜底与工作白名单。
+
+FlClash 的 Microsoft 混合 DIRECT 组采用 Apple HTTPS 连通性页并校验 200；纯代理子组测速和 Surge 配置保持原状。原因与运行态验证边界见 [客户端性能说明](docs/flclash-performance.md)。

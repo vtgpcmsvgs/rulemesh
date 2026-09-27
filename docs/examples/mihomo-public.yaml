@@ -240,7 +240,8 @@ proxy-groups:
   - name: "Microsoft"
     type: url-test
     hidden: false
-    url: "https://www.google.com/generate_204"
+    url: "https://www.apple.com/library/test/success.html"
+    expected-status: 200
     interval: 300
     tolerance: 100
     timeout: 5000
