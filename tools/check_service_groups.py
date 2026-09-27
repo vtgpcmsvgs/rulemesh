@@ -88,7 +88,9 @@ def check(path: Path, lines, groups, rules, auto):
                    if surge else [parser._scalar(line.split(":", 1)[1]) for line in lines if line.startswith("  - name:")])
     require(len(definitions) == len(set(definitions)), "策略组定义必须唯一，不能覆盖同名 provider 子组。")
     require(lines.count(MARKER) == 1, "业务策略组标记必须唯一。")
-    business_type = "smart" if surge else "url-test"
+    # Surge Smart Group 只接受代理策略作为成员，嵌套 smart/select 组会被静默忽略；
+    # 因此可见业务入口使用 select，实际测速由隐藏的地区/provider smart 子组承担。
+    business_type = "select" if surge else "url-test"
     for name in SERVICES:
         group = groups.get(name)
         require(group is not None and group.group_type == business_type, f"{name} 必须是可见的自动测速组。")
@@ -105,8 +107,6 @@ def check(path: Path, lines, groups, rules, auto):
             require(any(re.match(r'^    url:', s) for s in block), f"{name} 自动测速组必须配置探测地址。")
             expected_interval = "600" if "android" in path.name else "300"
             require(any(re.fullmatch(rf'    interval:\s*{expected_interval}', s) for s in block), f"{name} 自动测速组必须配置正确检测周期。")
-        if surge:
-            require(any(k in lines[group.line-1] for k in ("policy-path=", "include-other-group=")), f"{name} smart 组必须配置测速来源。")
         require((bool(group.members) or group.has_external_source) and all(m in groups or m == "DIRECT" for m in group.members), f"{name} 存在空候选或未知组引用。")
         require(bool(default_chain(name, groups)), f"{name} 默认选择链存在环或空组。")
         require(not group.has_external_source and not group.filter_text, f"{name} 自动测速组应复用子组，不得直接混入订阅源。")

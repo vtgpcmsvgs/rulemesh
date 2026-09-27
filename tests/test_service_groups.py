@@ -14,11 +14,13 @@ import check_service_groups as service
 
 
 class ServiceGroupTests(unittest.TestCase):
-    def test_all_business_entries_are_automatic_groups(self):
+    def test_all_business_entries_have_valid_automatic_selection(self):
         for client in ('mihomo', 'surge'):
             path, text = self.fixture(client)
             groups = parser._parse_mihomo_groups(text.splitlines()) if client == 'mihomo' else parser._parse_surge_groups(text.splitlines())
-            expected = 'url-test' if client == 'mihomo' else 'smart'
+            # Surge 不能把 smart 组嵌套为 smart 成员；可见入口用 select，
+            # 隐藏地区/provider 子组负责实际 smart 测速。
+            expected = 'url-test' if client == 'mihomo' else 'select'
             for name in service.SERVICES:
                 self.assertEqual(groups[name].group_type, expected, name)
             self.assertEqual(baseline.check(path, text.splitlines()), [])
