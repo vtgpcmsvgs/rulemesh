@@ -26,12 +26,13 @@
 
 ### 2026-09-27 手动地区与自动机场分层
 
-2026-09-27 业务选择约定：Google、YouTube、Telegram、Apple 使用 select，手动选择香港、台湾、日本、韩国、新加坡、美国六个地区自动组，Apple 另追加 DIRECT。六地区组均为 url-test，覆盖所有 provider 的对应地区节点。AI 与 Microsoft 使用 url-test，显式引用并共享“美国-provider”子组，Microsoft 父组另追加 DIRECT 参与自动测速；Crypto 引用“台湾-provider”，香港券商引用“香港-provider”。这些子组均为 url-test，逐一对应机场来源；私人配置每个固定地区业务有七个子组。Surge 父组必须用显式成员名称，不能用 include-other-group 代替，否则会展开为节点列表。隐藏状态不再作为功能验收条件。DNS、规则顺序、Store 美国及工作白名单边界保持。
+2026-09-27 业务选择约定：Google、YouTube、Telegram、Apple 使用 select，手动选择香港、台湾、日本、韩国、新加坡、美国六个地区自动组，Apple 另追加 DIRECT。六地区组均为 url-test，覆盖所有 provider 的对应地区节点。AI 与 Microsoft 共享“美国-provider”自动子组；Microsoft 在所有配置中使用 select，手动选择美国子组或 DIRECT；AI 仅两份私人 Mihomo 使用 select，其余配置保留 url-test；Crypto 引用“台湾-provider”，香港券商引用“香港-provider”。这些子组均为 url-test，逐一对应机场来源；私人配置每个固定地区业务有七个子组。Surge 父组必须用显式成员名称，不能用 include-other-group 代替，否则会展开为节点列表。隐藏状态不再作为功能验收条件。DNS、规则顺序、Store 美国及工作白名单边界保持。
 
 | 入口 | 类型 | 候选 |
 | --- | --- | --- |
 | Google、YouTube、Telegram、Apple | select | 六地区 url-test 组，初始香港；Apple 另有 DIRECT |
-| AI、Microsoft | url-test | 同一套美国-provider 子组；Microsoft 另有 DIRECT |
+| AI | 私人 Mihomo 为 select，其余为 url-test | 美国-provider 自动子组 |
+| Microsoft | select | 同一套美国-provider 自动子组及 DIRECT |
 | Crypto | url-test | 台湾-provider 子组 |
 | 香港券商 | url-test | 香港-provider 子组 |
 
@@ -39,7 +40,7 @@
 
 Surge 官方手册明确：smart 忽略嵌套策略组与内置策略；url-test 支持嵌套；include-other-group 递归导入成员节点。因此 `AI = url-test, "美国-provider_a", ...` 才能保留子组候选层级。六地区组可以使用 include-other-group 收集全部机场手动组的节点，然后统一执行地区过滤。当前通用全地区 smart 组只展开真实节点，可以继续保留。
 
-Surge url-test 的 interval 是测试结果有效期，使用且结果过期时触发重测，不等于固定后台周期；新版组级 url 参数无效，实际测速依赖 [General] 的 proxy-test-url 或节点 test-url。本次沿用既有全局 HTTP 测速地址。Mihomo 父子组沿用 url-test、HTTPS 测速及桌面 300 秒/安卓 600 秒周期，固定地区子组主动检测；Microsoft 因包含 DIRECT 改用 Apple HTTPS 成功页并校验 200，避免 Google 探测地址导致直连误报。
+Surge url-test 的 interval 是测试结果有效期，使用且结果过期时触发重测，不等于固定后台周期；新版组级 url 参数无效，实际测速依赖 [General] 的 proxy-test-url 或节点 test-url。本次沿用既有全局 HTTP 测速地址。Mihomo 父子组沿用 url-test、HTTPS 测速及桌面 300 秒/安卓 600 秒周期，固定地区子组主动检测；Microsoft 父组改为 select，组级测速地址与状态校验字段已移除。
 
 依据：[Surge 嵌套组](https://manual.nssurge.com/policy-groups/overview.html)、[smart 限制](https://manual.nssurge.com/policy-groups/smart.html)、[自动测试](https://manual.nssurge.com/policy-groups/url-test.html)、[导入成员语义](https://manual.nssurge.com/policy-groups/policy-including.html)。
 

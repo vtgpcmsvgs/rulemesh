@@ -39,7 +39,7 @@
 
 ## 测速与连接
 
-- Microsoft 父组包含 DIRECT，使用 `https://www.apple.com/library/test/success.html` 并设置 `expected-status: 200`；纯代理子组与机场 provider 继续使用 Google HTTPS 204。Apple 是 select，界面测速可使用 FlClash 默认地址，不能用两组的延迟显示直接判断 DIRECT 出站是否相同。新增 DIRECT 时必须同时检查探测地址在直连场景下是否适用。
+- Microsoft 父组现为 select，手动选择美国自动子组或 DIRECT，移除旧的 Apple 成功页及全部父组测速字段。纯代理子组与机场 provider 保持 Google HTTPS 204。手动组的界面测速由客户端发起，不代表父组会自动切换。
 - 本次读取的客户端生成配置保留国内默认 DNS、国内节点 bootstrap 和 AI 专用解析；HTTP 控制器与命名管道为空，无法读取内核 DIRECT 测速历史。绕过系统代理的命令仍可能经过 TUN，因此外部 HTTPS 请求成功不算生产 DIRECT 或 DNS 出口已验证。
 - 桌面 provider 与自动组间隔 300 秒；安卓为 600 秒。订阅下载周期仍为 21,600 秒，规则下载周期保持原配置。
 - 实际承担流量的自动组保持 `lazy: false`；仅供手动备用的地区组使用 `lazy: true`。provider 保持主动检测。使用 provider 节点时，不能把 provider 数和组数相加推断实际重复请求次数。
@@ -72,6 +72,6 @@
 
 ## 2026-09-25 八个业务入口
 
-2026-09-27 业务选择约定：Google、YouTube、Telegram、Apple 使用 select，手动选择香港、台湾、日本、韩国、新加坡、美国六个地区自动组，Apple 另追加 DIRECT。六地区组均为 url-test，覆盖所有 provider 的对应地区节点。AI 与 Microsoft 使用 url-test，显式引用并共享“美国-provider”子组，Microsoft 父组另追加 DIRECT 参与自动测速；Crypto 引用“台湾-provider”，香港券商引用“香港-provider”。这些子组均为 url-test，逐一对应机场来源；私人配置每个固定地区业务有七个子组。Surge 父组必须用显式成员名称，不能用 include-other-group 代替，否则会展开为节点列表。隐藏状态不再作为功能验收条件。DNS、规则顺序、Store 美国及工作白名单边界保持。
+2026-09-27 业务选择约定：Google、YouTube、Telegram、Apple 使用 select，手动选择香港、台湾、日本、韩国、新加坡、美国六个地区自动组，Apple 另追加 DIRECT。六地区组均为 url-test，覆盖所有 provider 的对应地区节点。AI 与 Microsoft 共享“美国-provider”自动子组；Microsoft 在所有配置中使用 select，手动选择美国子组或 DIRECT；AI 仅两份私人 Mihomo 使用 select，其余配置保留 url-test；Crypto 引用“台湾-provider”，香港券商引用“香港-provider”。这些子组均为 url-test，逐一对应机场来源；私人配置每个固定地区业务有七个子组。Surge 父组必须用显式成员名称，不能用 include-other-group 代替，否则会展开为节点列表。隐藏状态不再作为功能验收条件。DNS、规则顺序、Store 美国及工作白名单边界保持。
 
 两份私人 Mihomo（FlClash 桌面、安卓）的 AI 父组按用户最新要求使用 select，手动选择既有七个美国 provider 子组；子组仍为 url-test，AI 不提供 DIRECT，AI DNS 继续跟随 AI。该例外不得扩散到公开模板、Surge 或其他业务组。

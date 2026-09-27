@@ -238,14 +238,8 @@ proxy-groups:
       - "台湾-provider_c"
 
   - name: "Microsoft"
-    type: url-test
+    type: select
     hidden: false
-    url: "https://www.apple.com/library/test/success.html"
-    expected-status: 200
-    interval: 300
-    tolerance: 100
-    timeout: 5000
-    lazy: false
     proxies:
       - "美国-provider_a"
       - "美国-provider_b"

@@ -94,24 +94,30 @@ class ServiceGroupTests(unittest.TestCase):
                 self.assertNotEqual(text, changed)
                 self.assertTrue(baseline.check(path, changed.splitlines()))
 
-    def test_microsoft_allows_direct_alongside_us_provider_groups(self):
+    def test_microsoft_manual_selection_keeps_direct_and_us_provider_groups(self):
         for client in ('surge', 'mihomo'):
             path, text = self.fixture(client)
             groups = parser._parse_surge_groups(text.splitlines()) if client == 'surge' else parser._parse_mihomo_groups(text.splitlines())
             self.assertIn('DIRECT', groups['Microsoft'].members)
             self.assertEqual([m for m in groups['Microsoft'].members if m != 'DIRECT'], groups['AI'].members)
+            self.assertEqual(groups['Microsoft'].group_type, 'select')
             self.assertEqual(baseline.check(path, text.splitlines()), [])
 
-    def test_microsoft_direct_uses_reachable_https_probe(self):
-        path, text = self.fixture()
-        self.assertEqual(baseline.check(path, text.splitlines()), [])
-        changed = text.replace('https://www.apple.com/library/test/success.html', 'https://www.google.com/generate_204', 1)
-        self.assertTrue(any('混合 DIRECT 组' in e for e in baseline.check(path, changed.splitlines())))
-        anchor = '    url: "https://www.apple.com/library/test/success.html"\n    expected-status: 200\n'
-        self.assertEqual(text.count(anchor), 1)
-        for replacement in (anchor.replace('200', '204'), anchor.split('    expected-status:')[0]):
-            changed = text.replace(anchor, replacement)
-            self.assertTrue(any('校验 200' in e for e in baseline.check(path, changed.splitlines())))
+    def test_microsoft_manual_group_rejects_automatic_probe_fields(self):
+        for client in ('surge', 'mihomo'):
+            path, text = self.fixture(client)
+            self.assertEqual(baseline.check(path, text.splitlines()), [])
+            for key, value in [('url', 'https://example.com/probe'), ('interval', '300'), ('tolerance', '100'), ('timeout', '5'), ('lazy', 'false'), ('expected-status', '200')]:
+                if client == 'surge':
+                    line = next(s for s in text.splitlines() if s.startswith('Microsoft ='))
+                    changed = text.replace(line, line + f', {key}={value}')
+                else:
+                    anchor = '  - name: "Microsoft"\n    type: select\n'
+                    self.assertEqual(text.count(anchor), 1)
+                    changed = text.replace(anchor, anchor + f'    {key}: {value}\n')
+                # 读入 LF/CRLF 后均须识别手动组，不能让换行差异掩盖字段残留。
+                for content in (changed, changed.replace('\n', '\r\n')):
+                    self.assertTrue(any('周期测速字段' in e for e in baseline.check(path, content.splitlines())))
 
     def test_all_business_entries_have_valid_automatic_selection(self):
         for client in ('mihomo', 'surge'):

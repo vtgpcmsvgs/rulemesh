@@ -5,7 +5,7 @@ import re
 MARKER = "# RuleMesh 业务策略组：2026-09-25"
 SERVICES = ("Google", "YouTube", "AI", "Telegram", "Crypto", "Microsoft", "Apple", "香港券商")
 FIXED = {"AI": "us", "Crypto": "tw", "Microsoft": "us", "香港券商": "hk"}
-MANUAL = ("Google", "YouTube", "Telegram", "Apple")
+MANUAL = ("Google", "YouTube", "Telegram", "Microsoft", "Apple")
 MANUAL_AI_PROFILES = frozenset({
     "rulemesh-substore-mihomo-flclash-desktop.yaml",
     "rulemesh-substore-mihomo-flclash-android.yaml",
@@ -89,7 +89,7 @@ def check(path: Path, lines, groups, rules, auto):
     require(len(definitions) == len(set(definitions)), "策略组定义必须唯一，不能覆盖同名 provider 子组。")
     require(lines.count(MARKER) == 1, "业务策略组标记必须唯一。")
     # Surge smart 忽略嵌套组；include-other-group 展开节点，不保留子组候选。
-    # 两份私人 Mihomo 的 AI 手动选机场，其他配置仍保留原自动父组。
+    # 两份私人 Mihomo 的 AI 也手动选机场；Microsoft 已在全部配置中手动选择。
     for name in SERVICES:
         group = groups.get(name)
         manual = name in MANUAL or (name == "AI" and path.name in MANUAL_AI_PROFILES)
@@ -109,11 +109,7 @@ def check(path: Path, lines, groups, rules, auto):
                 require(any(re.match(r'^    url:', s) for s in block), f"{name} 自动测速组必须配置探测地址。")
                 expected_interval = "600" if "android" in path.name else "300"
                 require(any(re.fullmatch(rf'    interval:\s*{expected_interval}', s) for s in block), f"{name} 自动测速组必须配置正确检测周期。")
-                if name == "Microsoft":
-                    require('    url: "https://www.apple.com/library/test/success.html"' in block, "Microsoft 混合 DIRECT 组必须使用可直连的 HTTPS 连通性探测地址。")
-                    require('    expected-status: 200' in block, "Microsoft 混合 DIRECT 组必须校验 200 响应。")
-                else:
-                    require(any('    url: "https://www.google.com/generate_204"' in s for s in block), f"{name} 自动测速组必须使用标准 HTTPS 探测地址。")
+                require(any('    url: "https://www.google.com/generate_204"' in s for s in block), f"{name} 自动测速组必须使用标准 HTTPS 探测地址。")
             else:
                 require(not any(re.match(r'^    (url|interval|tolerance|timeout|lazy|expected-status):', s) for s in block), f"{name} 手动组不得增加周期测速字段。")
         require((bool(group.members) or group.has_external_source) and all(m in groups or m == "DIRECT" for m in group.members), f"{name} 存在空候选或未知组引用。")
@@ -121,8 +117,10 @@ def check(path: Path, lines, groups, rules, auto):
         require(not group.has_external_source and not group.filter_text, f"{name} 自动测速组应复用子组，不得直接混入订阅源。")
         if surge:
             require(not group.included_members, f"{name} 必须显式引用子组，不能用 include-other-group 展平节点。")
-            if name in FIXED:
+            if not manual:
                 require('interval=300' in lines[group.line-1], f"{name} 必须配置正确检测周期。")
+            else:
+                require(not re.search(r',\s*(?:url|interval|tolerance|timeout|lazy|expected-status)=', lines[group.line-1]), f"{name} 手动组不得增加周期测速字段。")
         if name in FIXED:
             approved = baseline.region_filters(FIXED[name], surge)
             # Microsoft 仅父组允许 DIRECT；共享美国子组及其他固定地区业务仍严格锁定地区。
