@@ -6,6 +6,10 @@ MARKER = "# RuleMesh 业务策略组：2026-09-25"
 SERVICES = ("Google", "YouTube", "AI", "Telegram", "Crypto", "Microsoft", "Apple", "香港券商")
 FIXED = {"AI": "us", "Crypto": "tw", "Microsoft": "us", "香港券商": "hk"}
 MANUAL = ("Google", "YouTube", "Telegram", "Apple")
+MANUAL_AI_PROFILES = frozenset({
+    "rulemesh-substore-mihomo-flclash-desktop.yaml",
+    "rulemesh-substore-mihomo-flclash-android.yaml",
+})
 REGION_LABELS = {"us": "美国", "tw": "台湾", "hk": "香港"}
 REGIONS = {"🇭🇰 香港-自动选择": "hk", "🇨🇳 台湾-自动选择": "tw",
            "🇯🇵 日本-自动选择": "jp", "🇰🇷 韩国-自动选择": "kr",
@@ -85,10 +89,11 @@ def check(path: Path, lines, groups, rules, auto):
     require(len(definitions) == len(set(definitions)), "策略组定义必须唯一，不能覆盖同名 provider 子组。")
     require(lines.count(MARKER) == 1, "业务策略组标记必须唯一。")
     # Surge smart 忽略嵌套组；include-other-group 展开节点，不保留子组候选。
-    # 四个手动入口用 select，固定地区父子组均用 url-test 并显式引用。
+    # 两份私人 Mihomo 的 AI 手动选机场，其他配置仍保留原自动父组。
     for name in SERVICES:
         group = groups.get(name)
-        expected_type = "select" if name in MANUAL else "url-test"
+        manual = name in MANUAL or (name == "AI" and path.name in MANUAL_AI_PROFILES)
+        expected_type = "select" if manual else "url-test"
         require(group is not None and group.group_type == expected_type, f"{name} 必须是可见的 {expected_type} 组。")
         if group is None:
             continue
@@ -100,7 +105,7 @@ def check(path: Path, lines, groups, rules, auto):
             end = next((i for i in range(group.line, len(lines)) if lines[i].startswith("  - name:") or re.match(r'^[\w-]+:', lines[i])), len(lines))
             block = lines[group.line:end]
             require("    hidden: false" in block, f"{name} 必须显式可见。")
-            if name in FIXED:
+            if not manual:
                 require(any(re.match(r'^    url:', s) for s in block), f"{name} 自动测速组必须配置探测地址。")
                 expected_interval = "600" if "android" in path.name else "300"
                 require(any(re.fullmatch(rf'    interval:\s*{expected_interval}', s) for s in block), f"{name} 自动测速组必须配置正确检测周期。")
@@ -110,7 +115,7 @@ def check(path: Path, lines, groups, rules, auto):
                 else:
                     require(any('    url: "https://www.google.com/generate_204"' in s for s in block), f"{name} 自动测速组必须使用标准 HTTPS 探测地址。")
             else:
-                require(not any(re.match(r'^    (url|interval|tolerance|lazy):', s) for s in block), f"{name} 手动组不得增加周期测速字段。")
+                require(not any(re.match(r'^    (url|interval|tolerance|timeout|lazy|expected-status):', s) for s in block), f"{name} 手动组不得增加周期测速字段。")
         require((bool(group.members) or group.has_external_source) and all(m in groups or m == "DIRECT" for m in group.members), f"{name} 存在空候选或未知组引用。")
         require(bool(default_chain(name, groups)), f"{name} 默认选择链存在环或空组。")
         require(not group.has_external_source and not group.filter_text, f"{name} 自动测速组应复用子组，不得直接混入订阅源。")

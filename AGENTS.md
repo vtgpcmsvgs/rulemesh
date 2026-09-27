@@ -253,3 +253,5 @@
 
 - Surge smart 只接受代理节点，忽略嵌套组；需要保留子组候选的自动父组使用 url-test 和显式成员引用。include-other-group 只用于有意展开的节点来源（如地区组收齐所有机场）。检查器必须拒绝两者混用。
 - 批量修改 YAML 组时按唯一顶层 proxy-groups 节和逐组边界构造完整替换，写入前验证字段不重复；不能只替换组首行后再次追加原块。
+
+两份私人 Mihomo（FlClash 桌面、安卓）的 AI 父组按用户最新要求使用 select，手动选择既有七个美国 provider 子组；子组仍为 url-test，AI 不提供 DIRECT，AI DNS 继续跟随 AI。该例外不得扩散到公开模板、Surge 或其他业务组。

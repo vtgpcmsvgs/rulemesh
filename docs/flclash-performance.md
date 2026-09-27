@@ -73,3 +73,5 @@
 ## 2026-09-25 八个业务入口
 
 2026-09-27 业务选择约定：Google、YouTube、Telegram、Apple 使用 select，手动选择香港、台湾、日本、韩国、新加坡、美国六个地区自动组，Apple 另追加 DIRECT。六地区组均为 url-test，覆盖所有 provider 的对应地区节点。AI 与 Microsoft 使用 url-test，显式引用并共享“美国-provider”子组，Microsoft 父组另追加 DIRECT 参与自动测速；Crypto 引用“台湾-provider”，香港券商引用“香港-provider”。这些子组均为 url-test，逐一对应机场来源；私人配置每个固定地区业务有七个子组。Surge 父组必须用显式成员名称，不能用 include-other-group 代替，否则会展开为节点列表。隐藏状态不再作为功能验收条件。DNS、规则顺序、Store 美国及工作白名单边界保持。
+
+两份私人 Mihomo（FlClash 桌面、安卓）的 AI 父组按用户最新要求使用 select，手动选择既有七个美国 provider 子组；子组仍为 url-test，AI 不提供 DIRECT，AI DNS 继续跟随 AI。该例外不得扩散到公开模板、Surge 或其他业务组。
