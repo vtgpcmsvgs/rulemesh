@@ -26,24 +26,24 @@
 
 ### 2026-09-26 业务出口调整
 
-香港券商统一由 `region/hk/hk_securities.list` 规则集承接，策略组命名为“香港券商”。该入口在 Surge 直接使用聚合订阅和香港过滤器自动测速；Mihomo/FlClash 按机场 provider 建立内部自动测速组。
+香港券商统一由 `region/hk/hk_securities.list` 规则集承接，策略组命名为“香港券商”。该入口按机场 provider 拆分为独立自动测速组，所有候选均使用香港过滤器。
 
-AI、Crypto、Microsoft 在 Surge 直接使用聚合订阅按地区过滤自动测速；Mihomo/FlClash 按 provider 拆分内部自动测速。AI 与 Microsoft 只收美国节点，Crypto 只收台湾节点。Google、YouTube、Telegram、Apple 的选择层改为展示香港、台湾、日本、韩国、新加坡、美国六个地区自动选择；这些地区自动组在界面中隐藏，只作为业务组的底层候选。
+AI、Crypto、Microsoft 同样按 provider 拆分自动测速：AI 与 Microsoft 只收美国节点，Crypto 只收台湾节点。Google、YouTube、Telegram、Apple 的选择层改为展示香港、台湾、日本、韩国、新加坡、美国六个地区自动选择；这些地区自动组在界面中隐藏，只作为业务组的底层候选。
 
 安卓不再维护独立的“Google 下载稳定”策略组，Google 专属进程、Google 规则集和对应 DNS 统一使用 Google 业务组。
 
-界面前部展示 Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple、香港券商。可见业务入口使用 `smart` 直接聚合订阅并测速；Apple 因保留 DIRECT 使用 `select`。Google/YouTube/Telegram/Apple 仍复用六个地区自动组，固定地区业务在 Surge 不再声明 provider 子组，避免客户端界面展开大量中间组。原机场组保持可见，订阅与过滤器保留；固定地区业务在 Surge 直接使用聚合订阅地区过滤测速，在 Mihomo/FlClash 使用 provider 子组自动测速。
+界面前部展示 Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple、香港券商。可见业务入口使用 `smart` 通过 `include-other-group` 聚合隐藏的地区/provider 子组；Apple 因保留 DIRECT 使用 `select`；下层继续承担自动选点和机场手动选择。原机场组保持可见，订阅与过滤器保留；固定地区业务的 provider 子组各自自动测速，选择层不直接测速。
 
 | 业务组 | 默认选择 | 可手动调整及边界 |
 | --- | --- | --- |
 | Google | 香港自动 | 六地区可选；Google Play 与三个专属进程接 Google，保留 QUIC |
 | YouTube | 香港自动 | 六地区可选；专用规则早于 Google，共享 Play CDN 仍归 Google |
-| AI | 聚合订阅中的美国节点自动组 | Surge 不声明 provider 子组；Mihomo/FlClash 继续按 provider 建立内部自动子组 |
+| AI | 首个 provider 的美国自动组 | 每个 provider 一个美国自动子组；不提供其他地区或 DIRECT |
 | Telegram | 香港自动 | 六地区可选 |
-| Crypto | 聚合订阅中的台湾节点自动组 | Surge 不声明 provider 子组；日本精确入口仍优先 |
-| Microsoft | 聚合订阅中的美国节点自动组 | Surge 不声明 provider 子组；Store、Outlook 与更新拒绝等前置例外保留 |
+| Crypto | 首个 provider 的台湾自动组 | 每个 provider 一个台湾自动子组；日本精确入口仍优先 |
+| Microsoft | 首个 provider 的美国自动组 | 每个 provider 一个美国自动子组，无 DIRECT；Store、Outlook 与更新拒绝等前置例外保留 |
 | Apple | DIRECT | 另有六地区选项；FlClash 更新拒绝优先，工作仅承接原更新入口，不增加全域白名单 |
-| 香港券商 | 聚合订阅中的香港节点自动组 | Surge 不声明 provider 子组；统一规则唯一调用，补齐尊嘉品牌兜底 |
+| 香港券商 | 首个 provider 的香港自动组 | 每个 provider 一个香港自动子组；统一规则唯一调用，补齐尊嘉品牌兜底 |
 
 
 `select` 的第一项只是新组初始默认值；客户端保存过的选择仍可能覆盖默认。手动切换会影响新连接，已有长连接不保证立即迁移。Google 或 YouTube 的共享账号/CDN 不能做到按页面完全隔离；不把共享 Google IP 强行划给 YouTube。
@@ -60,11 +60,11 @@ AI、Crypto、Microsoft 在 Surge 直接使用聚合订阅按地区过滤自动�
 1. 本轮的可证明收益是业务选择解耦、避免 YouTube 遮蔽 Play，以及选择层不直接测速；按 provider 的自动子组需要周期探测。现有 TCP 并发、统一延迟、缓存、主动检测和切换容差已经比附件更完整，保留这些能力。
 2. 真正的带宽优化应比较相同业务的首字节、连续下载吞吐、失败率、重试与出口稳定性，至少覆盖忙时和闲时；204 延迟只反映轻量连接，不能替代 YouTube 吞吐或 AI 流式响应表现。
 3. 如果用户后续提供可持续更新的 naiixi 订阅，可把它作为现有多机场体系的一员；本次不从静态附件推测订阅地址，也不复制其节点凭证到公开仓库。
-4. 不按一次测速删除机场、不把所有节点强制改成 AnyTLS、不激进关闭 QUIC，保持固定业务按地区过滤检测，Mihomo/FlClash 内部 provider 组按需检测。Notion 复用香港自动选择，避免额外周期探测。
+4. 不按一次测速删除机场、不把所有节点强制改成 AnyTLS、不激进关闭 QUIC，保持固定业务按 provider 检测和备用地区按需检测。Notion 复用香港自动选择，避免额外周期探测。
 
 ## 检查、发布与回滚
 
-`check_service_groups.py` 接入性能基线，检查八组唯一且可见、候选图无环、四个固定地区业务的聚合来源和地区过滤正确、业务规则实际接入、YouTube 顺序和 Apple 白名单边界。常用业务检查覆盖 TCP/UDP 首条命中；测试专门拒绝 YouTube 抢走 Play CDN、AI DNS 绕过业务组，以及选择层误改自动测速。
+`check_service_groups.py` 接入性能基线，检查八组唯一且可见、候选图无环、四个固定地区业务的所有 provider 子组来源和地区正确、业务规则实际接入、YouTube 顺序和 Apple 白名单边界。常用业务检查覆盖 TCP/UDP 首条命中；测试专门拒绝 YouTube 抢走 Play CDN、AI DNS 绕过业务组，以及选择层误改自动测速。
 
 本轮发现历史安卓夹具通过字符串替换模板生成，业务组改名后替换可以静默不命中；已更新为先断言唯一锚点，再构造 Google/YouTube 选择层、DNS 和 Apple 更新拒绝顺序。安卓结构判断复用既有能力标记，不根据文件名片段猜测。负例必须确认实际发生变更，避免用原本不合法的夹具掩盖缺陷。
 
@@ -78,7 +78,7 @@ AI、Crypto、Microsoft 在 Surge 直接使用聚合订阅按地区过滤自动�
 
 ## 2026-09-26 全量失败根因与防复发
 
-39 项失败包含有效安全负例：业务标记曾触发提前返回，使 DNS、规则顺序、地区与最终兜底检查失效。现已移除该捷径，业务结构检查与性能基线累计执行；旧的“直接手选节点”断言改为固定地区过滤与内部 provider 组分层断言，其他负例继续保留。
+39 项失败包含有效安全负例：业务标记曾触发提前返回，使 DNS、规则顺序、地区与最终兜底检查失效。现已移除该捷径，业务结构检查与性能基线累计执行；旧的“直接手选节点”断言改为 provider 自动子组断言，其他负例继续保留。
 
 公开模板必须使用占位 provider，Surge 子组逐字复用既有机场手动组 policy-path，不能用机场别名拼接路径。两份 FlClash 子组周期分别为 300/600 秒，固定业务所有子组主动检测；全地区及其他地区容差 50，美国 100。六个地区组隐藏，仍可由业务选择及规则引用。
 

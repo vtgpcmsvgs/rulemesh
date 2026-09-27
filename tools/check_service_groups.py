@@ -110,16 +110,12 @@ def check(path: Path, lines, groups, rules, auto):
             require(any(re.fullmatch(rf'    interval:\s*{expected_interval}', s) for s in block), f"{name} 自动测速组必须配置正确检测周期。")
         require((bool(group.members) or group.has_external_source) and all(m in groups or m == "DIRECT" for m in group.members), f"{name} 存在空候选或未知组引用。")
         require(bool(default_chain(name, groups)), f"{name} 默认选择链存在环或空组。")
+        require(not group.has_external_source and not group.filter_text, f"{name} 自动测速组应复用子组，不得直接混入订阅源。")
+        if surge and name != "Apple":
+            require('include-other-group=' in lines[group.line-1], f"{name} smart 组必须通过 include-other-group 聚合内部候选。")
         if name in FIXED:
             approved = baseline.region_filters(FIXED[name], surge)
             require(parser._group_has_us_semantics(name, groups, approved), f"{name} 所有候选必须满足地区约束。")
-            if surge:
-                require(group.has_external_source and not group.has_invalid_external_source, f"{name} 必须直接绑定有效聚合订阅源。")
-                require(group.filter_text in approved, f"{name} 必须保留限定地区过滤器。")
-                require('include-all-proxies=0' in lines[group.line-1], f"{name} 不得混入其他订阅节点。")
-                require('include-other-group=' not in lines[group.line-1], f"{name} 不得依赖已移除的 provider 子组。")
-                continue
-            require(not group.has_external_source and not group.filter_text, f"{name} 自动测速组应复用子组，不得直接混入订阅源。")
             sources = []
             for child in group.members:
                 leaf = groups.get(child)
@@ -141,9 +137,6 @@ def check(path: Path, lines, groups, rules, auto):
                     sources.extend(leaf.source_references)
             require(len(sources) == len(expected_sources) and set(sources) == expected_sources, f"{name} 必须逐一覆盖全部 provider，不能重复或遗漏。")
         else:
-            require(not group.has_external_source and not group.filter_text, f"{name} 自动测速组应复用子组，不得直接混入订阅源。")
-            if surge and name != "Apple":
-                require('include-other-group=' in lines[group.line-1], f"{name} smart 组必须通过 include-other-group 聚合内部候选。")
             candidates = list(REGIONS) + (["DIRECT"] if name == "Apple" else [])
             require(len(group.members) == len(candidates) and set(group.members) == set(candidates), f"{name} 必须完整展示六个地区自动组。")
 

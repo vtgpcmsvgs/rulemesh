@@ -67,14 +67,14 @@ class ServiceGroupTests(unittest.TestCase):
         fixed = changed.replace('      - 123', '      - "123"')
         self.assertEqual(baseline.check(path, fixed.splitlines()), [])
 
-    def test_surge_fixed_groups_use_filtered_aggregate_source(self):
+    def test_surge_children_reuse_exact_manual_provider_sources(self):
         path, text = self.fixture('surge')
         self.assertEqual(baseline.check(path, text.splitlines()), [])
         for name in service.FIXED:
-            line = next(s for s in text.splitlines() if s.startswith(name + ' ='))
-            self.assertIn('policy-path=', line)
-            self.assertIn('policy-regex-filter=', line)
-            self.assertNotIn(name + '-provider_', text)
+            old = next(s for s in text.splitlines() if s.startswith(name + '-provider_a ='))
+            new = re.sub(r'policy-path=[^,]+', 'policy-path=https://example.com/wrong-source', old)
+            errors = baseline.check(path, text.replace(old, new).splitlines())
+            self.assertTrue(any('provider' in e for e in errors))
 
     def test_regions_must_be_hidden_and_complete(self):
         path, text = self.fixture()
