@@ -14,6 +14,15 @@ import check_service_groups as service
 
 
 class ServiceGroupTests(unittest.TestCase):
+    def test_all_business_entries_are_automatic_groups(self):
+        for client in ('mihomo', 'surge'):
+            path, text = self.fixture(client)
+            groups = parser._parse_mihomo_groups(text.splitlines()) if client == 'mihomo' else parser._parse_surge_groups(text.splitlines())
+            expected = 'url-test' if client == 'mihomo' else 'smart'
+            for name in service.SERVICES:
+                self.assertEqual(groups[name].group_type, expected, name)
+            self.assertEqual(baseline.check(path, text.splitlines()), [])
+
     def test_unified_broker_scope_includes_priority_broker_only(self):
         rules = build_rules.build_source(ROOT / 'rules/region/hk/hk_securities.list').outputs['surge_rules']
         for domain in ('zvsthk.com', 'api.zvsthk.com', 'api-zvsthk.example'):
@@ -107,8 +116,8 @@ class ServiceGroupTests(unittest.TestCase):
         for name in service.SERVICES:
             for changed in (
                 text.replace(f'  - name: "{name}"', f'  - name: "missing-{name}"'),
-                text.replace(f'  - name: "{name}"\n    type: select\n    hidden: false', f'  - name: "{name}"\n    type: select\n    hidden: true'),
-                text.replace(f'  - name: "{name}"\n    type: select', f'  - name: "{name}"\n    type: url-test'),
+                text.replace(f'  - name: "{name}"\n    type: url-test\n    hidden: false', f'  - name: "{name}"\n    type: url-test\n    hidden: true'),
+                text.replace(f'  - name: "{name}"\n    type: url-test', f'  - name: "{name}"\n    type: select'),
             ):
                 self.assertNotEqual(changed, text)
                 self.assertTrue(baseline.check(path, changed.splitlines()), name)
@@ -124,7 +133,7 @@ class ServiceGroupTests(unittest.TestCase):
             changed = text[:start] + block.replace(filtered, '') + text[end:]
             self.assertTrue(any("地区过滤器" in e for e in baseline.check(path, changed.splitlines())))
             bad = block.replace('    use:\n', '    proxies:\n      - DIRECT\n    use:\n')
-            self.assertTrue(any("地区约束" in e for e in baseline.check(path, (text[:start]+bad+text[end:]).splitlines())))
+            self.assertTrue(any(name in e or "地区" in e for e in baseline.check(path, (text[:start]+bad+text[end:]).splitlines())))
 
     def test_dns_follows_ai_selector_and_default_engines_stay_active(self):
         path, text = self.fixture()
@@ -166,9 +175,9 @@ class ServiceGroupTests(unittest.TestCase):
 
     def test_cycles_are_rejected_even_in_non_default_candidates(self):
         path,text=self.fixture()
-        old='  - name: "Google"\n    type: select\n    hidden: false\n    proxies:\n'
+        old='  - name: "Google"\n    type: url-test\n    hidden: false\n'
         self.assertEqual(text.count(old),1)
-        changed=text.replace(old,old+'      - Google\n')
+        changed=text.replace(old,old+'    proxies:\n      - Google\n',1)
         self.assertTrue(any('环' in e for e in baseline.check(path,changed.splitlines())))
 
     def test_private_apple_update_rejection_and_work_scope_are_protected(self):
@@ -183,10 +192,13 @@ class ServiceGroupTests(unittest.TestCase):
 
     def test_selector_does_not_add_periodic_probe_and_ai_leaf_keeps_tolerance(self):
         path, text = self.fixture()
-        anchor = '  - name: "YouTube"\n    type: select\n'
+        anchor = '  - name: "YouTube"\n    type: url-test\n'
         self.assertEqual(text.count(anchor), 1)
-        changed = text.replace(anchor, anchor + '    interval: 60\n')
-        self.assertTrue(any('重复建立测速' in e for e in baseline.check(path,changed.splitlines())))
+        start = text.index(anchor)
+        end = text.index('  - name:', start + 1)
+        block = text[start:end]
+        changed = text[:start] + block.replace('    interval: 300', '    interval: 60', 1) + text[end:]
+        self.assertTrue(any('检测周期' in e for e in baseline.check(path,changed.splitlines())))
         start = text.index('  - name: "🇺🇸 美国-自动选择"')
         changed = text[:start] + text[start:].replace('    tolerance: 100', '    tolerance: 1', 1)
         self.assertNotEqual(text, changed)

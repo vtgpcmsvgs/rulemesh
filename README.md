@@ -298,7 +298,7 @@ ai_us 同时承接 OpenAI、Claude、Copilot、Cursor、Grok、Windsurf、Augmen
 
 ## 可见业务策略组
 
-2026-09-25 起，两份公开模板和五份私人配置展示 Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple、香港券商。Google/YouTube/Telegram/Apple 提供六地区自动组，Microsoft 仅提供按 provider 划分的美国自动组；业务 select 不新增周期测速。AI 美国、Crypto 台湾、Store 美国及工作白名单保持。YouTube 专用域名先于 Google，Play 共用 CDN 仍归 Google。Apple 普通配置默认直连，FlClash 更新拒绝仍优先；工作只沿用已有入口。
+2026-09-25 起，两份公开模板和五份私人配置展示 Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple、香港券商。八个业务入口均改为自动测速组：Surge 使用 smart，Mihomo/FlClash 使用 url-test；Google/YouTube/Telegram/Apple 通过六地区自动组，AI/Microsoft 按 provider 选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点。AI 美国、Crypto 台湾、Store 美国及工作白名单保持。YouTube 专用域名先于 Google，Play 共用 CDN 仍归 Google。Apple 普通配置由自动测速组选择地区，FlClash 更新拒绝仍优先；工作只沿用已有入口。
 
 参考 naiixi 的配置分析、默认选择、DNS 出口及验证边界见 [业务策略组重构](docs/service-groups-refactor.md)。安卓 DNS policy 现为 AI → YouTube → Google，分别跟随美国、香港、香港业务选择。
 

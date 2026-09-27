@@ -187,6 +187,7 @@
 ## 文件规范
 
 - 规则与文档统一使用 UTF-8 无 BOM
+- 公共仓库暂存时沿用既有 Git 文本规范化，不得为了隐藏换行提示临时设置 `core.autocrlf=false`；提交前复核暂存差异规模，避免将 CRLF 工作副本原样写入原为 LF 的索引。私人仓库仍遵守自己的 `* -text` 字节保留规则。
 - 新增或修改文本文件后，提交前要顺手检查是否意外写入 BOM；尤其是 `rules/`、`docs/`、`README.md`、`AGENTS.md`、`.github/`、`tools/`、`tests/`
 - 如果看到首行注释被构建脚本误报为 `unrecognized plain rule`，先检查 BOM
 - 不要手改 `dist/`；一律改 `rules/` 或构建脚本后重建
@@ -234,9 +235,9 @@
 
 ## 2026-09-25 业务选择层
 
-- 七份配置展示 Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple、香港券商，均为 select，复用机场 provider 与底层检测能力。Google、YouTube、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个隐藏自动组；Apple 另保留 DIRECT。AI 与 Microsoft 按 provider 自动选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，固定地区业务不提供 DIRECT。DNS 必须跟随对应业务组。此项取代通用业务只能直接引用自动组的旧检查，不取消地区约束。
+- 七份配置展示 Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple、香港券商，均为自动测速组；Surge 使用 smart，Mihomo/FlClash 使用 url-test，复用机场 provider 与底层检测能力。Google、YouTube、Telegram、Apple 通过六个隐藏地区自动组测速；AI 与 Microsoft 按 provider 自动选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，固定地区业务不提供 DIRECT。DNS 必须跟随对应业务组。
 - proxy/youtube 使用审核后的专用域名，不能整包 INCLUDE 含 gvt1/gvt2、ggpht 和 IP 的上游；先于 Google 广谱，旧 google_hk 保留完整兼容。新增业务规则须测正例和共享 CDN 负例。
-- 安卓 Google 使用六地区选择组，默认香港自动，三个 Google 专属进程和 QUIC 保留；DNS policy 按 AI、YouTube、Google 顺序分别绑定业务 select。普通桌面仅 AI policy，不机械扩散安卓策略。
+- 安卓 Google 使用六地区自动测速组，默认香港自动，三个 Google 专属进程和 QUIC 保留；DNS policy 按 AI、YouTube、Google 顺序分别绑定业务自动组。普通桌面仅 AI policy，不机械扩散安卓策略。
 - Apple 普通配置默认 DIRECT；两份 FlClash 的更新拒绝必须先于 Apple。工作只重绑既有 macOS 更新入口，禁止增加 Apple 全域放行。原机场手动组保留，Notion 统一复用香港自动选择。
 - 第三方配置的 DNS/hosts 也可能含凭证；只允许 tools/audit_reference_profile.py 白名单统计，不输出整节或解析异常原文。先准备任务专用依赖，不假设系统或捆绑 Python 自带 PyYAML。
 - 详见 docs/service-groups-refactor.md；组默认值、保存选择、文件发布和设备生效必须分开报告。

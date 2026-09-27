@@ -98,6 +98,7 @@ class _ProxyGroup:
     group_type: str = ""
     filter_text: str = ""
     members: list[str] = field(default_factory=list)
+    included_members: list[str] = field(default_factory=list)
     has_external_source: bool = False
     has_invalid_external_source: bool = False
     source_references: list[str] = field(default_factory=list)
@@ -327,6 +328,25 @@ def _surge_other_us_targets(lines: list[str], public_root: Path) -> list[str]:
     return targets
 
 
+def _split_surge_definition(definition: str) -> list[str]:
+    """按 Surge 逗号字段切分，同时保留带逗号的双引号参数。"""
+    parts: list[str] = []
+    start = 0
+    quoted = False
+    escaped = False
+    for index, char in enumerate(definition):
+        if char == '"' and not escaped:
+            quoted = not quoted
+        if char == ',' and not quoted:
+            parts.append(definition[start:index].strip())
+            start = index + 1
+        escaped = char == '\\' and not escaped
+        if char != '\\':
+            escaped = False
+    parts.append(definition[start:].strip())
+    return parts
+
+
 def _parse_surge_groups(lines: list[str]) -> dict[str, _ProxyGroup]:
     groups: dict[str, _ProxyGroup] = {}
     for line_number, line in _active_surge_section(lines, "Proxy Group"):
@@ -334,7 +354,7 @@ def _parse_surge_groups(lines: list[str]) -> dict[str, _ProxyGroup]:
             continue
         name, definition = line.split("=", 1)
         group_name = _scalar(name)
-        parts = [_scalar(part) for part in definition.split(",")]
+        parts = [_scalar(part) for part in _split_surge_definition(definition)]
         if not group_name or not parts:
             continue
         group = _ProxyGroup(line=line_number, group_type=parts[0].lower())
@@ -357,6 +377,10 @@ def _parse_surge_groups(lines: list[str]) -> dict[str, _ProxyGroup]:
                     "true",
                     "yes",
                 }
+            elif normalized_key == "include-other-group":
+                included = [item.strip() for item in _scalar(value).split(",") if item.strip()]
+                group.included_members.extend(included)
+                group.members.extend(included)
         groups[group_name] = group
     return groups
 
@@ -674,7 +698,8 @@ def _group_has_us_semantics(
     if group is None:
         return False
     next_seen = seen | {name}
-    members_are_us = bool(group.members) and all(
+    semantic_members = [member for member in group.members if member not in group.included_members]
+    members_are_us = bool(semantic_members) and all(
         _group_has_us_semantics(
             member,
             groups,
@@ -682,7 +707,7 @@ def _group_has_us_semantics(
             seen=next_seen,
             depth=depth + 1,
         )
-        for member in group.members
+        for member in semantic_members
     )
     has_us_filtered_source = (
         group.filter_text in approved_filters
@@ -691,14 +716,14 @@ def _group_has_us_semantics(
     )
     if group.group_type in FILTERING_GROUP_TYPES:
         return (
-            group.filter_text in approved_filters
+            (group.filter_text in approved_filters or (not group.filter_text and bool(group.members)))
             and not group.has_invalid_external_source
             and (group.has_external_source or bool(group.members))
-            and (not group.members or members_are_us)
+            and (not semantic_members or members_are_us)
         )
     return group.group_type in WRAPPER_GROUP_TYPES and (
         members_are_us
-        or (has_us_filtered_source and (not group.members or members_are_us))
+        or (has_us_filtered_source and (not semantic_members or members_are_us))
     )
 
 

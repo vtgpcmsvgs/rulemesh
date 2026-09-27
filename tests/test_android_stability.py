@@ -23,7 +23,7 @@ class AndroidStabilityTests(unittest.TestCase):
         text = text.replace(broker_rule, broker_rule + ''.join(f'  - PROCESS-NAME,{p},香港券商\n' for p in android.BROKER_PACKAGES))
         # 业务层已由 Google/YouTube 香港节点筛选组承接；夹具只补安卓专属规则。
         for name in ("Google", "YouTube"):
-            anchor = f'  - name: "{name}"\n    type: select\n    hidden: false\n'
+            anchor = f'  - name: "{name}"\n    type: url-test\n    hidden: false\n'
             self.assertEqual(text.count(anchor), 1)
         policy = ''.join(f'    "rule-set:{key}":\n' + ''.join(f'      - "{url}#{outbound}"\n' for url in baseline.OVERSEAS)
                          for key, outbound in (("proxy_youtube", "YouTube"), ("hk_google", "Google")))
@@ -109,7 +109,7 @@ class AndroidStabilityTests(unittest.TestCase):
                 changed = text.replace("rules:\n", "rules:\n  - " + rule.replace("REJECT", reject) + "\n")
                 with self.subTest(rule=rule, reject=reject):
                     self.assertTrue(android.check(path, changed.splitlines()))
-        google = '  - name: "Google"\n    type: select\n    hidden: false\n'
+        google = '  - name: "Google"\n    type: url-test\n    hidden: false\n'
         self.assertEqual(text.count(google), 1)
         disabled = text.replace(google, google + "    disable-udp: true\n", 1)
         self.assertTrue(android.check(path, disabled.splitlines()))
@@ -128,9 +128,9 @@ class AndroidStabilityTests(unittest.TestCase):
 
     def test_stable_group_cannot_become_fastest_or_nested_auto(self):
         path, text = self.fixture()
-        google = '  - name: "Google"\n    type: select\n    hidden: false\n'
+        google = '  - name: "Google"\n    type: url-test\n    hidden: false\n'
         self.assertEqual(text.count(google), 1)
-        for changed in (text.replace(google, google.replace("type: select", "type: url-test"), 1),
+        for changed in (text.replace(google, google.replace("type: url-test", "type: select"), 1),
                         text.replace(google, google + "    proxies: [DIRECT]\n", 1),
                         text.replace('    filter: "(?i)🇭🇰|香港|hong kong|\\\\bhk\\\\b"', '    filter: US', 1)):
             self.assertTrue(android.check(path, changed.splitlines()))

@@ -64,6 +64,6 @@ GitHub Raw 继续保留独立海外解析入口 `raw.githubusercontent.com = ser
 
 ## 业务组选择（2026-09-25）
 
-Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple、香港券商 作为可见 select 入口；Google、YouTube、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个隐藏自动组；Apple 另保留 DIRECT。AI 与 Microsoft 按 provider 自动选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，固定地区业务不提供 DIRECT。AI 仅提供美国候选，Crypto 仅台湾候选；ai_dns_us 与 AI 共用出口。YouTube 前置独立分流，Google 保留共享下载域和完整 IP。Apple Personal 默认 DIRECT，工作只沿用既有更新白名单，最终仍 REJECT。
+Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple、香港券商 作为可见 smart 自动测速入口；Google、YouTube、Telegram、Apple 通过香港、台湾、日本、韩国、新加坡、美国六个隐藏 smart 地区组；AI 与 Microsoft 按 provider 自动选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，固定地区业务不提供 DIRECT。AI 仅提供美国候选，Crypto 仅台湾候选；ai_dns_us 与 AI 共用出口。YouTube 前置独立分流，Google 保留共享下载域和完整 IP。Apple 由地区 smart 组自动选择，工作只沿用既有更新白名单，最终仍 REJECT。
 
 原机场手动组、节点 bootstrap、香港 Notion 规则和 Raw DNS 例外保留。导入后核对实际选择与 DNS 出口；参见 [完整说明](service-groups-refactor.md)。

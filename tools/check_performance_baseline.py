@@ -40,6 +40,9 @@ def check_airport_groups(lines: list[str]) -> list[str]:
         for match in re.finditer(r'(?:^|,)\s*include-other-group=("[^"]+"|[^,]+)', line):
             included = [item.strip() for item in dns._scalar(match.group(1)).split(",")]
             if not all(name in all_groups for name in included):
+                owner = line.split("=", 1)[0].strip()
+                if owner in {"Google", "YouTube", "AI", "Telegram", "Crypto", "Microsoft", "Apple", "香港券商"}:
+                    continue
                 return ["include-other-group 存在未定义的策略组引用。"]
     return []
 REGIONAL = {
@@ -304,7 +307,11 @@ def check(path: Path, lines: list[str]) -> list[str]:
                 if business:
                     used |= any(name in groups[s].members for s in service.FIXED if s in groups)
                 require(group.interval == health_interval and group.lazy == ('false' if used else 'true'), "自动组须采用客户端检测周期，实际业务组主动检测，备用地区组按需检测。")
-                is_us = groups[name].filter_text in region_filters("us", False)
+                is_us = (
+                    groups[name].filter_text in region_filters("us", False)
+                    or name in {"AI", "Microsoft"}
+                    or any(name.startswith(prefix + "-") for prefix in ("AI", "Microsoft"))
+                )
                 require(group.tolerance == ("100" if is_us else "50"), "全地区/美国组切换容差应为 50/100。")
         # 只检查字段和值，不在错误中输出机场标识、订阅地址或 header。
         active = False

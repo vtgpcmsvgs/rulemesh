@@ -30,8 +30,8 @@ IDS = {
 def default_chain(name, groups):
     """只遍历 select 的首项默认值；自动组是终点，环和空组不能当作有效默认值。"""
     chain = []
-    while name in groups and groups[name].group_type == "select":
-        if groups[name].has_external_source and not groups[name].members:
+    while name in groups and groups[name].group_type in {"select", "smart", "url-test"}:
+        if groups[name].has_external_source:
             return tuple(chain + [name])
         if name in chain or not groups[name].members:
             return ()
@@ -88,9 +88,10 @@ def check(path: Path, lines, groups, rules, auto):
                    if surge else [parser._scalar(line.split(":", 1)[1]) for line in lines if line.startswith("  - name:")])
     require(len(definitions) == len(set(definitions)), "策略组定义必须唯一，不能覆盖同名 provider 子组。")
     require(lines.count(MARKER) == 1, "业务策略组标记必须唯一。")
+    business_type = "smart" if surge else "url-test"
     for name in SERVICES:
         group = groups.get(name)
-        require(group is not None and group.group_type == "select", f"{name} 必须是可见的业务 select 组。")
+        require(group is not None and group.group_type == business_type, f"{name} 必须是可见的自动测速组。")
         if group is None:
             continue
         pattern = r'^' + re.escape(name) + r'\s*=' if surge else r'^  - name:\s*[\"\']?' + name + r'[\"\']?\s*$'
@@ -101,10 +102,14 @@ def check(path: Path, lines, groups, rules, auto):
             end = next((i for i in range(group.line, len(lines)) if lines[i].startswith("  - name:") or re.match(r'^[\w-]+:', lines[i])), len(lines))
             block = lines[group.line:end]
             require("    hidden: false" in block, f"{name} 必须显式可见。")
-            require(not any(re.match(r'^    (url|interval|lazy|tolerance):', s) for s in block), f"{name} 选择层不得重复建立测速任务。")
+            require(any(re.match(r'^    url:', s) for s in block), f"{name} 自动测速组必须配置探测地址。")
+            expected_interval = "600" if "android" in path.name else "300"
+            require(any(re.fullmatch(rf'    interval:\s*{expected_interval}', s) for s in block), f"{name} 自动测速组必须配置正确检测周期。")
+        if surge:
+            require(any(k in lines[group.line-1] for k in ("policy-path=", "include-other-group=")), f"{name} smart 组必须配置测速来源。")
         require((bool(group.members) or group.has_external_source) and all(m in groups or m == "DIRECT" for m in group.members), f"{name} 存在空候选或未知组引用。")
         require(bool(default_chain(name, groups)), f"{name} 默认选择链存在环或空组。")
-        require(not group.has_external_source and not group.filter_text, f"{name} 选择层应复用子组，不得直接混入节点。")
+        require(not group.has_external_source and not group.filter_text, f"{name} 自动测速组应复用子组，不得直接混入订阅源。")
         if name in FIXED:
             approved = baseline.region_filters(FIXED[name], surge)
             require(parser._group_has_us_semantics(name, groups, approved), f"{name} 所有候选必须满足地区约束。")
@@ -137,7 +142,8 @@ def check(path: Path, lines, groups, rules, auto):
         require(group is not None and group.group_type == ("smart" if surge else "url-test"), "缺少地区自动测速组。")
         if group:
             require(hidden(name), "地区自动组必须隐藏。")
-            require(not group.members and group.has_external_source and not group.has_invalid_external_source and group.filter_text in baseline.region_filters(region, surge), "地区自动组必须保留正确地区过滤器和订阅来源。")
+            require(group.has_external_source and not group.has_invalid_external_source and group.filter_text in baseline.region_filters(region, surge), "地区自动组必须保留正确地区过滤器和订阅来源。")
+            require(all(member in groups or member == "DIRECT" for member in group.members), "地区自动组存在未知嵌套策略组。")
             if not surge:
                 require(set(group.source_references) == expected_sources, "地区自动组必须覆盖全部 provider。")
     require(not any("Google" in name and "稳定" in name for name in groups), "不得恢复独立 Google 下载稳定组。")
@@ -152,7 +158,7 @@ def check(path: Path, lines, groups, rules, auto):
     require(all(acyclic(s, set()) for s in SERVICES), "业务策略组的候选引用存在循环。")
     for name in ("Google", "YouTube", "Telegram"):
         require(default_target(name, groups) == next(iter(REGIONS)), f"{name} 默认必须使用香港自动组。")
-    require(default_target("Apple", groups) == "DIRECT", "Apple 默认直连，保留六地区手动选项。")
+    require(default_target("Apple", groups) in set(REGIONS), "Apple 默认必须使用地区自动组。")
     positions = {}
     for pos, (_, parts) in enumerate(rules):
         ident = identifier(parts, surge)
