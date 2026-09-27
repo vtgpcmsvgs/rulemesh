@@ -268,7 +268,7 @@ proxy-groups:
   - name: "Apple"
     type: url-test
     hidden: false
-    url: "https://www.google.com/generate_204"
+    url: "https://captive.apple.com/hotspot-detect.html"
     interval: 300
     tolerance: 50
     timeout: 5000

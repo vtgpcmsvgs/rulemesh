@@ -23,6 +23,9 @@ class ServiceGroupTests(unittest.TestCase):
             expected = 'url-test' if client == 'mihomo' else 'select'
             for name in service.SERVICES:
                 self.assertEqual(groups[name].group_type, expected, name)
+            if client == 'mihomo':
+                apple_line = next(line for line in text.splitlines() if line.startswith('    url:') and 'captive.apple.com' in line)
+                self.assertIn('captive.apple.com/hotspot-detect.html', apple_line)
             self.assertEqual(baseline.check(path, text.splitlines()), [])
 
     def test_unified_broker_scope_includes_priority_broker_only(self):

@@ -52,4 +52,6 @@ GeoIP 使用 `geodata-mode: false`，`geox-url.mmdb` 直接引用 [MetaCubeX cou
 
 Google、YouTube、Telegram、AI、Crypto、Microsoft、Apple、香港券商均使用自动测速选择。Google/YouTube/Telegram/Apple 提供香港、台湾、日本、韩国、新加坡、美国六地区自动组；AI 与 Microsoft 按 provider 划分美国自动组，Crypto 按 provider 划分台湾自动组，香港券商按 provider 划分香港自动组。provider 更新仍 DIRECT。Apple 以香港自动组为首选并保留 DIRECT 兜底，私人 FlClash 保持更新拒绝优先。Store 美国与已有 Outlook 直连例外不受 Microsoft 通用选择覆盖。
 
+Apple 业务组使用 `https://captive.apple.com/hotspot-detect.html` 测速，使 DIRECT 候选不依赖 Google 直连可达性；其他业务组继续使用 Google 204 探测地址。
+
 AI DoH 使用 #AI；安卓额外按 YouTube → Google 配置各自 DNS 出口，分别跟随对应业务组。桌面不新增视频 DNS policy。新组第一项是初始默认，保存选择可能覆盖；下载速度与 204 延迟须分别验收。详见 [重构说明](service-groups-refactor.md)。
