@@ -11,7 +11,7 @@
 1. AI（含 Google AI）第一条规则固定美国。
 2. 抖音和新增微信、小红书精选入口前置 DIRECT，不增加整个腾讯或中国通用白名单。
 3. 日本明确访问例外、Crypto 台湾、香港券商香港先于 Google 通用入口。
-4. WPS 按 2026-09-18 修订统一直连，Store 专项固定美国；Google、YouTube、Telegram、Apple 使用 select，手动选择香港、台湾、日本、韩国、新加坡、美国六个地区 url-test 组；Apple 仅保留六地区选项。AI 与 Microsoft 按 provider 自动选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，固定地区业务不提供 DIRECT。
+4. WPS 按 2026-09-18 修订统一直连，Store 专项固定美国；Google、YouTube、Telegram、Apple 使用 select，手动选择香港、台湾、日本、韩国、新加坡、美国六个地区 url-test 组；Apple 在六地区选项后追加 DIRECT。AI 与 Microsoft 按 provider 自动选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，AI、Crypto、香港券商不提供 DIRECT；Microsoft 父组另追加 DIRECT 参与自动测速，代理候选仍限定美国。
 5. 保留既有拒绝、设备条件、GitHub SSH/Raw/Core、1Password、订阅端点、Polygon/BSC RPC、DNS、LAN、系统时间和指定直连。
 6. 其余连接最终 `FINAL,REJECT`。
 
@@ -47,8 +47,8 @@ Surge Enhanced Mode 由客户端启用，profile 不写 dns-mode；保留 localh
 
 ## 2026-09-25 可见业务入口
 
-工作配置展示八个 select，只替换已放行业务的策略目标。YouTube 从原 Google 覆盖中提取专用域名并前置；Apple 仅承接原 macOS 更新入口，不接入 Personal 的 Apple 全域规则。更新拒绝、设备条件、GitHub 观察及 FINAL,REJECT 保持，DNS 变更不授予额外放行。详见 [业务组说明](service-groups-refactor.md)。
+工作配置展示四个 select 与四个 url-test，只替换已放行业务的策略目标。YouTube 从原 Google 覆盖中提取专用域名并前置；Apple 仅承接原 macOS 更新入口，不接入 Personal 的 Apple 全域规则。更新拒绝、设备条件、GitHub 观察及 FINAL,REJECT 保持，DNS 变更不授予额外放行。详见 [业务组说明](service-groups-refactor.md)。
 
 ## 2026-09-27 策略组选择方式
 
-2026-09-27 业务选择约定：Google、YouTube、Telegram、Apple 使用 select，仅手动选择香港、台湾、日本、韩国、新加坡、美国六个地区自动组，Apple 不再提供 DIRECT。六地区组均为 url-test，覆盖所有 provider 的对应地区节点。AI 与 Microsoft 使用 url-test，显式引用并共享“美国-provider”子组；Crypto 引用“台湾-provider”，香港券商引用“香港-provider”。这些子组均为 url-test，逐一对应机场来源；私人配置每个固定地区业务有七个子组。Surge 父组必须用显式成员名称，不能用 include-other-group 代替，否则会展开为节点列表。隐藏状态不再作为功能验收条件。DNS、规则顺序、Store 美国及工作白名单边界保持。 本次只调整已有组的选择方式和候选名称，不新增工作规则、设备或流量放行。
+2026-09-27 业务选择约定：Google、YouTube、Telegram、Apple 使用 select，手动选择香港、台湾、日本、韩国、新加坡、美国六个地区自动组，Apple 另追加 DIRECT。六地区组均为 url-test，覆盖所有 provider 的对应地区节点。AI 与 Microsoft 使用 url-test，显式引用并共享“美国-provider”子组，Microsoft 父组另追加 DIRECT 参与自动测速；Crypto 引用“台湾-provider”，香港券商引用“香港-provider”。这些子组均为 url-test，逐一对应机场来源；私人配置每个固定地区业务有七个子组。Surge 父组必须用显式成员名称，不能用 include-other-group 代替，否则会展开为节点列表。隐藏状态不再作为功能验收条件。DNS、规则顺序、Store 美国及工作白名单边界保持。 本次只调整已有组的选择方式和候选名称，不新增工作规则、设备或流量放行。

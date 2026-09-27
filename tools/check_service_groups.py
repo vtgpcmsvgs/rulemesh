@@ -115,9 +115,12 @@ def check(path: Path, lines, groups, rules, auto):
                 require('interval=300' in lines[group.line-1], f"{name} 必须配置正确检测周期。")
         if name in FIXED:
             approved = baseline.region_filters(FIXED[name], surge)
-            require(parser._group_has_us_semantics(name, groups, approved), f"{name} 所有候选必须满足地区约束。")
+            # Microsoft 仅父组允许 DIRECT；共享美国子组及其他固定地区业务仍严格锁定地区。
+            children = [child for child in group.members if child != "DIRECT"]
+            require(group.members.count("DIRECT") == (1 if name == "Microsoft" else 0), f"{name} 的 DIRECT 候选数量不符合约定。")
+            require(bool(children) and all(parser._group_has_us_semantics(child, groups, approved) for child in children), f"{name} 代理候选必须满足地区约束。")
             sources = []
-            for child in group.members:
+            for child in children:
                 leaf = groups.get(child)
                 require(leaf is not None and leaf.group_type == "url-test", f"{name} 必须按 provider 自动测速选择。")
                 require(child.startswith(REGION_LABELS[FIXED[name]] + '-'), f"{name} 子组必须采用地区-provider 命名。")
@@ -137,7 +140,7 @@ def check(path: Path, lines, groups, rules, auto):
                     sources.extend(leaf.source_references)
             require(len(sources) == len(expected_sources) and set(sources) == expected_sources, f"{name} 必须逐一覆盖全部 provider，不能重复或遗漏。")
         else:
-            candidates = list(REGIONS)
+            candidates = list(REGIONS) + (["DIRECT"] if name == "Apple" else [])
             require(len(group.members) == len(candidates) and set(group.members) == set(candidates), f"{name} 必须完整展示六个地区自动组。")
 
     for name, region in REGIONS.items():
@@ -152,7 +155,7 @@ def check(path: Path, lines, groups, rules, auto):
                 imported = [source(groups[n]) for n in group.included_members if n in groups]
                 require(set(imported) == expected_sources, "地区自动组必须显式导入全部机场来源并按地区过滤。")
     if "AI" in groups and "Microsoft" in groups:
-        require(groups['AI'].members == groups['Microsoft'].members, "AI 与 Microsoft 必须复用同一套美国-provider 子组。")
+        require(groups['AI'].members == [m for m in groups['Microsoft'].members if m != "DIRECT"], "AI 与 Microsoft 必须复用同一套美国-provider 子组。")
     require(not any(n.startswith(tuple(s + '-' for s in FIXED)) for n in groups), "不得残留业务-provider 旧命名或重复美国组。")
     # 防止多行替换后重复保留原字段，被 YAML 的最后一个值悄悄覆盖。
     if not surge:

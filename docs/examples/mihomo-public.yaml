@@ -249,6 +249,7 @@ proxy-groups:
       - "美国-provider_a"
       - "美国-provider_b"
       - "美国-provider_c"
+      - "DIRECT"
 
   - name: "Apple"
     type: select
@@ -260,6 +261,7 @@ proxy-groups:
       - "🇰🇷 韩国-自动选择"
       - "🇸🇬 新加坡-自动选择"
       - "🇺🇸 美国-自动选择"
+      - "DIRECT"
 
   - name: "香港券商"
     type: url-test

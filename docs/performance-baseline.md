@@ -2,7 +2,7 @@
 
 2026-09-26 当前业务选择层以 [八个业务组与 DNS 联动](service-groups-refactor.md) 为准；下文保留历史基线及实测记录。
 
-2026-09-16 [出口修订](scoped-egress-repair.md) 优先：WPS 按 2026-09-18 修订统一直连、Store 专项固定美国；AI 使用审核域名，国内 DNS 与新华三固定第二条直连；Surge 移除阿里设备/整设备代理与爱思/Apple 海外解析残留。通用 Microsoft 保留代理，工作白名单仍 REJECT。
+2026-09-16 [出口修订](scoped-egress-repair.md) 优先：WPS 按 2026-09-18 修订统一直连、Store 专项固定美国；AI 使用审核域名，国内 DNS 与新华三固定第二条直连；Surge 移除阿里设备/整设备代理与爱思/Apple 海外解析残留。通用 Microsoft 保留美国代理候选并追加 DIRECT，工作白名单仍 REJECT。
 
 2026-09-16 两份 FlClash 的日常业务修订见 [常用业务连通性](common-network-reliability.md)：阿里系强制代理停用，安卓共享下载按目的地分流；Google 专属保护、AI 美国和其他地区要求继续保留。下文历史默认值不能覆盖此修订。
 
@@ -28,7 +28,7 @@
 
 - AI 入口放在第一条有效规则，避免 Google 完整 IP 地址空间和其他广谱规则抢先匹配；国内 AI 继续使用 `ai_cn_direct` 直连。
 - 抖音复用 `bytedance_direct`；新增 `cn_social_direct` 仅维护微信、小红书及专用 CDN 域名，不放宽整个腾讯或通用云服务。
-- 日本精确例外、Crypto 和香港券商都早于 Google 广谱规则。`google_hk`、`global_media` 等旧路径保留以兼容已有订阅；Google、YouTube、Telegram、Apple 使用 select，手动选择香港、台湾、日本、韩国、新加坡、美国六个地区 url-test 组；Apple 仅保留六地区选项。AI 与 Microsoft 按 provider 自动选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，固定地区业务不提供 DIRECT。
+- 日本精确例外、Crypto 和香港券商都早于 Google 广谱规则。`google_hk`、`global_media` 等旧路径保留以兼容已有订阅；Google、YouTube、Telegram、Apple 使用 select，手动选择香港、台湾、日本、韩国、新加坡、美国六个地区 url-test 组；Apple 在六地区选项后追加 DIRECT。AI 与 Microsoft 按 provider 自动选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，AI、Crypto、香港券商不提供 DIRECT；Microsoft 父组另追加 DIRECT 参与自动测速，代理候选仍限定美国。
 - 全地区组去掉国家标签筛选，只排除套餐占位项，允许没有地区标签的有效节点参与。FlClash 桌面使用 300 秒主动测速、安卓使用 600 秒；实际业务组主动、备用地区按需检测、全地区容差 50、美国容差 100；测速只衡量连接延迟，不等同于下载吞吐。
 - Mihomo 开启 `tcp-concurrent`，并发尝试目标的多个 IP，采用先成功的连接；保持 IPv4、ARC 缓存和 fake-ip。Surge 通用全地区保留 smart，六地区与固定业务父子组使用支持嵌套的 url-test；不机械移植其他客户端同名字段。
 - AWS IP 区域组和 `chain_socks5_ipcidr` 不再注册或调用于配置；`rules/`、上游登记与 `dist/` 产物继续保留，暂停使用不等于删除维护资产。
@@ -87,4 +87,4 @@ AI、Crypto、其他明确地区、Google、gfw 等前置规则和机场组不�
 
 ## 2026-09-25 业务选择层修订
 
-2026-09-27 修订：四个通用业务为可见 select，AI、Microsoft、Crypto、香港券商为可见 url-test；固定地区业务显式引用“地区-provider”自动子组，AI 与 Microsoft 共享美国子组。基线继续检查所有 AI/Crypto 候选的地区约束、默认引擎的主动检测及切换容差；Google、YouTube、Telegram、Apple 使用 select，手动选择香港、台湾、日本、韩国、新加坡、美国六个地区 url-test 组；Apple 仅保留六地区选项。AI 与 Microsoft 按 provider 自动选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，固定地区业务不提供 DIRECT。AI DNS 跟随 AI；安卓前置 YouTube policy 与 Google policy 分别跟随对应业务组。Apple 普通配置初始选择香港自动组、工作仍只承接原更新白名单，FlClash 更新拒绝仍优先。以 [业务策略组重构](service-groups-refactor.md) 为本轮差异依据。
+2026-09-27 修订：四个通用业务为可见 select，AI、Microsoft、Crypto、香港券商为可见 url-test；固定地区业务显式引用“地区-provider”自动子组，AI 与 Microsoft 共享美国子组。基线继续检查所有 AI/Crypto 候选的地区约束、默认引擎的主动检测及切换容差；Google、YouTube、Telegram、Apple 使用 select，手动选择香港、台湾、日本、韩国、新加坡、美国六个地区 url-test 组；Apple 在六地区选项后追加 DIRECT。AI 与 Microsoft 按 provider 自动选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，AI、Crypto、香港券商不提供 DIRECT；Microsoft 父组另追加 DIRECT 参与自动测速，代理候选仍限定美国。AI DNS 跟随 AI；安卓前置 YouTube policy 与 Google policy 分别跟随对应业务组。Apple 普通配置初始选择香港自动组、工作仍只承接原更新白名单，FlClash 更新拒绝仍优先。以 [业务策略组重构](service-groups-refactor.md) 为本轮差异依据。

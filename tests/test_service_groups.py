@@ -34,7 +34,7 @@ class ServiceGroupTests(unittest.TestCase):
             path, text = self.fixture(client)
             self.assertEqual(baseline.check(path, text.splitlines()), [])
             groups = parser._parse_surge_groups(text.splitlines()) if client == 'surge' else parser._parse_mihomo_groups(text.splitlines())
-            self.assertEqual(groups['AI'].members, groups['Microsoft'].members)
+            self.assertEqual(groups['AI'].members, [m for m in groups['Microsoft'].members if m != 'DIRECT'])
             if client == 'surge':
                 line = text.splitlines()[groups[next(iter(service.REGIONS))].line - 1]
                 changed = text.replace(line, re.sub(r', include-other-group="[^"]+"', '', line))
@@ -54,11 +54,11 @@ class ServiceGroupTests(unittest.TestCase):
         changed = text.replace(anchor, anchor + '    type: select\n')
         self.assertTrue(any('重复字段' in e for e in baseline.check(path, changed.splitlines())))
 
-    def test_manual_entries_have_exactly_six_regions_and_no_direct(self):
+    def test_manual_entries_reject_direct_except_apple(self):
         for client in ('surge', 'mihomo'):
             path, text = self.fixture(client)
             self.assertEqual(baseline.check(path, text.splitlines()), [])
-            for name in service.MANUAL:
+            for name in ('Google', 'YouTube', 'Telegram'):
                 if client == 'surge':
                     old = next(s for s in text.splitlines() if s.startswith(name + ' ='))
                     changed = text.replace(old, old.replace(', hidden=0', ', DIRECT, hidden=0'))
@@ -67,6 +67,14 @@ class ServiceGroupTests(unittest.TestCase):
                     changed = text.replace(anchor, anchor + '    proxies: [DIRECT]\n')
                 self.assertNotEqual(text, changed)
                 self.assertTrue(baseline.check(path, changed.splitlines()))
+
+    def test_microsoft_allows_direct_alongside_us_provider_groups(self):
+        for client in ('surge', 'mihomo'):
+            path, text = self.fixture(client)
+            groups = parser._parse_surge_groups(text.splitlines()) if client == 'surge' else parser._parse_mihomo_groups(text.splitlines())
+            self.assertIn('DIRECT', groups['Microsoft'].members)
+            self.assertEqual([m for m in groups['Microsoft'].members if m != 'DIRECT'], groups['AI'].members)
+            self.assertEqual(baseline.check(path, text.splitlines()), [])
 
     def test_all_business_entries_have_valid_automatic_selection(self):
         for client in ('mihomo', 'surge'):
@@ -211,8 +219,10 @@ class ServiceGroupTests(unittest.TestCase):
             self.assertEqual(set(groups[name].members), set(service.REGIONS))
         for name, region in service.FIXED.items():
             self.assertFalse(groups[name].has_external_source)
-            self.assertEqual(len(groups[name].members), 3)
-            for child in groups[name].members:
+            self.assertEqual('DIRECT' in groups[name].members, name == 'Microsoft')
+            children = [child for child in groups[name].members if child != 'DIRECT']
+            self.assertEqual(len(children), 3)
+            for child in children:
                 self.assertEqual(groups[child].group_type, 'url-test')
                 self.assertEqual(len(groups[child].source_references), 1)
                 self.assertIn(groups[child].filter_text, baseline.region_filters(region, False))
