@@ -1,6 +1,6 @@
 # FlClash 客户端与性能基线
 
-2026-09-26 当前业务选择层以 [八个业务组与 DNS 联动](service-groups-refactor.md) 为准；下文保留历史基线及实测记录。
+2026-09-27 当前业务选择层以 [八个业务组与 DNS 联动](service-groups-refactor.md) 为准；下文保留历史基线及实测记录。
 
 2026-09-16 用户已另外授权本机 FlClash 深度验收，记录见[桌面实测](flclash-desktop-validation-20260916.md)。下文早前“本次不操作桌面”和历史数量只描述各自迁移批次，不能覆盖本次桌面实测结论。
 
@@ -70,4 +70,4 @@
 
 ## 2026-09-25 八个业务入口
 
-新增 Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple、香港券商 select，按 provider 拆分固定地区测速，沿用桌面 300 秒、安卓 600 秒周期；Notion 复用香港自动选择，不再增加专用测速组。Google/YouTube/Telegram/Apple 提供六地区自动组，Microsoft 仅提供按 provider 划分的美国自动组；AI/Crypto 提供受地区过滤的 provider 自动子组。两份 FlClash 新增 Apple 服务入口并置于系统更新拒绝之后；安卓 Google 通过地区业务层引用并保留 QUIC。同步源文件后需由客户端更新 profile，核验实际生成配置与 DNS 出口；详见 [重构报告](service-groups-refactor.md)。
+2026-09-27 业务选择约定：Google、YouTube、Telegram、Apple 使用 select，仅手动选择香港、台湾、日本、韩国、新加坡、美国六个地区自动组，Apple 不再提供 DIRECT。六地区组均为 url-test，覆盖所有 provider 的对应地区节点。AI 与 Microsoft 使用 url-test，显式引用并共享“美国-provider”子组；Crypto 引用“台湾-provider”，香港券商引用“香港-provider”。这些子组均为 url-test，逐一对应机场来源；私人配置每个固定地区业务有七个子组。Surge 父组必须用显式成员名称，不能用 include-other-group 代替，否则会展开为节点列表。隐藏状态不再作为功能验收条件。DNS、规则顺序、Store 美国及工作白名单边界保持。

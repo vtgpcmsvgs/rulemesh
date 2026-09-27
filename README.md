@@ -1,6 +1,6 @@
 # RuleMesh
 
-2026-09-26 当前业务选择层以 [八个业务组与 DNS 联动](docs/service-groups-refactor.md) 为准；下文保留历史基线及实测记录。
+2026-09-27 当前业务选择层以 [八个业务组与 DNS 联动](docs/service-groups-refactor.md) 为准；下文保留历史基线及实测记录。
 
 2026-09-16 出口修订：海外 AI 仅匹配已审核域名，国内 DNS 与新华三紧随 AI 直连；Surge 清理阿里设备代理和爱思/Apple 海外解析。WPS/金山文档按 2026-09-18 用户要求统一直连，Microsoft Store 因美国地区应用要求固定美国；Microsoft 通用代理与其他既有地区例外保留。见[出口修订与防误伤](docs/scoped-egress-repair.md)。
 
@@ -150,9 +150,9 @@ python tools/build_rules.py
 
 - 海外 AI（含 Gemini、AI Studio、NotebookLM）固定美国，第一条规则优先匹配；国内 AI、抖音、小红书、微信直连。
 - Crypto、Polymarket、Polygon/BSC RPC 固定台湾；`opinion.trade` 保留日本访问例外，香港券商与 Personal 证券入口保留香港。明确地区要求优先于测速结果。
-- 香港券商统一使用 `region/hk/hk_securities` 规则集和“香港券商”策略组；AI、Crypto、Microsoft、香港券商按 provider 分组自动测速。Google、YouTube、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个隐藏地区自动组；安卓不再单独维护“Google 下载稳定”策略组。
+- 香港券商统一使用 `region/hk/hk_securities` 规则集和“香港券商”策略组；AI、Crypto、Microsoft、香港券商按 provider 分组自动测速。Google、YouTube、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个地区自动组；安卓不再单独维护“Google 下载稳定”策略组。
 - 命中前置规则的其余海外代理业务使用全地区自动组；未命中规则的 FINAL/MATCH 按 2026-09-12 用户要求使用 DIRECT，仅工作白名单保持 REJECT，不再按国家标签限制候选节点；套餐占位项继续过滤。前置 DIRECT/REJECT 行为继续保留。
-- Google、YouTube、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个隐藏自动组；Apple 另保留 DIRECT。AI 与 Microsoft 按 provider 自动选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，固定地区业务不提供 DIRECT。google_hk 兼容路径和完整官方 IP 地址空间保留，AI、国内精选及地区必需规则都在它前面。
+- Google、YouTube、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个地区自动组；Apple 仅保留六地区选项。AI 与 Microsoft 按 provider 自动选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，固定地区业务不提供 DIRECT。google_hk 兼容路径和完整官方 IP 地址空间保留，AI、国内精选及地区必需规则都在它前面。
 - 国内默认双 DoH，AI 单独通过美国解析；Mihomo 开启 TCP 并发，保留 ARC、fake-ip，桌面 300 秒、安卓 600 秒主动测速。默认国内 DNS 后不再重复加载十万条 DNS 专用清单。
 - AWS IP 和链式 SOCKS5 的源规则、快照与构建产物保留；当前配置不再注册或调用。
 - GeoIP 直接使用 [MetaCubeX country.mmdb](https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/country.mmdb)，停止本仓库二次 Release 发布。未定制的公共资源优先活跃上游，自定义规则继续引用 dist。
@@ -298,7 +298,7 @@ ai_us 同时承接 OpenAI、Claude、Copilot、Cursor、Grok、Windsurf、Augmen
 
 ## 可见业务策略组
 
-2026-09-25 起，两份公开模板和五份私人配置展示 Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple、香港券商。八个业务入口均改为自动测速组：Surge 使用 smart，Mihomo/FlClash 使用 url-test；Google/YouTube/Telegram/Apple 通过六地区自动组，AI/Microsoft 按 provider 选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点。AI 美国、Crypto 台湾、Store 美国及工作白名单保持。YouTube 专用域名先于 Google，Play 共用 CDN 仍归 Google。Apple 普通配置由自动测速组选择地区，FlClash 更新拒绝仍优先；工作只沿用已有入口。
+2026-09-27 业务选择约定：Google、YouTube、Telegram、Apple 使用 select，仅手动选择香港、台湾、日本、韩国、新加坡、美国六个地区自动组，Apple 不再提供 DIRECT。六地区组均为 url-test，覆盖所有 provider 的对应地区节点。AI 与 Microsoft 使用 url-test，显式引用并共享“美国-provider”子组；Crypto 引用“台湾-provider”，香港券商引用“香港-provider”。这些子组均为 url-test，逐一对应机场来源；私人配置每个固定地区业务有七个子组。Surge 父组必须用显式成员名称，不能用 include-other-group 代替，否则会展开为节点列表。隐藏状态不再作为功能验收条件。DNS、规则顺序、Store 美国及工作白名单边界保持。
 
 参考 naiixi 的配置分析、默认选择、DNS 出口及验证边界见 [业务策略组重构](docs/service-groups-refactor.md)。安卓 DNS policy 现为 AI → YouTube → Google，分别跟随美国、香港、香港业务选择。
 

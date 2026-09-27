@@ -17,8 +17,8 @@
 2. 国内 DNS 与新华三精选直连固定第二条，再调用国内 AI、抖音、微信与小红书。
 3. 日本明确访问例外、Crypto 台湾、香港券商与 Personal 香港证券。
 
-香港券商统一使用“香港券商”策略组；Google、YouTube、Telegram、Apple 可从六个地区自动选择中切换。地区自动组隐藏在界面中，仅由业务组调用。AI、Crypto、Microsoft 与香港券商均按 provider 拆分自动测速。
-4. Google、YouTube、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个隐藏自动组；Apple 另保留 DIRECT。AI 与 Microsoft 按 provider 自动选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，固定地区业务不提供 DIRECT。Google 保留官方完整地址空间。
+香港券商统一使用“香港券商”策略组；Google、YouTube、Telegram、Apple 可从六个地区自动选择中切换。地区自动组供业务组引用，界面是否隐藏不影响候选层级。AI、Crypto、Microsoft 与香港券商均按 provider 拆分自动测速。
+4. Google、YouTube、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个地区自动组；Apple 仅保留六地区选项。AI 与 Microsoft 按 provider 自动选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，固定地区业务不提供 DIRECT。Google 保留官方完整地址空间。
 5. Personal 精选规则与既有拒绝规则；Apple / Outlook 直连及 Microsoft Store 优先入口保持各自边界。
 6. 其他精确业务、GitHub SSH/Raw/Core、Polygon/BSC RPC、订阅端点与 DNS 出口。
 7. LAN、系统时间、阿里云 TCP/22 和其他国内直连。
@@ -64,6 +64,6 @@ GitHub Raw 继续保留独立海外解析入口 `raw.githubusercontent.com = ser
 
 ## 业务组选择（2026-09-25）
 
-Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple、香港券商作为可见业务入口；Surge 使用 smart 聚合底层自动测速组（Apple 因保留 DIRECT 使用 select）；Google、YouTube、Telegram、Apple 通过香港、台湾、日本、韩国、新加坡、美国六个隐藏 smart 地区组；AI 与 Microsoft 按 provider 自动选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，固定地区业务不提供 DIRECT。AI 仅提供美国候选，Crypto 仅台湾候选；ai_dns_us 与 AI 共用出口。YouTube 前置独立分流，Google 保留共享下载域和完整 IP。Apple 由地区 smart 组自动选择，工作只沿用既有更新白名单，最终仍 REJECT。
+2026-09-27 业务选择约定：Google、YouTube、Telegram、Apple 使用 select，仅手动选择香港、台湾、日本、韩国、新加坡、美国六个地区自动组，Apple 不再提供 DIRECT。六地区组均为 url-test，覆盖所有 provider 的对应地区节点。AI 与 Microsoft 使用 url-test，显式引用并共享“美国-provider”子组；Crypto 引用“台湾-provider”，香港券商引用“香港-provider”。这些子组均为 url-test，逐一对应机场来源；私人配置每个固定地区业务有七个子组。Surge 父组必须用显式成员名称，不能用 include-other-group 代替，否则会展开为节点列表。隐藏状态不再作为功能验收条件。DNS、规则顺序、Store 美国及工作白名单边界保持。
 
 原机场手动组、节点 bootstrap、香港 Notion 规则和 Raw DNS 例外保留。导入后核对实际选择与 DNS 出口；参见 [完整说明](service-groups-refactor.md)。

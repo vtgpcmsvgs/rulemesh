@@ -28,9 +28,9 @@
 
 - AI 入口放在第一条有效规则，避免 Google 完整 IP 地址空间和其他广谱规则抢先匹配；国内 AI 继续使用 `ai_cn_direct` 直连。
 - 抖音复用 `bytedance_direct`；新增 `cn_social_direct` 仅维护微信、小红书及专用 CDN 域名，不放宽整个腾讯或通用云服务。
-- 日本精确例外、Crypto 和香港券商都早于 Google 广谱规则。`google_hk`、`global_media` 等旧路径保留以兼容已有订阅；Google、YouTube、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个隐藏自动组；Apple 另保留 DIRECT。AI 与 Microsoft 按 provider 自动选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，固定地区业务不提供 DIRECT。
+- 日本精确例外、Crypto 和香港券商都早于 Google 广谱规则。`google_hk`、`global_media` 等旧路径保留以兼容已有订阅；Google、YouTube、Telegram、Apple 使用 select，手动选择香港、台湾、日本、韩国、新加坡、美国六个地区 url-test 组；Apple 仅保留六地区选项。AI 与 Microsoft 按 provider 自动选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，固定地区业务不提供 DIRECT。
 - 全地区组去掉国家标签筛选，只排除套餐占位项，允许没有地区标签的有效节点参与。FlClash 桌面使用 300 秒主动测速、安卓使用 600 秒；实际业务组主动、备用地区按需检测、全地区容差 50、美国容差 100；测速只衡量连接延迟，不等同于下载吞吐。
-- Mihomo 开启 `tcp-concurrent`，并发尝试目标的多个 IP，采用先成功的连接；保持 IPv4、ARC 缓存和 fake-ip。Surge 保持原有 smart 组与客户端自身连接机制，不机械移植同名字段。
+- Mihomo 开启 `tcp-concurrent`，并发尝试目标的多个 IP，采用先成功的连接；保持 IPv4、ARC 缓存和 fake-ip。Surge 通用全地区保留 smart，六地区与固定业务父子组使用支持嵌套的 url-test；不机械移植其他客户端同名字段。
 - AWS IP 区域组和 `chain_socks5_ipcidr` 不再注册或调用于配置；`rules/`、上游登记与 `dist/` 产物继续保留，暂停使用不等于删除维护资产。
 - Surge 只清理随 AWS/链式功能停用的设备专用组。机场手动组是独立选择功能，即使没有规则引用也必须保留；三份私人 Surge 各保留七组，保持原订阅与过滤器，设为可见并接入手动选择入口。两份 Mihomo 保留全地区和六地区自动引擎，固定业务新增 provider 子组。
 
@@ -87,4 +87,4 @@ AI、Crypto、其他明确地区、Google、gfw 等前置规则和机场组不�
 
 ## 2026-09-25 业务选择层修订
 
-当前配置在自动引擎之上增加八个可见 select。基线继续检查所有 AI/Crypto 候选的地区约束、默认引擎的主动检测及切换容差；Google、YouTube、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个隐藏自动组；Apple 另保留 DIRECT。AI 与 Microsoft 按 provider 自动选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，固定地区业务不提供 DIRECT。AI DNS 跟随 AI；安卓前置 YouTube policy 与 Google policy 分别跟随对应业务组。Apple 普通配置默认 DIRECT、工作仍只承接原更新白名单，FlClash 更新拒绝仍优先。以 [业务策略组重构](service-groups-refactor.md) 为本轮差异依据。
+2026-09-27 修订：四个通用业务为可见 select，AI、Microsoft、Crypto、香港券商为可见 url-test；固定地区业务显式引用“地区-provider”自动子组，AI 与 Microsoft 共享美国子组。基线继续检查所有 AI/Crypto 候选的地区约束、默认引擎的主动检测及切换容差；Google、YouTube、Telegram、Apple 使用 select，手动选择香港、台湾、日本、韩国、新加坡、美国六个地区 url-test 组；Apple 仅保留六地区选项。AI 与 Microsoft 按 provider 自动选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，固定地区业务不提供 DIRECT。AI DNS 跟随 AI；安卓前置 YouTube policy 与 Google policy 分别跟随对应业务组。Apple 普通配置初始选择香港自动组、工作仍只承接原更新白名单，FlClash 更新拒绝仍优先。以 [业务策略组重构](service-groups-refactor.md) 为本轮差异依据。

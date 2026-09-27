@@ -62,7 +62,7 @@
 - 两份 Mihomo 与公开模板采用国内 nameserver + AI 专用 nameserver-policy + 国内 proxy-server-nameserver bootstrap；ipv6、use-hosts、use-system-hosts、respect-rules 均为 false，开启 tcp-concurrent，保留 ARC 与 fake-ip。
 - 新版静态检查与生产运行态必须分别报告。历史 v1.19.25 查询未命中模拟 resolver；即使静态检查已通过，DNS 路由运行时仍未确认时也不得声称已经生效。
 - 两份 Surge Personal、两份 Mihomo 与公开模板的通用 FINAL/MATCH 按 2026-09-12 用户要求使用 DIRECT；仅工作白名单保持 FINAL,REJECT，前置代理规则继续使用指定组；FlClash 桌面 provider 与 url-test 使用 interval: 300、安卓使用 600；provider 与实际业务组 lazy: false，备用地区组 lazy: true，全地区 tolerance: 50、美国 tolerance: 100。全地区组只排除套餐占位项，不限制地区标签。
-- 七份配置的 ai_us 必须为第一条有效规则并包含 Google AI；国内精选直连、日本精确入口、Crypto 台湾和香港券商在 google_hk 完整 IP 规则前。google_hk 兼容路径和官方完整地址空间保留；Google、YouTube、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个隐藏自动组；Apple 另保留 DIRECT。AI 与 Microsoft 按 provider 自动选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，固定地区业务不提供 DIRECT。
+- 七份配置的 ai_us 必须为第一条有效规则并包含 Google AI；国内精选直连、日本精确入口、Crypto 台湾和香港券商在 google_hk 完整 IP 规则前。google_hk 兼容路径和官方完整地址空间保留；Google、YouTube、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个地区自动组；Apple 仅保留六地区选项。AI 与 Microsoft 按 provider 自动选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，固定地区业务不提供 DIRECT。
 - Mihomo 私有文件里的机场 provider `health-check.url` 与通用 `url-test` 组测速 URL 使用 HTTPS `https://www.google.com/generate_204`；Notion 规则复用香港自动选择组，不得恢复独立 Notion 策略组
 - `proxy-node-domains` 必须是从 Sub-Store 聚合订阅提取的节点 `server` 域名清单，且必须过滤 IP 并按一行一个域名输出；不得包含订阅链接域名、机场面板域名或普通目标网站域名，也不得输出逗号分隔清单
 - Surge `[Host]` 引用 `proxy-node-domains` 时，必须使用 Surge 生产设备可直接访问的 Sub-Store 分享文件 URL；不要把未经同网络验证的 `https://sub.store/api/file/proxy-node-domains` 写进生产配置
@@ -235,11 +235,11 @@
 
 ## 2026-09-25 业务选择层
 
-- 七份配置展示 Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple、香港券商；Surge 的可见业务入口使用 smart 聚合内部成员（Apple 因保留 DIRECT 使用 select），底层地区/provider 子组使用 smart，Mihomo/FlClash 使用 url-test，复用机场 provider 与底层检测能力。Google、YouTube、Telegram、Apple 通过六个隐藏地区自动组测速；AI 与 Microsoft 按 provider 自动选择美国节点，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，固定地区业务不提供 DIRECT。DNS 必须跟随对应业务组。
-- Surge 策略组的隐藏参数沿用客户端兼容写法 `hidden=1/0`；检查器同时接受 `true/false`，但生产私有配置优先使用 `1/0`。
+- 2026-09-27 业务选择约定：Google、YouTube、Telegram、Apple 使用 select，仅手动选择香港、台湾、日本、韩国、新加坡、美国六个地区自动组，Apple 不再提供 DIRECT。六地区组均为 url-test，覆盖所有 provider 的对应地区节点。AI 与 Microsoft 使用 url-test，显式引用并共享“美国-provider”子组；Crypto 引用“台湾-provider”，香港券商引用“香港-provider”。这些子组均为 url-test，逐一对应机场来源；私人配置每个固定地区业务有七个子组。Surge 父组必须用显式成员名称，不能用 include-other-group 代替，否则会展开为节点列表。隐藏状态不再作为功能验收条件。DNS、规则顺序、Store 美国及工作白名单边界保持。
+- Surge 保留 `hidden=1/0` 参数兼容写法，但不得以此保证客户端隐藏效果；本轮用户取消隐藏验收。
 - proxy/youtube 使用审核后的专用域名，不能整包 INCLUDE 含 gvt1/gvt2、ggpht 和 IP 的上游；先于 Google 广谱，旧 google_hk 保留完整兼容。新增业务规则须测正例和共享 CDN 负例。
-- 安卓 Google 使用六地区自动测速组，默认香港自动，三个 Google 专属进程和 QUIC 保留；DNS policy 按 AI、YouTube、Google 顺序分别绑定业务自动组。普通桌面仅 AI policy，不机械扩散安卓策略。
-- Apple 普通配置默认 DIRECT；两份 FlClash 的更新拒绝必须先于 Apple。工作只重绑既有 macOS 更新入口，禁止增加 Apple 全域放行。原机场手动组保留，Notion 统一复用香港自动选择。
+- 安卓 Google 使用六地区手动选择组，默认香港自动，三个 Google 专属进程和 QUIC 保留；DNS policy 按 AI、YouTube、Google 顺序分别绑定对应业务组。普通桌面仅 AI policy，不机械扩散安卓策略。
+- Apple 普通配置手动选择六地区、初始香港；两份 FlClash 的更新拒绝必须先于 Apple。工作只重绑既有 macOS 更新入口，禁止增加 Apple 全域放行。原机场手动组保留，Notion 统一复用香港自动选择。
 - 第三方配置的 DNS/hosts 也可能含凭证；只允许 tools/audit_reference_profile.py 白名单统计，不输出整节或解析异常原文。先准备任务专用依赖，不假设系统或捆绑 Python 自带 PyYAML。
 - 详见 docs/service-groups-refactor.md；组默认值、保存选择、文件发布和设备生效必须分开报告。
 
@@ -249,3 +249,6 @@
 - 全量自动组从实际全地区入口识别，不能把首个 provider 子组当全地区组；固定业务的所有 provider 子组主动检测，备用地区按需检测。
 - 香港券商统一规则补齐香港优先兼容文件中的券商精确项，不整体合并 GoDaddy 等非券商；新入口在兼容项之前，旧资产保留。
 - 负向测试必须先确认基准配置通过和变异实际命中；新增组结构不能靠删除有效的安全测试适配。
+
+- Surge smart 只接受代理节点，忽略嵌套组；需要保留子组候选的自动父组使用 url-test 和显式成员引用。include-other-group 只用于有意展开的节点来源（如地区组收齐所有机场）。检查器必须拒绝两者混用。
+- 批量修改 YAML 组时按唯一顶层 proxy-groups 节和逐组边界构造完整替换，写入前验证字段不重复；不能只替换组首行后再次追加原块。

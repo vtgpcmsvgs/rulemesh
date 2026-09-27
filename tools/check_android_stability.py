@@ -107,7 +107,7 @@ def check(path: Path, lines: list[str]) -> list[str]:
     stable = groups.get(target)
     if business:
         google = groups.get("Google")
-        require(google is not None and google.group_type in {"url-test", "smart"} and set(google.members) == set(service.REGIONS), "安卓 Google 必须保留六地区自动组。")
+        require(google is not None and google.group_type == "select" and set(google.members) == set(service.REGIONS), "安卓 Google 必须手动选择六地区自动组。")
         require(target == next(iter(service.REGIONS)) and stable is not None and stable.group_type in {"url-test", "smart"}, "安卓 Google 默认必须使用香港自动组。")
         for name in ("Google", *service.REGIONS):
             candidate = groups.get(name)

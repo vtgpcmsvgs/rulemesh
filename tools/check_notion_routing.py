@@ -49,8 +49,8 @@ def check(path: Path, lines: list[str], auto: str) -> list[str]:
     if hk is None or not re.search(r"香港|hong kong|(?:^|[^a-z])hk(?:$|[^a-z])", hk.filter_text, re.IGNORECASE):
         errors.append("Notion 目标组必须具有香港节点过滤条件。")
     if surge:
-        if hk is None or hk.group_type != "smart":
-            errors.append("Notion 的香港目标组必须是 Surge smart。")
+        if hk is None or hk.group_type not in {"smart", "url-test"}:
+            errors.append("Notion 的香港目标组必须是 Surge 自动组。")
         return errors
     providers = parser._parse_mihomo_providers(lines)
     if identifier not in providers or providers[identifier][1] != BASE + "mihomo/classical/region/hk/notion_hk.yaml":

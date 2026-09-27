@@ -5,6 +5,8 @@ import re
 MARKER = "# RuleMesh 业务策略组：2026-09-25"
 SERVICES = ("Google", "YouTube", "AI", "Telegram", "Crypto", "Microsoft", "Apple", "香港券商")
 FIXED = {"AI": "us", "Crypto": "tw", "Microsoft": "us", "香港券商": "hk"}
+MANUAL = ("Google", "YouTube", "Telegram", "Apple")
+REGION_LABELS = {"us": "美国", "tw": "台湾", "hk": "香港"}
 REGIONS = {"🇭🇰 香港-自动选择": "hk", "🇨🇳 台湾-自动选择": "tw",
            "🇯🇵 日本-自动选择": "jp", "🇰🇷 韩国-自动选择": "kr",
            "🇸🇬 新加坡-自动选择": "sg", "🇺🇸 美国-自动选择": "us"}
@@ -75,12 +77,6 @@ def check(path: Path, lines, groups, rules, auto):
         end = next((i for i in range(group.line, len(lines)) if lines[i].startswith("  - name:") or re.match(r'^[\w-]+:', lines[i])), len(lines))
         return lines[group.line:end]
 
-    def hidden(name):
-        group = groups[name]
-        if surge:
-            return bool(re.search(r'(?:^|,)\s*hidden=(?:true|1)(?:,|$)', lines[group.line-1], re.I))
-        return "    hidden: true" in group_block(group)
-
     expected_sources = ({source(g) for n, g in groups.items() if g.group_type == "select" and g.has_external_source and (n.startswith("✈️ ") or n.startswith("机场 "))}
                         if surge else set(parser._parse_mihomo_proxy_provider_names(lines)))
     require(bool(expected_sources), "缺少已登记的机场订阅来源。")
@@ -88,13 +84,12 @@ def check(path: Path, lines, groups, rules, auto):
                    if surge else [parser._scalar(line.split(":", 1)[1]) for line in lines if line.startswith("  - name:")])
     require(len(definitions) == len(set(definitions)), "策略组定义必须唯一，不能覆盖同名 provider 子组。")
     require(lines.count(MARKER) == 1, "业务策略组标记必须唯一。")
-    # Surge Smart Group 只接受代理策略作为成员，嵌套 smart/select 组会被静默忽略；
-    # 因此可见业务入口使用 select，实际测速由隐藏的地区/provider smart 子组承担。
-    business_type = "smart" if surge else "url-test"
+    # Surge smart 忽略嵌套组；include-other-group 展开节点，不保留子组候选。
+    # 四个手动入口用 select，固定地区父子组均用 url-test 并显式引用。
     for name in SERVICES:
         group = groups.get(name)
-        expected_type = "select" if surge and name == "Apple" else business_type
-        require(group is not None and group.group_type == expected_type, f"{name} 必须是可见的自动测速组。")
+        expected_type = "select" if name in MANUAL else "url-test"
+        require(group is not None and group.group_type == expected_type, f"{name} 必须是可见的 {expected_type} 组。")
         if group is None:
             continue
         pattern = r'^' + re.escape(name) + r'\s*=' if surge else r'^  - name:\s*[\"\']?' + name + r'[\"\']?\s*$'
@@ -105,26 +100,31 @@ def check(path: Path, lines, groups, rules, auto):
             end = next((i for i in range(group.line, len(lines)) if lines[i].startswith("  - name:") or re.match(r'^[\w-]+:', lines[i])), len(lines))
             block = lines[group.line:end]
             require("    hidden: false" in block, f"{name} 必须显式可见。")
-            require(any(re.match(r'^    url:', s) for s in block), f"{name} 自动测速组必须配置探测地址。")
-            expected_interval = "600" if "android" in path.name else "300"
-            require(any(re.fullmatch(rf'    interval:\s*{expected_interval}', s) for s in block), f"{name} 自动测速组必须配置正确检测周期。")
+            if name in FIXED:
+                require(any(re.match(r'^    url:', s) for s in block), f"{name} 自动测速组必须配置探测地址。")
+                expected_interval = "600" if "android" in path.name else "300"
+                require(any(re.fullmatch(rf'    interval:\s*{expected_interval}', s) for s in block), f"{name} 自动测速组必须配置正确检测周期。")
+            else:
+                require(not any(re.match(r'^    (url|interval|tolerance|lazy):', s) for s in block), f"{name} 手动组不得增加周期测速字段。")
         require((bool(group.members) or group.has_external_source) and all(m in groups or m == "DIRECT" for m in group.members), f"{name} 存在空候选或未知组引用。")
         require(bool(default_chain(name, groups)), f"{name} 默认选择链存在环或空组。")
         require(not group.has_external_source and not group.filter_text, f"{name} 自动测速组应复用子组，不得直接混入订阅源。")
-        if surge and name != "Apple":
-            require('include-other-group=' in lines[group.line-1], f"{name} smart 组必须通过 include-other-group 聚合内部候选。")
+        if surge:
+            require(not group.included_members, f"{name} 必须显式引用子组，不能用 include-other-group 展平节点。")
+            if name in FIXED:
+                require('interval=300' in lines[group.line-1], f"{name} 必须配置正确检测周期。")
         if name in FIXED:
             approved = baseline.region_filters(FIXED[name], surge)
             require(parser._group_has_us_semantics(name, groups, approved), f"{name} 所有候选必须满足地区约束。")
             sources = []
             for child in group.members:
                 leaf = groups.get(child)
-                require(leaf is not None and leaf.group_type == ("smart" if surge else "url-test"), f"{name} 必须按 provider 自动测速选择。")
+                require(leaf is not None and leaf.group_type == "url-test", f"{name} 必须按 provider 自动测速选择。")
+                require(child.startswith(REGION_LABELS[FIXED[name]] + '-'), f"{name} 子组必须采用地区-provider 命名。")
                 if leaf is None:
                     continue
                 require(not leaf.members and leaf.has_external_source and not leaf.has_invalid_external_source, f"{name} 子组必须只使用一个有效订阅来源。")
                 require(leaf.filter_text in approved, f"{name} 子组必须保留限定地区过滤器。")
-                require(hidden(child), f"{name} 子组必须隐藏，避免重复展示。")
                 if surge:
                     sources.append(source(leaf))
                     require('include-all-proxies=0' in lines[leaf.line-1], f"{name} 子组不得混入其他订阅节点。")
@@ -137,18 +137,28 @@ def check(path: Path, lines, groups, rules, auto):
                     sources.extend(leaf.source_references)
             require(len(sources) == len(expected_sources) and set(sources) == expected_sources, f"{name} 必须逐一覆盖全部 provider，不能重复或遗漏。")
         else:
-            candidates = list(REGIONS) + (["DIRECT"] if name == "Apple" else [])
+            candidates = list(REGIONS)
             require(len(group.members) == len(candidates) and set(group.members) == set(candidates), f"{name} 必须完整展示六个地区自动组。")
 
     for name, region in REGIONS.items():
         group = groups.get(name)
-        require(group is not None and group.group_type == ("smart" if surge else "url-test"), "缺少地区自动测速组。")
+        require(group is not None and group.group_type == "url-test", "缺少地区自动测速组。")
         if group:
-            require(hidden(name), "地区自动组必须隐藏。")
             require(group.has_external_source and not group.has_invalid_external_source and group.filter_text in baseline.region_filters(region, surge), "地区自动组必须保留正确地区过滤器和订阅来源。")
             require(all(member in groups or member == "DIRECT" for member in group.members), "地区自动组存在未知嵌套策略组。")
             if not surge:
                 require(set(group.source_references) == expected_sources, "地区自动组必须覆盖全部 provider。")
+            else:
+                imported = [source(groups[n]) for n in group.included_members if n in groups]
+                require(set(imported) == expected_sources, "地区自动组必须显式导入全部机场来源并按地区过滤。")
+    if "AI" in groups and "Microsoft" in groups:
+        require(groups['AI'].members == groups['Microsoft'].members, "AI 与 Microsoft 必须复用同一套美国-provider 子组。")
+    require(not any(n.startswith(tuple(s + '-' for s in FIXED)) for n in groups), "不得残留业务-provider 旧命名或重复美国组。")
+    # 防止多行替换后重复保留原字段，被 YAML 的最后一个值悄悄覆盖。
+    if not surge:
+        for group in groups.values():
+            keys = [m[1] for s in group_block(group) if (m := re.match(r'^    ([\w-]+):', s))]
+            require(len(keys) == len(set(keys)), "Mihomo 策略组不得包含重复字段。")
     require(not any("Google" in name and "稳定" in name for name in groups), "不得恢复独立 Google 下载稳定组。")
 
     # 检查全部候选边，不能只检查首项，避免手动切换后出现环。
