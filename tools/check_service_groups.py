@@ -90,10 +90,11 @@ def check(path: Path, lines, groups, rules, auto):
     require(lines.count(MARKER) == 1, "业务策略组标记必须唯一。")
     # Surge Smart Group 只接受代理策略作为成员，嵌套 smart/select 组会被静默忽略；
     # 因此可见业务入口使用 select，实际测速由隐藏的地区/provider smart 子组承担。
-    business_type = "select" if surge else "url-test"
+    business_type = "smart" if surge else "url-test"
     for name in SERVICES:
         group = groups.get(name)
-        require(group is not None and group.group_type == business_type, f"{name} 必须是可见的自动测速组。")
+        expected_type = "select" if surge and name == "Apple" else business_type
+        require(group is not None and group.group_type == expected_type, f"{name} 必须是可见的自动测速组。")
         if group is None:
             continue
         pattern = r'^' + re.escape(name) + r'\s*=' if surge else r'^  - name:\s*[\"\']?' + name + r'[\"\']?\s*$'
@@ -110,6 +111,8 @@ def check(path: Path, lines, groups, rules, auto):
         require((bool(group.members) or group.has_external_source) and all(m in groups or m == "DIRECT" for m in group.members), f"{name} 存在空候选或未知组引用。")
         require(bool(default_chain(name, groups)), f"{name} 默认选择链存在环或空组。")
         require(not group.has_external_source and not group.filter_text, f"{name} 自动测速组应复用子组，不得直接混入订阅源。")
+        if surge and name != "Apple":
+            require('include-other-group=' in lines[group.line-1], f"{name} smart 组必须通过 include-other-group 聚合内部候选。")
         if name in FIXED:
             approved = baseline.region_filters(FIXED[name], surge)
             require(parser._group_has_us_semantics(name, groups, approved), f"{name} 所有候选必须满足地区约束。")

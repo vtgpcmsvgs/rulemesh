@@ -32,7 +32,7 @@ AI、Crypto、Microsoft 同样按 provider 拆分自动测速：AI 与 Microsoft
 
 安卓不再维护独立的“Google 下载稳定”策略组，Google 专属进程、Google 规则集和对应 DNS 统一使用 Google 业务组。
 
-界面前部展示 Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple、香港券商。可见业务入口使用 `select` 选择隐藏的地区/provider smart 子组；下层继续承担自动选点和机场手动选择。原机场组保持可见，订阅与过滤器保留；固定地区业务的 provider 子组各自自动测速，选择层不直接测速。
+界面前部展示 Google、YouTube、AI、Telegram、Crypto、Microsoft、Apple、香港券商。可见业务入口使用 `smart` 通过 `include-other-group` 聚合隐藏的地区/provider 子组；Apple 因保留 DIRECT 使用 `select`；下层继续承担自动选点和机场手动选择。原机场组保持可见，订阅与过滤器保留；固定地区业务的 provider 子组各自自动测速，选择层不直接测速。
 
 | 业务组 | 默认选择 | 可手动调整及边界 |
 | --- | --- | --- |

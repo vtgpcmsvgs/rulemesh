@@ -18,11 +18,12 @@ class ServiceGroupTests(unittest.TestCase):
         for client in ('mihomo', 'surge'):
             path, text = self.fixture(client)
             groups = parser._parse_mihomo_groups(text.splitlines()) if client == 'mihomo' else parser._parse_surge_groups(text.splitlines())
-            # Surge 不能把 smart 组嵌套为 smart 成员；可见入口用 select，
-            # 隐藏地区/provider 子组负责实际 smart 测速。
-            expected = 'url-test' if client == 'mihomo' else 'select'
+            # Surge 通过 include-other-group 递归聚合代理成员；Apple 保留 select
+            # 以便 DIRECT 作为不测速的手动候选。
+            expected = 'url-test' if client == 'mihomo' else 'smart'
             for name in service.SERVICES:
-                self.assertEqual(groups[name].group_type, expected, name)
+                expected_name = 'select' if client == 'surge' and name == 'Apple' else expected
+                self.assertEqual(groups[name].group_type, expected_name, name)
             if client == 'mihomo':
                 apple_line = next(line for line in text.splitlines() if line.startswith('    url:') and 'captive.apple.com' in line)
                 self.assertIn('captive.apple.com/hotspot-detect.html', apple_line)
