@@ -236,7 +236,7 @@
 
 ## 2026-09-25 业务选择层
 
-- 2026-09-27 业务选择约定：Google、YouTube、Telegram、Apple 使用 select，手动选择香港、台湾、日本、韩国、新加坡、美国六个地区自动组，Apple 另追加 DIRECT。六地区组均为 url-test，覆盖所有 provider 的对应地区节点。AI 与 Microsoft 共享“美国-provider”自动子组；Microsoft 在所有配置中使用 select，手动选择美国子组或 DIRECT；AI 仅两份私人 Mihomo 使用 select，其余配置保留 url-test；Crypto 引用“台湾-provider”，香港券商引用“香港-provider”。这些子组均为 url-test，逐一对应机场来源；私人配置每个固定地区业务有七个子组。Surge 父组必须用显式成员名称，不能用 include-other-group 代替，否则会展开为节点列表。隐藏状态不再作为功能验收条件。DNS、规则顺序、Store 美国及工作白名单边界保持。
+- 2026-09-27 业务选择约定：Google、YouTube、Telegram、Apple 使用 select，手动选择香港、台湾、日本、韩国、新加坡、美国六个地区自动组，Apple 另追加 DIRECT。六地区组均为 url-test，覆盖所有 provider 的对应地区节点。AI 与 Microsoft 共享“美国-provider”自动子组；Microsoft 在所有配置中使用 select，手动选择美国子组或 DIRECT；AI、Crypto、香港券商仅两份私人 Mihomo 的父组使用 select，其余配置保留 url-test；Crypto 引用“台湾-provider”，香港券商引用“香港-provider”。这些子组均为 url-test，逐一对应机场来源；私人配置每个固定地区业务有七个子组。Surge 父组必须用显式成员名称，不能用 include-other-group 代替，否则会展开为节点列表。隐藏状态不再作为功能验收条件。DNS、规则顺序、Store 美国及工作白名单边界保持。
 - Surge 保留 `hidden=1/0` 参数兼容写法，但不得以此保证客户端隐藏效果；本轮用户取消隐藏验收。
 - proxy/youtube 使用审核后的专用域名，不能整包 INCLUDE 含 gvt1/gvt2、ggpht 和 IP 的上游；先于 Google 广谱，旧 google_hk 保留完整兼容。新增业务规则须测正例和共享 CDN 负例。
 - 安卓 Google 使用六地区手动选择组，默认香港自动，三个 Google 专属进程和 QUIC 保留；DNS policy 按 AI、YouTube、Google 顺序分别绑定对应业务组。普通桌面仅 AI policy，不机械扩散安卓策略。
@@ -254,4 +254,4 @@
 - Surge smart 只接受代理节点，忽略嵌套组；需要保留子组候选的自动父组使用 url-test 和显式成员引用。include-other-group 只用于有意展开的节点来源（如地区组收齐所有机场）。检查器必须拒绝两者混用。
 - 批量修改 YAML 组时按唯一顶层 proxy-groups 节和逐组边界构造完整替换，写入前验证字段不重复；不能只替换组首行后再次追加原块。
 
-两份私人 Mihomo（FlClash 桌面、安卓）的 AI 父组按用户最新要求使用 select，手动选择既有七个美国 provider 子组；子组仍为 url-test，AI 不提供 DIRECT，AI DNS 继续跟随 AI。该例外不得扩散到公开模板、Surge 或其他业务组。
+2026-09-28：两份私人 Mihomo（FlClash 桌面、安卓）的 AI、Crypto、香港券商父组使用 select，分别手动选择既有七个美国、台湾、香港 provider 子组；子组仍为 url-test，三个父组不提供 DIRECT，也不设置组级测速字段。AI DNS 继续跟随 AI，Crypto 与香港券商沿用默认国内 DNS。该例外不得扩散到公开模板、Surge、香港地区自动组或其他业务组。

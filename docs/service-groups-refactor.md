@@ -13,7 +13,7 @@
 | 项目 | 附件中的事实 | RuleMesh 的采用方式 |
 | --- | --- | --- |
 | 节点协议 | 141 个节点全部为 AnyTLS；空闲检查及超时均为 30 秒，最少空闲会话为 0 | 会话复用可能减少连续连接开销；是否更快仍取决于线路、核心和服务端。不强改其他机场协议或统一套用节点参数 |
-| 选择方式 | 22 个组全部是 `select`，没有 `url-test` 或 `fallback` | 学习独立业务入口；手动选择层复用地区自动引擎，固定业务父子组自动测速；固定地区业务按 provider 建立自动子组 |
+| 选择方式 | 22 个组全部是 `select`，没有 `url-test` 或 `fallback` | 学习独立业务入口；手动选择层复用地区自动引擎，父组按客户端约定选择模式；固定地区业务按 provider 建立自动子组 |
 | DNS | 三个机场自有 DoH，节点 bootstrap 指向本地 DNS 监听地址，启用 hosts | 可能依赖机场节点与解析的配套设计；不复制私人端点或回环。保留国内默认、独立节点 bootstrap、AI 美国解析 |
 | Fake IP | 配了范围和过滤表，但没有显式 `enhanced-mode: fake-ip` | 不能仅凭范围判断实际启用。RuleMesh 继续明确启用 fake-ip、ARC 与缓存持久化 |
 | UDP 与 TFO | 全部节点 UDP 开启、TFO 关闭 | 保留 UDP/QUIC；TFO 不是这份附件速度优势的证据，不盲目添加 |
@@ -26,21 +26,21 @@
 
 ### 2026-09-27 手动地区与自动机场分层
 
-2026-09-27 业务选择约定：Google、YouTube、Telegram、Apple 使用 select，手动选择香港、台湾、日本、韩国、新加坡、美国六个地区自动组，Apple 另追加 DIRECT。六地区组均为 url-test，覆盖所有 provider 的对应地区节点。AI 与 Microsoft 共享“美国-provider”自动子组；Microsoft 在所有配置中使用 select，手动选择美国子组或 DIRECT；AI 仅两份私人 Mihomo 使用 select，其余配置保留 url-test；Crypto 引用“台湾-provider”，香港券商引用“香港-provider”。这些子组均为 url-test，逐一对应机场来源；私人配置每个固定地区业务有七个子组。Surge 父组必须用显式成员名称，不能用 include-other-group 代替，否则会展开为节点列表。隐藏状态不再作为功能验收条件。DNS、规则顺序、Store 美国及工作白名单边界保持。
+2026-09-27 业务选择约定：Google、YouTube、Telegram、Apple 使用 select，手动选择香港、台湾、日本、韩国、新加坡、美国六个地区自动组，Apple 另追加 DIRECT。六地区组均为 url-test，覆盖所有 provider 的对应地区节点。AI 与 Microsoft 共享“美国-provider”自动子组；Microsoft 在所有配置中使用 select，手动选择美国子组或 DIRECT；AI、Crypto、香港券商仅两份私人 Mihomo 的父组使用 select，其余配置保留 url-test；Crypto 引用“台湾-provider”，香港券商引用“香港-provider”。这些子组均为 url-test，逐一对应机场来源；私人配置每个固定地区业务有七个子组。Surge 父组必须用显式成员名称，不能用 include-other-group 代替，否则会展开为节点列表。隐藏状态不再作为功能验收条件。DNS、规则顺序、Store 美国及工作白名单边界保持。
 
 | 入口 | 类型 | 候选 |
 | --- | --- | --- |
 | Google、YouTube、Telegram、Apple | select | 六地区 url-test 组，初始香港；Apple 另有 DIRECT |
 | AI | 私人 Mihomo 为 select，其余为 url-test | 美国-provider 自动子组 |
 | Microsoft | select | 同一套美国-provider 自动子组及 DIRECT |
-| Crypto | url-test | 台湾-provider 子组 |
-| 香港券商 | url-test | 香港-provider 子组 |
+| Crypto | 私人 Mihomo 为 select，其余为 url-test | 台湾-provider 子组 |
+| 香港券商 | 私人 Mihomo 为 select，其余为 url-test | 香港-provider 子组 |
 
 地区-provider 子组本身为 url-test，单一机场来源并限制地区；每个地区组汇集所有机场的同地区节点。AI 与 Microsoft 共享美国子组，避免重复探测。公开模板使用占位机场，不包含私人订阅或机场清单。既有机场手动入口保留。
 
 Surge 官方手册明确：smart 忽略嵌套策略组与内置策略；url-test 支持嵌套；include-other-group 递归导入成员节点。因此 `AI = url-test, "美国-provider_a", ...` 才能保留子组候选层级。六地区组可以使用 include-other-group 收集全部机场手动组的节点，然后统一执行地区过滤。当前通用全地区 smart 组只展开真实节点，可以继续保留。
 
-Surge url-test 的 interval 是测试结果有效期，使用且结果过期时触发重测，不等于固定后台周期；新版组级 url 参数无效，实际测速依赖 [General] 的 proxy-test-url 或节点 test-url。本次沿用既有全局 HTTP 测速地址。Mihomo 父子组沿用 url-test、HTTPS 测速及桌面 300 秒/安卓 600 秒周期，固定地区子组主动检测；Microsoft 父组改为 select，组级测速地址与状态校验字段已移除。
+Surge url-test 的 interval 是测试结果有效期，使用且结果过期时触发重测，不等于固定后台周期；新版组级 url 参数无效，实际测速依赖 [General] 的 proxy-test-url 或节点 test-url。本次沿用既有全局 HTTP 测速地址。Mihomo 自动子组沿用 url-test、HTTPS 测速及桌面 300 秒/安卓 600 秒周期，固定地区子组主动检测；Microsoft 父组为 select，两份私人 Mihomo 的 AI、Crypto、香港券商父组也为 select，均不设置组级测速字段。
 
 依据：[Surge 嵌套组](https://manual.nssurge.com/policy-groups/overview.html)、[smart 限制](https://manual.nssurge.com/policy-groups/smart.html)、[自动测试](https://manual.nssurge.com/policy-groups/url-test.html)、[导入成员语义](https://manual.nssurge.com/policy-groups/policy-including.html)。
 

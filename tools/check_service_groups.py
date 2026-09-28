@@ -6,7 +6,8 @@ MARKER = "# RuleMesh 业务策略组：2026-09-25"
 SERVICES = ("Google", "YouTube", "AI", "Telegram", "Crypto", "Microsoft", "Apple", "香港券商")
 FIXED = {"AI": "us", "Crypto": "tw", "Microsoft": "us", "香港券商": "hk"}
 MANUAL = ("Google", "YouTube", "Telegram", "Microsoft", "Apple")
-MANUAL_AI_PROFILES = frozenset({
+MANUAL_FIXED_SERVICES = frozenset({"AI", "Crypto", "香港券商"})
+MANUAL_FIXED_PROFILES = frozenset({
     "rulemesh-substore-mihomo-flclash-desktop.yaml",
     "rulemesh-substore-mihomo-flclash-android.yaml",
 })
@@ -89,10 +90,10 @@ def check(path: Path, lines, groups, rules, auto):
     require(len(definitions) == len(set(definitions)), "策略组定义必须唯一，不能覆盖同名 provider 子组。")
     require(lines.count(MARKER) == 1, "业务策略组标记必须唯一。")
     # Surge smart 忽略嵌套组；include-other-group 展开节点，不保留子组候选。
-    # 两份私人 Mihomo 的 AI 也手动选机场；Microsoft 已在全部配置中手动选择。
+    # 两份私人 Mihomo 的 AI、Crypto、香港券商手动选机场；Microsoft 在全部配置中手动选择。
     for name in SERVICES:
         group = groups.get(name)
-        manual = name in MANUAL or (name == "AI" and path.name in MANUAL_AI_PROFILES)
+        manual = name in MANUAL or (name in MANUAL_FIXED_SERVICES and path.name in MANUAL_FIXED_PROFILES)
         expected_type = "select" if manual else "url-test"
         require(group is not None and group.group_type == expected_type, f"{name} 必须是可见的 {expected_type} 组。")
         if group is None:

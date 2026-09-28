@@ -9,20 +9,22 @@ sys.path.insert(0, str(ROOT / "tools"))
 import check_android_stability as android
 import check_performance_baseline as baseline
 import check_private_dns_precedence as parser
+import check_service_groups as service
 import build_rules
 
 
 class AndroidStabilityTests(unittest.TestCase):
     def fixture(self):
         text = (ROOT / "docs/examples/mihomo-public.yaml").read_text(encoding="utf-8")
-        # 公开模板仍自动选择；私人安卓夹具须显式应用 AI 手动选择例外。
-        matches = list(re.finditer(r'^  - name: "AI"\n.*?(?=^  - name:)', text, re.M | re.S))
-        self.assertEqual(len(matches), 1)
-        match = matches[0]
-        block = match.group().replace('    type: url-test\n', '    type: select\n')
-        block, removed = re.subn(r'^    (url|interval|tolerance|timeout|lazy):.*\n', '', block, flags=re.M)
-        self.assertEqual(removed, 5)
-        text = text[:match.start()] + block + text[match.end():]
+        # 公开模板保持自动；私人夹具复用完整例外清单，避免只转换 AI 而遗漏新增手动业务。
+        for name in service.MANUAL_FIXED_SERVICES:
+            matches = list(re.finditer(rf'^  - name: "{name}"\n.*?(?=^  - name:)', text, re.M | re.S))
+            self.assertEqual(len(matches), 1)
+            match = matches[0]
+            block = match.group().replace('    type: url-test\n', '    type: select\n')
+            block, removed = re.subn(r'^    (url|interval|tolerance|timeout|lazy):.*\n', '', block, flags=re.M)
+            self.assertEqual(removed, 5)
+            text = text[:match.start()] + block + text[match.end():]
         text = text.replace("interval: 300", "interval: 600")
         text = text.replace("\n", "\n" + android.MARKER + "\n", 1)
         text += "\n# PRIVATE_SUBSCRIPTION_DIRECT_START\n# PRIVATE_SUBSCRIPTION_DIRECT_END\n"

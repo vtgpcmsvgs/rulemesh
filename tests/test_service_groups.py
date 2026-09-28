@@ -14,17 +14,20 @@ import check_service_groups as service
 
 
 class ServiceGroupTests(unittest.TestCase):
-    def test_only_private_mihomo_ai_is_manual_with_automatic_us_children(self):
+    def test_only_private_mihomo_fixed_services_are_manual_with_automatic_children(self):
         public_path, original = self.fixture()
-        match = re.search(r'^  - name: "AI"\n.*?(?=^  - name:)', original, re.M | re.S)
-        self.assertIsNotNone(match)
-        block = match.group().replace('    type: url-test\n', '    type: select\n')
-        block = re.sub(r'^    (url|interval|tolerance|timeout|lazy):.*\n', '', block, flags=re.M)
-        manual_text = original[:match.start()] + block + original[match.end():]
-        self.assertTrue(any('AI 必须是' in e for e in baseline.check(public_path, manual_text.splitlines())))
+        manual_text = original
+        for name in service.MANUAL_FIXED_SERVICES:
+            match = re.search(rf'^  - name: "{name}"\n.*?(?=^  - name:)', manual_text, re.M | re.S)
+            self.assertIsNotNone(match)
+            block = match.group().replace('    type: url-test\n', '    type: select\n')
+            block = re.sub(r'^    (url|interval|tolerance|timeout|lazy):.*\n', '', block, flags=re.M)
+            manual_text = manual_text[:match.start()] + block + manual_text[match.end():]
+        for name in service.MANUAL_FIXED_SERVICES:
+            self.assertTrue(any(f'{name} 必须是' in e for e in baseline.check(public_path, manual_text.splitlines())))
         apple = '  - RULE-SET,direct_apple,Apple\n'
         private_text = manual_text.replace(apple, '').replace('  - RULE-SET,reject_os_update,REJECT\n', '  - RULE-SET,reject_os_update,REJECT\n' + apple)
-        for filename in service.MANUAL_AI_PROFILES:
+        for filename in service.MANUAL_FIXED_PROFILES:
             text = private_text.replace('interval: 300', 'interval: 600') if 'android' in filename else private_text
 
             def check(value):
@@ -33,12 +36,16 @@ class ServiceGroupTests(unittest.TestCase):
 
             self.assertEqual(check(text), [])
             groups = parser._parse_mihomo_groups(text.splitlines())
-            self.assertEqual(groups['AI'].group_type, 'select')
-            self.assertTrue(all(groups[n].group_type == 'url-test' for n in groups['AI'].members))
-            anchor = '  - name: "AI"\n    type: select\n'
-            self.assertEqual(text.count(anchor), 1)
-            self.assertTrue(any('AI 必须是' in e for e in check(text.replace(anchor, anchor.replace('select', 'url-test')))))
-            self.assertTrue(any('周期测速字段' in e for e in check(text.replace(anchor, anchor + '    interval: 300\n'))))
+            original_groups = parser._parse_mihomo_groups(original.splitlines())
+            for name in service.MANUAL_FIXED_SERVICES:
+                self.assertEqual(groups[name].group_type, 'select')
+                self.assertEqual(groups[name].members, original_groups[name].members)
+                self.assertNotIn('DIRECT', groups[name].members)
+                self.assertTrue(all(groups[n].group_type == 'url-test' for n in groups[name].members))
+                anchor = f'  - name: "{name}"\n    type: select\n'
+                self.assertEqual(text.count(anchor), 1)
+                self.assertTrue(any(f'{name} 必须是' in e for e in check(text.replace(anchor, anchor.replace('select', 'url-test')))))
+                self.assertTrue(any('周期测速字段' in e for e in check(text.replace(anchor, anchor + '    interval: 300\n'))))
 
     def test_surge_nested_candidates_cannot_be_smart_or_expanded(self):
         path, text = self.fixture('surge')
