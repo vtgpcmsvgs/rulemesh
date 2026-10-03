@@ -6,7 +6,7 @@
 # 规则展开: 每个主机名同时生成 DOMAIN 与 DOMAIN-WILDCARD，统一收敛为节点选择入口。
 # 本次抓取主机数: 39
 # 累计主机数: 44
-# 同步时间: 2026-10-02T07:22:53+00:00
+# 同步时间: 2026-10-03T06:55:43+00:00
 
 DOMAIN,137.rpc.thirdweb.com
 DOMAIN-WILDCARD,*.137.rpc.thirdweb.com
