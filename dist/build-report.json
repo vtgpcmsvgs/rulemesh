@@ -92,8 +92,8 @@
       "category": "direct",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 380,
-        "mihomo_classical": 380
+        "surge_rules": 381,
+        "mihomo_classical": 381
       },
       "dist": {
         "surge_rules": "dist/surge/rules/direct/bytedance_direct.list",
