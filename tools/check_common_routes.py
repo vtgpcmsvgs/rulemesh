@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import fnmatch
 import json
+import re
 from functools import lru_cache
 from pathlib import Path
 
@@ -13,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CASES = Path(__file__).with_name("common_route_cases.json")
 MARKER = "# RuleMesh 日常连通性基线：2026-09-16"
 PRIVATE_NAMES = {f"rulemesh-substore-mihomo-flclash-{client}.yaml" for client in ("android", "desktop")}
+PRIVATE_NAMES.add("rulemesh-substore-mihomo-clashmi-ios.yaml")
 
 
 def split_rule(text: str) -> list[str]:
@@ -79,20 +81,57 @@ def provider_rules(path: Path) -> tuple[str, ...]:
     return tuple(parser._scalar(s[4:]) for s in path.read_text("utf-8").splitlines() if s.startswith("  - "))
 
 
+def inline_provider_rules(lines: list[str]) -> dict[str, tuple[str, ...]]:
+    """解析内联 classical，避免把没有 URL 的合法规则集误报为未注册。"""
+    result = {}
+    section = ""
+    name = None
+    blocks = {}
+    for line in lines:
+        top = re.match(r"^([\w-]+):", line)
+        if top:
+            section = top[1]
+            name = None
+        if section != "rule-providers":
+            continue
+        provider = re.fullmatch(r"  ([\w-]+):", line)
+        if provider:
+            name = provider[1]
+            if name in blocks:
+                raise ValueError("规则集重复注册")
+            blocks[name] = []
+        elif name:
+            blocks[name].append(line)
+    for name, block in blocks.items():
+        if "    type: inline" not in block:
+            continue
+        if "    behavior: classical" not in block or "    payload:" not in block:
+            raise ValueError("域名审计仅支持带 payload 的内联 classical")
+        payload = tuple(parser._scalar(line[8:]) for line in block if line.startswith("      - "))
+        if not payload:
+            raise ValueError("内联规则集不能为空")
+        result[name] = payload
+    return result
+
+
 def route(lines: list[str], domain: str, process: str, network: str = "tcp") -> tuple[str, str]:
     providers = parser._parse_mihomo_providers(lines)
+    inline = inline_provider_rules(lines)
     for _, fields in parser._parse_mihomo_rules(lines):
         text = ",".join(fields)
         parts = split_rule(text)
         target = parts[-2] if parts[-1] == "no-resolve" else parts[-1]
         if parts[0] == "RULE-SET":
             identifier = parts[1]
-            if identifier not in providers:
+            if identifier in inline:
+                candidates = inline[identifier]
+            elif identifier not in providers:
                 raise ValueError("规则集未注册")
-            relative = parser._approved_public_path(providers[identifier][1])
-            if not relative or not relative.startswith("/dist/mihomo/classical/"):
-                raise ValueError("规则集不是可核对的本仓库 classical 产物")
-            candidates = provider_rules(ROOT / relative.lstrip("/"))
+            else:
+                relative = parser._approved_public_path(providers[identifier][1])
+                if not relative or not relative.startswith("/dist/mihomo/classical/"):
+                    raise ValueError("规则集不是可核对的本仓库 classical 产物")
+                candidates = provider_rules(ROOT / relative.lstrip("/"))
             hit = any(matches(r, domain, process, network) for r in candidates)
             reason = identifier
         else:

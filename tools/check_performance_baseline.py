@@ -272,7 +272,9 @@ def check(path: Path, lines: list[str]) -> list[str]:
     else:
         require(not groups[auto].filter_text, "全地区 url-test 组不得限定地区标签。")
         require("tcp-concurrent: true" in lines and "ipv6: false" in lines, "Mihomo 必须开启 TCP 并发并保留 IPv4 基线。")
-        require("find-process-mode: strict" in lines, "Mihomo 源文件应保留按需识别进程；FlClash 界面覆写能力需另行实机验证。")
+        clashmi_ios = path.name == "rulemesh-substore-mihomo-clashmi-ios.yaml"
+        process_mode = "off" if clashmi_ios else "strict"
+        require(f"find-process-mode: {process_mode}" in lines, "iOS 关闭进程匹配；FlClash 源文件保留 strict 按需识别进程，界面覆写需实机验证。")
         values, policies = dns._parse_mihomo_dns(lines)
         require(values == DOMESTIC, "Mihomo 默认业务 DNS 应为国内双 DoH。")
         require(len(policies) == ((3 if business else 2) if android_repair else 1) and policies[0].providers == ("us_ai",), "Mihomo 仅保留 AI 专用 DNS policy；安卓业务分组可追加 YouTube 与 Google 专项。")
@@ -299,8 +301,8 @@ def check(path: Path, lines: list[str]) -> list[str]:
         require(tuple(node_dns) == DOMESTIC, "指定代理的 AI DoH 必须配套独立国内节点 bootstrap，避免解析循环。")
         require(not any(name in {"cn-dns-domains", "cn-performance-dns-domains"} for name in providers), "Mihomo 不应重复加载 DNS 专用域名清单。")
         health, parsed_groups, _ = performance.parse_mihomo(lines)
-        health_interval = '600' if 'flclash-android' in path.name else '300'
-        require(bool(health) and all(item.interval == health_interval and item.lazy == "false" for item in health), "机场健康检查应为桌面 300 秒、安卓 600 秒主动检测。")
+        health_interval = '600' if 'flclash-android' in path.name or clashmi_ios else '300'
+        require(bool(health) and all(item.interval == health_interval and item.lazy == "false" for item in health), "机场健康检查应为桌面 300 秒、安卓/iOS 600 秒主动检测。")
         for name, group in parsed_groups.items():
             if group.group_type == "url-test":
                 used = any(name in service.default_chain(parts[2], groups) for _, parts in rules if len(parts) >= 3) if business else any(name in parts[2:3] for _, parts in rules)

@@ -312,6 +312,18 @@ if ($LASTEXITCODE -ne 0) {
     throw "Common application route validation failed."
 }
 
+Write-Host "[check] validate Clash Mi iOS derivation"
+$clashMiChecker = Join-Path $repoRoot "tools\derive_clashmi_profile.py"
+if ($routePython.Kind -eq "Launcher") {
+    & $routePython.Value -3 -B -X utf8 $clashMiChecker --check
+}
+else {
+    & $routePython.Value -B -X utf8 $clashMiChecker --check
+}
+if ($LASTEXITCODE -ne 0) {
+    throw "Clash Mi iOS derivation validation failed."
+}
+
 Invoke-UnitTests
 
 Write-Host "[check] validate Surge test URLs"

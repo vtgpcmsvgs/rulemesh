@@ -30,10 +30,12 @@ SURGE_CONFIG_NAMES = (
 )
 MIHOMO_CONFIG_NAMES = (
     "mihomo-public.yaml",
+    "rulemesh-substore-mihomo-clashmi-ios.yaml",
     "rulemesh-substore-mihomo-flclash-desktop.yaml",
     "rulemesh-substore-mihomo-flclash-android.yaml",
 )
 MIHOMO_SINGLE_DNS_TRUTH_CONFIG_NAMES = (
+    "rulemesh-substore-mihomo-clashmi-ios.yaml",
     "rulemesh-substore-mihomo-flclash-desktop.yaml",
     "rulemesh-substore-mihomo-flclash-android.yaml",
 )
@@ -527,6 +529,7 @@ def default_paths(repo_root: Path) -> list[Path]:
                 private_config_root / "rulemesh-substore-surge-work-whitelist.conf",
                 private_config_root / "rulemesh-substore-mihomo-flclash-desktop.yaml",
                 private_config_root / "rulemesh-substore-mihomo-flclash-android.yaml",
+                private_config_root / "rulemesh-substore-mihomo-clashmi-ios.yaml",
             ]
         )
 

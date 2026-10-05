@@ -1,5 +1,7 @@
 # Mihomo 使用说明
 
+iPhone 的 Clash Mi 使用独立 `rulemesh-substore-mihomo-clashmi-ios.yaml`，不要套用安卓应用进程规则。它保留桌面分流与 DNS 基线，测速周期 600 秒，TUN 交给应用管理；关闭 DNS/规则/代理组覆写并保留 TUN 覆写。阿里云 SSH 的 ASN 兜底转换为精确网段内联快照。导入、派生维护与设备验收见 [Clash Mi iOS](clashmi-ios.md)。此专项不改变公开模板。
+
 公开模板为 [mihomo-public.yaml](examples/mihomo-public.yaml)。公开模板、FlClash 桌面端 与 FlClash 安卓端 私有配置共同采用 [2026-09-09 性能基线](performance-baseline.md)。
 
 ## 接入

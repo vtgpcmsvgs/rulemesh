@@ -10,6 +10,7 @@ from check_dns_safety import default_paths
 
 ROOT = Path(__file__).resolve().parents[1]
 PRIVATE_PROFILE_NAMES = {
+    "rulemesh-substore-mihomo-clashmi-ios.yaml",
     "rulemesh-substore-surge-personal.conf",
     "rulemesh-substore-surge-personal-company.conf",
     "rulemesh-substore-surge-work-whitelist.conf",
@@ -21,6 +22,7 @@ SURGE_PERSONAL_NAMES = {
     "rulemesh-substore-surge-personal-company.conf",
 }
 MIHOMO_PROFILE_NAMES = {
+    "rulemesh-substore-mihomo-clashmi-ios.yaml",
     "rulemesh-substore-mihomo-flclash-desktop.yaml",
     "rulemesh-substore-mihomo-flclash-android.yaml",
 }

@@ -10,6 +10,17 @@ import check_common_routes as common
 
 
 class CommonRouteTests(unittest.TestCase):
+    def test_inline_classical_is_checked_in_rule_order(self):
+        lines = ['rule-providers:', '  local:', '    type: inline',
+                 '    behavior: classical', '    payload:',
+                 '      - "IP-CIDR,192.0.2.0/24,no-resolve"',
+                 '      - "DOMAIN,example.org"', 'rules:',
+                 '  - RULE-SET,local,PROXY', '  - MATCH,DIRECT']
+        self.assertEqual(common.route(lines, 'example.org', ''), ('PROXY', 'local'))
+        self.assertEqual(common.route(lines, 'other.example', ''), ('DIRECT', 'MATCH'))
+        with self.assertRaises(ValueError):
+            common.route([line for line in lines if not line.startswith('      - ')], 'example.org', '')
+
     def test_suffix_does_not_match_similar_unrelated_domain(self):
         rule = "DOMAIN-SUFFIX,alipay.com"
         self.assertTrue(common.matches(rule, "mobilegw.alipay.com", "browser"))

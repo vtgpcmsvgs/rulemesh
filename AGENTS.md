@@ -2,6 +2,8 @@
 
 ## 仓库重点
 
+- Clash Mi iOS 私有配置 `rulemesh-substore-mihomo-clashmi-ios.yaml` 由 `tools/derive_clashmi_profile.py` 从桌面配置及当前构建资产派生。先构建再派生；业务、机场与订阅同步块变更后重新派生，不手工维护第三套业务规则。iOS 进程匹配 off、检测周期 600 秒、TUN 交给应用、关闭 DNS/业务覆写，保留桌面 DNS 基线；阿里云 SSH 仅保留精确网段内联快照，不使用 ASN。静态检查与 iPhone 的实际 DNS/内存/连接验收分开报告，详见 `docs/clashmi-ios.md`。
+
 - 源规则只维护在 `rules/`
 - 构建产物只发布三条线：
   - `dist/surge/rules/`

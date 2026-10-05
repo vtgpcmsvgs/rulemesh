@@ -8,6 +8,7 @@ FIXED = {"AI": "us", "Crypto": "tw", "Microsoft": "us", "香港券商": "hk"}
 MANUAL = ("Google", "YouTube", "Telegram", "Microsoft", "Apple")
 MANUAL_FIXED_SERVICES = frozenset({"AI", "Crypto", "香港券商"})
 MANUAL_FIXED_PROFILES = frozenset({
+    "rulemesh-substore-mihomo-clashmi-ios.yaml",
     "rulemesh-substore-mihomo-flclash-desktop.yaml",
     "rulemesh-substore-mihomo-flclash-android.yaml",
 })
@@ -108,7 +109,7 @@ def check(path: Path, lines, groups, rules, auto):
             require("    hidden: false" in block, f"{name} 必须显式可见。")
             if not manual:
                 require(any(re.match(r'^    url:', s) for s in block), f"{name} 自动测速组必须配置探测地址。")
-                expected_interval = "600" if "android" in path.name else "300"
+                expected_interval = "600" if "android" in path.name or "clashmi-ios" in path.name else "300"
                 require(any(re.fullmatch(rf'    interval:\s*{expected_interval}', s) for s in block), f"{name} 自动测速组必须配置正确检测周期。")
                 require(any('    url: "https://www.google.com/generate_204"' in s for s in block), f"{name} 自动测速组必须使用标准 HTTPS 探测地址。")
             else:
