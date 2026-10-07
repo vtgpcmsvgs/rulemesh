@@ -248,8 +248,8 @@
       "category": "proxy",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 5223,
-        "mihomo_classical": 5223
+        "surge_rules": 5259,
+        "mihomo_classical": 5259
       },
       "dist": {
         "surge_rules": "dist/surge/rules/proxy/gfw.list",
@@ -261,8 +261,8 @@
       "category": "proxy",
       "classification": "domain-only",
       "counts": {
-        "surge_rules": 4394,
-        "mihomo_classical": 4394
+        "surge_rules": 4430,
+        "mihomo_classical": 4430
       },
       "dist": {
         "surge_rules": "dist/surge/rules/proxy/gfw_precise.list",
