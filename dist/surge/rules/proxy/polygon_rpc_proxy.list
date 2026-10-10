@@ -24,6 +24,8 @@ DOMAIN,matic.rpc.sentio.xyz
 DOMAIN-WILDCARD,*.matic.rpc.sentio.xyz
 DOMAIN,poly.api.pocket.network
 DOMAIN-WILDCARD,*.poly.api.pocket.network
+DOMAIN,polygon-bor-rpc.blockreq.com
+DOMAIN-WILDCARD,*.polygon-bor-rpc.blockreq.com
 DOMAIN,polygon-bor-rpc.publicnode.com
 DOMAIN-WILDCARD,*.polygon-bor-rpc.publicnode.com
 DOMAIN,polygon-mainnet.4everland.org
@@ -62,6 +64,8 @@ DOMAIN,polygon.therpc.io
 DOMAIN-WILDCARD,*.polygon.therpc.io
 DOMAIN,public.1rpc.io
 DOMAIN-WILDCARD,*.public.1rpc.io
+DOMAIN,public.blazingnode.com
+DOMAIN-WILDCARD,*.public.blazingnode.com
 DOMAIN,public.stackup.sh
 DOMAIN-WILDCARD,*.public.stackup.sh
 DOMAIN,rpc-mainnet.matic.quiknode.pro

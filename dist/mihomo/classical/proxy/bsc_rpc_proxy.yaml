@@ -61,6 +61,8 @@ payload:
   - "DOMAIN-WILDCARD,*.bsc-mainnet.rpcfast.com"
   - "DOMAIN,bsc-rpc-public.chainpulse.cc"
   - "DOMAIN-WILDCARD,*.bsc-rpc-public.chainpulse.cc"
+  - "DOMAIN,bsc-rpc.blockreq.com"
+  - "DOMAIN-WILDCARD,*.bsc-rpc.blockreq.com"
   - "DOMAIN,bsc-rpc.keccak.io"
   - "DOMAIN-WILDCARD,*.bsc-rpc.keccak.io"
   - "DOMAIN,bsc-rpc.publicnode.com"
