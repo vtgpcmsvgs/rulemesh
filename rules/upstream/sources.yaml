@@ -210,7 +210,7 @@ sources:
     hk/hk_user_priority.list:
       preferred:
         - repo: self
-          note: 用户指定的香港优先业务，承接 GoDaddy、尊嘉证券 ZVsthk 关键词与 supado.com，不扩大为通用券商或注册商规则
+          note: 用户指定的香港优先业务，承接 GoDaddy 与尊嘉证券 ZVsthk 关键词，不扩大为通用券商或注册商规则
     hk/personal_priority_hk.list:
       preferred:
         - repo: self

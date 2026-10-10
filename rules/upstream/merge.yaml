@@ -287,7 +287,7 @@ merge_plan:
 
   - id: hk-user-priority
     target: rules/region/hk/hk_user_priority.list
-    purpose: 用户指定 GoDaddy、尊嘉证券与 supado.com 的香港优先入口
+    purpose: 用户指定 GoDaddy 与尊嘉证券的香港优先入口
     strategy:
       - explicit_domain_suffixes_first
       - brand_keyword_fallbacks

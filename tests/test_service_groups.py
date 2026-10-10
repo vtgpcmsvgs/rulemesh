@@ -141,8 +141,15 @@ class ServiceGroupTests(unittest.TestCase):
         rules = build_rules.build_source(ROOT / 'rules/region/hk/hk_securities.list').outputs['surge_rules']
         for domain in ('zvsthk.com', 'api.zvsthk.com', 'api-zvsthk.example'):
             self.assertTrue(any(common.matches(r, domain, 'browser') for r in rules))
-        for domain in ('godaddy.com', 'supado.com'):
+        for domain in ('godaddy.com',):
             self.assertFalse(any(common.matches(r, domain, 'browser') for r in rules))
+
+    def test_supado_belongs_to_ai_relay_only(self):
+        relay_rules = build_rules.build_source(ROOT / 'rules/region/multi/ai_relay.list').outputs['surge_rules']
+        hk_rules = build_rules.build_source(ROOT / 'rules/region/hk/hk_user_priority.list').outputs['surge_rules']
+        for domain in ('supado.com', 'portal.supado.com'):
+            self.assertTrue(any(common.matches(r, domain, 'browser') for r in relay_rules))
+            self.assertFalse(any(common.matches(r, domain, 'browser') for r in hk_rules))
 
     def test_provider_partition_is_complete_unique_and_region_locked(self):
         path, text = self.fixture()

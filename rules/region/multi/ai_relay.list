@@ -8,6 +8,7 @@ DOMAIN-SUFFIX,modelflare.dev
 DOMAIN-SUFFIX,sudocode.chat
 DOMAIN-SUFFIX,sssaicode.com
 DOMAIN-SUFFIX,xiu.ai
+DOMAIN-SUFFIX,supado.com
 
 # Help AIO 公开评测页列出的站点主域；去除注册链接的路径、查询参数与子域前缀。
 DOMAIN-SUFFIX,micuapi.ai
