@@ -1,0 +1,41 @@
+# 支付与加密支付服务入口：承接结账、支付网关、法币入金与加密支付服务主域。
+# 边界：不承接银行、交易所或普通金融站点；客户端应绑定全地区自动选择。
+# 来源：用户明确指定域名，及主流支付/加密支付服务的官方主域交叉核对结果。
+# 维护：仅保留明确服务主域，不使用 payment/crypto 关键词泛匹配。
+
+# 用户明确指定。
+DOMAIN-SUFFIX,infini.money
+DOMAIN-SUFFIX,stripe.com
+
+# 通用支付网关与账单平台。
+DOMAIN-SUFFIX,checkout.com
+DOMAIN-SUFFIX,paypal.com
+DOMAIN-SUFFIX,paypalobjects.com
+DOMAIN-SUFFIX,braintreegateway.com
+DOMAIN-SUFFIX,braintreepayments.com
+DOMAIN-SUFFIX,adyen.com
+DOMAIN-SUFFIX,squareup.com
+DOMAIN-SUFFIX,worldpay.com
+DOMAIN-SUFFIX,authorize.net
+DOMAIN-SUFFIX,payoneer.com
+DOMAIN-SUFFIX,paddle.com
+DOMAIN-SUFFIX,lemonsqueezy.com
+DOMAIN-SUFFIX,fastspring.com
+
+# 加密支付、法币入金与商户结算。
+DOMAIN-SUFFIX,coinbase.com
+DOMAIN-SUFFIX,coinbasecommerce.com
+DOMAIN-SUFFIX,bitpay.com
+DOMAIN-SUFFIX,coingate.com
+DOMAIN-SUFFIX,nowpayments.io
+DOMAIN-SUFFIX,transak.com
+DOMAIN-SUFFIX,moonpay.com
+DOMAIN-SUFFIX,ramp.network
+DOMAIN-SUFFIX,banxa.com
+DOMAIN-SUFFIX,mercuryo.io
+DOMAIN-SUFFIX,simplex.com
+DOMAIN-SUFFIX,wert.io
+DOMAIN-SUFFIX,triple-a.io
+DOMAIN-SUFFIX,passimpay.io
+DOMAIN-SUFFIX,oxapay.com
+DOMAIN-SUFFIX,cryptomus.com

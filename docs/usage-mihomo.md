@@ -17,7 +17,7 @@ iPhone 的 Clash Mi 使用独立 `rulemesh-substore-mihomo-clashmi-ios.yaml`，�
 
 香港券商统一由 `hk_securities` 规则集和“香港券商”策略组承接；AI、Crypto、Microsoft、香港券商按 provider 使用独立 `url-test` 子组，Microsoft 父组使用 `select`。Google、YouTube、Telegram、Apple 复用六个地区自动组。安卓已移除“Google 下载稳定”组，Google 下载相关规则统一进入 Google 业务组。
 
-WPS/金山文档按 2026-09-18 修订统一 DIRECT，继续使用默认国内 DNS，Microsoft Store 专项固定美国，通用 Microsoft 保留美国代理候选并追加 DIRECT。Notion 在 Google 广谱前使用 `hk_notion` 规则集并复用香港自动选择，覆盖网页、API、公开页与图片，沿用国内 DNS；详见 [Notion 网页优化](notion-network-optimization.md)。Google、YouTube、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个地区自动组；Apple 在六地区选项后追加 DIRECT。AI 与 Microsoft 按 provider 保留美国自动子组，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，AI、Crypto、香港券商不提供 DIRECT；Microsoft 父组使用 select，手动选择美国子组或 DIRECT。GoDaddy 与 supado.com 由香港优先规则集承接；尊嘉证券优先命中统一香港券商规则集。未命中前置规则时 `MATCH,DIRECT`。既有前置 DIRECT/REJECT 规则保持作用；Polymarket 从媒体入口移入 Crypto。AWS IP 与链式代理 provider 和调用均停用，仓库资产继续维护。
+WPS/金山文档按 2026-09-18 修订统一 DIRECT，继续使用默认国内 DNS，Microsoft Store 专项固定美国，通用 Microsoft 保留美国代理候选并追加 DIRECT。Notion 在 Google 广谱前使用 `hk_notion` 规则集并复用香港自动选择，覆盖网页、API、公开页与图片，沿用国内 DNS；详见 [Notion 网页优化](notion-network-optimization.md)。Google、YouTube、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个地区自动组；Apple 在六地区选项后追加 DIRECT。AI 与 Microsoft 按 provider 保留美国自动子组，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，AI、Crypto、香港券商不提供 DIRECT；Microsoft 父组使用 select，手动选择美国子组或 DIRECT。AI 中转站使用 `multi_ai_relay`，支付与加密支付使用 `multi_payment_crypto`，住宅代理与住宅代理 API 使用 `multi_residential_proxy`，三者绑定全地区自动选择。GoDaddy 与 supado.com 由香港优先规则集承接；尊嘉证券优先命中统一香港券商规则集。未命中前置规则时 `MATCH,DIRECT`。既有前置 DIRECT/REJECT 规则保持作用；Polymarket 从媒体入口移入 Crypto。AWS IP 与链式代理 provider 和调用均停用，仓库资产继续维护。
 
 `direct_cn_services` 固定第二条，保护国内 DNS 与新华三；AI 仅按审核后的域名边界匹配，避免名称相似网站同时进入美国出口与海外解析。Store 专项在两份 FlClash 中仍晚于既有更新拒绝。见[出口修订](scoped-egress-repair.md)。
 

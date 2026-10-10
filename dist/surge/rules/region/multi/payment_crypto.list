@@ -1,0 +1,35 @@
+# 生成来源：rules/region/multi/payment_crypto.list
+# 类型：rules
+# 请勿直接编辑 dist。
+
+DOMAIN-SUFFIX,infini.money
+DOMAIN-SUFFIX,stripe.com
+DOMAIN-SUFFIX,checkout.com
+DOMAIN-SUFFIX,paypal.com
+DOMAIN-SUFFIX,paypalobjects.com
+DOMAIN-SUFFIX,braintreegateway.com
+DOMAIN-SUFFIX,braintreepayments.com
+DOMAIN-SUFFIX,adyen.com
+DOMAIN-SUFFIX,squareup.com
+DOMAIN-SUFFIX,worldpay.com
+DOMAIN-SUFFIX,authorize.net
+DOMAIN-SUFFIX,payoneer.com
+DOMAIN-SUFFIX,paddle.com
+DOMAIN-SUFFIX,lemonsqueezy.com
+DOMAIN-SUFFIX,fastspring.com
+DOMAIN-SUFFIX,coinbase.com
+DOMAIN-SUFFIX,coinbasecommerce.com
+DOMAIN-SUFFIX,bitpay.com
+DOMAIN-SUFFIX,coingate.com
+DOMAIN-SUFFIX,nowpayments.io
+DOMAIN-SUFFIX,transak.com
+DOMAIN-SUFFIX,moonpay.com
+DOMAIN-SUFFIX,ramp.network
+DOMAIN-SUFFIX,banxa.com
+DOMAIN-SUFFIX,mercuryo.io
+DOMAIN-SUFFIX,simplex.com
+DOMAIN-SUFFIX,wert.io
+DOMAIN-SUFFIX,triple-a.io
+DOMAIN-SUFFIX,passimpay.io
+DOMAIN-SUFFIX,oxapay.com
+DOMAIN-SUFFIX,cryptomus.com

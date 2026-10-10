@@ -1,11 +1,11 @@
 {
   "summary": {
-    "domain-only": 16,
+    "domain-only": 19,
     "ipcidr-only": 7,
     "classical/mixed": 30,
     "dns-domain-set": 2,
     "empty": 0,
-    "total_sources": 55,
+    "total_sources": 58,
     "total_warnings": 0
   },
   "sources": [
@@ -556,6 +556,19 @@
       }
     },
     {
+      "source": "rules/region/multi/ai_relay.list",
+      "category": "region",
+      "classification": "domain-only",
+      "counts": {
+        "surge_rules": 24,
+        "mihomo_classical": 24
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/region/multi/ai_relay.list",
+        "mihomo_classical": "dist/mihomo/classical/region/multi/ai_relay.yaml"
+      }
+    },
+    {
       "source": "rules/region/multi/chain_socks5_ipcidr.list",
       "category": "region",
       "classification": "ipcidr-only",
@@ -566,6 +579,32 @@
       "dist": {
         "surge_rules": "dist/surge/rules/region/multi/chain_socks5_ipcidr.list",
         "mihomo_classical": "dist/mihomo/classical/region/multi/chain_socks5_ipcidr.yaml"
+      }
+    },
+    {
+      "source": "rules/region/multi/payment_crypto.list",
+      "category": "region",
+      "classification": "domain-only",
+      "counts": {
+        "surge_rules": 31,
+        "mihomo_classical": 31
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/region/multi/payment_crypto.list",
+        "mihomo_classical": "dist/mihomo/classical/region/multi/payment_crypto.yaml"
+      }
+    },
+    {
+      "source": "rules/region/multi/residential_proxy.list",
+      "category": "region",
+      "classification": "domain-only",
+      "counts": {
+        "surge_rules": 25,
+        "mihomo_classical": 25
+      },
+      "dist": {
+        "surge_rules": "dist/surge/rules/region/multi/residential_proxy.list",
+        "mihomo_classical": "dist/mihomo/classical/region/multi/residential_proxy.yaml"
       }
     },
     {

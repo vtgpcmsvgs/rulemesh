@@ -1,0 +1,32 @@
+# AI 中转站与 OpenAI 兼容接口入口：只承接已公开列出的服务主域。
+# 边界：不承接官方 AI 平台、通用云厂商或共享 CDN 根域；客户端应绑定全地区自动选择。
+# 来源：Help AIO「AI 中转站评测」公开站点排行榜（2026-10-10），加用户明确指定的四个域名。
+# 维护：站点改域名时先核实官网归属，再更新本文件；不使用 DOMAIN-KEYWORD。
+
+# 用户明确指定。
+DOMAIN-SUFFIX,modelflare.dev
+DOMAIN-SUFFIX,sudocode.chat
+DOMAIN-SUFFIX,sssaicode.com
+DOMAIN-SUFFIX,xiu.ai
+
+# Help AIO 公开评测页列出的站点主域；去除注册链接的路径、查询参数与子域前缀。
+DOMAIN-SUFFIX,micuapi.ai
+DOMAIN-SUFFIX,packyapi.ai
+DOMAIN-SUFFIX,4router.net
+DOMAIN-SUFFIX,cctq.ai
+DOMAIN-SUFFIX,cubence.com
+DOMAIN-SUFFIX,78code.cc
+DOMAIN-SUFFIX,rightapi.ai
+DOMAIN-SUFFIX,timicc.com
+DOMAIN-SUFFIX,apinebula.ai
+DOMAIN,co.yes.vg
+DOMAIN-SUFFIX,bytecatcode.org
+DOMAIN-SUFFIX,ikuncode.cc
+DOMAIN-SUFFIX,nekocode.ai
+DOMAIN-SUFFIX,muzeai.top
+DOMAIN-SUFFIX,cpass.cc
+DOMAIN-SUFFIX,hongmacc.com
+DOMAIN-SUFFIX,yunwu.ai
+DOMAIN-SUFFIX,undyingapi.com
+DOMAIN-SUFFIX,duckcoding.ai
+DOMAIN-SUFFIX,88code.org

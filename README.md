@@ -194,6 +194,10 @@ Google 通用业务仍维护在 google_hk 兼容入口，完整同步 Google / F
 
 ai_us 同时承接 OpenAI、Claude、Copilot、Cursor、Grok、Windsurf、Augment 等海外平台，仅使用审核后的域名/后缀；上游快照用作候选，不直接引入关键词、共享云根域或 IP/ASN。国内 AI、Trae 中国大陆入口继续由 ai_cn_direct / bytedance_direct 直连。工作白名单不因通用模板变更自动加入国内 AI 入口。详细顺序以性能基线和模板为准。
 
+`region/multi/ai_relay` 承接用户指定的 modelflare.dev、sudocode.chat、sssaicode.com、xiu.ai，以及 Help AIO 公开评测页列出的 AI 中转站主域，统一绑定全地区自动选择；`region/multi/payment_crypto` 承接 infini.money、Stripe 与主流支付/加密支付服务主域，同样绑定全地区自动选择。两者均只使用显式域名，不用关键词泛匹配。
+
+`region/multi/residential_proxy` 承接用户指定的 cliproxy.com、decodo.com，以及公开住宅代理基准和厂商官网确认的住宅/ISP 代理与住宅代理 API 主域，统一绑定全地区自动选择。
+
 ## 上游维护方式
 
 当前仓库只先落两类维护元数据：

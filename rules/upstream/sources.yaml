@@ -159,6 +159,26 @@ sources:
           note: 负责 gfw.txt 与 tld-not-cn.txt 主体
 
   region:
+    multi/ai_relay.list:
+      preferred:
+        - repo: self
+          note: 用户指定的 AI 中转站域名与 Help AIO 公开评测页站点主域，统一绑定全地区自动选择；不使用关键词或共享云根域
+        - repo: Help AIO AI 中转站评测
+          note: 2026-10-10 公开排行榜列出的 22 个站点，仅提取官网主域并去除注册链接参数
+    multi/payment_crypto.list:
+      preferred:
+        - repo: self
+          note: 用户指定的 Infini/Stripe 与主流支付、加密支付服务主域，统一绑定全地区自动选择；不使用关键词泛匹配
+        - repo: official payment provider websites
+          note: 仅收录支付网关、加密支付和法币入金服务的官方主域，维护时先核对归属再更新
+    multi/residential_proxy.list:
+      preferred:
+        - repo: self
+          note: 用户指定的住宅代理服务与公开基准中的住宅/ISP 代理主域，统一绑定全地区自动选择；不使用关键词泛匹配
+        - repo: AIMultiple residential proxy benchmark
+          note: 交叉核对公开住宅代理基准中的 Bright Data、Decodo、Oxylabs、Webshare、DataImpulse、NodeMaven、Byteful、SOAX 与 Infatica
+        - repo: official residential proxy provider websites
+          note: 补充公开提供住宅或住宅代理 API 的服务主域，更新前先核对产品归属
     hk/alibaba_hk.list:
       preferred:
         - repo: self

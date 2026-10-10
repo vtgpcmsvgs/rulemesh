@@ -16,6 +16,33 @@ defaults:
     manual_entries_first: true
 
 merge_plan:
+  - id: multi-ai-relay
+    target: rules/region/multi/ai_relay.list
+    purpose: AI 中转站与 OpenAI 兼容接口入口走全地区自动选择
+    strategy:
+      - reviewed_explicit_service_domains_only
+      - public_directory_candidates_plus_user_requested_domains
+    notes:
+      - 只保留公开评测页列出的站点主域和用户明确指定域名，不使用关键词、共享 CDN 根域或 IP/ASN
+
+  - id: multi-payment-crypto
+    target: rules/region/multi/payment_crypto.list
+    purpose: 支付网关与加密支付服务入口走全地区自动选择
+    strategy:
+      - explicit_provider_domains_only
+      - user_requested_domains_first
+    notes:
+      - 收录用户指定的 Infini/Stripe 与经官方站点交叉核对的支付、加密支付、法币入金服务主域
+
+  - id: multi-residential-proxy
+    target: rules/region/multi/residential_proxy.list
+    purpose: 住宅代理与住宅代理 API 服务入口走全地区自动选择
+    strategy:
+      - reviewed_explicit_provider_domains_only
+      - public_benchmark_candidates_plus_user_requested_domains
+    notes:
+      - 只保留用户指定域名和公开住宅代理基准/官方站点确认的服务主域，不使用关键词或代理节点 IP
+
   - id: youtube
     target: rules/proxy/youtube.list
     purpose: YouTube 视频及资源独立选点，不被 Google 完整地址空间提前吞并

@@ -1,0 +1,29 @@
+# 生成来源：rules/region/multi/residential_proxy.list
+# 类型：rules
+# 请勿直接编辑 dist。
+
+DOMAIN-SUFFIX,cliproxy.com
+DOMAIN-SUFFIX,decodo.com
+DOMAIN-SUFFIX,brightdata.com
+DOMAIN-SUFFIX,oxylabs.io
+DOMAIN-SUFFIX,webshare.io
+DOMAIN-SUFFIX,dataimpulse.com
+DOMAIN-SUFFIX,nodemaven.com
+DOMAIN-SUFFIX,byteful.com
+DOMAIN-SUFFIX,soax.com
+DOMAIN-SUFFIX,infatica.io
+DOMAIN-SUFFIX,geonode.com
+DOMAIN-SUFFIX,iproyal.com
+DOMAIN-SUFFIX,rayobyte.com
+DOMAIN-SUFFIX,netnut.io
+DOMAIN-SUFFIX,proxyempire.io
+DOMAIN-SUFFIX,stormproxies.com
+DOMAIN-SUFFIX,hydraproxy.com
+DOMAIN-SUFFIX,packetstream.io
+DOMAIN-SUFFIX,luna-proxy.com
+DOMAIN-SUFFIX,proxyrack.com
+DOMAIN-SUFFIX,proxy-seller.com
+DOMAIN-SUFFIX,scraperapi.com
+DOMAIN-SUFFIX,scrapingbee.com
+DOMAIN-SUFFIX,scrapfly.io
+DOMAIN-SUFFIX,zyte.com

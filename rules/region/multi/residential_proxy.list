@@ -1,0 +1,35 @@
+# 住宅代理与住宅代理 API 服务入口：只承接明确提供住宅/ISP 代理的服务主域。
+# 边界：不承接普通 VPN、机场面板、代理节点 IP 或通用抓取目标；客户端绑定全地区自动选择。
+# 来源：用户指定的 cliproxy.com、decodo.com，以及 AIMultiple 住宅代理公开基准和厂商官网交叉核对结果。
+# 维护：仅使用显式主域，不使用 proxy/residential 关键词泛匹配。
+
+# 用户明确指定。
+DOMAIN-SUFFIX,cliproxy.com
+DOMAIN-SUFFIX,decodo.com
+
+# AIMultiple 公开住宅代理基准中的服务商。
+DOMAIN-SUFFIX,brightdata.com
+DOMAIN-SUFFIX,oxylabs.io
+DOMAIN-SUFFIX,webshare.io
+DOMAIN-SUFFIX,dataimpulse.com
+DOMAIN-SUFFIX,nodemaven.com
+DOMAIN-SUFFIX,byteful.com
+DOMAIN-SUFFIX,soax.com
+DOMAIN-SUFFIX,infatica.io
+
+# 其他提供住宅/ISP 代理或住宅代理 API 的公开服务商。
+DOMAIN-SUFFIX,geonode.com
+DOMAIN-SUFFIX,iproyal.com
+DOMAIN-SUFFIX,rayobyte.com
+DOMAIN-SUFFIX,netnut.io
+DOMAIN-SUFFIX,proxyempire.io
+DOMAIN-SUFFIX,stormproxies.com
+DOMAIN-SUFFIX,hydraproxy.com
+DOMAIN-SUFFIX,packetstream.io
+DOMAIN-SUFFIX,luna-proxy.com
+DOMAIN-SUFFIX,proxyrack.com
+DOMAIN-SUFFIX,proxy-seller.com
+DOMAIN-SUFFIX,scraperapi.com
+DOMAIN-SUFFIX,scrapingbee.com
+DOMAIN-SUFFIX,scrapfly.io
+DOMAIN-SUFFIX,zyte.com

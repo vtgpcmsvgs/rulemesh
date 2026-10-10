@@ -584,6 +584,33 @@ rule-providers:
     interval: 86400
     proxy: "♻️ 自动选择"
 
+  multi_ai_relay:
+    type: http
+    behavior: classical
+    format: yaml
+    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/multi/ai_relay.yaml"
+    path: ./ruleset/region/multi/ai_relay.yaml
+    interval: 86400
+    proxy: "♻️ 自动选择"
+
+  multi_payment_crypto:
+    type: http
+    behavior: classical
+    format: yaml
+    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/multi/payment_crypto.yaml"
+    path: ./ruleset/region/multi/payment_crypto.yaml
+    interval: 86400
+    proxy: "♻️ 自动选择"
+
+  multi_residential_proxy:
+    type: http
+    behavior: classical
+    format: yaml
+    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/region/multi/residential_proxy.yaml"
+    path: ./ruleset/region/multi/residential_proxy.yaml
+    interval: 86400
+    proxy: "♻️ 自动选择"
+
   tw_crypto:
     type: http
     behavior: classical
@@ -830,7 +857,11 @@ rule-providers:
 rules:
   # AI 美国、Crypto 台湾；已登记日本入口与香港券商保留地区，其余代理自动择优。
   - RULE-SET,us_ai,AI
+
   - RULE-SET,direct_cn_services,DIRECT
+  - RULE-SET,multi_ai_relay,♻️ 自动选择
+  - RULE-SET,multi_payment_crypto,♻️ 自动选择
+  - RULE-SET,multi_residential_proxy,♻️ 自动选择
   - RULE-SET,direct_ai_cn,DIRECT
   - RULE-SET,direct_bytedance,DIRECT
   - RULE-SET,direct_cn_social,DIRECT
