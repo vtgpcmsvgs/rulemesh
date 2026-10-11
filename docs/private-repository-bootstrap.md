@@ -53,6 +53,27 @@
 
 5. 解析当前配置目录时以实际布局为准：优先使用 `rulemesh-local/current`；若没有 `current`，但主配置与同步脚本直接位于仓库根目录，则使用根目录。不得为适配旧说明凭空创建 `current`。当前根目录包含家庭与公司两份 Surge Personal：`rulemesh-substore-surge-personal.conf` 和 `rulemesh-substore-surge-personal-company.conf`；两者除用途标识与 MITM 外应保持同构。
 
+## GitHub 认证与 HTTPS 传输恢复
+
+先区分浏览器登录、GitHub CLI 凭据与 Git 传输三层。浏览器显示设备授权成功后，仍须等 `gh auth login` 成功退出，再以 `gh auth status` 确认凭据已保存；不要读取或输出真实令牌。设备码过期时重新生成，不能继续使用旧码。如果写入 GitHub CLI 凭据文件被沙箱拒绝，应核对路径并申请提升权限重新运行登录，不把网页成功误报为本机认证成功。随后执行 `gh auth setup-git --hostname github.com`。
+
+2026-10-11 曾复现：系统 DNS 与 GitHub HTTPS/API 可用，但当前 Git 的 HTTPS 传输报 `getaddrinfo() thread failed to start`。此时可以仅向当前 Git 命令传入系统实际解析的地址，避开 Git 的线程解析路径；不固定 IP、不改生产 DNS、remote 或全局 Git 网络配置，不关闭证书校验。以下示例适用于已核对 `origin` 为 GitHub HTTPS 的公开或私人工作副本：
+
+```powershell
+$syncRepo = (Get-Location).Path
+$githubAddresses = @(Resolve-DnsName github.com -Type A -ErrorAction Stop |
+    Where-Object IPAddress | Select-Object -ExpandProperty IPAddress)
+if ($githubAddresses.Count -eq 0) { throw 'github.com IPv4 resolution failed' }
+$gitSyncArgs = @('-c', "safe.directory=$syncRepo", '-c',
+    "http.curloptResolve=github.com:443:$($githubAddresses[0])")
+git @gitSyncArgs -C $syncRepo fetch --prune origin
+if ($LASTEXITCODE -ne 0) { throw 'Git fetch failed; stop sync' }
+git @gitSyncArgs -C $syncRepo rev-list --left-right --count 'HEAD...@{upstream}'
+if ($LASTEXITCODE -ne 0) { throw 'Git upstream comparison failed; stop sync' }
+```
+
+比较结果依次为本地领先、落后数量。落后非零时先整合远端并重新构建检查，再用同一临时参数执行普通 `push origin main`，不得强推。推送后再次 fetch、比较，并核对远端 `main` 的提交号；两份工作区干净且各自领先/落后均为 `0` 才算完成。地址应在新一轮传输前重新解析，不能将本次 Fake IP 或公共 IP 写成长期配置。每条依赖命令均须检查退出码，失败后停止后续写操作。
+
 ## Codex 行为边界
 
 - GitHub 登录状态只能证明账号身份，不能替代仓库发现、克隆与本地路径登记。

@@ -215,7 +215,7 @@ ai_us 同时承接 OpenAI、Claude、Copilot、Cursor、Grok、Windsurf、Augmen
 
 真实客户端配置的最终数据源是 GitHub 私人仓库 [`vtgpcmsvgs/rulemesh-local`](https://github.com/vtgpcmsvgs/rulemesh-local)，Windows 默认工作副本位于 `%USERPROFILE%\Desktop\rulemesh-local`。根目录 [`private-repository.json`](private-repository.json) 是这项对应关系的机器可读登记。
 
-同一 GitHub 账号已经登录，并不意味着另一台机器已经克隆该仓库，也不意味着新的 Codex 会话自动知道本地目录对应关系。若本机不存在 `rulemesh-local`，应先读取登记文件，通过 GitHub 确认私人仓库可访问，再克隆到登记路径；不得直接断言配置不存在或创建新的空仓库。完整恢复、校验与脱敏边界见 [docs/private-repository-bootstrap.md](docs/private-repository-bootstrap.md)。
+同一 GitHub 账号已经登录，并不意味着另一台机器已经克隆该仓库，也不意味着新的 Codex 会话自动知道本地目录对应关系。若本机不存在 `rulemesh-local`，应先读取登记文件，通过 GitHub 确认私人仓库可访问，再克隆到登记路径；不得直接断言配置不存在或创建新的空仓库。完整恢复、校验与脱敏边界，以及设备码过期、凭据保存失败和 Git DNS 线程解析故障的恢复步骤，见 [docs/private-repository-bootstrap.md](docs/private-repository-bootstrap.md)。
 
 ## 本地私有配置
 
