@@ -102,6 +102,8 @@
   {"service":"尊嘉证券","domain":"api.zvsthk.example","expected":"hk_securities"},
   {"service":"Supado","domain":"supado.com","expected":"multi_ai_relay"},
   {"service":"Supado","domain":"portal.supado.com","expected":"multi_ai_relay"},
+  {"service":"AI 中转站（xi-xu.me）","domain":"xi-xu.me","expected":"multi_ai_relay"},
+  {"service":"AI 中转站（xi-xu.me）","domain":"api.xi-xu.me","expected":"multi_ai_relay"},
   {"service":"Apple","domain":"www.apple.com","expected":"direct_apple"},
   {"service":"Apple","domain":"www.icloud.com","expected":"direct_apple"},
   {"service":"Microsoft","domain":"www.microsoft.com","expected":"us_microsoft"},

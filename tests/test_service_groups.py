@@ -151,6 +151,11 @@ class ServiceGroupTests(unittest.TestCase):
             self.assertTrue(any(common.matches(r, domain, 'browser') for r in relay_rules))
             self.assertFalse(any(common.matches(r, domain, 'browser') for r in hk_rules))
 
+    def test_xi_xu_belongs_to_ai_relay(self):
+        relay_rules = build_rules.build_source(ROOT / 'rules/region/multi/ai_relay.list').outputs['surge_rules']
+        for domain in ('xi-xu.me', 'api.xi-xu.me'):
+            self.assertTrue(any(common.matches(r, domain, 'browser') for r in relay_rules))
+
     def test_provider_partition_is_complete_unique_and_region_locked(self):
         path, text = self.fixture()
         self.assertEqual(baseline.check(path, text.splitlines()), [])
