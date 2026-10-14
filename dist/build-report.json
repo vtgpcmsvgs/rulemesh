@@ -53,8 +53,8 @@
       "category": "direct",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 485,
-        "mihomo_classical": 485
+        "surge_rules": 489,
+        "mihomo_classical": 489
       },
       "dist": {
         "surge_rules": "dist/surge/rules/direct/alicloud_hk_ipv4_ssh22_direct.list",
@@ -105,8 +105,8 @@
       "category": "direct",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 120535,
-        "mihomo_classical": 120535
+        "surge_rules": 120225,
+        "mihomo_classical": 120225
       },
       "dist": {
         "surge_rules": "dist/surge/rules/direct/cn_direct.list",
@@ -417,8 +417,8 @@
       "category": "region",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 541,
-        "mihomo_classical": 541
+        "surge_rules": 539,
+        "mihomo_classical": 539
       },
       "dist": {
         "surge_rules": "dist/surge/rules/region/hk/hk_securities.list",
@@ -430,8 +430,8 @@
       "category": "region",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 491,
-        "mihomo_classical": 491
+        "surge_rules": 489,
+        "mihomo_classical": 489
       },
       "dist": {
         "surge_rules": "dist/surge/rules/region/hk/hk_securities_aggressive.list",
@@ -753,7 +753,7 @@
       "category": "dns",
       "classification": "dns-domain-set",
       "counts": {
-        "surge_dns_domains": 110916
+        "surge_dns_domains": 110606
       },
       "dist": {
         "surge_dns_domains": "dist/surge/dns/cn_performance_dns_domains.list"
