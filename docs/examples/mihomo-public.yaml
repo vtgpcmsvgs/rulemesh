@@ -859,6 +859,7 @@ rules:
   - RULE-SET,us_ai,AI
 
   - RULE-SET,direct_cn_services,DIRECT
+  # 第三方中转/模型网关含 OpenRouter、EasyAPI、CCAPI 及 CC Switch 赞助页核实的官网/API/备用入口；默认国内 DNS，分类见 docs/ai-relay-classification.md。
   - RULE-SET,multi_ai_relay,♻️ 自动选择
   - RULE-SET,multi_payment_crypto,♻️ 自动选择
   - RULE-SET,multi_residential_proxy,♻️ 自动选择

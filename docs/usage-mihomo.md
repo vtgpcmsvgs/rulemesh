@@ -19,6 +19,10 @@ iPhone 的 Clash Mi 使用独立 `rulemesh-substore-mihomo-clashmi-ios.yaml`，�
 
 WPS/金山文档按 2026-09-18 修订统一 DIRECT，继续使用默认国内 DNS，Microsoft Store 专项固定美国，通用 Microsoft 保留美国代理候选并追加 DIRECT。Notion 在 Google 广谱前使用 `hk_notion` 规则集并复用香港自动选择，覆盖网页、API、公开页与图片，沿用国内 DNS；详见 [Notion 网页优化](notion-network-optimization.md)。Google、YouTube、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个地区自动组；Apple 在六地区选项后追加 DIRECT。AI 与 Microsoft 按 provider 保留美国自动子组，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，AI、Crypto、香港券商不提供 DIRECT；Microsoft 父组使用 select，手动选择美国子组或 DIRECT。AI 中转站使用 `multi_ai_relay`，支付与加密支付使用 `multi_payment_crypto`，住宅代理与住宅代理 API 使用 `multi_residential_proxy`，三者绑定全地区自动选择。GoDaddy 由香港优先规则集承接；尊嘉证券优先命中统一香港券商规则集；supado.com 已迁入 `multi_ai_relay`。未命中前置规则时 `MATCH,DIRECT`。既有前置 DIRECT/REJECT 规则保持作用；Polymarket 从媒体入口移入 Crypto。AWS IP 与链式代理 provider 和调用均停用，仓库资产继续维护。
 
+中转规则已补充 `easyapis.cc`、`ccapi.us` 与截图核实的第三方中转/聚合网关，见[逐项分类](ai-relay-classification.md)。OpenRouter 从 `us_ai` 迁入 `multi_ai_relay`，使用全地区自动选择；`rule-set:us_ai` 的 DNS policy 不再覆盖它，沿用默认国内 DNS。原生模型 API 与纯推理/算力平台不并入中转规则，共用母域只登记确认的服务主机。
+
+2026-10-21 核对 CC Switch 赞助页后，再补齐 AIGoCode、ClaudeCN、GrooRoute、SudoCode.us、XycAi、EveryAPI、AllTokens 的 11 条官网/API/备用规则。既有 `multi_ai_relay` 继续绑定全地区自动选择和默认国内 DNS；更新 provider 资源后覆盖新域名，具体访问限制见分类文档。
+
 `direct_cn_services` 固定第二条，保护国内 DNS 与新华三；AI 仅按审核后的域名边界匹配，避免名称相似网站同时进入美国出口与海外解析。Store 专项在两份 FlClash 中仍晚于既有更新拒绝。见[出口修订](scoped-egress-repair.md)。
 
 GitHub SSH 精确直连在 Core / gfw 前；国内通用直连在 gfw 前。阿里云 SSH 继续保留仅 TCP/22 的内联兜底与 `DIRECT,no-resolve` 调用。AdsPower 三类调用与专用 provider 已停用，远程资产继续保留；系统时间同步与可选 1Password 规则继续保留。Surge 的工作白名单不会扩散到 Mihomo。

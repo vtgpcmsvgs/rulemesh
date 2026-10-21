@@ -14,6 +14,7 @@ class ScopedEgressTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.ai = build_rules.build_source(ROOT / 'rules/region/us/ai_us.list').outputs['surge_rules']
+        cls.relay = build_rules.build_source(ROOT / 'rules/region/multi/ai_relay.list').outputs['surge_rules']
 
     def ai_matches(self, domain):
         return any(common.matches(rule, domain, 'browser') for rule in self.ai)
@@ -42,7 +43,7 @@ class ScopedEgressTests(unittest.TestCase):
                        'generativelanguage.googleapis.com', 'claude.ai', 'claude.com', 'api.anthropic.com',
                        'api.x.ai', 'grok.com', 'api.githubcopilot.com', 'copilot.microsoft.com',
                        'cursor.com', 'cursor.sh', 'codeium.com', 'augmentcode.com', 'trae.ai',
-                       'perplexity.ai', 'poe.com', 'openrouter.ai', 'suno.com', 'suno.ai',
+                       'perplexity.ai', 'poe.com', 'suno.com', 'suno.ai',
                        'openai-api.arkoselabs.com', 'xai.chronosphere.io'):
             self.assertTrue(self.ai_matches(domain), domain)
         self.assertFalse(self.ai_matches('openai.com.example.org'))
@@ -50,6 +51,34 @@ class ScopedEgressTests(unittest.TestCase):
         self.assertFalse(self.ai_matches('notebook.google.example.org'))
         self.assertFalse(self.ai_matches('notebook.google.com.example.org'))
         self.assertFalse(self.ai_matches('notebook.example.org'))
+
+    def test_relay_domains_cannot_be_shadowed_by_us_routing_or_dns(self):
+        self.assertEqual({rule.split(',')[0] for rule in self.relay}, {'DOMAIN', 'DOMAIN-SUFFIX'})
+        for rule in self.relay:
+            domain = rule.split(',')[1]
+            self.assertFalse(self.ai_matches(domain), domain)
+        for domain in ('openrouter.ai', 'api.openrouter.ai', 'easyapis.cc', 'api.ccapi.us',
+                       'api.ikuncode.ai', 'node-hk.sssaicodeapi.com', 'node-hk.sssaiapi.com',
+                       'open.cherryin.net', 'cc-api.pipellm.ai', 'maas.so-show.com',
+                       'www.aigocode.net', 'api.aigocode.dev', 'api.aigocode.app',
+                       'claudecn.ai', 'grooroute.pro', 'grooroute.xyz',
+                       'sudocode.us', 'sudocode.run', 'apicdn.xyc.ai',
+                       'everyapi.ai', 'app.everyapi.ai', 'api.everyapi.ai', 'api-cn.everyapi.ai',
+                       'alltokens.cc', 'alltokens.si'):
+            self.assertTrue(any(common.matches(rule, domain, 'browser') for rule in self.relay), domain)
+
+    def test_relay_does_not_capture_model_vendors_inference_clouds_or_shared_parents(self):
+        for domain in ('ai.google.dev', 'build.nvidia.com', 'modelscope.cn', 'api.siliconflow.cn',
+                       'api.ppio.com', 'api.novita.ai', 'compshare.cn', 'api.modelverse.cn',
+                       's.qiniu.com', 'qiniu.com', 'fluxapay.xyz', 'so-show.com', 'cherryin.ai',
+                       'pipellm.ai', 'fenno.ai', 'tu-zi.com', 'api.baiduqianfan.ai',
+                       'gpu.atlascloud.ai', 'unrelated.so-show.com', 'unrelated.cherryin.ai',
+                       'openrouter.ai.example.org', 'noteasyapis.cc',
+                       'platform.kimi.com', 'platform.kimi.ai', 'www.volcengine.com',
+                       'www.byteplus.com', 'newapi.ai', 'www.newapi.ai', 'ccswitch.io',
+                       'aigocode.dev', 'unrelated.aigocode.dev', 'noteveryapi.ai',
+                       'grooroute.pro.example.org', 'alltokens.cc.example.org'):
+            self.assertFalse(any(common.matches(rule, domain, 'browser') for rule in self.relay), domain)
 
     def fixture(self, client):
         path = ROOT / 'docs/examples' / ('surge-public.conf' if client == 'surge' else 'mihomo-public.yaml')

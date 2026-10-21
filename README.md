@@ -194,7 +194,9 @@ Google 通用业务仍维护在 google_hk 兼容入口，完整同步 Google / F
 
 ai_us 同时承接 OpenAI、Claude、Copilot、Cursor、Grok、Windsurf、Augment 等海外平台，仅使用审核后的域名/后缀；上游快照用作候选，不直接引入关键词、共享云根域或 IP/ASN。国内 AI、Trae 中国大陆入口继续由 ai_cn_direct / bytedance_direct 直连。工作白名单不因通用模板变更自动加入国内 AI 入口。详细顺序以性能基线和模板为准。
 
-`region/multi/ai_relay` 承接用户指定的 modelflare.dev、sudocode.chat、sssaicode.com、xiu.ai、supado.com、xi-xu.me，以及 Help AIO 公开评测页列出的 AI 中转站主域，统一绑定全地区自动选择；`region/multi/payment_crypto` 承接 infini.money、Stripe 与主流支付/加密支付服务主域，同样绑定全地区自动选择。两者均只使用显式域名，不用关键词泛匹配。
+`region/multi/ai_relay` 承接用户指定的 modelflare.dev、sudocode.chat、sssaicode.com、xiu.ai、supado.com、xi-xu.me、easyapis.cc、ccapi.us，以及公开评测和截图核实的第三方中转/模型聚合服务，统一绑定全地区自动选择。OpenRouter 已从 `ai_us` 迁入，DNS 使用默认国内解析；共用母域仅登记服务主机，模型厂商原生 API 和纯推理/算力平台不并入。截图逐项分类与访问限制见 [AI 中转站分类](docs/ai-relay-classification.md)。`region/multi/payment_crypto` 承接 infini.money、Stripe 与主流支付/加密支付服务主域，同样绑定全地区自动选择。两者均只使用显式域名，不用关键词泛匹配。
+
+2026-10-21 按 [CC Switch 赞助页](https://ccswitch.io/zh/sponsors)与公开预设补齐 AIGoCode、ClaudeCN、GrooRoute、SudoCode.us、XycAi、EveryAPI、AllTokens 的官网/API/备用入口，共新增 11 条中转规则；已覆盖服务不重复，原生平台及 new-api 开源项目不因赞助类别纳入。出口和 DNS 沿用既有中转配置，设备更新远程规则后使用新增内容。
 
 `region/multi/residential_proxy` 承接用户指定的 cliproxy.com、decodo.com，以及公开住宅代理基准和厂商官网确认的住宅/ISP 代理与住宅代理 API 主域，统一绑定全地区自动选择。
 

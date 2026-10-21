@@ -1,6 +1,8 @@
-# AI 中转站与 OpenAI 兼容接口入口：只承接已公开列出的服务主域。
-# 边界：不承接官方 AI 平台、通用云厂商或共享 CDN 根域；客户端应绑定全地区自动选择。
-# 来源：Help AIO「AI 中转站评测」公开站点排行榜（2026-10-10），加用户明确指定的域名。
+# AI 中转站与第三方模型聚合网关：承接已核实的官网和 API 域名。
+# 边界：不承接模型厂商原生 API、纯推理/算力平台、通用云厂商或共享 CDN 根域。
+# 顺序：官方 AI 美国及国内精选入口之后、Google/直连/代理广谱之前，绑定全地区自动选择。
+# 来源：用户指定、Help AIO 公开评测、截图站点官网与 CC Switch 赞助页/公开供应商预设（2026-10-21）。
+# 分类与核验限制见 docs/ai-relay-classification.md；共享母域只登记确认的服务主机。
 # 维护：站点改域名时先核实官网归属，再更新本文件；不使用 DOMAIN-KEYWORD。
 
 # 用户明确指定。
@@ -10,6 +12,8 @@ DOMAIN-SUFFIX,sssaicode.com
 DOMAIN-SUFFIX,xiu.ai
 DOMAIN-SUFFIX,supado.com
 DOMAIN-SUFFIX,xi-xu.me
+DOMAIN-SUFFIX,easyapis.cc
+DOMAIN-SUFFIX,ccapi.us
 
 # Help AIO 公开评测页列出的站点主域；去除注册链接的路径、查询参数与子域前缀。
 DOMAIN-SUFFIX,micuapi.ai
@@ -32,3 +36,122 @@ DOMAIN-SUFFIX,yunwu.ai
 DOMAIN-SUFFIX,undyingapi.com
 DOMAIN-SUFFIX,duckcoding.ai
 DOMAIN-SUFFIX,88code.org
+
+# 截图补充：独立 API 中转与多模型聚合平台。
+# 88API；与已收录的 88code.org 是不同域名。
+DOMAIN-SUFFIX,88api.ai
+# 9527CODE：服务入口。
+DOMAIN-SUFFIX,9527.codes
+# A6API：服务入口。
+DOMAIN-SUFFIX,a6api.com
+# AiHubMix；官网连接受限时由公开预设核对 API 地址。
+DOMAIN-SUFFIX,aihubmix.com
+# Amux：服务入口。
+DOMAIN-SUFFIX,amux.ai
+# APIKEY；截图品牌与域名拼写不同，只登记实际的 .fan。
+DOMAIN-SUFFIX,apikey.fan
+# BotCF：服务入口。
+DOMAIN-SUFFIX,botcf.com
+# ClaudeAPI：服务入口。
+DOMAIN-SUFFIX,apito.ai
+# ClaudeCN：服务入口。
+DOMAIN-SUFFIX,claudecn.top
+DOMAIN-SUFFIX,claudecn.ai
+# Code0：服务入口。
+DOMAIN-SUFFIX,code0.ai
+# CrazyRouter：服务入口。
+DOMAIN-SUFFIX,crazyrouter.com
+# DMXAPI：服务入口。
+DOMAIN-SUFFIX,dmxapi.cn
+# JieKou AI：模型网关入口。
+DOMAIN-SUFFIX,jiekou.ai
+# OpenModel：服务入口。
+DOMAIN-SUFFIX,openmodel.ai
+# OpenRouter：从 ai_us 迁入；业务和 DNS 不再匹配美国专项。
+DOMAIN-SUFFIX,openrouter.ai
+# PatewayAI：服务入口。
+DOMAIN-SUFFIX,pateway.ai
+# RunAPI：服务入口。
+DOMAIN-SUFFIX,runapi.host
+# RunToken：服务入口。
+DOMAIN-SUFFIX,runtoken.ai
+# 胜算云；包含 router.shengsuanyun.com。
+DOMAIN-SUFFIX,shengsuanyun.com
+# SoleAPI：服务入口。
+DOMAIN-SUFFIX,soleapi.com
+# SubRouter：服务入口。
+DOMAIN-SUFFIX,subrouter.ai
+# TeamoRouter：服务入口。
+DOMAIN-SUFFIX,teamorouter.cn
+# TheRouter：服务入口。
+DOMAIN-SUFFIX,therouter.ai
+# TokenFlux：服务入口。
+DOMAIN-SUFFIX,tokenflux.dev
+# XycAi：服务入口。
+DOMAIN-SUFFIX,xycai.us
+DOMAIN-SUFFIX,xyc.ai
+# 鱼鱼连线。
+DOMAIN-SUFFIX,yylx.io
+# ZetaAPI：服务入口。
+DOMAIN-SUFFIX,zetaapi.ai
+
+# 截图补充：面向 AI 编程工具的第三方中转。
+# AICodeMirror：服务入口。
+DOMAIN-SUFFIX,aicodemirror.ai
+# AICodeWith：服务入口。
+DOMAIN-SUFFIX,aicodewith.ai
+# AICoding：服务入口。
+DOMAIN-SUFFIX,aicoding.inc
+# AIGoCode：服务入口。
+DOMAIN-SUFFIX,aigocode.app
+DOMAIN-SUFFIX,aigocode.net
+DOMAIN,api.aigocode.dev
+# CCSub：服务入口。
+DOMAIN-SUFFIX,ccsub.net
+# E-FlowCode：服务入口。
+DOMAIN-SUFFIX,e-flowcode.cc
+# IKunCode；保留原有 ikuncode.cc，补充截图里的 .ai。
+DOMAIN-SUFFIX,ikuncode.ai
+# RelaxyCode；官网核验受证书/HTTP 错误限制，公开预设登记第三方 Anthropic 接口。
+DOMAIN-SUFFIX,relaxycode.com
+# SSSAiCode；补充官网/API 新域名及公开预设中的精确备用主机。
+DOMAIN-SUFFIX,sssaicodeapi.com
+DOMAIN,node-hk.sssaiapi.com
+
+# 截图补充：服务与其他产品共用母域，精确登记官网/API 主机。
+# AtlasCloud：聚合 API 与官网入口，不扩至云资源子域。
+DOMAIN,atlascloud.ai
+DOMAIN,www.atlascloud.ai
+DOMAIN,api.atlascloud.ai
+# CherryIN：主入口和预设列出的备用 API，不覆盖母域其他服务。
+DOMAIN,open.cherryin.ai
+DOMAIN,open.cherryin.net
+# FennoAI：服务入口。
+DOMAIN,api.fenno.ai
+# FluxA 模型市场；不覆盖支付母域或千帆官方 API。
+DOMAIN,agentmarket.fluxapay.xyz
+# PIPELLM：官网和实际 Claude API 地址分开登记。
+DOMAIN,code.pipellm.ai
+DOMAIN,cc-api.pipellm.ai
+# SoruxGPT：服务入口。
+DOMAIN,ai.soruxgpt.com
+# Soshow：模型市场和实际模型 API。
+DOMAIN,aimarket.so-show.com
+DOMAIN,maas.so-show.com
+# 兔子 API。
+DOMAIN,api.tu-zi.com
+# OpenCode Go/Zen：官网公开提供第三方模型网关，共用主机无法按 URL 路径分流。
+DOMAIN,opencode.ai
+
+# CC Switch 赞助页补充：按服务核实官网、实际 API 与公开备用入口（2026-10-21）。
+# GrooRoute Pro：官网/API 与预设登记的备用入口。
+DOMAIN-SUFFIX,grooroute.pro
+DOMAIN-SUFFIX,grooroute.xyz
+# SudoCode.us：与既有 sudocode.chat 分开登记，保留公开备用入口。
+DOMAIN-SUFFIX,sudocode.us
+DOMAIN-SUFFIX,sudocode.run
+# EveryAPI：覆盖官网、控制台及 api/api-cn 接入主机。
+DOMAIN-SUFFIX,everyapi.ai
+# AllTokens：个人与企业服务入口。
+DOMAIN-SUFFIX,alltokens.cc
+DOMAIN-SUFFIX,alltokens.si

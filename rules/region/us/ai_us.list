@@ -86,10 +86,9 @@ DOMAIN-SUFFIX,arc.net
 DOMAIN-SUFFIX,perplexity.ai
 DOMAIN-SUFFIX,pplx.ai
 
-# Poe 与 OpenRouter：产品和专用资源入口。
+# Poe：产品和专用资源入口；OpenRouter 聚合网关归入 multi/ai_relay 自动选择。
 DOMAIN-SUFFIX,poe.com
 DOMAIN-SUFFIX,poecdn.net
-DOMAIN-SUFFIX,openrouter.ai
 
 # Hugging Face、Meta AI 与 Character.AI：官方产品入口。
 DOMAIN-SUFFIX,huggingface.co

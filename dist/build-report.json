@@ -560,8 +560,8 @@
       "category": "region",
       "classification": "domain-only",
       "counts": {
-        "surge_rules": 26,
-        "mihomo_classical": 26
+        "surge_rules": 90,
+        "mihomo_classical": 90
       },
       "dist": {
         "surge_rules": "dist/surge/rules/region/multi/ai_relay.list",
@@ -651,8 +651,8 @@
       "category": "region",
       "classification": "domain-only",
       "counts": {
-        "surge_rules": 85,
-        "mihomo_classical": 85
+        "surge_rules": 84,
+        "mihomo_classical": 84
       },
       "dist": {
         "surge_rules": "dist/surge/rules/region/us/ai_us.list",

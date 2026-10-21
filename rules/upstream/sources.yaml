@@ -162,9 +162,15 @@ sources:
     multi/ai_relay.list:
       preferred:
         - repo: self
-          note: 用户指定的 AI 中转站域名与 Help AIO 公开评测页站点主域，统一绑定全地区自动选择；不使用关键词或共享云根域
+          note: 用户指定、公开评测及截图核实的第三方中转/聚合网关，统一绑定全地区自动选择；共享母域使用精确主机，不使用关键词或共享云根域
         - repo: Help AIO AI 中转站评测
           note: 2026-10-10 公开排行榜列出的 22 个站点，仅提取官网主域并去除注册链接参数
+        - repo: farion1231/cc-switch
+          note: 2026-10-12 公开 claudeProviderPresets.ts 作为截图服务的官网/API 候选，与官网交叉分类；不整包导入 aggregator 类别，纯推理及官方平台排除
+        - repo: https://ccswitch.io/zh/sponsors
+          note: 2026-10-21 赞助说明与 Claude/Codex/Gemini 公开预设交叉核对官网、API 和备用域名；已覆盖项不重复，原生平台与开源项目不因类别标签纳入
+        - repo: 服务官网及公开文档
+          note: 分类、证据和访问限制记录在 docs/ai-relay-classification.md；OpenRouter 从 ai_us 迁入并退出美国专项 DNS
     multi/payment_crypto.list:
       preferred:
         - repo: self
@@ -248,7 +254,7 @@ sources:
     us/ai_us.list:
       preferred:
         - repo: self
-          note: 审核后的海外 AI 服务域名边界，禁止关键词、通配符、共享云根域与 IP/ASN 扩围；美国出口及专用 DNS 共用
+          note: 审核后的海外 AI 服务域名边界，禁止关键词、通配符、共享云根域与 IP/ASN 扩围；美国出口及专用 DNS 共用，OpenRouter 聚合网关交给 multi/ai_relay
         - repo: blackmatrix7/ios_rule_script
           note: OpenAI / Claude / Gemini / Copilot 候选来源，保留快照供审核，不再整包 INCLUDE
         - repo: SkywalkerJi/Clash-Rules

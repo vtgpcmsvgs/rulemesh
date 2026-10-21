@@ -18,12 +18,15 @@ defaults:
 merge_plan:
   - id: multi-ai-relay
     target: rules/region/multi/ai_relay.list
-    purpose: AI 中转站与 OpenAI 兼容接口入口走全地区自动选择
+    purpose: AI 中转站与第三方模型聚合网关走全地区自动选择
     strategy:
       - reviewed_explicit_service_domains_only
       - public_directory_candidates_plus_user_requested_domains
     notes:
-      - 只保留公开评测页列出的站点主域和用户明确指定域名，不使用关键词、共享 CDN 根域或 IP/ASN
+      - 只保留用户指定及公开评测、官网和公开供应商预设交叉核实的中转/聚合服务，不整包导入供应商类别
+      - 不使用关键词、共享 CDN 根域或 IP/ASN；共享母域只登记服务主机，模型厂商原生 API 和纯推理/算力平台不并入
+      - OpenRouter 从 ai_us 迁入，流量使用全地区自动选择，DNS 回到默认国内解析；分类证据见 docs/ai-relay-classification.md
+      - CC Switch 赞助页按具体服务核实官网、API 与备用地址，保留旧兼容入口，不整包导入原生平台或开源基础设施项目
 
   - id: multi-payment-crypto
     target: rules/region/multi/payment_crypto.list
@@ -465,6 +468,7 @@ merge_plan:
       - retain_upstream_snapshots_as_review_candidates
     notes:
       - 统一承接 OpenAI / Claude / Gemini / Copilot / Cursor / Grok / Windsurf / Augment 等海外 AI 平台
+      - OpenRouter 等第三方模型聚合网关由 multi/ai_relay 承接，不再参与美国业务和 AI 专用 DNS
       - 客户端默认绑定美国地区策略，不再绑定台湾地区策略
       - Trae 只保留明确海外入口；DeepSeek、Trae 中国大陆入口与其他国内 AI 不并入该文件，而是优先交给 rules/direct/ai_cn_direct.list，再由直连兜底规则承接共享基础设施
       - 禁止关键词、通配符、共享云根域与 IP/ASN 兜底；避免相似名称同时被误送美国与海外 DNS
