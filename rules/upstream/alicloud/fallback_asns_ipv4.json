@@ -1,5 +1,5 @@
 {
-  "syncToken": "2026-10-21T06:24:43+00:00",
+  "syncToken": "2026-10-22T06:29:05+00:00",
   "source": {
     "api": "RIPEstat announced-prefixes",
     "docUrl": "https://stat.ripe.net/docs/data-api/api-endpoints/announced-prefixes",
@@ -13,17 +13,17 @@
   "perAsn": [
     {
       "asn": 45102,
-      "queryStartTime": "2026-10-07T00:00:00",
-      "queryEndTime": "2026-10-21T00:00:00",
-      "reportedPrefixCount": 1381,
-      "reportedIpv4PrefixCount": 1243,
-      "uniqueIpv4PrefixCount": 1243,
+      "queryStartTime": "2026-10-08T00:00:00",
+      "queryEndTime": "2026-10-22T00:00:00",
+      "reportedPrefixCount": 1380,
+      "reportedIpv4PrefixCount": 1242,
+      "uniqueIpv4PrefixCount": 1242,
       "collapsedIpv4PrefixCount": 202
     },
     {
       "asn": 134963,
-      "queryStartTime": "2026-10-07T00:00:00",
-      "queryEndTime": "2026-10-21T00:00:00",
+      "queryStartTime": "2026-10-08T00:00:00",
+      "queryEndTime": "2026-10-22T00:00:00",
       "reportedPrefixCount": 272,
       "reportedIpv4PrefixCount": 267,
       "uniqueIpv4PrefixCount": 267,
@@ -31,17 +31,17 @@
     },
     {
       "asn": 24429,
-      "queryStartTime": "2026-10-07T00:00:00",
-      "queryEndTime": "2026-10-21T00:00:00",
-      "reportedPrefixCount": 1120,
-      "reportedIpv4PrefixCount": 683,
-      "uniqueIpv4PrefixCount": 683,
-      "collapsedIpv4PrefixCount": 263
+      "queryStartTime": "2026-10-08T00:00:00",
+      "queryEndTime": "2026-10-22T00:00:00",
+      "reportedPrefixCount": 1121,
+      "reportedIpv4PrefixCount": 684,
+      "uniqueIpv4PrefixCount": 684,
+      "collapsedIpv4PrefixCount": 264
     }
   ],
-  "collapsedIpv4PrefixCount": 483,
-  "uniqueIpv4AddressCount": 5908484,
-  "syncedAt": "2026-10-21T06:24:43+00:00",
+  "collapsedIpv4PrefixCount": 484,
+  "uniqueIpv4AddressCount": 5908740,
+  "syncedAt": "2026-10-22T06:29:05+00:00",
   "ipv4Prefix": [
     "5.181.224.0/23",
     "8.25.82.0/24",
@@ -514,6 +514,7 @@
     "177.3.88.0/21",
     "177.4.80.0/20",
     "198.11.128.0/18",
+    "199.190.46.0/24",
     "202.144.199.0/24",
     "203.107.2.0/23",
     "203.107.48.0/22",
