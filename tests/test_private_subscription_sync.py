@@ -12,13 +12,13 @@ ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "tools/sync_private_subscription_direct.ps1"
 POWERSHELL = shutil.which("powershell") or shutil.which("pwsh")
 SURGE_NAMES = [
-    "surge-home.conf",
-    "surge-company.conf",
-    "surge-work.conf",
+    "rulemesh-surge-home-20261023.conf",
+    "rulemesh-surge-company-20261023.conf",
+    "rulemesh-surge-work-20261023.conf",
 ]
 MIHOMO_NAMES = [
-    "flclash-desktop.yaml",
-    "flclash-android.yaml",
+    "rulemesh-flclash-desktop-20261023.yaml",
+    "rulemesh-flclash-android-20261023.yaml",
 ]
 SOURCE = """# 官网与订阅共用域名
 DOMAIN,shared.example,SHARED

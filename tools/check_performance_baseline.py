@@ -274,7 +274,7 @@ def check(path: Path, lines: list[str]) -> list[str]:
     else:
         require(not groups[auto].filter_text, "全地区 url-test 组不得限定地区标签。")
         require("tcp-concurrent: true" in lines and "ipv6: false" in lines, "Mihomo 必须开启 TCP 并发并保留 IPv4 基线。")
-        clashmi_ios = path.name == "clashmi-ios.yaml"
+        clashmi_ios = path.name == "rulemesh-clashmi-ios-20261023.yaml"
         process_mode = "off" if clashmi_ios else "always" if android_repair and android.CHATGPT_MARKER in lines else "strict"
         require(f"find-process-mode: {process_mode}" in lines, "iOS 关闭进程匹配；安卓 ChatGPT 接管使用 always；其他 Mihomo 源文件保留 strict 按需识别进程。界面覆写需实机验证。")
         values, policies = dns._parse_mihomo_dns(lines)

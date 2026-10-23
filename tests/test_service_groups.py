@@ -313,13 +313,13 @@ class ServiceGroupTests(unittest.TestCase):
 
     def test_private_apple_update_rejection_and_work_scope_are_protected(self):
         _, text = self.fixture()
-        path = Path('flclash-desktop.yaml')
+        path = Path('rulemesh-flclash-desktop-20261023.yaml')
         self.assertTrue(any('更新拒绝必须早于' in e for e in baseline.check(path,text.splitlines())))
         apple = '  - RULE-SET,direct_apple,Apple\n'
         changed = text.replace(apple, '').replace('  - RULE-SET,reject_os_update,REJECT\n', '  - RULE-SET,reject_os_update,REJECT\n' + apple)
         self.assertFalse(any('更新拒绝必须早于' in e for e in baseline.check(path,changed.splitlines())))
         _, surge = self.fixture('surge')
-        self.assertTrue(any('Apple 全域放行' in e for e in baseline.check(Path('surge-work.conf'),surge.splitlines())))
+        self.assertTrue(any('Apple 全域放行' in e for e in baseline.check(Path('rulemesh-surge-work-20261023.conf'),surge.splitlines())))
 
     def test_selector_does_not_add_periodic_probe_and_ai_leaf_keeps_tolerance(self):
         path, text = self.fixture()

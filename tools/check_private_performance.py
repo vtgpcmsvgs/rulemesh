@@ -10,21 +10,21 @@ from check_dns_safety import default_paths
 
 ROOT = Path(__file__).resolve().parents[1]
 PRIVATE_PROFILE_NAMES = {
-    "clashmi-ios.yaml",
-    "surge-home.conf",
-    "surge-company.conf",
-    "surge-work.conf",
-    "flclash-desktop.yaml",
-    "flclash-android.yaml",
+    "rulemesh-clashmi-ios-20261023.yaml",
+    "rulemesh-surge-home-20261023.conf",
+    "rulemesh-surge-company-20261023.conf",
+    "rulemesh-surge-work-20261023.conf",
+    "rulemesh-flclash-desktop-20261023.yaml",
+    "rulemesh-flclash-android-20261023.yaml",
 }
 SURGE_PERSONAL_NAMES = {
-    "surge-home.conf",
-    "surge-company.conf",
+    "rulemesh-surge-home-20261023.conf",
+    "rulemesh-surge-company-20261023.conf",
 }
 MIHOMO_PROFILE_NAMES = {
-    "clashmi-ios.yaml",
-    "flclash-desktop.yaml",
-    "flclash-android.yaml",
+    "rulemesh-clashmi-ios-20261023.yaml",
+    "rulemesh-flclash-desktop-20261023.yaml",
+    "rulemesh-flclash-android-20261023.yaml",
 }
 HK_SECURITIES_RULE_PROVIDER = "hk_securities_aggressive"
 HK_SECURITIES_RULE_URL = (
@@ -663,7 +663,7 @@ def validate_profile(path: Path) -> list[PerformanceFinding]:
         return [PerformanceFinding(path, 1, message, "按 docs/performance-baseline.md 修复。") for message in check(path, lines)]
     if path.name in SURGE_PERSONAL_NAMES:
         return validate_surge_personal(path, lines)
-    if path.name == "surge-work.conf":
+    if path.name == "rulemesh-surge-work-20261023.conf":
         return validate_surge_work(path, lines)
     if path.name in MIHOMO_PROFILE_NAMES:
         return validate_mihomo(path, lines)

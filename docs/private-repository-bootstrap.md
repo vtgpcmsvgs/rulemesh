@@ -51,7 +51,7 @@
 
    PowerShell 会把未加引号的 `@{...}` 当作哈希表语法，因此包含 `@{upstream}` 的 revision 必须整体使用单引号。只应把实际登记的私人仓库路径传给 `safe.directory`，不得用 `*` 或写入全局配置。
 
-5. 解析当前配置目录时以实际布局为准：优先使用 `rulemesh-local/current`；若没有 `current`，但主配置与同步脚本直接位于仓库根目录，则使用根目录。不得为适配旧说明凭空创建 `current`。当前根目录包含家庭与公司两份 Surge Personal：`surge-home.conf` 和 `surge-company.conf`；两者除用途标识与 MITM 外应保持同构。
+5. 解析当前配置目录时以实际布局为准：优先使用 `rulemesh-local/current`；若没有 `current`，但主配置与同步脚本直接位于仓库根目录，则使用根目录。不得为适配旧说明凭空创建 `current`。当前根目录包含家庭与公司两份 Surge Personal：`rulemesh-surge-home-20261023.conf` 和 `rulemesh-surge-company-20261023.conf`；两者除用途标识与 MITM 外应保持同构。
 
 ## GitHub 认证与 HTTPS 传输恢复
 
@@ -76,7 +76,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Git upstream comparison failed; stop sync' }
 
 ## Codex 行为边界
 
-- 六份主配置使用 `surge-home.conf`、`surge-company.conf`、`surge-work.conf`、`flclash-desktop.yaml`、`flclash-android.yaml`、`clashmi-ios.yaml`；按短名恢复与检查，重命名后还须更新客户端原有文件路径或订阅链接。
+- 六份主配置使用 `rulemesh-surge-home-20261023.conf`、`rulemesh-surge-company-20261023.conf`、`rulemesh-surge-work-20261023.conf`、`rulemesh-flclash-desktop-20261023.yaml`、`rulemesh-flclash-android-20261023.yaml`、`rulemesh-clashmi-ios-20261023.yaml`；名称包含 RuleMesh 标识及本次命名版本日期，恢复与检查须使用完整文件名，重命名后还须更新客户端原有文件路径或订阅链接。
 - GitHub 登录状态只能证明账号身份，不能替代仓库发现、克隆与本地路径登记。
 - 在声明“私人配置不存在”之前，必须先读取 `private-repository.json`，并通过 GitHub 检查登记的私人仓库是否可访问。
 - 不要把私人仓库克隆到公开 `rulemesh` 仓库内部，也不要把两者合并为同一个 Git 工作区。

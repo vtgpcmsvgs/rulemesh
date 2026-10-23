@@ -24,20 +24,20 @@ ALLOWED_DOMESTIC_NAMESERVER_POLICY_KEYS = {
 
 SURGE_CONFIG_NAMES = (
     "surge-public.conf",
-    "surge-home.conf",
-    "surge-company.conf",
-    "surge-work.conf",
+    "rulemesh-surge-home-20261023.conf",
+    "rulemesh-surge-company-20261023.conf",
+    "rulemesh-surge-work-20261023.conf",
 )
 MIHOMO_CONFIG_NAMES = (
     "mihomo-public.yaml",
-    "clashmi-ios.yaml",
-    "flclash-desktop.yaml",
-    "flclash-android.yaml",
+    "rulemesh-clashmi-ios-20261023.yaml",
+    "rulemesh-flclash-desktop-20261023.yaml",
+    "rulemesh-flclash-android-20261023.yaml",
 )
 MIHOMO_SINGLE_DNS_TRUTH_CONFIG_NAMES = (
-    "clashmi-ios.yaml",
-    "flclash-desktop.yaml",
-    "flclash-android.yaml",
+    "rulemesh-clashmi-ios-20261023.yaml",
+    "rulemesh-flclash-desktop-20261023.yaml",
+    "rulemesh-flclash-android-20261023.yaml",
 )
 MIHOMO_SINGLE_DNS_TRUTH_FORBIDDEN_KEYS = {
     "proxy-server-nameserver",
@@ -523,13 +523,13 @@ def default_paths(repo_root: Path) -> list[Path]:
         private_config_root = current if current.exists() else private_repo
         paths.extend(
             [
-                private_config_root / "surge-home.conf",
+                private_config_root / "rulemesh-surge-home-20261023.conf",
                 private_config_root
-                / "surge-company.conf",
-                private_config_root / "surge-work.conf",
-                private_config_root / "flclash-desktop.yaml",
-                private_config_root / "flclash-android.yaml",
-                private_config_root / "clashmi-ios.yaml",
+                / "rulemesh-surge-company-20261023.conf",
+                private_config_root / "rulemesh-surge-work-20261023.conf",
+                private_config_root / "rulemesh-flclash-desktop-20261023.yaml",
+                private_config_root / "rulemesh-flclash-android-20261023.yaml",
+                private_config_root / "rulemesh-clashmi-ios-20261023.yaml",
             ]
         )
 
