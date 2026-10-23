@@ -12,6 +12,8 @@
 
 安卓开关修改或备份恢复后，还须完整停止并启动 VPN，用 `tools/check_android_vpn_runtime.py --adb <实际路径>` 核对系统层不再发布旧 HTTP 代理。大智慧补充复测曾出现界面已经关闭、运行态仍保留代理的情况，导致多个行情组件空白；保存的 `vpnProps` 不能代替这一步。
 
+2026-10-23 ChatGPT 冷启动对照：完整启动 FlClash 后立即打开 3/3 出现 SSL 错误，等待唯一 VPN 和连续三次主接口受信 TLS 成功后 3/3 页面及连接恢复；固定 5 秒仍有失败。自动运行、电池优化豁免只用于保活，未根治竞态；用户要求关闭 FlClash 后可正常联网，不启用 VPN 断网保护。只读工具新增 `--chatgpt-tls`，HTTP 403 仅作为受信 TLS 证据，消息须另验。完整记录与恢复流程见 [安卓网络修复](android-network-repair.md)。
+
 2026-09-16 用户进一步选择国内日常业务直连，两份 FlClash 停用阿里系代理调用和 provider；早先三个支付宝条件规则已撤下。安卓系统下载管理器不再整体走 Google 组，改按目的地规则判断；Google 三个专属进程、稳定组、DNS 与 QUIC 保持。详见 [常用业务连通性](common-network-reliability.md)。桌面仅同步源文件，本次仍不操作本机 FlClash；Surge 保持独立配置。
 
 - 桌面：`flclash-desktop.yaml`。

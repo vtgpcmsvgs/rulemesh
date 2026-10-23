@@ -4,7 +4,7 @@ import sys
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
-from check_android_vpn_runtime import audit_connectivity, package_uid
+from check_android_vpn_runtime import audit_chatgpt_tls, audit_connectivity, package_uid
 
 
 class AndroidVpnRuntimeTests(unittest.TestCase):
@@ -49,6 +49,30 @@ class AndroidVpnRuntimeTests(unittest.TestCase):
                     "package:com.follow.clash uid:10001\npackage:com.follow.clash uid:10002\n"):
             with self.assertRaises(ValueError):
                 package_uid(raw)
+
+    def test_trusted_tls_with_forbidden_http_is_transport_evidence_only(self):
+        result = audit_chatgpt_tls("RM_CHATGPT_TLS 403 0 0.633475\n")
+        self.assertTrue(result["passed"])
+        self.assertEqual(result["http_status"], 403)
+
+    def test_zero_verify_result_without_a_handshake_cannot_pass(self):
+        for raw in ("RM_CHATGPT_TLS 000 0 0.000000\n",
+                    "curl: (28) timeout\nRM_CHATGPT_TLS 000 0 0.000000\n",
+                    "curl: (35) TLS connect error\nRM_CHATGPT_TLS 000 1 0.000000\n",
+                    "RM_CHATGPT_TLS 403 20 0.600000\n",
+                    "curl: (28) timeout\nRM_CHATGPT_TLS 200 0 0.600000\n"):
+            with self.subTest(raw=raw):
+                self.assertFalse(audit_chatgpt_tls(raw)["passed"])
+
+    def test_missing_malformed_or_duplicate_tls_evidence_fails(self):
+        for raw in ("", "curl: not found", "RM_CHATGPT_TLS bad\n",
+                    "RM_CHATGPT_TLS 200 0 0.5\n" * 2):
+            self.assertFalse(audit_chatgpt_tls(raw)["passed"])
+
+    def test_failed_command_cannot_be_hidden_by_a_valid_http_marker(self):
+        result = audit_chatgpt_tls("RM_CHATGPT_TLS 200 0 0.5\n", command_exit_code=28)
+        self.assertFalse(result["passed"])
+        self.assertEqual(result["command_exit_code"], 28)
 
 
 if __name__ == "__main__":

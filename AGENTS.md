@@ -230,6 +230,7 @@
 - 2026-09-14 安卓 Google 下载使用独立 fallback 稳定组，同组海外 DoH 在 AI policy 后；按 2026-09-16 修订，仅三个 Google 专属进程保留兜底，共享下载管理器按目的地分流，QUIC 与 AI 第一条保持。实机 Cronet 在 UDP/443 被拒绝时发生协议错误、1404 网络错误和重试，禁止恢复 Google/Play 定向拒绝或用 disable-udp 强制回退。默认国内 DNS、节点 bootstrap、其他地区例外不变；不得机械扩散到桌面或 Surge。配置及验收边界见 docs/android-network-repair.md，必须通过 check_android_stability.py。
 - ADB 读取、模拟点击、应用私有数据访问是三个独立能力；设备拒绝时按系统授权边界处理。UI/API 输出必须在输出前白名单脱敏。诊断复用解析器前检查字段定义，构建器传绝对源路径；第三方文件路径先枚举，任何错误立即中止依赖步骤。
 - 安卓 VPN 开关的保存值不等于生效值。修改或恢复后必须完整停止/启动 FlClash VPN，并用 tools/check_android_vpn_runtime.py 检查 Android 活动 VPN 不再携带旧 HTTP 代理；系统传输可能是 CELLULAR|VPN 或 WIFI|VPN，不能只匹配 Transports: VPN。业务验收覆盖用户实际失败的多个组件及应用重开，不能凭单页短暂成功宣称整个应用恢复。
+- ChatGPT 冷启动验收须区分 VPN 建立、受信 TLS、DNS 出口、应用页面和消息业务；可用 tools/check_android_vpn_runtime.py --chatgpt-tls 核对传输。超时也可能给出 ssl_verify_result=0，必须同时有握手、HTTP 响应与命令成功；403 只算传输证据。固定等待、自动运行、电池豁免和缓存输入框不能替代验收，旧 SSL 错误页需在连接就绪后结束进程再重开。用户拒绝 VPN 断网保护，不得擅自开启。UI 自动化必须确认启动已到目标包、前置选择器已退出，并在目标唯一且完全可见时操作；UI 超时或 VPN 未启动的轮次不得计入网络结果。
 
 - 桌面、安卓唯一现用客户端均为 FlClash，对应私人文件为 flclash-desktop.yaml / flclash-android.yaml。以 docs/flclash-performance.md 为当前接入、测速、覆写与复测依据；旧客户端缓存和命名管道不能代表 FlClash 运行态。
 - 标准模式导入规则，DNS 覆写关闭；必须检查 preferences 中的 patchClashConfig 和生成 config.yaml。源文件进程匹配 strict；FlClash 0.8.97 界面只接受 always/off，实际保留 always 以支持进程规则，不能写入无效 strict 或直接 off。先检查客户端枚举再改字段，不能将内核支持等同于界面支持。
