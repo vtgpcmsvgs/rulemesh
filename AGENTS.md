@@ -55,6 +55,7 @@
   - 结论必须拆成端点 / 内容、配额、日历有效期与运行态四项：明确 `0 < expire <= now` 或在有效正数 `total` 下 `upload + download >= total` 时总体无效；`Expire = 0`、缺失配额或缺失到期时间只能报告“服务端未提供”，不能擅自解释为永久有效；其余项通过且至少一个节点有近期成功健康历史时才可报告当前可用，个别节点失败不影响结论
   - 默认不得调用可能长时间阻塞的强制 `/healthcheck`、启动隔离 Mihomo、重载客户端或反复试错；运行态不可读时，立即把订阅有效与节点存活拆开报告证据缺口，只有用户明确要求深挖时才升级验证
   - 常规检查由主流程一次完成，不先分派多个重复审计；子审计结果必须由主流程复核后才能使用。输出只保留 provider 名、HTTP 状态、节点计数、存活计数、剩余比例与到期时间，不得输出 URL、token、节点名、server、控制器密钥、header 或响应正文
+- `tools/check.ps1` 每次必须执行 `check_private_subscriptions.py` 在线订阅闸门；两份 Mihomo 清单先一致，再以 DIRECT 和原 User-Agent 并发验证。HTTP/解析失败、空 proxies、明确过期或流量耗尽均失败；私人配置、PowerShell 7 或已登记的 `requirements-check.txt` 依赖缺失不能跳过。YAML 必须使用正式解析器，不能用临时子集解析器或全文 name 计数替代；依赖在长期 `.venv` 中预先安装，检查过程中不自动安装。配额/到期缺失或零值只标记未提供；订阅下载与节点存活、设备 DNS 验收分别报告。公网 CI 只运行脱敏离线回归，不传私人订阅。
 - 用 Mihomo 原生 `-t -d` 做临时语法检查时，`-d` 必须指向已确认位于任务临时目录下的专用目录；PowerShell 变量不得使用大小写不敏感的 `$home` / `$HOME`，避免把缓存或数据库误写到用户主目录
 - 私有机场 provider 若发生重命名（例如机场别名变更），除同步更新 `current` 下的 Mihomo / Surge 配置外，还要检查 FlClash 桌面端 运行目录中的旧 provider 缓存、辅助 profile、remote profile 注册项与历史当前项；避免新旧 provider id 并存，导致 UI 继续读取旧缓存或把问题误判成“节点被过滤”
 - 2026-09-09 用户已批准性能基线：普通业务默认国内双 DoH，海外 AI（含 Google AI）美国出口与独立海外解析；Crypto 台湾、明确日本入口与香港券商保留地区，其余海外代理自动择优。完整约束见 docs/performance-baseline.md；不得恢复旧版默认海外 DNS 和大量镜像 policy。

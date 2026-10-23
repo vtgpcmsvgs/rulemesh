@@ -63,13 +63,20 @@ Windows 本地与 Codex 会话统一优先使用包装脚本：
 powershell -ExecutionPolicy Bypass -File tools/build_rules.ps1
 ```
 
+首次运行完整检查时，先建立长期使用的检查环境（需要 Python 与 PowerShell 7）：
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-check.txt
+```
+
 日常开发自检可直接运行：
 
 ```bash
 powershell -ExecutionPolicy Bypass -File tools/check.ps1
 ```
 
-这个脚本会串行执行构建、变更联动闸门、单元测试、`dist/` 目录结构校验、`dist/build-report.json` warning 校验，并在最后输出 `git status --short`。
+这个脚本会串行执行构建、变更联动闸门、单元测试、私人机场订阅在线必检、`dist/` 目录结构校验、`dist/build-report.json` warning 校验，并在最后输出 `git status --short`。订阅检查先核对两份 Mihomo 的当前清单，再按相同 User-Agent 直连下载；HTTP 失败、解析失败、空节点列表、已过期或流量耗尽都会阻断完整检查。缺少私人配置、正式 YAML 依赖或 PowerShell 7 也会失败，不将未检查视为通过。到期或配额未提供会明确标记，下载通过不代表节点存活或设备 DNS 出口已验收。详见[订阅检查约定](docs/private-subscription-direct-sync.md)。
 其中 `tools/check_change_guardrails.py` 会先按“源规则 / 上游登记 / 公开说明模板 / 构建与检查脚本”等类别总结当前工作区变更；对于当前已明确的强关联项，会直接失败，例如：
 
 - `rules/{reject,direct,proxy,region}/` 下 `.list` 源规则文件新增、删除或重命名，但没有同步修改 `rules/upstream/sources.yaml` 与 `rules/upstream/merge.yaml`

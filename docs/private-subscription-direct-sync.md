@@ -66,6 +66,22 @@ powershell -ExecutionPolicy Bypass -File (Join-Path $privateCurrent "sync_privat
 - 两份 Mihomo 的 provider 名称、URL、缓存路径、出站和请求头保持一致；健康检查分别使用桌面 300 秒、安卓 600 秒。
 - 本次修复保持国内默认 DNS、AI 专用解析和国内节点 bootstrap；订阅用途与 DNS 出口要分别验证，静态通过不能当作设备已经加载。
 
+## 每次完整检查的订阅必检
+
+`tools/check.ps1` 在单元测试后固定调用 `tools/check_private_subscriptions.py`，不能只凭测试数量、构建成功或缓存存在宣称完整检查通过。检查器只读取登记私人目录的桌面/安卓两份 Mihomo 清单；先核对 provider 名、直属 URL、`proxy: DIRECT` 与 User-Agent，再进行网络请求。iOS 从桌面派生，不重复请求相同订阅。
+
+首次建立长期 `.venv`，安装 `requirements-check.txt` 锁定的 PyYAML，并准备 PowerShell 7；后续检查不自动安装依赖。所有订阅响应由正式 YAML 解析器读取完整文档，统计顶层 `proxies`，支持流式/块式、跨行、引号、JSON 兼容写法，拒绝重复键和危险标签。解析器缺陷不能被解释成机场失效；先用脱敏回归覆盖实际格式。
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-check.txt
+powershell -ExecutionPolicy Bypass -File tools/check.ps1
+```
+
+必检使用 `HttpClient + SocketsHttpHandler.UseProxy = false`、禁止自动跳转、每项 10 秒与全程 60 秒 deadline；URL 和响应只经内存传递，不保存订阅正文。HTTP 非 200、传输失败、非 Clash YAML、缺少/为空的顶层节点列表、明确到期或配额耗尽都会返回非零。缺少私人仓库、依赖或运行时同样失败。未提供的到期/配额不擅自判定为永久有效；输出仅包含 provider 名、状态、节点数、剩余比例、到期与固定诊断，异常不回显源行或私人值。
+
+这项闸门验证订阅下载与已提供的元数据，不触发强制 healthcheck、不重载客户端，不将下载成功当作节点存活或实际 DNS 出口已验收。公共 GitHub CI 安装相同依赖后只运行脱敏单元测试；没有私人仓库的公共 CI 结果不能替代本地完整检查。
+
 ## Mihomo provider 有效性极速审计
 
 这项审计只回答两个问题：订阅当前是否仍在有效期内，以及每个 provider 是否至少有一个经健康历史确认的存活节点。正常情况下以 30 秒完成为目标；从任务开始即设置 60 秒全局 deadline，到点必须取消未完成的网络或命名管道操作，停止扩展试验并准确报告证据缺口。

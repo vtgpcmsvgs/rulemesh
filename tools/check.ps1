@@ -81,6 +81,23 @@ You can fix this by:
 "@
 }
 
+function Invoke-PrivateSubscriptionValidation {
+    $python = Resolve-PythonCommand
+    $validatorScript = Join-Path $PSScriptRoot "check_private_subscriptions.py"
+    $env:PYTHONUTF8 = "1"
+    $env:PYTHONDONTWRITEBYTECODE = "1"
+    Write-Host "[check] validate private subscription downloads, quota and expiration"
+    if ($python.Kind -eq "Launcher") {
+        & $python.Value -3 -B -X utf8 $validatorScript
+    }
+    else {
+        & $python.Value -B -X utf8 $validatorScript
+    }
+    if ($LASTEXITCODE -ne 0) {
+        throw "Private subscription validation failed."
+    }
+}
+
 function Invoke-UnitTests {
     $python = Resolve-PythonCommand
     $env:PYTHONUTF8 = "1"
@@ -338,6 +355,8 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Invoke-UnitTests
+
+Invoke-PrivateSubscriptionValidation
 
 Write-Host "[check] validate Surge test URLs"
 Invoke-SurgeTestUrlValidation
