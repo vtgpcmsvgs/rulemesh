@@ -24,10 +24,6 @@ sources:
       preferred:
         - repo: self
           note: 从 cn_direct 与 gfw_precise 自动生成冲突保护表，保留全部中国 IP 规则，最终必须 DIRECT
-    ips5_direct.list:
-      preferred:
-        - repo: self
-          note: ips5.vip 主域及全部子域直连，独立服务入口，不扩展到其他服务商或节点 IP
     aisi_direct.list:
       preferred:
         - repo: self
@@ -101,6 +97,12 @@ sources:
         - repo: GitHub Docs
           note: 参考 github.com:22 与 ssh.github.com:443 的 SSH 接入说明，避免把网页流量误放直连
   proxy:
+    general_proxy.list:
+      preferred:
+        - repo: self
+          note: 合并 GitHub 核心 HTTPS 与 1Password 官方核心域名，客户端复用通用自动选择组
+        - repo: 1Password Support
+          note: 官方域名快照继续每日更新，不再注册 1Password 专用 provider
     youtube.list:
       preferred:
         - repo: blackmatrix7/ios_rule_script
@@ -108,13 +110,7 @@ sources:
     gfw_precise.list:
       preferred:
         - repo: Loyalsoldier/surge-rules
-          note: 只引用 gfw.txt 的具体域名，不引入顶级域泛匹配；同步时排除已撤销的 Webshare，保留 Decodo 官方主域
-    onepassword_proxy.list:
-      preferred:
-        - repo: self
-          note: 1Password 重度用户专项节点选择入口，源文件只保留单一 INCLUDE
-        - repo: 1Password Support
-          note: 通过官方《1Password ports and domains》每日抓取核心一方域名与更新/基础设施端点，保守排除第三方集成域名
+          note: 只引用 gfw.txt 的具体域名，不引入顶级域泛匹配；保留 Webshare 网站与 Decodo 官方主域
     github_core_proxy.list:
       preferred:
         - repo: self
@@ -123,18 +119,6 @@ sources:
           note: 参考 GitHub 受限网络放行文档与 SSH over 443 文档，维持“Git 传输直连、核心 HTTPS 代理”的拆分
         - repo: GitHub Meta API
           note: 参考 GitHub 当前公开域名族群，显式覆盖 github.com、githubassets.com 与 githubusercontent.com 核心入口
-    polygon_rpc_proxy.list:
-      preferred:
-        - repo: self
-          note: Polygon 主网 RPC 域名专项节点选择入口，源文件只保留单一 INCLUDE，由 Chainlist 每日自动累计更新 host 集合
-        - repo: DefiLlama/chainlist
-          note: 每日抓取 chainlist.org/rpcs.json 中 chainId=137 的最终 RPC 列表，按 host 规范化后生成 DOMAIN 与 DOMAIN-WILDCARD，并采用只增不减策略
-    bsc_rpc_proxy.list:
-      preferred:
-        - repo: self
-          note: BSC 主网 RPC 域名专项节点选择入口，源文件只保留单一 INCLUDE，由 Chainlist 每日自动累计更新 host 集合
-        - repo: DefiLlama/chainlist
-          note: 每日抓取 chainlist.org/rpcs.json 中 chainId=56 的最终 RPC 列表，按 host 规范化后生成 DOMAIN 与 DOMAIN-WILDCARD，不包含 opBNB
     overseas_dns_ipv4_proxy.list:
       preferred:
         - repo: self
@@ -170,15 +154,9 @@ sources:
         - repo: self
           note: 用户指定的住宅代理服务与公开基准中的住宅/ISP 代理主域，统一绑定全地区自动选择；不使用关键词泛匹配
         - repo: AIMultiple residential proxy benchmark
-          note: 交叉核对公开住宅代理基准中的 Bright Data、Decodo、Oxylabs、DataImpulse、NodeMaven、Byteful、SOAX 与 Infatica；已撤销的 Webshare 不再收录
+          note: 交叉核对公开住宅代理基准中的 Bright Data、Decodo、Oxylabs、DataImpulse、NodeMaven、Byteful、SOAX 与 Infatica；Webshare 网站保留
         - repo: official residential proxy provider websites
           note: 补充公开提供住宅或住宅代理 API 的服务主域，更新前先核对产品归属
-    hk/alibaba_hk.list:
-      preferred:
-        - repo: self
-          note: 阿里系按设备选择代理的兼容入口，默认自动择优，默认公开模板不启用；通过 Alibaba 主体、XianYu 专项清单与品牌关键词兜底优先保证闲鱼等业务完整命中
-        - repo: blackmatrix7/ios_rule_script
-          note: Alibaba.list 负责阿里巴巴域名族、共享基础设施、应用进程与网络 IP 段，XianYu.list 补充闲鱼非品牌域名
     hk/wps_kdocs.list:
       preferred:
         - repo: self
@@ -255,6 +233,8 @@ sources:
           note: 保持单文件入口稳定，承接本地补充，如 g42.ai、预测市场与新增 DeFi/分析站点
         - repo: blackmatrix7/ios_rule_script
           note: 负责 Cryptocurrency.list 主体，通过 INCLUDE 并入该文件
+        - repo: DefiLlama/chainlist
+          note: Polygon 与 BSC 主网 RPC 快照通过 INCLUDE 合并到统一 Crypto 入口，继续每日累计更新
     hk/google_hk.list:
       preferred:
         - repo: self
@@ -285,42 +265,6 @@ sources:
       preferred:
         - repo: self
           note: Polymarket 的显式后缀与关键词统一在 crypto_tw 维护，台湾出口；opinion.trade 保留日本明确例外
-    multi/chain_socks5_ipcidr.list:
-      preferred:
-        - repo: self
-          note: 私有代理服务商导出清单的脱敏快照；只保留经校验、去重的端点 IPv4，不记录下载地址、端口或认证信息
-
-    hk/hk_aws_ipv4.list:
-      preferred:
-        - repo: self
-          note: 保持源规则层 AWS 香港 IPv4 的单一 INCLUDE 入口稳定
-        - repo: AWS ip-ranges.json
-          note: 每日同步全部 ap-east-1 IPv4 前缀到 rules/upstream/aws/hk_ipv4.txt
-    jp/tokyo_aws_ipv4.list:
-      preferred:
-        - repo: self
-          note: 保持源规则层 AWS 东京 IPv4 的单一 INCLUDE 入口稳定
-        - repo: AWS ip-ranges.json
-          note: 每日同步全部 ap-northeast-1 IPv4 前缀到 rules/upstream/aws/tokyo_ipv4.txt
-    jp/osaka_aws_ipv4.list:
-      preferred:
-        - repo: self
-          note: 保持源规则层 AWS 大阪 IPv4 的单一 INCLUDE 入口稳定
-        - repo: AWS ip-ranges.json
-          note: 每日同步全部 ap-northeast-3 IPv4 前缀到 rules/upstream/aws/osaka_ipv4.txt
-    kr/seoul_aws_ipv4.list:
-      preferred:
-        - repo: self
-          note: 保持源规则层 AWS 首尔 IPv4 的单一 INCLUDE 入口稳定
-        - repo: AWS ip-ranges.json
-          note: 每日同步全部 ap-northeast-2 IPv4 前缀到 rules/upstream/aws/seoul_ipv4.txt
-    tw/taipei_aws_ipv4.list:
-      preferred:
-        - repo: self
-          note: 保持源规则层 AWS 台北 IPv4 的单一 INCLUDE 入口稳定
-        - repo: AWS ip-ranges.json
-          note: 每日同步全部 ap-east-2 IPv4 前缀到 rules/upstream/aws/taipei_ipv4.txt
-
   dns:
     cn_dns_domains.list:
       preferred:

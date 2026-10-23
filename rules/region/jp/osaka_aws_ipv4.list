@@ -1,4 +1,0 @@
-# AWS 大阪 IPv4 前缀。
-# 区域映射：ap-northeast-3 = 大阪。
-# 上游快照由 GitHub Actions 每日刷新。
-INCLUDE,upstream/aws/osaka_ipv4.txt

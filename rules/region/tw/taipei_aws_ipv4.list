@@ -1,4 +1,0 @@
-# AWS 台北 IPv4 前缀。
-# 区域映射：ap-east-2 = 台北。
-# 上游快照由 GitHub Actions 每日刷新。
-INCLUDE,upstream/aws/taipei_ipv4.txt

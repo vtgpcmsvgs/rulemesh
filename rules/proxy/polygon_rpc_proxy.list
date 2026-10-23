@@ -1,6 +1,0 @@
-# Polygon 主网 RPC 节点选择规则。
-# 维护原则：
-# 1) 真正的域名集合由 tools/sync_upstream_rules.py 每日从 Chainlist 最终产物自动抓取并累计写入 upstream 快照。
-# 2) 上游策略采用“只增不减”，避免 Chainlist 日常波动导致客户端覆盖面回撤。
-# 3) 客户端接入时必须放在 proxy/gfw 前，避免被广谱代理规则提前命中。
-INCLUDE,upstream/chainlist/polygon_rpc_domains.list

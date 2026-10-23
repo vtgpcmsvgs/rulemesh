@@ -19,7 +19,7 @@ iPhone 的 Clash Mi 使用独立 `clashmi-ios.yaml`，不要套用安卓应用�
 
 香港券商统一由 `hk_securities` 规则集和“香港券商”策略组承接；AI、Crypto、Microsoft、香港券商按 provider 使用独立 `url-test` 子组，Microsoft 父组使用 `select`。Google、YouTube、Telegram、Apple 复用六个地区自动组。安卓已移除“Google 下载稳定”组，Google 下载相关规则统一进入 Google 业务组。
 
-WPS/金山文档按 2026-09-18 修订统一 DIRECT，继续使用默认国内 DNS，Microsoft Store 专项固定美国，通用 Microsoft 保留美国代理候选并追加 DIRECT。Notion 在 Google 广谱前使用 `hk_notion` 规则集并复用香港自动选择，覆盖网页、API、公开页与图片，沿用国内 DNS；详见 [Notion 网页优化](notion-network-optimization.md)。Google、YouTube、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个地区自动组；Apple 在六地区选项后追加 DIRECT。AI 与 Microsoft 按 provider 保留美国自动子组，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，AI、Crypto、香港券商不提供 DIRECT；Microsoft 父组使用 select，手动选择美国子组或 DIRECT。AI 中转站使用 `multi_ai_relay`，支付与加密支付使用 `multi_payment_crypto`，住宅代理与住宅代理 API 使用 `multi_residential_proxy`，三者绑定全地区自动选择。GoDaddy 由香港优先规则集承接；尊嘉证券优先命中统一香港券商规则集；supado.com 已迁入 `multi_ai_relay`。未命中前置规则时 `MATCH,DIRECT`。既有前置 DIRECT/REJECT 规则保持作用；Polymarket 从媒体入口移入 Crypto。AWS IP 与链式代理 provider 和调用均停用，仓库资产继续维护。
+WPS/金山文档按 2026-09-18 修订统一 DIRECT，继续使用默认国内 DNS，Microsoft Store 专项固定美国，通用 Microsoft 保留美国代理候选并追加 DIRECT。Notion 在 Google 广谱前使用 `hk_notion` 规则集并复用香港自动选择，覆盖网页、API、公开页与图片，沿用国内 DNS；详见 [Notion 网页优化](notion-network-optimization.md)。Google、YouTube、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个地区自动组；Apple 在六地区选项后追加 DIRECT。AI 与 Microsoft 按 provider 保留美国自动子组，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，AI、Crypto、香港券商不提供 DIRECT；Microsoft 父组使用 select，手动选择美国子组或 DIRECT。AI 中转站使用 `multi_ai_relay`，支付与加密支付使用 `multi_payment_crypto`，住宅代理与住宅代理 API 使用 `multi_residential_proxy`，三者绑定全地区自动选择。GoDaddy 由香港优先规则集承接；尊嘉证券优先命中统一香港券商规则集；supado.com 已迁入 `multi_ai_relay`。未命中前置规则时 `MATCH,DIRECT`。既有前置 DIRECT/REJECT 规则保持作用；Polymarket 从媒体入口移入 Crypto。AWS 地区 IP 与链式代理资产、provider、内联节点及拨号引用已删除。
 
 中转规则已补充 `easyapis.cc`、`ccapi.us` 与截图核实的第三方中转/聚合网关，见[逐项分类](ai-relay-classification.md)。OpenRouter 从 `us_ai` 迁入 `multi_ai_relay`，使用全地区自动选择；`rule-set:us_ai` 的 DNS policy 不再覆盖它，沿用默认国内 DNS。原生模型 API 与纯推理/算力平台不并入中转规则，共用母域只登记确认的服务主机。
 
@@ -27,7 +27,7 @@ WPS/金山文档按 2026-09-18 修订统一 DIRECT，继续使用默认国内 DN
 
 `direct_cn_services` 固定第二条，保护国内 DNS 与新华三；AI 仅按审核后的域名边界匹配，避免名称相似网站同时进入美国出口与海外解析。Store 专项在两份 FlClash 中仍晚于既有更新拒绝。见[出口修订](scoped-egress-repair.md)。
 
-GitHub SSH 精确直连在 Core / gfw 前；国内通用直连在 gfw 前。阿里云 SSH 继续保留仅 TCP/22 的内联兜底与 `DIRECT,no-resolve` 调用。AdsPower 的调用与仓库资产已删除，住宅代理与 GFW 规则不再包含 Webshare；其余住宅代理、系统时间同步与可选 1Password 规则继续保留，待确认项见[业务规则清理审计](business-rule-cleanup-20261023.md)。删除规则不强制直连或拒绝，之后按其他规则及最终兜底处理。Surge 的工作白名单不会扩散到 Mihomo。
+GitHub SSH 精确直连在 Core / gfw 前；国内通用直连在 gfw 前。阿里云 SSH 继续保留仅 TCP/22 的内联兜底与 `DIRECT,no-resolve` 调用。2026-10-23：Webshare 网站与其他 24 个住宅代理网站域名保留；删除 ips5 专项直连、五份 AWS 地区 IP、链式 SOCKS5 与阿里系强制代理的源规则、登记、专用同步代码及产物。私有链式节点、负载均衡池和拨号引用一起清理。1Password 官方快照合并到 proxy/general_proxy，Polygon/BSC RPC 快照合并到 region/tw/crypto_tw，继续上游更新；通用代理与 Crypto 台湾出口、默认国内 DNS 保持。AdsPower 资产继续保持删除。 删除专项入口后按其余规则处理。Surge 工作白名单不扩散到 Mihomo。
 
 ## DNS、测速与连接
 
@@ -52,7 +52,6 @@ GeoIP 使用 `geodata-mode: false`，`geox-url.mmdb` 直接引用 [MetaCubeX cou
 
 配置精简优先复用已有规则集；Google Play / Android 已由 `hk_google` 覆盖。Surge 专用的 `ai_dns_us` 传输规则和 Personal 爱思入口不机械复制到 Mihomo，AI DNS 继续通过 DoH URL 的美国代理参数生效。既有策略组保持；机场手动入口不能仅因没有规则引用而删除。
 
-2026-09-12：`direct/ips5_direct` 以 DIRECT 覆盖 `ips5.vip` 主域及全部子域，位于 AI 之后、Google 广谱与拒绝之前，使用默认国内双 DoH；工作白名单仅增加该服务。2026-10-23 已进一步删除 AdsPower 与 Webshare 业务规则，见[规则停用与删除](rule-deactivation.md)。
 
 2026-09-12 FlClash 迁移与优化以 [客户端性能基线](flclash-performance.md) 为准：桌面和安卓使用新文件名；通用末尾改为 cn_direct_light → gfw_precise → DIRECT，完整规则资产保留。工作白名单不接入新兜底，机场手动组保留。桌面 300 秒、安卓 600 秒，备用地区按需检测；以最终生成配置核对界面覆写。
 

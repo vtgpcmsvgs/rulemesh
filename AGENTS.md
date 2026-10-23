@@ -83,7 +83,7 @@
 - Codex 每日任务必须调用状态目录中的已安装运行副本与运行配置，只运行只读 `report` 并发送 `RM-INV-*`；不得在无人值守任务中运行 `collect`、接受 `RM-EXEC-*`、修改 Surge、编辑仓库、提交或推送
 - 飞书 Webhook 只能作为 Scheduled 日报的旁路提醒：默认由本地守护进程在每日 `09:05 Asia/Shanghai` 发送采集质量与待查看项数量，不发送证据、域名、`RM-*` ID 或配置。飞书回复永远不构成调查或执行授权；Webhook 配置 / 网络失败不得阻断采集、`report` 或 Scheduled，真实 URL / 签名密钥只允许保存在状态目录的私有 `config.json`
 
-- AWS IP 与链式 SOCKS5 的源规则、上游登记和构建产物继续保留；当前配置不得注册或调用，停用配置不等于删除资产。
+- 2026-10-23：Webshare 网站与其他 24 个住宅代理网站域名保留；删除 ips5 专项直连、五份 AWS 地区 IP、链式 SOCKS5 与阿里系强制代理的源规则、登记、专用同步代码及产物。私有链式节点、负载均衡池和拨号引用一起清理。1Password 官方快照合并到 proxy/general_proxy，Polygon/BSC RPC 快照合并到 region/tw/crypto_tw，继续上游更新；通用代理与 Crypto 台湾出口、默认国内 DNS 保持。AdsPower 资产继续保持删除。
 - GeoIP 直接使用 MetaCubeX/meta-rules-dat 持续更新的 country.mmdb，不再经由本仓库 Release；未定制公共资源优先活跃上游，自定义规则继续使用 dist。
 - 批量替换出口前列出地区例外，并从实际业务路由解析目标组；多个组可复用地区过滤器，不得假定美国组唯一。
 
@@ -123,11 +123,11 @@
 - Surge Personal 固定维护家庭版 `surge-home.conf` 与公司版 `surge-company.conf`；两者只允许用途标识和 MITM 不同，路由与 DNS 结构必须同步。Personal 专用的 `personal_priority_hk`、`notion_hk`、`hk_securities_aggressive`、`apple_direct`、`outlook_direct` 不得同步进工作白名单；2026-09-16 Store 美国专项是已批准例外，在工作配置中必须晚于更新拒绝。
 - 工作配置也使用默认国内 DNS；可保留小型 cn_dns_domains，不引用性能型清单，DNS 调整不授予流量放行。
 - 维护 `surge-work.conf` 时，默认应维持“仅放行明确白名单入口，其余流量对工作电脑统一 REJECT”的原则；若要恢复广谱放行（如 `proxy/gfw`、广谱 `direct`、`FINAL` 兜底放行），必须得到用户明确确认
-- 工作白名单保留既有精确放行、设备条件与观察规则，新增 cn_social_direct 精确直连；AI 美国、Crypto/RPC 台湾、明确日本入口与香港券商保留地区，其他代理自动择优。AWS IP 和链式 SOCKS5 调用停用；最终保持 FINAL,REJECT，不恢复 cn_direct 或 gfw 广谱放行。
+- 工作白名单保留既有精确放行、设备条件与观察规则，新增 cn_social_direct 精确直连；AI 美国、Crypto/RPC 台湾、明确日本入口与香港券商保留地区，其他代理自动择优。AWS 地区 IP、链式 SOCKS5 与阿里系强制代理资产和调用已删除；最终保持 FINAL,REJECT，不恢复 cn_direct 或 gfw 广谱放行。
 - region/hk/wps_kdocs 按 2026-09-18 用户要求统一 DIRECT，取消香港地区展示出口要求；历史路径与 hk_wps_kdocs provider 名仅作兼容，不代表出口。七份配置均早于 Google 广谱，DNS 保持默认国内；工作白名单仅保留该专项放行，最终 REJECT 不变。
 - GitHub 在该工作路由文件中除 `github_ssh_direct` 外，还允许紧随其后保留 `DOMAIN,raw.githubusercontent.com` 下载入口与一条广覆盖 `DOMAIN-KEYWORD,github` 观察兜底；它们用于显式放行 GitHub Raw 规则产物下载，并发现 SSH / Raw 之外的漏网之鱼，不得被“去重”或“收敛”掉
 - GitHub Raw 下载链路默认还应保留独立 `[Host]` 解析例外；当前私有配置使用 `raw.githubusercontent.com = server:https://cloudflare-dns.com/dns-query`，避免规则产物下载回落到本地/国内系统 DNS；但这不是代理节点 bootstrap，不能影响 `proxy-node-domains` 继续使用 AliDNS DoH
-- AdsPower 按 2026-10-23 用户业务撤销要求彻底删除主清单、三类源规则、登记、派生器与产物，取代 2026-09-12 的保留资产约定；检查器继续拒绝恢复调用。Webshare 从住宅代理和 GFW 快照移除，上游同步排除其主域与子域，避免每日同步恢复。其他住宅代理、ips5、AWS/链式等资产仅列为确认项，不随本次删除。
+- AdsPower 已按 2026-10-23 用户业务撤销要求彻底删除，检查器拒绝恢复调用。Webshare 网站与其余 24 个住宅代理网站域名保留，网站访问和购买的 IP 必须分别确认；清理决定以 docs/business-rule-cleanup-20261023.md 为准。
 - Outlook 直连覆盖邮件、精确共享登录与认证资源，不扩大到 Microsoft 根域；共享认证也影响其他应用。2026-09-16 Microsoft Store 专项固定美国以满足地区 IP 条件，通用 Microsoft（含中国服务）保留美国代理候选并追加 DIRECT，默认国内 DNS 不变；工作及 FlClash 的既有更新拒绝仍优先。
 - 上述工作路由白名单特化只适用于工作路由文件本身，不自动扩散到两个 `personal` 配置，也不要把 `personal` 配置的通用结构反向覆盖到该工作路由文件
 - 只要工作路由白名单逻辑、适用范围、维护边界发生变化，必须同步更新 `docs/surge-work-cluster-whitelist.md`、`README.md` 与相关使用说明，避免后续失忆式回滚
@@ -142,9 +142,6 @@
 
 - 修改 `rules/{reject,direct,proxy,region}/` 下的中大型 `.list` 源规则文件时，默认按“同平台 / 同服务聚合展示 + 上游优先 + 本地兜底”维护，不要把显式域名和关键词兜底简单堆成一坨
 - 文件头必须先写清楚：这份规则负责什么、不负责什么、与相邻规则文件的边界是什么、客户端顺序上应放在哪里
-- 像多地区链式 SOCKS5 端点这类非单一区域入口，不要因为历史来源继续挂在 `rules/region/jp/` 之类的单国家目录；应按当前语义放到更合适的路径，并在文件头写清客户端能力边界：Surge 可以在规则层把端点连接交给链式 / 负载均衡组，Mihomo 普通 `RULE-SET` 不等价于节点拨号层的 `dialer-proxy`
-- `rules/region/multi/chain_socks5_ipcidr.list` 维护私有代理服务商导出清单的脱敏快照；更新时必须在内存中完整校验每行 IPv4、端口与认证字段，拒绝空响应、异常行、非公网 IPv4 和重复 IP，全部通过后再按 IPv4 数值排序并原子全量替换。公开仓库只能保留 `IP-CIDR,<IPv4>/32`，不得保存或输出下载地址、端口、用户名、密码、令牌或 `plan_id`
-- 两份 Mihomo 私有配置与公开 Mihomo 模板默认不得注册或调用 `region/multi/chain_socks5_ipcidr`；只有完成 `dialer-proxy` 配置、节点选择关系与运行时出口复测后才能恢复，不能因为 Surge 存在同名规则入口就机械对齐
 - `IP-CIDR`、`IP-CIDR6`、`GEOIP`、`IP-ASN`、`ASN` 这类 IP 判断规则构建时默认补 `no-resolve`；纯 IP 规则集在客户端 `RULE-SET` 调用层仍建议保留 `no-resolve`
 - 同一小节内部默认顺序是：
   - 小节注释
@@ -212,7 +209,7 @@
 - 归并规则先确认既有规则集覆盖和首条命中顺序；Google Play 复用 google_hk，Surge Personal 爱思复用 aisi_direct，Apple 官方更新复用 apple_direct。ai_dns_us 单独保证 Surge AI DoH 美国出口，不扩大工作白名单或机械增加 Mihomo provider。私有 SRC-IP、端点及同步标记不写入公开规则。
 - 多文件修改先完成全部唯一锚点和数量预检再写入；补丁存在空更新区块等格式错误时立即修正并重新预检，不得假设已部分成功。
 
-规则停用约定：从授权配置移除调用、内联观察项与专用 provider / DNS 依赖，保留源规则、登记、构建逻辑和产物；暂停专用任务，共用任务只停对应步骤。用户明确要求删除业务时，删除其完整资产与专用生成逻辑，并防止上游重新导入；先核对共享依赖，不顺带删除其他业务。AdsPower/Webshare 已于 2026-10-23 删除，细则见 docs/rule-deactivation.md。`ips5.vip` 独立直连与国内 DNS 保留。
+- 删除业务须核对节点、策略组与拨号字段；网站访问与购买的代理端点分别确认。合并覆盖须验证编译后完整保留上游快照。
 
 - 多文件字节保真编辑的锚点须按实际文件换行匹配，不得根据终端显示假定 CRLF；兼容 LF / CRLF 后仍断言唯一，全部预检通过再写入。
 - `tools/check.ps1` 包含重建和会暂时调整产物的测试；必须等待完整进程成功退出后再读取 `dist/`、构建报告或生成提交文件清单，避免并发审计把中间态误报为产物丢失。
@@ -224,7 +221,7 @@
 - 用户补充业务目的时，必须从实际出口核对地区要求，不能把此前“自动择优”误当作满足固定香港或美国；WPS 直连、Store 美国和既有 AI/Crypto/日本/券商例外由性能检查共同保护。
 - 一次补丁不能对同一文件同时 Delete/Add；整文件改写使用唯一预检后原子替换。PowerShell 搜索必须传真实目录并用 `--glob` 筛选，禁止拼接 `tools/check*` 这类未展开路径；所有选项必须放在 `--` 前，之后只能是模式和路径。失败后先纠正该命令再继续。
 
-- 2026-09-16 用户改为国内日常业务直连：两份 FlClash 停用阿里系强制代理调用及专用 provider，保留源规则、登记和产物；撤下已被正常直连取代的三个支付宝组件补丁。安卓系统下载管理器改按目的地分流，Google 三个专属进程、稳定组、QUIC、DNS 与地区例外保持。此项取代同日早先“必须保留三个支付宝条件规则”的临时约定，Surge 独立配置不机械同步。
+- 2026-09-16 用户改为国内日常业务直连；2026-10-23 进一步删除阿里系强制代理的源规则、登记和产物。已撤下三个支付宝组件补丁。安卓系统下载管理器按目的地分流，Google 三个专属进程、稳定组、QUIC、DNS 与地区例外保持，Surge 独立配置不机械同步。
 - 常用业务必须通过 `tools/check_common_routes.py` 的 TCP/UDP 域名首条命中检查；数据在 `tools/common_route_cases.json`，覆盖用户指定应用、资源和共享下载场景。静态域名检查没有真实 IP，不得称为设备网络验收；未知语法或缺失 provider 必须报错，不能跳过。手机验收要区分界面、实际返回流量、DNS 出口、网络类型与需要登录/真实订单的业务。
 - 浏览器验收使用 `tools/check_browser_evidence.py` 区分错误页、局部资源失败、未确认媒体和通过；文字长度或旧 DOM 不能盖过主文档错误。VPN 重建后的失败单独保留，再做恢复复测；`/proxies` 不含选中节点时从 `/providers/proxies` 关联，空健康历史即使 `alive=true` 也不能算近期存活证据。
 - 安卓导出备份先确认成功，再在授权下载目录定位唯一实际文件；文件选择器标题不能当完整路径。工具返回的 `exit_code` 不会自动中止外层 JavaScript，拉取等前置命令非零时必须显式停止后续校验。包含 SQL 等嵌套引号的诊断优先写任务脚本文件执行。
@@ -236,7 +233,7 @@
 
 - 桌面、安卓唯一现用客户端均为 FlClash，对应私人文件为 flclash-desktop.yaml / flclash-android.yaml。以 docs/flclash-performance.md 为当前接入、测速、覆写与复测依据；旧客户端缓存和命名管道不能代表 FlClash 运行态。
 - 标准模式导入规则，DNS 覆写关闭；必须检查 preferences 中的 patchClashConfig 和生成 config.yaml。源文件进程匹配 strict；FlClash 0.8.97 界面只接受 always/off，实际保留 always 以支持进程规则，不能写入无效 strict 或直接 off。先检查客户端枚举再改字段，不能将内核支持等同于界面支持。
-- cn_direct_light 由构建自动推导，只适用于紧接 gfw_precise、最终 DIRECT 的末尾；工作白名单不调用。完整 cn_direct/gfw 与 AWS/链式资产保留；AdsPower 资产已删除。
+- cn_direct_light 由构建自动推导，只适用于紧接 gfw_precise、最终 DIRECT 的末尾；工作白名单不调用。完整 cn_direct/gfw 保留；AWS 地区 IP、链式 SOCKS5 与 AdsPower 资产已删除。
 - 校验 native validateConfig 只代表 YAML 能解析，需区分真正加载；provider 缓存须位于隔离 home 内。API 404 不能误报节点不可用，DNS UDP 被 TUN 缓存命中不能误报公网解析器更快。
 - 阅读第三方源码前先用 rg --files 确认路径，不能把旧文件布局当作当前事实；脚本依赖用明确运行时路径，临时 PyYAML 不假设系统环境全局可用。
 

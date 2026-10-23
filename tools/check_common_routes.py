@@ -167,7 +167,7 @@ def profile_contract(path: Path, lines: list[str]) -> list[str]:
         errors.append("日常连通性基线标记必须唯一保留")
     active = [s for s in lines if s.strip() and not s.lstrip().startswith("#")]
     if any("hk_alibaba" in s or "region/hk/alibaba_hk" in s for s in active):
-        errors.append("已停用的阿里系强制代理不得恢复调用、注册或解析依赖")
+        errors.append("已删除的阿里系强制代理不得恢复调用、注册或解析依赖")
     for _, parts in parser._parse_mihomo_rules(lines):
         if parts[:1] == ["PROCESS-NAME"] and parts[1] in {"com.android.providers.downloads", "com.android.providers.downloads.ui"}:
             errors.append("系统下载管理器必须按目的地分流，不能整体强制代理或直连")

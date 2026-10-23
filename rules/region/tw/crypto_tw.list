@@ -1,11 +1,16 @@
 # 加密货币规则统一入口（台湾策略）：按“上游主体 + 分类补站 + 本地兜底”维护。
 # 维护约束：
-# 1) 主体来自 blackmatrix7 的 Cryptocurrency.list，持续同步。
+# 1) 主体来自 blackmatrix7 的 Cryptocurrency.list；Polygon/BSC 主网 RPC 来自 Chainlist，持续同步。
 # 2) 本地补充主要承接上游暂未覆盖、但你实际使用中已观察到的交易基础设施、预测市场与链上分析站点。
 # 3) 本规则集设计目标固定为台湾节点，客户端请绑定 TW-AUTO（或等价台湾策略组）。
+# 4) 客户端早于 Google 广谱；不包含支付服务商与住宅代理网站，二者使用 multi 下的独立入口。
 
 # 加密货币通用主体：以上游快照为主，承接主流交易所、钱包、链上服务与常见加密站点。
 INCLUDE,upstream/blackmatrix7/cryptocurrency.list
+
+# Polygon / BSC 主网 RPC：合并官方 Chainlist 快照，客户端只调用统一 Crypto 入口。
+INCLUDE,upstream/chainlist/polygon_rpc_domains.list
+INCLUDE,upstream/chainlist/bsc_rpc_domains.list
 
 # 交易所 / 交易接入基础设施：保留交易品牌词与相关基础设施兜底。
 DOMAIN-KEYWORD,bitget

@@ -26,7 +26,7 @@
 7. LAN、系统时间、阿里云 TCP/22 和其他国内直连。
 8. `gfw_precise` 使用全地区 smart；未命中前置规则时 `FINAL,DIRECT,dns-failed`，工作白名单保持 `FINAL,REJECT`。
 
-命中普通海外规则时使用全地区 smart 组，未命中规则的 `FINAL` 使用 DIRECT；AI 美国、Crypto/RPC 台湾、`opinion.trade` 日本、券商香港是明确例外。地区组仍可用于手动选择。AWS IP 规则和链式 SOCKS5 规则仅保留仓库源文件与产物，配置不再调用。
+命中普通海外规则时使用全地区 smart 组，未命中规则的 `FINAL` 使用 DIRECT；AI 美国、Crypto/RPC 台湾、`opinion.trade` 日本、券商香港是明确例外。地区组仍可用于手动选择。AWS 地区 IP 与链式 SOCKS5 的专用资产及配置已删除。
 
 `global_media` 承接 X / Twitter 和媒体服务；Polymarket 已移入 Crypto 台湾。WPS/金山文档按 2026-09-18 修订统一 DIRECT，继续使用默认国内 DNS，Store 专项固定美国以满足地区 IP 要求；通用 Microsoft 保留美国代理候选并追加 DIRECT；Notion 在 Google 广谱前使用香港自动选择，默认国内 DNS 保留，详见 [Notion 网页优化](notion-network-optimization.md)。GoDaddy 由香港优先规则集承接；尊嘉证券优先命中统一香港券商规则集；supado.com 已迁入 AI 中转站规则集并使用全地区自动选择。国内 AI 由 `ai_cn_direct` 承接，不扩入海外 AI。AI 仅使用明确域名，详见[出口修订](scoped-egress-repair.md)。AI 中转站使用 `region/multi/ai_relay` 绑定全地区自动选择；支付与加密支付使用 `region/multi/payment_crypto` 绑定全地区自动选择；住宅代理与住宅代理 API 使用 `region/multi/residential_proxy` 绑定全地区自动选择，三者均不使用关键词泛匹配。
 
@@ -49,7 +49,7 @@ GitHub Raw 继续保留独立海外解析入口 `raw.githubusercontent.com = ser
 - GitHub SSH 直连必须先于 GitHub Core / gfw，Raw 自举入口独立存在，GitHub 网页和 API 使用自动代理。
 - Outlook 邮件、精确共享登录和认证资源直连，不扩展到整个 Microsoft 根域；共享认证被其他应用复用时也直连。
 - 阿里云远程 SSH 规则之前保留只限 TCP/22 的内联兜底；`aliyuncs.com` 和 `check.myclientip.com` 保持既有精确直连。普通配置不恢复阿里云广谱观察放行。
-- AdsPower 的调用与仓库资产已删除；住宅代理与 GFW 规则不再包含 Webshare。其余住宅代理与可选 1Password 产物继续保留，待确认项见[业务规则清理审计](business-rule-cleanup-20261023.md)。删除规则不强制直连或拒绝，之后按其他规则及最终兜底处理。
+- 2026-10-23：Webshare 网站与其他 24 个住宅代理网站域名保留；删除 ips5 专项直连、五份 AWS 地区 IP、链式 SOCKS5 与阿里系强制代理的源规则、登记、专用同步代码及产物。私有链式节点、负载均衡池和拨号引用一起清理。1Password 官方快照合并到 proxy/general_proxy，Polygon/BSC RPC 快照合并到 region/tw/crypto_tw，继续上游更新；通用代理与 Crypto 台湾出口、默认国内 DNS 保持。AdsPower 资产继续保持删除。 详见[业务规则清理记录](business-rule-cleanup-20261023.md)。
 - 工作文件保留既有观察规则、设备条件与最终拒绝，不复制 Personal 专用入口。
 
 ## 分发与维护
@@ -62,7 +62,6 @@ GitHub Raw 继续保留独立海外解析入口 `raw.githubusercontent.com = ser
 
 机场手动组必须独立保留并在选择入口可访问，不能因普通规则直接使用自动组而删除。公开模板提供单机场占位示例；私人三份 Surge 各保留七组。爱思规则集中在 `direct/aisi_direct`（仅 Personal）；Google Play 重复项复用 `google_hk`；AI DNS 用 `region/us/ai_dns_us` 绑定美国，早于设备、加密 DNS 协议和最终兜底。
 
-2026-09-12：`direct/ips5_direct` 以 DIRECT 覆盖 `ips5.vip` 主域及全部子域，位于 AI 之后、Google 广谱与拒绝之前，使用默认国内双 DoH；工作白名单仅增加该服务。2026-10-23 已进一步删除 AdsPower 与 Webshare 业务规则，见[规则停用与删除](rule-deactivation.md)。
 
 2026-09-12 FlClash 迁移与优化以 [客户端性能基线](flclash-performance.md) 为准：桌面和安卓使用新文件名；通用末尾改为 cn_direct_light → gfw_precise → DIRECT，完整规则资产保留。工作白名单不接入新兜底，机场手动组保留。桌面 300 秒、安卓 600 秒，备用地区按需检测；以最终生成配置核对界面覆写。
 

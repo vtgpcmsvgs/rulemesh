@@ -73,7 +73,7 @@ class AndroidStabilityTests(unittest.TestCase):
         self.assertEqual(text.count(apple), 1)
         text = text.replace(apple, "")
         text = text.replace("  - RULE-SET,reject_os_update,REJECT\n", "  - RULE-SET,reject_os_update,REJECT\n" + apple, 1)
-        anchor = "  - RULE-SET,direct_ips5,DIRECT\n"
+        anchor = "  - RULE-SET,direct_cn_social,DIRECT\n"
         self.assertEqual(text.count(anchor), 1)
         components = "  " + android.ALIPAY_MARKER + "\n" + "".join("  - " + rule + "\n" for rule in android.alipay_component_rules())
         text = text.replace(anchor, anchor + components, 1)

@@ -1,6 +1,13 @@
-# 生成来源：rules/proxy/onepassword_proxy.list
+# 生成来源：rules/proxy/general_proxy.list
 # 行为：classical
 payload:
+  - "DOMAIN,api.github.com"
+  - "DOMAIN,gist.github.com"
+  - "DOMAIN,gist.githubusercontent.com"
+  - "DOMAIN,raw.githubusercontent.com"
+  - "DOMAIN-SUFFIX,github.com"
+  - "DOMAIN-SUFFIX,githubassets.com"
+  - "DOMAIN-SUFFIX,githubusercontent.com"
   - "DOMAIN-SUFFIX,1password.com"
   - "DOMAIN-SUFFIX,1password.ca"
   - "DOMAIN-SUFFIX,1password.eu"

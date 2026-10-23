@@ -51,7 +51,6 @@ REGIONAL = {
     "region/hk/hk_brokers": "hk", "region/hk/hk_user_priority": "hk",
     "region/hk/hk_securities_aggressive": "hk",
     "region/hk/android_brokers_aggressive": "hk",
-    "proxy/polygon_rpc_proxy": "tw", "proxy/bsc_rpc_proxy": "tw",
     "region/us/microsoft_store_us": "us",
 }
 PROVIDER_IDS = {
@@ -60,7 +59,6 @@ PROVIDER_IDS = {
     "hk_brokers": "region/hk/hk_brokers", "hk_user_priority": "region/hk/hk_user_priority",
     "hk_securities_aggressive": "region/hk/hk_securities_aggressive",
     "android_brokers_aggressive": "region/hk/android_brokers_aggressive",
-    "proxy_polygon_rpc": "proxy/polygon_rpc_proxy", "proxy_bsc_rpc": "proxy/bsc_rpc_proxy",
     "hk_wps_kdocs": "region/hk/wps_kdocs", "us_microsoft_store": "region/us/microsoft_store_us",
 }
 
@@ -113,7 +111,6 @@ def check(path: Path, lines: list[str]) -> list[str]:
         identifiers = {
             BASE + "surge/rules/region/us/ai_us.list": "ai",
             BASE + "surge/rules/direct/cn_services_direct.list": "domestic_services",
-            BASE + "surge/rules/direct/ips5_direct.list": "ips5",
             BASE + "surge/rules/direct/bytedance_direct.list": "douyin",
             BASE + "surge/rules/direct/cn_social_direct.list": "social",
             BASE + "surge/rules/region/hk/google_hk.list": "google",
@@ -125,12 +122,11 @@ def check(path: Path, lines: list[str]) -> list[str]:
         groups = dns._parse_mihomo_groups(lines)
         auto_groups = [name for name, group in groups.items() if group.group_type == "url-test"]
         rules = dns._parse_mihomo_rules(lines)
-        identifiers = {"us_ai": "ai", "direct_cn_services": "domestic_services", "direct_ips5": "ips5", "direct_bytedance": "douyin", "direct_cn_social": "social", "hk_google": "google", "hk_wps_kdocs": "wps"}
+        identifiers = {"us_ai": "ai", "direct_cn_services": "domestic_services", "direct_bytedance": "douyin", "direct_cn_social": "social", "hk_google": "google", "hk_wps_kdocs": "wps"}
         providers = dns._parse_mihomo_providers(lines)
         for name, identifier in {
             "us_ai": "region/us/ai_us", "direct_bytedance": "direct/bytedance_direct",
             "direct_cn_social": "direct/cn_social_direct", "hk_google": "region/hk/google_hk",
-            "direct_ips5": "direct/ips5_direct",
             "direct_cn_services": "direct/cn_services_direct",
             "hk_wps_kdocs": "region/hk/wps_kdocs", "us_microsoft_store": "region/us/microsoft_store_us",
         }.items():
@@ -161,9 +157,9 @@ def check(path: Path, lines: list[str]) -> list[str]:
     for position, (_, parts) in enumerate(rules):
         if len(parts) >= 3 and parts[0] == "RULE-SET" and parts[1] in identifiers:
             selected.setdefault(identifiers[parts[1]], []).append((position, parts))
-    for identifier in ("ai", "domestic_services", "douyin", "social", "ips5", "google", "wps"):
+    for identifier in ("ai", "domestic_services", "douyin", "social", "google", "wps"):
         require(len(selected.get(identifier, [])) == 1, f"{identifier} 必须有且只有一个显式入口。")
-    if not all(len(selected.get(key, [])) == 1 for key in ("ai", "domestic_services", "douyin", "social", "ips5", "google", "wps")):
+    if not all(len(selected.get(key, [])) == 1 for key in ("ai", "domestic_services", "douyin", "social", "google", "wps")):
         return errors
     ai_position, ai_rule = selected["ai"][0]
     us = ai_rule[2]
@@ -176,7 +172,12 @@ def check(path: Path, lines: list[str]) -> list[str]:
         "国内 DNS 与新华三必须紧随 AI 直连，安卓券商进程级香港兜底应置于其后。",
     )
     active = [line for line in lines if line.strip() and not line.lstrip().startswith(("#", ";", "//"))]
-    require(not any("alibaba_hk" in line or "hk_alibaba" in line for line in active), "阿里系强制代理已停用，不得保留调用、注册或解析依赖。")
+    # 链式拨号也可能挂在 url-test 组上，仅检查 RULE-SET 会漏检。
+    require(not any(re.search(r"(?:^\s*dialer-proxy\s*:|(?:^|,)\s*underlying-proxy\s*=)", line) for line in active), "链式代理已删除，不得残留 dialer-proxy / underlying-proxy 拨号引用。")
+    require(not any(re.search(r"(?:=\s*socks5\s*,|^\s*type:\s*['\"]?socks5['\"]?\s*$)", line, re.I) for line in active), "链式 SOCKS5 内联节点已删除，不得恢复。")
+    require(not any("ips5" in line.lower() for line in active), "ips5 专项已删除，不得恢复调用、注册或 DNS 依赖。")
+    require(not any(any(token in line for token in ("onepassword_proxy", "proxy_onepassword", "polygon_rpc_proxy", "bsc_rpc_proxy", "proxy_polygon_rpc", "proxy_bsc_rpc")) for line in active), "1Password/RPC 应并入通用入口，不得恢复专用 provider。")
+    require(not any("alibaba_hk" in line or "hk_alibaba" in line for line in active), "阿里系强制代理已删除，不得保留调用、注册或解析依赖。")
     require(not any(parts[:1] == ["SRC-IP"] and parts[-1] in groups for _, parts in rules), "不得用整设备代理覆盖国内默认直连；地区要求按业务规则表达。")
     fixed_positions = {}
     for position, (_, parts) in enumerate(rules):
@@ -192,7 +193,7 @@ def check(path: Path, lines: list[str]) -> list[str]:
             require(position < selected["google"][0][0], "地区必需入口必须早于 Google 完整 IP 地址空间。")
     broker_key = "region/hk/hk_securities" if business else "region/hk/hk_brokers"
     require(all(key in fixed_positions for key in ("region/tw/crypto_tw", "region/jp/domains_to_jp", broker_key, "region/us/microsoft_store_us")), "缺少 Crypto、日本、券商或 Store 美国专项规则。")
-    for key in ("douyin", "social", "ips5", "wps"):
+    for key in ("douyin", "social", "wps"):
         position, parts = selected[key][0]
         require(parts[2] == "DIRECT", f"{key} 必须直连。")
         require(ai_position < position < selected["google"][0][0], f"{key} 必须在 AI 之后、Google 广谱规则之前。")
@@ -226,7 +227,6 @@ def check(path: Path, lines: list[str]) -> list[str]:
             require(target in {"DIRECT", "REJECT", "REJECT-DROP", "REJECT-TINYGIF"}, "规则引用未知策略。")
         if "REJECT" in target:
             require(position > selected["social"][0][0], "国内精选直连必须早于拒绝规则。")
-            require(position > selected["ips5"][0][0], "ips5 直连必须早于拒绝规则。")
     finals = [parts for _, parts in rules if parts[0] in {"FINAL", "MATCH"}]
     require(len(finals) == 1 and finals[0][1] == ("REJECT" if work else "DIRECT"), "最终兜底必须为 DIRECT，工作白名单必须保持 REJECT。")
     if work:
@@ -238,7 +238,7 @@ def check(path: Path, lines: list[str]) -> list[str]:
         if not surge:
             for key, file in zip(expected, ('direct/cn_direct_light', 'proxy/gfw_precise')):
                 require(key in providers and providers[key][1] == BASE + 'mihomo/classical/' + file + '.yaml', '精简兜底 provider 必须引用配套产物。')
-    require(not any("aws_ipv4" in line or "chain_socks5_ipcidr" in line for line in lines if not line.lstrip().startswith("#")), "配置应停用 AWS IP 与链式代理入口，源规则仍保留。")
+    require(not any("aws_ipv4" in line or "chain_socks5_ipcidr" in line for line in lines if not line.lstrip().startswith("#")), "AWS IP 与链式代理已删除，不得恢复调用或注册。")
     require(any(GEOIP_URL in line for line in lines if not line.lstrip().startswith("#")), "GeoIP 必须直接使用 MetaCubeX 持续更新的上游。")
     require(not any("vtgpcmsvgs/rulemesh/releases/download/" in line for line in lines if not line.lstrip().startswith("#")), "配置不得重新依赖本仓库 Release 镜像。")
 

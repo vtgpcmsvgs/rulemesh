@@ -78,11 +78,11 @@
   {"service":"Crypto","domain":"polymarket.com","expected":"tw_crypto"},
   {"service":"日本入口","domain":"opinion.trade","expected":"jp_domains"},
   {"service":"香港券商","domain":"futuhk.com","expected":"hk_securities"},
-  {"service":"GitHub","domain":"github.com","expected":"proxy_github_core"},
-  {"service":"GitHub","domain":"raw.githubusercontent.com","expected":"proxy_github_core"},
+  {"service":"GitHub","domain":"github.com","expected":"proxy_general"},
+  {"service":"GitHub","domain":"raw.githubusercontent.com","expected":"proxy_general"},
   {"service":"国内下载","domain":"gw.alicdn.com","process":"com.android.providers.downloads","expected":"DIRECT"},
   {"service":"国内下载","domain":"img10.360buyimg.com","process":"com.android.providers.downloads.ui","expected":"DIRECT"},
-  {"service":"按目的地下载","domain":"github.com","process":"com.android.providers.downloads","expected":"proxy_github_core"},
+  {"service":"按目的地下载","domain":"github.com","process":"com.android.providers.downloads","expected":"proxy_general"},
   {"service":"Wikipedia","domain":"zh.wikipedia.org","expected":"proxy_gfw"},
   {"service":"Reddit","domain":"www.reddit.com","expected":"proxy_gfw"},
   {"service":"Discord","domain":"discord.com","expected":"proxy_gfw"},
@@ -216,7 +216,9 @@
   {"service":"Microsoft","domain":"www.microsoft.com","expected":"us_microsoft"},
   {"service":"Microsoft Store","domain":"apps.microsoft.com","expected":"us_microsoft_store"},
   {"service":"Google 共享下载","domain":"redirector.gvt2.com","expected":"hk_google"},
-  {"service":"Google 共享头像","domain":"lh3.ggpht.com","expected":"hk_google"}
+  {"service":"Google 共享头像","domain":"lh3.ggpht.com","expected":"hk_google"},
+  {"service":"Webshare网站","domain":"dashboard.webshare.io","expected":"multi_residential_proxy"},
+  {"service":"1Password通用代理","domain":"my.1password.com","expected":"proxy_general"},
+  {"service":"Polygon RPC","domain":"polygon-rpc.com","expected":"tw_crypto"},
+  {"service":"BSC RPC","domain":"bsc-dataseed.bnbchain.org","expected":"tw_crypto"}
 ]
-
-

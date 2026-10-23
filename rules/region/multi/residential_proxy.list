@@ -2,7 +2,7 @@
 # 边界：不承接普通 VPN、机场面板、代理节点 IP 或通用抓取目标；客户端绑定全地区自动选择。
 # 来源：用户指定的 cliproxy.com、decodo.com，以及 AIMultiple 住宅代理公开基准和厂商官网交叉核对结果。
 # 维护：仅使用显式主域，不使用 proxy/residential 关键词泛匹配。
-# 2026-10-23：Webshare 业务已撤销，不再收录；其他服务商等待用户逐项确认。
+# 2026-10-23：保留 Webshare 网站；购买的节点 IP 与链式代理配置不属于本清单。
 
 # 用户明确指定。
 DOMAIN-SUFFIX,cliproxy.com
@@ -11,6 +11,7 @@ DOMAIN-SUFFIX,decodo.com
 # AIMultiple 公开住宅代理基准中的服务商。
 DOMAIN-SUFFIX,brightdata.com
 DOMAIN-SUFFIX,oxylabs.io
+DOMAIN-SUFFIX,webshare.io
 DOMAIN-SUFFIX,dataimpulse.com
 DOMAIN-SUFFIX,nodemaven.com
 DOMAIN-SUFFIX,byteful.com

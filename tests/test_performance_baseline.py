@@ -22,17 +22,20 @@ class PerformanceBaselineTests(unittest.TestCase):
                     errors = baseline.check(path, (text + '\n' + injected).splitlines())
                     self.assertTrue(any('AdsPower 已删除' in error for error in errors))
 
-    def test_ips5_direct_cannot_be_removed_rerouted_or_shadowed(self):
-        for client in ('surge', 'mihomo'):
+    def test_removed_ips5_provider_cannot_be_restored(self):
+        for client in ("surge", "mihomo"):
             path, text = self.fixture(client)
-            lines = text.splitlines()
-            index = next(i for i, line in enumerate(lines) if (line.startswith('RULE-SET,') and '/ips5_direct.list,' in line) or line.startswith('  - RULE-SET,direct_ips5,'))
-            for changed in (
-                lines[:index] + lines[index+1:],
-                lines[:index] + [lines[index].replace(',DIRECT', ',REJECT')] + lines[index+1:],
-                lines[:index] + lines[index+1:] + [lines[index]],
-            ):
-                self.assertTrue(any('ips5' in error for error in baseline.check(path, changed)))
+            injected = "DOMAIN-SUFFIX,ips5.vip,DIRECT" if client == "surge" else "  - RULE-SET,direct_ips5,DIRECT"
+            self.assertTrue(any("ips5" in error for error in baseline.check(path, (text + "\n" + injected).splitlines())))
+
+    def test_chain_dialing_is_rejected_even_without_ruleset_calls(self):
+        for client in ("surge", "mihomo"):
+            path, text = self.fixture(client)
+            samples = (["retired = socks5, 192.0.2.1, 1080", "test = url-test, DIRECT, underlying-proxy=retired"]
+                       if client == "surge" else ["    type: socks5", "    dialer-proxy: retired"])
+            for line in samples:
+                errors = baseline.check(path, (text + "\n" + line).splitlines())
+                self.assertTrue(any("链式" in error for error in errors))
 
     def test_final_is_direct_except_work_whitelist(self):
         for client in ('surge', 'mihomo'):

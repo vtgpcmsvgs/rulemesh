@@ -31,14 +31,14 @@
 - 日本精确例外、Crypto 和香港券商都早于 Google 广谱规则。`google_hk`、`global_media` 等旧路径保留以兼容已有订阅；Google、YouTube、Telegram、Apple 使用 select，手动选择香港、台湾、日本、韩国、新加坡、美国六个地区 url-test 组；Apple 在六地区选项后追加 DIRECT。AI 与 Microsoft 按 provider 保留美国自动子组，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，AI、Crypto、香港券商不提供 DIRECT；Microsoft 父组使用 select，手动选择美国子组或 DIRECT。
 - 全地区组去掉国家标签筛选，只排除套餐占位项，允许没有地区标签的有效节点参与。FlClash 桌面使用 300 秒主动测速、安卓使用 600 秒；实际业务组主动、备用地区按需检测、全地区容差 50、美国容差 100；测速只衡量连接延迟，不等同于下载吞吐。
 - Mihomo 开启 `tcp-concurrent`，并发尝试目标的多个 IP，采用先成功的连接；保持 IPv4、ARC 缓存和 fake-ip。Surge 通用全地区保留 smart，六地区与固定业务父子组使用支持嵌套的 url-test；不机械移植其他客户端同名字段。
-- AWS IP 区域组和 `chain_socks5_ipcidr` 不再注册或调用于配置；`rules/`、上游登记与 `dist/` 产物继续保留，暂停使用不等于删除维护资产。
-- Surge 只清理随 AWS/链式功能停用的设备专用组。机场手动组是独立选择功能，即使没有规则引用也必须保留；三份私人 Surge 各保留七组，保持原订阅与过滤器，设为可见并接入手动选择入口。两份 Mihomo 保留全地区和六地区自动引擎，固定业务新增 provider 子组。
+- 2026-10-23：Webshare 网站与其他 24 个住宅代理网站域名保留；删除 ips5 专项直连、五份 AWS 地区 IP、链式 SOCKS5 与阿里系强制代理的源规则、登记、专用同步代码及产物。私有链式节点、负载均衡池和拨号引用一起清理。1Password 官方快照合并到 proxy/general_proxy，Polygon/BSC RPC 快照合并到 region/tw/crypto_tw，继续上游更新；通用代理与 Crypto 台湾出口、默认国内 DNS 保持。AdsPower 资产继续保持删除。
+- Surge 删除已撤销 AWS/链式功能的专用组和节点。机场手动组是独立选择功能，即使没有规则引用也必须保留；三份私人 Surge 各保留七组，保持原订阅与过滤器，设为可见并接入手动选择入口。两份 Mihomo 保留全地区和六地区自动引擎，固定业务新增 provider 子组。
 
 ## DNS
 
 2026-09-14 安卓下载修复是本基线的窄例外：Google/Play 使用香港业务选择组，同组海外 DoH 的 `rule-set:hk_google` 位于 AI policy 后，并使用进程兜底。保留 QUIC，禁止恢复已导致实机 Cronet 重试的 Google/Play UDP/443 拒绝。国内默认、节点 bootstrap、AI 美国与其他地区约束仍保留。
 
-2026-10-23 修订：AdsPower 从停用改为彻底删除仓库规则资产，Webshare 从住宅代理和 GFW 清单删除；取代 2026-09-12 的 AdsPower 资产保留约定。`direct/ips5_direct` 继续以 DIRECT 覆盖 `ips5.vip` 及全部子域，位于 AI 之后、Google 广谱与拒绝之前。流程见 [规则停用与删除](rule-deactivation.md)，校验继续防止旧调用恢复和直连入口被抢先覆盖。
+2026-10-23：Webshare 网站与其他 24 个住宅代理网站域名保留；删除 ips5 专项直连、五份 AWS 地区 IP、链式 SOCKS5 与阿里系强制代理的源规则、登记、专用同步代码及产物。私有链式节点、负载均衡池和拨号引用一起清理。1Password 官方快照合并到 proxy/general_proxy，Polygon/BSC RPC 快照合并到 region/tw/crypto_tw，继续上游更新；通用代理与 Crypto 台湾出口、默认国内 DNS 保持。AdsPower 资产继续保持删除。 流程见[规则停用与删除](rule-deactivation.md)。
 
 普通业务默认使用 AliDNS 与 DNSPod 两个国内 DoH，减少国内 CDN 调度偏差及海外解析绕行。不再为普通代理、拒绝或地区规则镜像大量海外 DNS policy，也不重复加载十万条性能型 DNS 专用域名清单。原清单仍保留为可选规则资产。
 
@@ -56,7 +56,7 @@ GeoIP 直接使用 `https://github.com/MetaCubeX/meta-rules-dat/releases/downloa
 
 ## 校验与经验
 
-`tools/check_performance_baseline.py` 校验带日期标记的当前配置；旧版检查仍用于没有该标记的历史配置与回归夹具。新的校验不是豁免：必须验证真实地区过滤条件、规则先后顺序、AI DNS 的代理参数、国内自举、工作拒绝边界、AWS 停用与上游地址。
+`tools/check_performance_baseline.py` 校验带日期标记的当前配置；旧版检查仍用于没有该标记的历史配置与回归夹具。新的校验不是豁免：必须验证真实地区过滤条件、规则先后顺序、AI DNS 的代理参数、国内自举、工作拒绝边界、已删除资产防回归与上游地址。
 
 - 精简注释时曾丢失私有订阅同步块标记；已按原始规则身份恢复，新增私有标记完整性检查，确保后续同步脚本仍可定位。
 - 实际运行订阅同步时发现 Surge 分支传入空缩进，但必填字符串参数拒绝空值；已在最窄的 Prefix 参数添加 AllowEmptyString，并以真实 PowerShell 参数绑定回归验证。必填参数不等于非空内容要求。

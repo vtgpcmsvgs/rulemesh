@@ -1,63 +1,9 @@
-# 1Password 专项代理规则约定
+# 1Password 通用代理规则
 
-本文记录 `proxy/onepassword_proxy` 的维护边界、自动同步来源与接入方式，避免后续把 1Password 的重度用户特化误扩散成公开模板默认行为，或把第三方依赖域名无边界地并进代理入口。
+2026-10-23 用户确认继续使用 1Password，但无需专项规则。客户端统一调用 `proxy/general_proxy`，通过 INCLUDE 合并 GitHub 核心 HTTPS 与 `rules/upstream/onepassword/core_domains.list`；不再发布 `proxy/onepassword_proxy` 或注册独立 provider。使用既有全地区自动选择，沿用默认国内 DNS。
 
-## 适用范围
+`tools/sync_upstream_rules.py` 继续每日读取 [1Password 官方端口与域名说明](https://support.1password.com/ports-domains/)，生成官方核心域名快照。必须保留 `1password.com`、`1passwordservices.com`、`1passwordusercontent.com`、`app-updates.agilebits.com`、`1infra.net`、`cache.agilebits.com`。支持官方的 .ca / .eu 变体；抓取失败、结构异常或核心域名缺失时保留旧快照并报告失败。
 
-- `rules/proxy/onepassword_proxy.list`
-- `rules/upstream/onepassword/core_domains.list`
-- `tools/sync_upstream_rules.py`
-- 本地私有家庭与公司两份 Surge Personal
-- 本地私有 `surge-work.conf`
-- 本地私有 `flclash-desktop.yaml`
-- 本地私有 `flclash-android.yaml`
+Watchtower、Fastmail、Brex、Privacy Cards 等第三方依赖不自动纳入。规则不能扩展成宽泛共享根域或关键词。
 
-## 设计目标
-
-- 为 1Password 重度用户提供稳定的 `🚀 节点选择` 专项入口
-- 规则由仓库每天自动同步，后续无需继续手工追域名
-- 只保留 1Password 官方自有核心域名与更新/基础设施端点
-- 不把 Watchtower、Fastmail、Brex、Privacy Cards 等第三方依赖域名默认卷入代理入口
-
-## 上游来源
-
-- 主来源：`https://support.1password.com/ports-domains/`
-- 同步脚本每天抓取官方支持页，再保守生成 `rules/upstream/onepassword/core_domains.list`
-- 解析结果必须保留核心域名：`1password.com`、`1passwordservices.com`、`1passwordusercontent.com`、`app-updates.agilebits.com`、`1infra.net`、`cache.agilebits.com`
-- 如果官方页面结构异常、抓取失败或缺少核心域名，本次同步会保留旧快照，不会用异常结果覆盖现有文件
-
-## 自动同步边界
-
-- 自动保留：
-  - `1password.com` / `.ca` / `.eu`
-  - `1passwordservices.com`
-  - `1passwordusercontent.com` / `.ca` / `.eu`
-  - `app-updates.agilebits.com`
-  - `1infra.net`
-  - `cache.agilebits.com`
-- 不自动保留：
-  - `api.pwnedpasswords.com`
-  - `fastmail.com`
-  - `jmap.fastmail.com`
-  - `api.privacy.com`
-  - `accounts.brex.com`
-  - `platform.brex.com`
-  - 其他只影响特定扩展功能或第三方集成的域名
-
-## 客户端接入
-
-- Surge:
-  - 接入 `dist/surge/rules/proxy/onepassword_proxy.list`
-  - 顺序必须放在 `proxy/gfw.list` 前
-- Mihomo:
-  - 接入 `dist/mihomo/classical/proxy/onepassword_proxy.yaml`
-  - 顺序必须放在 `proxy_gfw` 前
-- Surge 工作白名单:
-  - 这条规则属于显式放行入口
-- 建议顺序放在“私有订阅域名同步块”之后、其他广谱规则之前
-
-## 公开模板边界
-
-- 公开模板默认不内置 `proxy/onepassword_proxy`
-- 原因不是它无效，而是它属于“重度用户特化”而非所有用户的默认行为
-- 如果未来决定把它升级成公开模板默认入口，必须同步更新 `README.md`、`docs/usage-surge.md`、`docs/usage-mihomo.md` 与两份公开模板
+Surge 使用 `dist/surge/rules/proxy/general_proxy.list`；Mihomo 使用 `dist/mihomo/classical/proxy/general_proxy.yaml`，provider 为 `proxy_general`。放在 GitHub SSH 精确直连与 Raw 自举之后、广谱规则之前。工作白名单只放行上述精确服务，最终仍为 REJECT。公开模板与私有配置一致接入此通用入口。

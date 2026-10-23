@@ -186,9 +186,7 @@ IP 类源规则可以只写主体字段；构建产物会自动补 `no-resolve`�
 
 ## 文件边界补充
 
-- 单一区域的公有云前缀继续放在对应地区目录，例如 `rules/region/jp/tokyo_aws_ipv4.list`
-- 多地区链式代理 / 多地区 SOCKS5 端点不要因为历史来源继续挂在单一国家目录；应按当前语义放到类似 `rules/region/multi/` 的路径
-- 这类文件的头注释要明确写清：它不是某个国家地区入口，客户端默认应接到链式代理 / 自动选择 / 负载均衡组，而不是固定地区组
+- 文件路径反映当前语义；已撤销的 AWS 地区 IP 与链式 SOCKS5 资产不得恢复。
 
 ## 只改源文件、不改 dist 的情况
 
@@ -265,7 +263,7 @@ IP 类源规则可以只写主体字段；构建产物会自动补 `no-resolve`�
 
 配置归并时，先复用已有规则集并验证首条匹配；只有独立职责才新增源文件。`aisi_direct` 只承接 Surge Personal 原有爱思域名与关键词，Apple 更新复用 `apple_direct`；`ai_dns_us` 只承接 Surge AI 解析器的精确传输主机。Google Play 已有覆盖，不建立重复规则集。设备地址、订阅端点不进入公开源规则；机场界面组不是可按规则引用数删除的冗余。
 
-规则停用约定：从授权配置移除调用、内联观察项与专用 provider / DNS 依赖，保留源规则、登记、构建逻辑和产物；暂停专用任务，共用任务只停对应步骤。用户明确要求删除业务时，删除其完整资产与专用生成逻辑，并防止上游重新导入；先核对共享依赖，不顺带删除其他业务。AdsPower/Webshare 已于 2026-10-23 删除，细则见 [规则停用与删除](rule-deactivation.md)。`ips5.vip` 独立直连与国内 DNS 保留。
+规则停用保留资产；明确删除业务时清理完整依赖图，包括节点、组成员、dialer-proxy / underlying-proxy、DNS、同步与构建入口。网站访问与购买的代理端点分别确认。2026-10-23：Webshare 网站与其他 24 个住宅代理网站域名保留；删除 ips5 专项直连、五份 AWS 地区 IP、链式 SOCKS5 与阿里系强制代理的源规则、登记、专用同步代码及产物。私有链式节点、负载均衡池和拨号引用一起清理。1Password 官方快照合并到 proxy/general_proxy，Polygon/BSC RPC 快照合并到 region/tw/crypto_tw，继续上游更新；通用代理与 Crypto 台湾出口、默认国内 DNS 保持。AdsPower 资产继续保持删除。 细则见[规则停用与删除](rule-deactivation.md)。
 
 精简兜底由完整 cn_direct 与仅含 DOMAIN/DOMAIN-SUFFIX 的 gfw_precise 自动推导；保留双向域名重叠与全部 IP 规则，不手写上游镜像。cn_direct_light → gfw_precise → DIRECT 三项必须相邻，工作白名单不适用；规则语法扩展必须先补等价证明与检查。
 

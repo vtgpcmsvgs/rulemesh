@@ -45,7 +45,6 @@ merge_plan:
       - public_benchmark_candidates_plus_user_requested_domains
     notes:
       - 只保留用户指定域名和公开住宅代理基准/官方站点确认的服务主域，不使用关键词或代理节点 IP
-      - 2026-10-23 删除 Webshare，其他住宅代理服务商等待用户确认，不随本次业务撤销批量删除
 
   - id: youtube
     target: rules/proxy/youtube.list
@@ -76,17 +75,6 @@ merge_plan:
     strategy:
       - include_loyalsoldier_gfw_only
       - exact_decodo_service_suffix
-    notes:
-      - 上游同步排除 Webshare 主域及子域，避免业务撤销后重新导入
-  - id: ips5-direct
-    target: rules/direct/ips5_direct.list
-    purpose: ips5.vip 主域及全部子域直连
-    strategy:
-      - manual_only
-      - explicit_service_domain_suffix
-    notes:
-      - 七份配置在 AI 之后、Google 广谱和拒绝之前以 DIRECT 调用，使用默认国内 DNS
-
   - id: aisi-direct
     target: rules/direct/aisi_direct.list
     purpose: Surge Personal 爱思精选直连，Apple 更新复用既有 Apple 直连规则
@@ -291,20 +279,6 @@ merge_plan:
     notes:
       - 不替代通用券商规则，也不扩大到注册商或金融行业广谱域名
 
-  - id: hk-alibaba
-    target: rules/region/hk/alibaba_hk.list
-    purpose: 阿里系业务保留设备条件并默认自动择优
-    strategy:
-      - include_blackmatrix7_alibaba_and_xianyu
-      - retain_aggressive_brand_keyword_fallback
-      - bind_to_hk_auto_only_in_opt_in_client_rules
-      - reuse_same_ruleset_for_surge_overseas_dns_override
-    notes:
-      - 默认公开模板不启用，客户端应在调用层限定设备或明确的专用配置，避免改变其他终端的国内业务路径
-      - 客户端顺序必须放在 direct/ai_cn_direct、direct/cn_direct 与阿里云 SSH 指定直连入口前
-      - DNS 按已批准 2026-09-09 性能基线：普通业务默认国内双 DoH，Mihomo 仅 AI 使用专项 policy，地区必需业务优先保留出口
-      - 闲鱼除 XianYu 上游外继续保留 goofish、xianyu 与 idlefish 关键词兜底，优先避免漏网
-
   - id: hk-wps-kdocs
     target: rules/region/hk/wps_kdocs.list
     purpose: WPS Office 与金山文档统一直连，保留历史路径与既有业务覆盖
@@ -373,18 +347,6 @@ merge_plan:
       - include_upstream_first_then_local_core_fallback
       - include_loyalsoldier_gfw_and_tld_not_cn
 
-  - id: onepassword-proxy
-    target: rules/proxy/onepassword_proxy.list
-    purpose: 1Password 核心连接节点选择
-    strategy:
-      - keep_source_file_as_single_include
-      - sync_onepassword_core_domains_daily_from_official_support
-      - keep_only_first_party_core_domains_and_update_endpoints
-    notes:
-      - 只自动保留 1Password 官方自有核心域名与更新/基础设施端点
-      - 不自动并入 Watchtower、Fastmail、Brex、Privacy Cards 等第三方依赖域名
-      - 客户端顺序应放在 proxy/gfw 前；工作白名单中也应作为显式放行入口
-
   - id: github-core-proxy
     target: rules/proxy/github_core_proxy.list
     purpose: GitHub 网页、API、Gist、Raw 与静态资源节点选择入口
@@ -396,29 +358,6 @@ merge_plan:
       - Git 传输继续由 direct/github_ssh_direct 承接；本入口只处理核心 HTTPS 业务
       - 默认显式覆盖 github.com、githubassets.com 与 githubusercontent.com，不扩展到 github.io
       - 客户端顺序应放在 proxy/gfw 前；Surge 侧仍建议在它前面保留 raw.githubusercontent.com 自举入口
-
-  - id: polygon-rpc-proxy
-    target: rules/proxy/polygon_rpc_proxy.list
-    purpose: Polygon 主网 RPC 域名专项节点选择
-    strategy:
-      - keep_source_file_as_single_include
-      - sync_chainlist_polygon_rpc_hosts_daily
-      - retain_incremental_union_without_shrinking_scope
-    notes:
-      - 每日抓取 chainlist.org/rpcs.json 中 chainId=137 的最终 RPC 列表，并统一归一化为主机名规则
-      - 上游快照采用只增不减策略，避免 Chainlist 日常波动导致既有覆盖面回撤
-      - 客户端顺序应放在 proxy/gfw 前，避免被广谱代理入口提前命中
-  - id: bsc-rpc-proxy
-    target: rules/proxy/bsc_rpc_proxy.list
-    purpose: BSC 主网 RPC 域名专项节点选择
-    strategy:
-      - keep_source_file_as_single_include
-      - sync_chainlist_bsc_rpc_hosts_daily
-      - retain_incremental_union_without_shrinking_scope
-    notes:
-      - 每日抓取 chainlist.org/rpcs.json 中 chainId=56 的最终 RPC 列表，并统一归一化为主机名规则
-      - 仅覆盖 BNB Smart Chain Mainnet，不扩展到 opBNB 等其他 BNB 系链
-      - 客户端顺序应放在 proxy/gfw 前，避免被广谱代理入口提前命中
 
   - id: overseas-dns-ipv4-proxy
     target: rules/proxy/overseas_dns_ipv4_proxy.list
@@ -458,6 +397,7 @@ merge_plan:
 
   - id: tw-crypto
     target: rules/region/tw/crypto_tw.list
+    # Polygon/BSC RPC 合并为统一 Crypto 调用，台湾出口与默认国内 DNS 保持。
     purpose: 加密货币相关网站走台湾策略
     strategy:
       - keep_single_entry_file_for_client_stability
@@ -465,41 +405,6 @@ merge_plan:
       - include_blackmatrix7_cryptocurrency
     notes:
       - 覆盖区块浏览器、交易所、DeFi 与预测市场；本地保留第三方未覆盖站点，如 g42.ai
-
-  - id: hk-aws-ipv4
-    target: rules/region/hk/hk_aws_ipv4.list
-    purpose: AWS 香港 IPv4 路由入口
-    strategy:
-      - keep_source_file_as_single_include
-      - sync_aws_ap_east_1_ipv4_daily
-
-  - id: aws-tokyo-ipv4
-    target: rules/region/jp/tokyo_aws_ipv4.list
-    purpose: AWS 东京 IPv4 路由入口
-    strategy:
-      - keep_source_file_as_single_include
-      - sync_aws_ap_northeast_1_ipv4_daily
-
-  - id: aws-osaka-ipv4
-    target: rules/region/jp/osaka_aws_ipv4.list
-    purpose: AWS 大阪 IPv4 路由入口
-    strategy:
-      - keep_source_file_as_single_include
-      - sync_aws_ap_northeast_3_ipv4_daily
-
-  - id: aws-seoul-ipv4
-    target: rules/region/kr/seoul_aws_ipv4.list
-    purpose: AWS 首尔 IPv4 路由入口
-    strategy:
-      - keep_source_file_as_single_include
-      - sync_aws_ap_northeast_2_ipv4_daily
-
-  - id: aws-taipei-ipv4
-    target: rules/region/tw/taipei_aws_ipv4.list
-    purpose: AWS 台北 IPv4 路由入口
-    strategy:
-      - keep_source_file_as_single_include
-      - sync_aws_ap_east_2_ipv4_daily
 
   - id: jp-domains
     target: rules/region/jp/domains_to_jp.list
@@ -510,16 +415,6 @@ merge_plan:
     notes:
       - 当前保留 opinion.trade 显式入口，统一绑定日本地区策略
       - 只有确认存在稳定日本落点时再补充，避免把香港更稳定的解锁站点误挂到日本区域
-
-  - id: multi-chain-socks5-ipcidr
-    target: rules/region/multi/chain_socks5_ipcidr.list
-    purpose: 私有链式 SOCKS5 端点池 CIDR 入口
-    strategy:
-      - manual_only
-      - replace_from_private_provider_export
-      - keep_only_valid_unique_public_ipv4_32
-    notes:
-      - 每次以私有服务商当前导出清单全量替换；公开仓库不得保存下载地址、端口或认证信息
 
   - id: reject-os-update
     target: rules/reject/os_update_reject.list
@@ -557,6 +452,15 @@ merge_plan:
     notes:
       - 合并 Loyalsoldier 中国直连域名主体与 cn_dns_domains 小型人工白名单，并保持首次出现顺序去重
       - 只供性能配置引用，不替代工作白名单继续使用的小型 cn_dns_domains 清单
+
+  - id: general-proxy
+    target: rules/proxy/general_proxy.list
+    purpose: 通用服务代理入口，合并 GitHub 核心与 1Password
+    strategy:
+      - include_existing_github_core_and_official_onepassword_snapshot
+      - use_global_auto_without_new_service_group
+    notes:
+      - 只包含精确服务范围，工作白名单不引入 gfw 广谱
 
 runtime_plan:
   - id: shared-geoip-mmdb

@@ -1,4 +1,0 @@
-# AWS 东京 IPv4 前缀。
-# 区域映射：ap-northeast-1 = 东京。
-# 上游快照由 GitHub Actions 每日刷新。
-INCLUDE,upstream/aws/tokyo_ipv4.txt

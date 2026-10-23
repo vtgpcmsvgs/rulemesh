@@ -21,7 +21,6 @@ ROUTES = {
     "region/us/ai_us": "AI", "region/us/ai_dns_us": "AI",
     "region/hk/google_hk": "Google", "proxy/youtube": "YouTube",
     "region/hk/telegram": "Telegram", "region/tw/crypto_tw": "Crypto",
-    "proxy/polygon_rpc_proxy": "Crypto", "proxy/bsc_rpc_proxy": "Crypto",
     "region/us/microsoft_us": "Microsoft", "direct/apple_direct": "Apple",
     "region/us/macos_update_us": "Apple",
 }
@@ -29,7 +28,6 @@ IDS = {
     "hk_securities": "region/hk/hk_securities",
     "us_ai": "region/us/ai_us", "hk_google": "region/hk/google_hk", "proxy_youtube": "proxy/youtube",
     "hk_telegram": "region/hk/telegram", "tw_crypto": "region/tw/crypto_tw",
-    "proxy_polygon_rpc": "proxy/polygon_rpc_proxy", "proxy_bsc_rpc": "proxy/bsc_rpc_proxy",
     "us_microsoft": "region/us/microsoft_us", "direct_apple": "direct/apple_direct",
     "us_macos_update": "region/us/macos_update_us",
 }

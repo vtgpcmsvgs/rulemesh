@@ -215,13 +215,13 @@ function Get-EndpointProxyPolicy {
     $ruleContent = $sections[0].Groups['body'].Value
     $patterns = if ($Mode -eq "surge") {
         @(
-            '(?m)^RULE-SET,https://raw\.githubusercontent\.com/.*/proxy/onepassword_proxy\.list,"([^"]+)"',
+            '(?m)^RULE-SET,https://raw\.githubusercontent\.com/.*/proxy/general_proxy\.list,"([^"]+)"',
             '(?m)^RULE-SET,https://raw\.githubusercontent\.com/.*/proxy/gfw(?:_precise)?\.list,"([^"]+)"'
         )
     }
     else {
         @(
-            '(?m)^\s*-\s*RULE-SET,proxy_onepassword,(.+?)\s*$',
+            '(?m)^\s*-\s*RULE-SET,proxy_general,(.+?)\s*$',
             '(?m)^\s*-\s*RULE-SET,proxy_gfw(?:_precise)?,(.+?)\s*$'
         )
     }

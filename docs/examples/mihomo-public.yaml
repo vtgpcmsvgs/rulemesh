@@ -532,14 +532,6 @@ rule-providers:
     path: ./ruleset/direct/cn_services_direct.yaml
     interval: 86400
     proxy: "♻️ 自动选择"
-  direct_ips5:
-    type: http
-    behavior: classical
-    format: yaml
-    url: https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/direct/ips5_direct.yaml
-    path: ./ruleset/direct/ips5_direct.yaml
-    interval: 86400
-    proxy: "♻️ 自动选择"
   direct_cn_social:
     type: http
     behavior: classical
@@ -692,24 +684,6 @@ rule-providers:
     interval: 86400
     proxy: "♻️ 自动选择"
 
-  proxy_polygon_rpc:
-    type: http
-    behavior: classical
-    format: yaml
-    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/proxy/polygon_rpc_proxy.yaml"
-    path: ./ruleset/proxy/polygon_rpc_proxy.yaml
-    interval: 86400
-    proxy: "♻️ 自动选择"
-
-  proxy_bsc_rpc:
-    type: http
-    behavior: classical
-    format: yaml
-    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/proxy/bsc_rpc_proxy.yaml"
-    path: ./ruleset/proxy/bsc_rpc_proxy.yaml
-    interval: 86400
-    proxy: "♻️ 自动选择"
-
   proxy_overseas_dns_ipv4:
     type: http
     behavior: classical
@@ -719,12 +693,12 @@ rule-providers:
     interval: 86400
     proxy: "♻️ 自动选择"
 
-  proxy_github_core:
+  proxy_general:
     type: http
     behavior: classical
     format: yaml
-    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/proxy/github_core_proxy.yaml"
-    path: ./ruleset/proxy/github_core_proxy.yaml
+    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/proxy/general_proxy.yaml"
+    path: ./ruleset/proxy/general_proxy.yaml
     interval: 86400
     proxy: "♻️ 自动选择"
 
@@ -862,12 +836,11 @@ rules:
   # 第三方中转/模型网关含 OpenRouter、EasyAPI、CCAPI 及 CC Switch 赞助页核实的官网/API/备用入口；默认国内 DNS，分类见 docs/ai-relay-classification.md。
   - RULE-SET,multi_ai_relay,♻️ 自动选择
   - RULE-SET,multi_payment_crypto,♻️ 自动选择
-  # 住宅代理入口已移除 Webshare；其余服务保留。
+  # 住宅代理与 Webshare 网站保留；购买的代理 IP 和链式拨号另行处理。
   - RULE-SET,multi_residential_proxy,♻️ 自动选择
   - RULE-SET,direct_ai_cn,DIRECT
   - RULE-SET,direct_bytedance,DIRECT
   - RULE-SET,direct_cn_social,DIRECT
-  - RULE-SET,direct_ips5,DIRECT
   - RULE-SET,jp_domains,🇯🇵 日本-自动选择
   - RULE-SET,tw_crypto,Crypto
   - RULE-SET,hk_securities,香港券商
@@ -888,9 +861,7 @@ rules:
   - RULE-SET,hk_telegram,Telegram
   - RULE-SET,hk_global_media,♻️ 自动选择
   - RULE-SET,direct_github_ssh,DIRECT
-  - RULE-SET,proxy_github_core,♻️ 自动选择
-  - RULE-SET,proxy_polygon_rpc,Crypto
-  - RULE-SET,proxy_bsc_rpc,Crypto
+  - RULE-SET,proxy_general,♻️ 自动选择
   - RULE-SET,proxy_overseas_dns_ipv4,♻️ 自动选择,no-resolve
   - DOMAIN,localhost,DIRECT
   - DOMAIN-SUFFIX,local,DIRECT

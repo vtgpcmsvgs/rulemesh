@@ -62,25 +62,6 @@ class GoogleIpSnapshotTests(unittest.TestCase):
             sync_upstream_rules.validate_google_ip_ranges_payload(private)
 
 
-class BuildAwsSnapshotTextTests(unittest.TestCase):
-    def test_uses_expected_headers(self) -> None:
-        payload = {
-            "syncToken": "123",
-            "createDate": "2026-03-22-00-00-00",
-            "prefixes": [
-                {"region": "ap-east-1", "ip_prefix": "203.0.113.0/24"},
-            ],
-        }
-        snapshot = sync_upstream_rules.AWS_REGION_SNAPSHOTS[0]
-
-        text = sync_upstream_rules.build_aws_snapshot_text(payload, snapshot)
-
-        self.assertIn(sync_upstream_rules.AWS_IP_RANGES_URL, text)
-        self.assertIn(snapshot.title, text)
-        self.assertIn("203.0.113.0/24", text)
-        self.assertIn("123", text)
-
-
 class BuildAlicloudSnapshotTextTests(unittest.TestCase):
     def test_uses_expected_headers(self) -> None:
         payload = {

@@ -1,4 +1,0 @@
-# AWS 香港 IPv4 区域前缀。
-# 区域映射：ap-east-1 = 香港。
-# 上游快照由 GitHub Actions 每日刷新。
-INCLUDE,upstream/aws/hk_ipv4.txt

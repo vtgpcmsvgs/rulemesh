@@ -119,7 +119,7 @@ python tools/build_rules.py
 - `pull request` 到 `main` 时会校验单元测试、构建流程，以及 `rules/upstream` 与 `dist/` 是否已经提交最新结果
 - 每天 `09:30 Asia/Shanghai` 的上游同步、重建与自动回写由 [`.github/workflows/sync-upstream-rules.yml`](.github/workflows/sync-upstream-rules.yml) 单独负责
 - 这条每日上游工作流会在 `checkout` 前先发送一次 Feishu webhook 健康检查；只要 webhook 缺失、失效或发送失败，工作流会直接失败
-- 通用上游、Chainlist、1Password、AWS、阿里云等 upstream 抓取失败会统一聚合告警并让同步步骤失败，避免残缺快照继续构建或提交；如果工作流其他步骤失败，还会再发一条不依赖仓库 checkout 的工作流级失败兜底告警
+- 通用上游、Chainlist、1Password、阿里云等 upstream 抓取失败会统一聚合告警并让同步步骤失败，避免残缺快照继续构建或提交；如果工作流其他步骤失败，还会再发一条不依赖仓库 checkout 的工作流级失败兜底告警
 - 支持手动触发
 - [`.github/workflows/build-dist.yml`](.github/workflows/build-dist.yml) 不再自动拉上游或自动修复提交；如果网页端直接编辑 `main` 却漏提 `dist/`，工作流会明确报错提醒补齐
 
@@ -143,7 +143,6 @@ python tools/build_rules.py
 - [docs/geoip-upstream.md](docs/geoip-upstream.md)
 - [docs/surge-work-cluster-whitelist.md](docs/surge-work-cluster-whitelist.md)
 - [docs/private-subscription-direct-sync.md](docs/private-subscription-direct-sync.md)
-- [docs/aws-region-rules.md](docs/aws-region-rules.md)
 - [docs/alicloud-direct-rules.md](docs/alicloud-direct-rules.md)
 - [docs/github-ssh-direct-rules.md](docs/github-ssh-direct-rules.md)
 - [docs/github-core-proxy-rules.md](docs/github-core-proxy-rules.md)
@@ -160,7 +159,7 @@ python tools/build_rules.py
 - 命中前置规则的其余海外代理业务使用全地区自动组；未命中规则的 FINAL/MATCH 按 2026-09-12 用户要求使用 DIRECT，仅工作白名单保持 REJECT，不再按国家标签限制候选节点；套餐占位项继续过滤。前置 DIRECT/REJECT 行为继续保留。
 - Google、YouTube、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个地区自动组；Apple 在六地区选项后追加 DIRECT。AI 与 Microsoft 按 provider 保留美国自动子组，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，AI、Crypto、香港券商不提供 DIRECT；Microsoft 父组使用 select，手动选择美国子组或 DIRECT。google_hk 兼容路径和完整官方 IP 地址空间保留，AI、国内精选及地区必需规则都在它前面。
 - 国内默认双 DoH，AI 单独通过美国解析；Mihomo 开启 TCP 并发，保留 ARC、fake-ip，桌面 300 秒、安卓 600 秒主动测速。默认国内 DNS 后不再重复加载十万条 DNS 专用清单。
-- AWS IP 和链式 SOCKS5 的源规则、快照与构建产物保留；当前配置不再注册或调用。
+- 2026-10-23：Webshare 网站与其他 24 个住宅代理网站域名保留；删除 ips5 专项直连、五份 AWS 地区 IP、链式 SOCKS5 与阿里系强制代理的源规则、登记、专用同步代码及产物。私有链式节点、负载均衡池和拨号引用一起清理。1Password 官方快照合并到 proxy/general_proxy，Polygon/BSC RPC 快照合并到 region/tw/crypto_tw，继续上游更新；通用代理与 Crypto 台湾出口、默认国内 DNS 保持。AdsPower 资产继续保持删除。
 - GeoIP 直接使用 [MetaCubeX country.mmdb](https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/country.mmdb)，停止本仓库二次 Release 发布。未定制的公共资源优先活跃上游，自定义规则继续引用 dist。
 
 当前维护边界：
@@ -169,8 +168,8 @@ python tools/build_rules.py
 - 家庭和公司两份 Surge Personal 只允许用途说明与 MITM 不同，路由与 DNS 同步；两份 Mihomo 的 provider 和地区策略同步。
 - GitHub SSH 精确直连先于 Core / gfw；Raw 自举入口与海外 Host 解析独立保留。工作文件已有 GitHub 观察规则保留；AdsPower 观察规则已删除。
 - Outlook 邮件、精确共享认证与资源直连，不放宽 Microsoft 根域。WPS 统一直连、Microsoft Store 固定美国，Notion 复用香港自动选择，香港证券与用户指定 GoDaddy、尊嘉证券保留香港；supado.com 归入 AI 中转站规则集并使用全地区自动选择。详见 [Notion 网页优化](docs/notion-network-optimization.md)。
-- 阿里云 SSH 仅 TCP/22 的内联兜底必须先于远程规则；阿里控制面与出口探测精确直连保留。已登记设备的阿里业务条件仍保留源地址，普通代理策略改为自动组。
-- AdsPower 已于 2026-10-23 按业务撤销要求删除主清单、三类规则、登记、派生器与产物；Webshare 从住宅代理与 GFW 清单移除，上游同步防止重新导入。其他候选见[业务规则清理审计](docs/business-rule-cleanup-20261023.md)。Polygon、BSC 和可选 1Password 等上游持续更新。
+- 阿里云 SSH 仅 TCP/22 的内联兜底必须先于远程规则；阿里控制面与出口探测精确直连保留。阿里系强制代理条件与专用资产已删除。
+- 1Password 通过通用代理入口接入，Polygon/BSC 通过 Crypto 台湾入口接入；Webshare 网站保留。清理范围见[业务规则清理记录](docs/business-rule-cleanup-20261023.md)。
 - Surge 测速保留 HTTP，Mihomo 保留 HTTPS；Surge 不写 dns-mode 或 proxy-server-nameserver。传统 DNS 接管、节点 bootstrap、IPv4 基线与微信本机回环例外继续保留。
 - 机场官网访问与订阅下载必须按用途区分：官网访问代理、后台订阅 DIRECT；共用端点保持浏览器代理兼容行为，订阅专用端点直接 DIRECT；同步脚本按明确 Target 执行，且必须保留同步块起止标记。
 - 2026-05-07 下线的激进拒绝入口不恢复；本地只读监控仍使用 RM-INV / RM-EXEC 两阶段授权，不自动修改配置。
@@ -314,7 +313,6 @@ ai_us 同时承接 OpenAI、Claude、Copilot、Cursor、Grok、Windsurf、Augmen
 
 机场策略与配置精简：三份私人 Surge 的七个机场手动组分别保留并接回选择入口，不按规则引用数量删除。Personal 爱思入口集中为 `direct/aisi_direct`；Apple 更新和 Google Play 复用既有规则集；Surge AI DNS 的美国出口集中为 `region/us/ai_dns_us`。Mihomo 保持已有组与 DNS 代理参数，不扩大业务范围。设备地址及订阅端点继续只在私人仓库维护，详见 [性能基线](docs/performance-baseline.md)。
 
-2026-09-12：`direct/ips5_direct` 以 DIRECT 覆盖 `ips5.vip` 主域及全部子域，位于 AI 之后、Google 广谱与拒绝之前，使用默认国内双 DoH；工作白名单仅增加该服务。2026-10-23 已进一步删除 AdsPower 与 Webshare 业务规则，见[规则停用与删除](docs/rule-deactivation.md)。
 
 2026-09-12 FlClash 迁移与优化以 [客户端性能基线](docs/flclash-performance.md) 为准：桌面和安卓使用新文件名；通用末尾改为 cn_direct_light → gfw_precise → DIRECT，完整规则资产保留。工作白名单不接入新兜底，机场手动组保留。桌面 300 秒、安卓 600 秒，备用地区按需检测；以最终生成配置核对界面覆写。
 

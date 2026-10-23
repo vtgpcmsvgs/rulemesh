@@ -1,0 +1,9 @@
+# 通用服务代理入口：合并 GitHub 核心 HTTPS 与 1Password 官方核心连接。
+# 边界：不包含顶级域、全站关键词或住宅代理节点；使用既有全地区自动选择组。
+# 顺序：GitHub SSH 精确直连及 Raw 自举之后、广谱规则之前；工作白名单只显式放行本清单。
+
+# GitHub 核心 HTTPS：复用原源文件，保持 SSH 与网页访问边界。
+INCLUDE,proxy/github_core_proxy.list
+
+# 1Password：保留官方域名更新，不再单独注册客户端规则集。
+INCLUDE,upstream/onepassword/core_domains.list

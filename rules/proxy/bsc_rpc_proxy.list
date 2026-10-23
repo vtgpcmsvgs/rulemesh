@@ -1,6 +1,0 @@
-# BSC 主网 RPC 节点选择规则。
-# 维护原则：
-# 1) 真正的域名集合由 tools/sync_upstream_rules.py 每日从 Chainlist 最终产物自动抓取并累计写入 upstream 快照。
-# 2) 仅针对 chainId=56 的 BNB Smart Chain Mainnet，不包含 opBNB 等其他 BNB 系链。
-# 3) 客户端接入时必须放在 proxy/gfw 前，避免被广谱代理规则提前命中。
-INCLUDE,upstream/chainlist/bsc_rpc_domains.list

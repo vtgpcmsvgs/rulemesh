@@ -36,7 +36,6 @@ FETCH_EXCEPTIONS = (
 FETCH_AND_VALUE_EXCEPTIONS = (*FETCH_EXCEPTIONS, ValueError)
 RULEMESH_REPO = "vtgpcmsvgs/rulemesh"
 RULEMESH_REPO_URL = f"https://github.com/{RULEMESH_REPO}"
-AWS_IP_RANGES_URL = "https://ip-ranges.amazonaws.com/ip-ranges.json"
 GOOGLE_IP_RANGES_URL = "https://www.gstatic.com/ipranges/goog.json"
 GOOGLE_IP_SNAPSHOT_PATH = Path("google/goog_ip_ranges.list")
 ALICLOUD_PUBLIC_IP_DOC_URL = (
@@ -172,13 +171,6 @@ class UpstreamFile:
 
 
 @dataclass(frozen=True)
-class AwsRegionSnapshot:
-    path: Path
-    regions: tuple[str, ...]
-    title: str
-
-
-@dataclass(frozen=True)
 class AlicloudCredentials:
     access_key_id: str
     access_key_secret: str
@@ -262,10 +254,6 @@ UPSTREAM_FILES = (
         "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/BiliBili/BiliBili.list",
     ),
     UpstreamFile(
-        Path("blackmatrix7/alibaba.list"),
-        "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Alibaba/Alibaba.list",
-    ),
-    UpstreamFile(
         Path("blackmatrix7/bytedance.list"),
         "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/ByteDance/ByteDance.list",
     ),
@@ -322,10 +310,6 @@ UPSTREAM_FILES = (
         "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/YouTube/YouTube.list",
     ),
     UpstreamFile(
-        Path("blackmatrix7/xianyu.list"),
-        "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/XianYu/XianYu.list",
-    ),
-    UpstreamFile(
         Path("skywalkerji/cursor.list"),
         "https://raw.githubusercontent.com/SkywalkerJi/Clash-Rules/master/AI/Cursor.yaml",
         source_repo="SkywalkerJi/Clash-Rules",
@@ -357,34 +341,6 @@ UPSTREAM_FILES = (
     ),
 )
 
-AWS_JSON_PATH = Path("aws/ip-ranges.json")
-AWS_REGION_SNAPSHOTS = (
-    AwsRegionSnapshot(
-        path=Path("aws/hk_ipv4.txt"),
-        regions=("ap-east-1",),
-        title="AWS 香港 IPv4（ap-east-1）",
-    ),
-    AwsRegionSnapshot(
-        path=Path("aws/tokyo_ipv4.txt"),
-        regions=("ap-northeast-1",),
-        title="AWS 东京 IPv4（ap-northeast-1）",
-    ),
-    AwsRegionSnapshot(
-        path=Path("aws/osaka_ipv4.txt"),
-        regions=("ap-northeast-3",),
-        title="AWS 大阪 IPv4（ap-northeast-3）",
-    ),
-    AwsRegionSnapshot(
-        path=Path("aws/seoul_ipv4.txt"),
-        regions=("ap-northeast-2",),
-        title="AWS 首尔 IPv4（ap-northeast-2）",
-    ),
-    AwsRegionSnapshot(
-        path=Path("aws/taipei_ipv4.txt"),
-        regions=("ap-east-2",),
-        title="AWS 台北 IPv4（ap-east-2）",
-    ),
-)
 
 ALICLOUD_REGION_SNAPSHOTS = (
     AlicloudRegionSnapshot(
@@ -641,19 +597,6 @@ def normalize_clash_yaml_payload(item: UpstreamFile, text: str) -> str:
 
 def normalize_upstream_text(item: UpstreamFile, text: str) -> str:
     if item.format_hint == "raw":
-        if item.path == Path("loyalsoldier/gfw.txt"):
-            # 业务已撤销：同步时移除 Webshare 主域及子域，避免上游更新恢复旧入口。
-            kept = []
-            for raw in text.splitlines():
-                domain = raw.strip().lower().lstrip("+.")
-                fields = [part.strip().lower() for part in raw.split(",")]
-                if len(fields) >= 2 and fields[0] in {"domain", "domain-suffix"}:
-                    domain = fields[1].lstrip("+.")
-                domain = domain.rstrip(".")
-                if domain == "webshare.io" or domain.endswith(".webshare.io"):
-                    continue
-                kept.append(raw)
-            return normalize_text("\n".join(kept))
         return text
     if item.format_hint == "clash_yaml_payload":
         return normalize_clash_yaml_payload(item, text)
@@ -1077,7 +1020,7 @@ def build_chainlist_rpc_snapshot_text(
         f"# 标题: {snapshot.title}",
         f"# chainId: {snapshot.chain_id}",
         "# 维护策略: 只增不减；保留历史已收录主机名，避免上游日常波动导致覆盖面回撤。",
-        "# 规则展开: 每个主机名同时生成 DOMAIN 与 DOMAIN-WILDCARD，统一收敛为节点选择入口。",
+        "# 规则展开: 每个主机名同时生成 DOMAIN 与 DOMAIN-WILDCARD，由统一 Crypto 台湾入口承接。",
         f"# 本次抓取主机数: {len(current_hosts)}",
         f"# 累计主机数: {len(cumulative_hosts)}",
         f"# 同步时间: {synced_at}",
@@ -1282,15 +1225,6 @@ def sync_onepassword_snapshot(failures: list[UpstreamFailure]) -> tuple[int, int
     return 0, 0
 
 
-def validate_aws_payload(data: object) -> dict[str, object]:
-    if not isinstance(data, dict):
-        raise ValueError("AWS payload is not a JSON object")
-    prefixes = data.get("prefixes")
-    if not isinstance(prefixes, list):
-        raise ValueError("AWS payload is missing the prefixes array")
-    return data
-
-
 def validate_google_ip_ranges_payload(
     data: object,
 ) -> tuple[dict[str, object], list[ipaddress.IPv4Network], list[ipaddress.IPv6Network]]:
@@ -1392,139 +1326,6 @@ def sync_google_ip_snapshot(failures: list[UpstreamFailure]) -> tuple[int, int]:
         return 1, 0
     print(f"[SKIP] {GOOGLE_IP_SNAPSHOT_PATH.as_posix()}")
     return 0, 0
-
-
-def collect_aws_ipv4_prefixes(
-    payload: dict[str, object],
-    regions: tuple[str, ...],
-) -> tuple[list[str], list[tuple[str, list[str]]]]:
-    entries = payload["prefixes"]
-    assert isinstance(entries, list)
-
-    per_region: list[tuple[str, list[str]]] = []
-    combined: list[str] = []
-
-    for region in regions:
-        region_prefixes = ordered_unique(
-            [
-                ip_prefix.strip()
-                for entry in entries
-                if isinstance(entry, dict)
-                and entry.get("region") == region
-                and isinstance(entry.get("ip_prefix"), str)
-                and (ip_prefix := entry["ip_prefix"]).strip()
-            ]
-        )
-        per_region.append((region, region_prefixes))
-        combined.extend(region_prefixes)
-
-    return ordered_unique(combined), per_region
-
-
-def build_aws_snapshot_text(payload: dict[str, object], snapshot: AwsRegionSnapshot) -> str:
-    prefixes, per_region = collect_aws_ipv4_prefixes(payload, snapshot.regions)
-    sync_token = str(payload.get("syncToken", "unknown"))
-    create_date = str(payload.get("createDate", "unknown"))
-
-    lines = [
-        f"# 来源: {AWS_IP_RANGES_URL}",
-        f"# 标题: {snapshot.title}",
-        f"# 同步令牌: {sync_token}",
-        f"# 上游创建时间: {create_date}",
-        f"# 区域: {', '.join(snapshot.regions)}",
-        "# 范围: 所选 AWS 区域公开发布的全部 IPv4 前缀。",
-        f"# IPv4 前缀数量: {len(prefixes)}",
-    ]
-    lines.extend(
-        f"# {region}: {len(region_prefixes)} 条前缀"
-        for region, region_prefixes in per_region
-    )
-    lines.append("")
-    lines.extend(prefixes)
-    lines.append("")
-    return "\n".join(lines)
-
-
-def sync_aws_snapshots(failures: list[UpstreamFailure]) -> tuple[int, int]:
-    try:
-        raw_text = fetch_text(AWS_IP_RANGES_URL)
-    except FETCH_EXCEPTIONS as exc:
-        print(f"[WARN] aws/ip-ranges.json fetch failed: {exc}")
-        record_failure(
-            failures,
-            source="AWS 官方地址池",
-            resource=AWS_JSON_PATH.as_posix(),
-            url=AWS_IP_RANGES_URL,
-            category=classify_fetch_failure(exc),
-            detail=format_exception_message(exc),
-        )
-        return 0, 1
-
-    try:
-        payload = validate_aws_payload(json.loads(raw_text))
-    except (json.JSONDecodeError, ValueError) as exc:
-        print(f"[WARN] aws/ip-ranges.json parse failed: {exc}")
-        record_failure(
-            failures,
-            source="AWS 官方地址池",
-            resource=AWS_JSON_PATH.as_posix(),
-            url=AWS_IP_RANGES_URL,
-            category="返回内容异常",
-            detail=format_exception_message(exc),
-        )
-        return 0, 1
-
-    prefixes = payload.get("prefixes")
-    assert isinstance(prefixes, list)
-    if not prefixes:
-        detail = "AWS payload prefixes 数组为空"
-        print(f"[WARN] aws/ip-ranges.json parse failed: {detail}")
-        record_failure(
-            failures,
-            source="AWS 官方地址池",
-            resource=AWS_JSON_PATH.as_posix(),
-            url=AWS_IP_RANGES_URL,
-            category="上游内容为空",
-            detail=detail,
-        )
-        return 0, 1
-
-    changed = 0
-    failed = 0
-
-    if write_if_changed(
-        UPSTREAM_ROOT / AWS_JSON_PATH,
-        json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
-    ):
-        print(f"[UPDATE] {AWS_JSON_PATH.as_posix()}")
-        changed += 1
-    else:
-        print(f"[SKIP] {AWS_JSON_PATH.as_posix()}")
-
-    for snapshot in AWS_REGION_SNAPSHOTS:
-        snapshot_prefixes, _ = collect_aws_ipv4_prefixes(payload, snapshot.regions)
-        if not snapshot_prefixes:
-            detail = f"{', '.join(snapshot.regions)} 在 AWS payload 中没有任何 IPv4 前缀"
-            print(f"[WARN] {snapshot.path.as_posix()} sync failed: {detail}")
-            record_failure(
-                failures,
-                source="AWS 区域快照",
-                resource=snapshot.path.as_posix(),
-                url=AWS_IP_RANGES_URL,
-                category="区域前缀为空",
-                detail=detail,
-            )
-            failed += 1
-            continue
-
-        rendered = build_aws_snapshot_text(payload, snapshot)
-        if write_if_changed(UPSTREAM_ROOT / snapshot.path, rendered):
-            print(f"[UPDATE] {snapshot.path.as_posix()}")
-            changed += 1
-        else:
-            print(f"[SKIP] {snapshot.path.as_posix()}")
-
-    return changed, failed
 
 
 def env_value(*names: str) -> str | None:
@@ -2832,7 +2633,6 @@ SYNC_TASKS = (
     SyncTask(name="onepassword", runner=sync_onepassword_snapshot),
     SyncTask(name="chainlist", runner=sync_chainlist_rpc_snapshots),
     SyncTask(name="hkex_participants", runner=sync_hkex_participant_websites),
-    SyncTask(name="aws", runner=sync_aws_snapshots),
     SyncTask(name="alicloud", runner=sync_alicloud_snapshots),
 )
 

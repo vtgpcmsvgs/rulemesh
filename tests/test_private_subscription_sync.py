@@ -32,7 +32,7 @@ SURGE = """# 注释里的 [Rule] 不是节标题。
 [Proxy Group]
 自动组 = select, DIRECT
 [Rule]
-RULE-SET,https://raw.githubusercontent.com/example/repo/main/proxy/onepassword_proxy.list,"自动组"
+RULE-SET,https://raw.githubusercontent.com/example/repo/main/proxy/general_proxy.list,"自动组"
 # >>> PRIVATE_SUBSCRIPTION_DIRECT_START
 DOMAIN,old.example,DIRECT
 # <<< PRIVATE_SUBSCRIPTION_DIRECT_END
@@ -44,7 +44,7 @@ MIHOMO = """proxy-providers:
     url: https://shared.example/subscription
     proxy: DIRECT
 rules:
-  - RULE-SET,proxy_onepassword,自动组
+  - RULE-SET,proxy_general,自动组
   # >>> PRIVATE_SUBSCRIPTION_DIRECT_START
   - DOMAIN,old.example,DIRECT
   # <<< PRIVATE_SUBSCRIPTION_DIRECT_END
