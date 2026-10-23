@@ -105,8 +105,8 @@
       "category": "direct",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 120535,
-        "mihomo_classical": 120535
+        "surge_rules": 120533,
+        "mihomo_classical": 120533
       },
       "dist": {
         "surge_rules": "dist/surge/rules/direct/cn_direct.list",
@@ -118,8 +118,8 @@
       "category": "direct",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 10121,
-        "mihomo_classical": 10121
+        "surge_rules": 10119,
+        "mihomo_classical": 10119
       },
       "dist": {
         "surge_rules": "dist/surge/rules/direct/cn_direct_light.list",
@@ -235,8 +235,8 @@
       "category": "proxy",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 132,
-        "mihomo_classical": 132
+        "surge_rules": 134,
+        "mihomo_classical": 134
       },
       "dist": {
         "surge_rules": "dist/surge/rules/proxy/bsc_rpc_proxy.list",
