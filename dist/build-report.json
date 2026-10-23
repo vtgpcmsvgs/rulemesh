@@ -1,27 +1,14 @@
 {
   "summary": {
-    "domain-only": 19,
+    "domain-only": 18,
     "ipcidr-only": 7,
-    "classical/mixed": 30,
+    "classical/mixed": 28,
     "dns-domain-set": 2,
     "empty": 0,
-    "total_sources": 58,
+    "total_sources": 55,
     "total_warnings": 0
   },
   "sources": [
-    {
-      "source": "rules/direct/adspower_direct.list",
-      "category": "direct",
-      "classification": "classical/mixed",
-      "counts": {
-        "surge_rules": 4,
-        "mihomo_classical": 4
-      },
-      "dist": {
-        "surge_rules": "dist/surge/rules/direct/adspower_direct.list",
-        "mihomo_classical": "dist/mihomo/classical/direct/adspower_direct.yaml"
-      }
-    },
     {
       "source": "rules/direct/ai_cn_direct.list",
       "category": "direct",
@@ -218,19 +205,6 @@
       }
     },
     {
-      "source": "rules/proxy/adspower_proxy.list",
-      "category": "proxy",
-      "classification": "domain-only",
-      "counts": {
-        "surge_rules": 6,
-        "mihomo_classical": 6
-      },
-      "dist": {
-        "surge_rules": "dist/surge/rules/proxy/adspower_proxy.list",
-        "mihomo_classical": "dist/mihomo/classical/proxy/adspower_proxy.yaml"
-      }
-    },
-    {
       "source": "rules/proxy/bsc_rpc_proxy.list",
       "category": "proxy",
       "classification": "classical/mixed",
@@ -248,8 +222,8 @@
       "category": "proxy",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 5262,
-        "mihomo_classical": 5262
+        "surge_rules": 5261,
+        "mihomo_classical": 5261
       },
       "dist": {
         "surge_rules": "dist/surge/rules/proxy/gfw.list",
@@ -261,8 +235,8 @@
       "category": "proxy",
       "classification": "domain-only",
       "counts": {
-        "surge_rules": 4433,
-        "mihomo_classical": 4433
+        "surge_rules": 4432,
+        "mihomo_classical": 4432
       },
       "dist": {
         "surge_rules": "dist/surge/rules/proxy/gfw_precise.list",
@@ -599,8 +573,8 @@
       "category": "region",
       "classification": "domain-only",
       "counts": {
-        "surge_rules": 25,
-        "mihomo_classical": 25
+        "surge_rules": 24,
+        "mihomo_classical": 24
       },
       "dist": {
         "surge_rules": "dist/surge/rules/region/multi/residential_proxy.list",
@@ -709,19 +683,6 @@
       "dist": {
         "surge_rules": "dist/surge/rules/reject/adblock_reject.list",
         "mihomo_classical": "dist/mihomo/classical/reject/adblock_reject.yaml"
-      }
-    },
-    {
-      "source": "rules/reject/adspower_reject.list",
-      "category": "reject",
-      "classification": "classical/mixed",
-      "counts": {
-        "surge_rules": 30,
-        "mihomo_classical": 20
-      },
-      "dist": {
-        "surge_rules": "dist/surge/rules/reject/adspower_reject.list",
-        "mihomo_classical": "dist/mihomo/classical/reject/adspower_reject.yaml"
       }
     },
     {

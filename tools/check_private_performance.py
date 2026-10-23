@@ -548,7 +548,7 @@ def validate_mihomo(path: Path, lines: list[str]) -> list[PerformanceFinding]:
                     "把 google_hk 固定到香港自动选择组。",
                 )
             )
-        blocking_providers = {"reject_adblock", "reject_os_update", "reject_adspower", "us_ai", "proxy_overseas_dns_ipv4"}
+        blocking_providers = {"reject_adblock", "reject_os_update", "us_ai", "proxy_overseas_dns_ipv4"}
         if any(
             position < google_position
             and len(parts) >= 2

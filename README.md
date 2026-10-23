@@ -22,7 +22,6 @@ Clash Mi iOS 使用独立私有配置 `clashmi-ios.yaml`，由桌面业务配置
 
 ```text
 rules/
-  app/         # 应用级主清单（构建前自动派生）
   dns/         # DNS 专用域名清单源文件
   reject/      # 拒绝类源规则
   direct/      # 直连类源规则
@@ -52,7 +51,6 @@ private-repository.json # 私人配置仓库的机器可读发现登记
 
 - `rules/` 下参与构建的源规则文件统一使用 `.list` 命名
 - `rules/dns/` 用于维护 DNS 专用域名清单；`cn_dns_domains.list` 生成小型精选 `dist/surge/dns/cn_dns_domains.list`，`cn_performance_dns_domains.list` 自动合并中国直连域名主体与前者，生成性能型 `dist/surge/dns/cn_performance_dns_domains.list`
-- `rules/app/` 用于维护单一应用的主清单；例如 `rules/app/adspower.txt` 会在构建前自动派生到 `rules/reject/`、`rules/direct/` 与 `rules/proxy/`
 - 例如 `rules/region/hk/google_hk.list` 会生成 `dist/surge/rules/region/hk/google_hk.list` 与 `dist/mihomo/classical/region/hk/google_hk.yaml`
 - `dist/build-report.json` 会记录每个源文件被识别为 `domain-only`、`ipcidr-only` 或 `classical/mixed`，以及构建警告
 - 这些分类结果只用于维护诊断，不再对应额外的 `domainset` / `domain` / `ipcidr` 产物目录
@@ -88,7 +86,6 @@ python tools/build_rules.py
 
 构建脚本会：
 
-- 先把 `rules/app/adspower.txt` 自动派生到 `rules/reject/adspower_reject.list`、`rules/direct/adspower_direct.list` 与 `rules/proxy/adspower_proxy.list`
 - 从 `rules/` 读取源规则
 - 自动生成 `dist/surge/rules/`、`dist/surge/dns/` 与 `dist/mihomo/classical/`
 - 将纯域名规则规范化成显式规则行，例如 `.example.com` 会输出成 `DOMAIN-SUFFIX,example.com`
@@ -104,7 +101,7 @@ python tools/build_rules.py
 
 最小发布流程：
 
-1. 修改 `rules/app/` 主清单或 `rules/` 源规则
+1. 修改 `rules/` 源规则
 2. 运行 `powershell -ExecutionPolicy Bypass -File tools/build_rules.ps1`
 3. 检查 `dist/` 与 `dist/build-report.json`
 4. 提交 `rules/`、`dist/`、文档与 CI 改动
@@ -163,10 +160,10 @@ python tools/build_rules.py
 
 - 工作白名单保持最终 `FINAL,REJECT` 和既有设备条件，只补充微信、小红书精选直连，不增加 cn_direct / gfw 广谱放行；Personal 专项入口不得复制进去。
 - 家庭和公司两份 Surge Personal 只允许用途说明与 MITM 不同，路由与 DNS 同步；两份 Mihomo 的 provider 和地区策略同步。
-- GitHub SSH 精确直连先于 Core / gfw；Raw 自举入口与海外 Host 解析独立保留。工作文件已有 GitHub 观察规则保留；AdsPower 观察规则已按用户要求停用。
+- GitHub SSH 精确直连先于 Core / gfw；Raw 自举入口与海外 Host 解析独立保留。工作文件已有 GitHub 观察规则保留；AdsPower 观察规则已删除。
 - Outlook 邮件、精确共享认证与资源直连，不放宽 Microsoft 根域。WPS 统一直连、Microsoft Store 固定美国，Notion 复用香港自动选择，香港证券与用户指定 GoDaddy、尊嘉证券保留香港；supado.com 归入 AI 中转站规则集并使用全地区自动选择。详见 [Notion 网页优化](docs/notion-network-optimization.md)。
 - 阿里云 SSH 仅 TCP/22 的内联兜底必须先于远程规则；阿里控制面与出口探测精确直连保留。已登记设备的阿里业务条件仍保留源地址，普通代理策略改为自动组。
-- AdsPower 保留主清单与 reject/direct/proxy 产物，当前配置不再调用；Polygon、BSC 和可选 1Password 等上游持续更新，不直接替换掉本地定制规则。
+- AdsPower 已于 2026-10-23 按业务撤销要求删除主清单、三类规则、登记、派生器与产物；Webshare 从住宅代理与 GFW 清单移除，上游同步防止重新导入。其他候选见[业务规则清理审计](docs/business-rule-cleanup-20261023.md)。Polygon、BSC 和可选 1Password 等上游持续更新。
 - Surge 测速保留 HTTP，Mihomo 保留 HTTPS；Surge 不写 dns-mode 或 proxy-server-nameserver。传统 DNS 接管、节点 bootstrap、IPv4 基线与微信本机回环例外继续保留。
 - 机场官网访问与订阅下载必须按用途区分：官网访问代理、后台订阅 DIRECT；共用端点保持浏览器代理兼容行为，订阅专用端点直接 DIRECT；同步脚本按明确 Target 执行，且必须保留同步块起止标记。
 - 2026-05-07 下线的激进拒绝入口不恢复；本地只读监控仍使用 RM-INV / RM-EXEC 两阶段授权，不自动修改配置。
@@ -284,7 +281,7 @@ ai_us 同时承接 OpenAI、Claude、Copilot、Cursor、Grok、Windsurf、Augmen
 - 动手前先把本次改动归类到“源规则 / 上游登记 / 公开说明模板 / 构建与检查脚本 / 私有同步项”；高风险联动没想清前，不要直接编辑
 - 优先改 `rules/`，不要直接手改 `dist/`
 - 新增规则前，先想清楚它是 `reject`、`direct`、`proxy` 还是 `region`
-- 遇到单一应用同时涉及多种动作时，优先维护 `rules/app/*.txt` 主清单，再由构建前同步派生到现有分类
+- 单一应用涉及多种动作时，分别维护现有分类源规则；当前构建不再提供 AdsPower 应用主清单派生步骤
 - 新增、删除或重命名 `rules/{reject,direct,proxy,region}/` 下的 `.list` 源规则文件时，同步更新 `rules/upstream/sources.yaml` 与 `rules/upstream/merge.yaml`
 - 新增或调整默认对外使用的规则入口、顺序、策略含义时，同步更新 `README.md`、`docs/usage-surge.md`、`docs/usage-mihomo.md` 与两份公开模板
 - 新增或调整 Mihomo 默认的 Tun、嗅探、DNS 分流、安全边界或性能取舍时，同步更新 `docs/mihomo-tun-dns-methodology.md`
@@ -310,7 +307,7 @@ ai_us 同时承接 OpenAI、Claude、Copilot、Cursor、Grok、Windsurf、Augmen
 
 机场策略与配置精简：三份私人 Surge 的七个机场手动组分别保留并接回选择入口，不按规则引用数量删除。Personal 爱思入口集中为 `direct/aisi_direct`；Apple 更新和 Google Play 复用既有规则集；Surge AI DNS 的美国出口集中为 `region/us/ai_dns_us`。Mihomo 保持已有组与 DNS 代理参数，不扩大业务范围。设备地址及订阅端点继续只在私人仓库维护，详见 [性能基线](docs/performance-baseline.md)。
 
-2026-09-12：`direct/ips5_direct` 以 DIRECT 覆盖 `ips5.vip` 主域及全部子域，位于 AI 之后、Google 广谱与拒绝之前，使用默认国内双 DoH；工作白名单仅增加该服务。AdsPower 停用范围、资产与定时任务处理见[规则停用与恢复](docs/rule-deactivation.md)。
+2026-09-12：`direct/ips5_direct` 以 DIRECT 覆盖 `ips5.vip` 主域及全部子域，位于 AI 之后、Google 广谱与拒绝之前，使用默认国内双 DoH；工作白名单仅增加该服务。2026-10-23 已进一步删除 AdsPower 与 Webshare 业务规则，见[规则停用与删除](docs/rule-deactivation.md)。
 
 2026-09-12 FlClash 迁移与优化以 [客户端性能基线](docs/flclash-performance.md) 为准：桌面和安卓使用新文件名；通用末尾改为 cn_direct_light → gfw_precise → DIRECT，完整规则资产保留。工作白名单不接入新兜底，机场手动组保留。桌面 300 秒、安卓 600 秒，备用地区按需检测；以最终生成配置核对界面覆写。
 

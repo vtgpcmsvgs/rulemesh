@@ -641,6 +641,19 @@ def normalize_clash_yaml_payload(item: UpstreamFile, text: str) -> str:
 
 def normalize_upstream_text(item: UpstreamFile, text: str) -> str:
     if item.format_hint == "raw":
+        if item.path == Path("loyalsoldier/gfw.txt"):
+            # 业务已撤销：同步时移除 Webshare 主域及子域，避免上游更新恢复旧入口。
+            kept = []
+            for raw in text.splitlines():
+                domain = raw.strip().lower().lstrip("+.")
+                fields = [part.strip().lower() for part in raw.split(",")]
+                if len(fields) >= 2 and fields[0] in {"domain", "domain-suffix"}:
+                    domain = fields[1].lstrip("+.")
+                domain = domain.rstrip(".")
+                if domain == "webshare.io" or domain.endswith(".webshare.io"):
+                    continue
+                kept.append(raw)
+            return normalize_text("\n".join(kept))
         return text
     if item.format_hint == "clash_yaml_payload":
         return normalize_clash_yaml_payload(item, text)

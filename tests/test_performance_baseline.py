@@ -14,13 +14,13 @@ import build_rules
 
 
 class PerformanceBaselineTests(unittest.TestCase):
-    def test_adspower_deactivation_blocks_calls_and_orphan_providers(self):
+    def test_adspower_removal_blocks_calls_and_orphan_providers(self):
         for client in ('surge', 'mihomo'):
             path, text = self.fixture(client)
             for injected in ('DOMAIN-KEYWORD,adspower,DIRECT', 'RULE-SET,reject_adspower,REJECT', '  direct_adspower:', 'DOMAIN,api.adspowerapp.com,DIRECT'):
                 with self.subTest(client=client, injected=injected):
                     errors = baseline.check(path, (text + '\n' + injected).splitlines())
-                    self.assertTrue(any('AdsPower 已停用' in error for error in errors))
+                    self.assertTrue(any('AdsPower 已删除' in error for error in errors))
 
     def test_ips5_direct_cannot_be_removed_rerouted_or_shadowed(self):
         for client in ('surge', 'mihomo'):

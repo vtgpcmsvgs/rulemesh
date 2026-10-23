@@ -21,7 +21,7 @@ AWS IP 与链式 SOCKS5 设备分流调用已停用；仓库源规则与产物�
 
 - 不接入 `proxy/gfw`、`direct/cn_direct`、网易或哔哩哔哩广谱直连。Personal 的 Apple、Outlook、Notion、personal_priority、香港证券增强和 Microsoft Store 专项不复制进工作文件；用户指定的 GoDaddy 与尊嘉证券仅作为本文件的精确香港白名单入口，supado.com 由 AI 中转站规则集使用全地区自动选择。
 - WPS 保留显式 DIRECT 入口，早于 Google 广谱和最终拒绝。`zsxq.com`、`yikaiying.com` 的既有精确 DIRECT 继续保留。
-- GitHub SSH carve-out、Raw 下载、Core 规则和已有 GitHub 广覆盖观察项独立保留；AdsPower 三类规则与观察兜底已按用户要求全部停用，仓库资产继续保留。GitHub 观察项仍不得因通用去重而删除。
+- GitHub SSH carve-out、Raw 下载、Core 规则和已有 GitHub 广覆盖观察项独立保留；AdsPower 规则、观察兜底与仓库资产已按 2026-10-23 业务撤销要求删除，Webshare 从住宅代理与 GFW 清单移除。工作白名单不会为其新增放行，最终 REJECT 保持。GitHub 观察项仍不得因通用去重而删除。
 - 订阅源只在私人目录维护，起止标记必须保留。`-Target surge` 同步浏览器自动代理例外和普通订阅更新 DIRECT；其他客户端不因共享源顺带改动。
 - Polygon/BSC RPC 与 Crypto 同属台湾出站；1Password 和其他无地区要求的白名单代理用自动组。
 - 阿里云 SSH 保留 TCP/22 内联兜底、远程 `DIRECT,no-resolve` 与指定控制面、出口探测直连；不扩展端口或恢复阿里云广谱放行。
@@ -41,7 +41,7 @@ Surge Enhanced Mode 由客户端启用，profile 不写 dns-mode；保留 localh
 
 工作配置保留七个机场手动选择组；它们只提供策略界面入口，不授予新的流量放行。AI DNS 归并保持原有精确主机和规则位置；Personal 爱思规则不扩入工作白名单。
 
-2026-09-12：`direct/ips5_direct` 以 DIRECT 覆盖 `ips5.vip` 主域及全部子域，位于 AI 之后、Google 广谱与拒绝之前，使用默认国内双 DoH；工作白名单仅增加该服务。AdsPower 停用范围、资产与定时任务处理见[规则停用与恢复](rule-deactivation.md)。
+2026-09-12：`direct/ips5_direct` 以 DIRECT 覆盖 `ips5.vip` 主域及全部子域，位于 AI 之后、Google 广谱与拒绝之前，使用默认国内双 DoH；工作白名单仅增加该服务。2026-10-23 已进一步删除 AdsPower 与 Webshare 业务规则，见[规则停用与删除](rule-deactivation.md)。
 
 机场端点只按确认的用途精确放行：官网访问走既有自动组，订阅专用域名 DIRECT，共用域名仅浏览器进程代理、其他订阅连接直连。新增官网不会扩大为平台根后缀或广谱代理；最终仍为 FINAL,REJECT。
 

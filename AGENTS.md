@@ -126,7 +126,7 @@
 - region/hk/wps_kdocs 按 2026-09-18 用户要求统一 DIRECT，取消香港地区展示出口要求；历史路径与 hk_wps_kdocs provider 名仅作兼容，不代表出口。七份配置均早于 Google 广谱，DNS 保持默认国内；工作白名单仅保留该专项放行，最终 REJECT 不变。
 - GitHub 在该工作路由文件中除 `github_ssh_direct` 外，还允许紧随其后保留 `DOMAIN,raw.githubusercontent.com` 下载入口与一条广覆盖 `DOMAIN-KEYWORD,github` 观察兜底；它们用于显式放行 GitHub Raw 规则产物下载，并发现 SSH / Raw 之外的漏网之鱼，不得被“去重”或“收敛”掉
 - GitHub Raw 下载链路默认还应保留独立 `[Host]` 解析例外；当前私有配置使用 `raw.githubusercontent.com = server:https://cloudflare-dns.com/dns-query`，避免规则产物下载回落到本地/国内系统 DNS；但这不是代理节点 bootstrap，不能影响 `proxy-node-domains` 继续使用 AliDNS DoH
-- AdsPower 按 2026-09-12 用户要求在五份私有配置与两份公开模板停用：移除三类调用、专用 provider 和工作观察兜底，保留主清单、源规则、登记、派生器与产物；重新启用须用户明确要求。
+- AdsPower 按 2026-10-23 用户业务撤销要求彻底删除主清单、三类源规则、登记、派生器与产物，取代 2026-09-12 的保留资产约定；检查器继续拒绝恢复调用。Webshare 从住宅代理和 GFW 快照移除，上游同步排除其主域与子域，避免每日同步恢复。其他住宅代理、ips5、AWS/链式等资产仅列为确认项，不随本次删除。
 - Outlook 直连覆盖邮件、精确共享登录与认证资源，不扩大到 Microsoft 根域；共享认证也影响其他应用。2026-09-16 Microsoft Store 专项固定美国以满足地区 IP 条件，通用 Microsoft（含中国服务）保留美国代理候选并追加 DIRECT，默认国内 DNS 不变；工作及 FlClash 的既有更新拒绝仍优先。
 - 上述工作路由白名单特化只适用于工作路由文件本身，不自动扩散到两个 `personal` 配置，也不要把 `personal` 配置的通用结构反向覆盖到该工作路由文件
 - 只要工作路由白名单逻辑、适用范围、维护边界发生变化，必须同步更新 `docs/surge-work-cluster-whitelist.md`、`README.md` 与相关使用说明，避免后续失忆式回滚
@@ -211,7 +211,7 @@
 - 归并规则先确认既有规则集覆盖和首条命中顺序；Google Play 复用 google_hk，Surge Personal 爱思复用 aisi_direct，Apple 官方更新复用 apple_direct。ai_dns_us 单独保证 Surge AI DoH 美国出口，不扩大工作白名单或机械增加 Mihomo provider。私有 SRC-IP、端点及同步标记不写入公开规则。
 - 多文件修改先完成全部唯一锚点和数量预检再写入；补丁存在空更新区块等格式错误时立即修正并重新预检，不得假设已部分成功。
 
-规则停用约定：从授权配置移除调用、内联观察项与专用 provider / DNS 依赖，保留远程源规则、登记、构建逻辑和产物；暂停专用定时任务，共用任务只停对应专用步骤，通用构建保留。重新启用须用户明确要求。AdsPower 为当前停用实例，细则见公开仓库 docs/rule-deactivation.md。`ips5.vip` 独立使用 direct/ips5_direct，AI 之后、Google 广谱和拒绝之前 DIRECT，沿用国内 DNS。
+规则停用约定：从授权配置移除调用、内联观察项与专用 provider / DNS 依赖，保留源规则、登记、构建逻辑和产物；暂停专用任务，共用任务只停对应步骤。用户明确要求删除业务时，删除其完整资产与专用生成逻辑，并防止上游重新导入；先核对共享依赖，不顺带删除其他业务。AdsPower/Webshare 已于 2026-10-23 删除，细则见 docs/rule-deactivation.md。`ips5.vip` 独立直连与国内 DNS 保留。
 
 - 多文件字节保真编辑的锚点须按实际文件换行匹配，不得根据终端显示假定 CRLF；兼容 LF / CRLF 后仍断言唯一，全部预检通过再写入。
 - `tools/check.ps1` 包含重建和会暂时调整产物的测试；必须等待完整进程成功退出后再读取 `dist/`、构建报告或生成提交文件清单，避免并发审计把中间态误报为产物丢失。
@@ -235,7 +235,7 @@
 
 - 桌面、安卓唯一现用客户端均为 FlClash，对应私人文件为 flclash-desktop.yaml / flclash-android.yaml。以 docs/flclash-performance.md 为当前接入、测速、覆写与复测依据；旧客户端缓存和命名管道不能代表 FlClash 运行态。
 - 标准模式导入规则，DNS 覆写关闭；必须检查 preferences 中的 patchClashConfig 和生成 config.yaml。源文件进程匹配 strict；FlClash 0.8.97 界面只接受 always/off，实际保留 always 以支持进程规则，不能写入无效 strict 或直接 off。先检查客户端枚举再改字段，不能将内核支持等同于界面支持。
-- cn_direct_light 由构建自动推导，只适用于紧接 gfw_precise、最终 DIRECT 的末尾；工作白名单不调用。完整 cn_direct/gfw、AWS/链式和已停用 AdsPower 资产保留。
+- cn_direct_light 由构建自动推导，只适用于紧接 gfw_precise、最终 DIRECT 的末尾；工作白名单不调用。完整 cn_direct/gfw 与 AWS/链式资产保留；AdsPower 资产已删除。
 - 校验 native validateConfig 只代表 YAML 能解析，需区分真正加载；provider 缓存须位于隔离 home 内。API 404 不能误报节点不可用，DNS UDP 被 TUN 缓存命中不能误报公网解析器更快。
 - 阅读第三方源码前先用 rg --files 确认路径，不能把旧文件布局当作当前事实；脚本依赖用明确运行时路径，临时 PyYAML 不假设系统环境全局可用。
 

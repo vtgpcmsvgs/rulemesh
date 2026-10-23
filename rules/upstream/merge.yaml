@@ -45,6 +45,7 @@ merge_plan:
       - public_benchmark_candidates_plus_user_requested_domains
     notes:
       - 只保留用户指定域名和公开住宅代理基准/官方站点确认的服务主域，不使用关键词或代理节点 IP
+      - 2026-10-23 删除 Webshare，其他住宅代理服务商等待用户确认，不随本次业务撤销批量删除
 
   - id: youtube
     target: rules/proxy/youtube.list
@@ -75,6 +76,8 @@ merge_plan:
     strategy:
       - include_loyalsoldier_gfw_only
       - exact_decodo_service_suffix
+    notes:
+      - 上游同步排除 Webshare 主域及子域，避免业务撤销后重新导入
   - id: ips5-direct
     target: rules/direct/ips5_direct.list
     purpose: ips5.vip 主域及全部子域直连
@@ -104,16 +107,6 @@ merge_plan:
       - explicit_service_domains
     notes:
       - 抖音复用 bytedance_direct，海外 AI 前置美国分流，工作白名单只新增这一精选入口
-  - id: adspower-direct
-    target: rules/direct/adspower_direct.list
-    purpose: AdsPower 代理检测与网络环境测试直连放行
-    strategy:
-      - generated_from_rules_app_adspower_manifest
-      - keep_single_source_of_truth
-    notes:
-      - 统一由 rules/app/adspower.txt 维护，不直接手改该源文件
-      - adspower.com 与 adspower.net 在主清单中必须成对出现
-
   - id: ai-cn-direct
     target: rules/direct/ai_cn_direct.list
     purpose: 国内 AI 平台显式直连入口
@@ -380,16 +373,6 @@ merge_plan:
       - include_upstream_first_then_local_core_fallback
       - include_loyalsoldier_gfw_and_tld_not_cn
 
-  - id: adspower-proxy
-    target: rules/proxy/adspower_proxy.list
-    purpose: AdsPower 必须走节点选择的核心服务
-    strategy:
-      - generated_from_rules_app_adspower_manifest
-      - keep_single_source_of_truth
-    notes:
-      - 统一由 rules/app/adspower.txt 维护，不直接手改该源文件
-      - 规则顺序应先于 proxy/gfw，避免被广谱代理入口吞没
-
   - id: onepassword-proxy
     target: rules/proxy/onepassword_proxy.list
     purpose: 1Password 核心连接节点选择
@@ -546,16 +529,6 @@ merge_plan:
       - keep_scope_small_and_stable
     notes:
       - 不引入上游订阅，避免第三方规则膨胀或误伤非更新流量
-
-  - id: reject-adspower
-    target: rules/reject/adspower_reject.list
-    purpose: AdsPower 隐私追踪与可安全阻断端点拦截
-    strategy:
-      - generated_from_rules_app_adspower_manifest
-      - keep_single_source_of_truth
-    notes:
-      - 统一由 rules/app/adspower.txt 维护，不直接手改该源文件
-      - 规则应与其他 reject 入口一起放在最前，先做阻断再做放行
 
   - id: adblock
     target: rules/reject/adblock_reject.list

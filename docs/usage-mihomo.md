@@ -27,7 +27,7 @@ WPS/金山文档按 2026-09-18 修订统一 DIRECT，继续使用默认国内 DN
 
 `direct_cn_services` 固定第二条，保护国内 DNS 与新华三；AI 仅按审核后的域名边界匹配，避免名称相似网站同时进入美国出口与海外解析。Store 专项在两份 FlClash 中仍晚于既有更新拒绝。见[出口修订](scoped-egress-repair.md)。
 
-GitHub SSH 精确直连在 Core / gfw 前；国内通用直连在 gfw 前。阿里云 SSH 继续保留仅 TCP/22 的内联兜底与 `DIRECT,no-resolve` 调用。AdsPower 三类调用与专用 provider 已停用，远程资产继续保留；系统时间同步与可选 1Password 规则继续保留。Surge 的工作白名单不会扩散到 Mihomo。
+GitHub SSH 精确直连在 Core / gfw 前；国内通用直连在 gfw 前。阿里云 SSH 继续保留仅 TCP/22 的内联兜底与 `DIRECT,no-resolve` 调用。AdsPower 的调用与仓库资产已删除，住宅代理与 GFW 规则不再包含 Webshare；其余住宅代理、系统时间同步与可选 1Password 规则继续保留，待确认项见[业务规则清理审计](business-rule-cleanup-20261023.md)。删除规则不强制直连或拒绝，之后按其他规则及最终兜底处理。Surge 的工作白名单不会扩散到 Mihomo。
 
 ## DNS、测速与连接
 
@@ -52,7 +52,7 @@ GeoIP 使用 `geodata-mode: false`，`geox-url.mmdb` 直接引用 [MetaCubeX cou
 
 配置精简优先复用已有规则集；Google Play / Android 已由 `hk_google` 覆盖。Surge 专用的 `ai_dns_us` 传输规则和 Personal 爱思入口不机械复制到 Mihomo，AI DNS 继续通过 DoH URL 的美国代理参数生效。既有策略组保持；机场手动入口不能仅因没有规则引用而删除。
 
-2026-09-12：`direct/ips5_direct` 以 DIRECT 覆盖 `ips5.vip` 主域及全部子域，位于 AI 之后、Google 广谱与拒绝之前，使用默认国内双 DoH；工作白名单仅增加该服务。AdsPower 停用范围、资产与定时任务处理见[规则停用与恢复](rule-deactivation.md)。
+2026-09-12：`direct/ips5_direct` 以 DIRECT 覆盖 `ips5.vip` 主域及全部子域，位于 AI 之后、Google 广谱与拒绝之前，使用默认国内双 DoH；工作白名单仅增加该服务。2026-10-23 已进一步删除 AdsPower 与 Webshare 业务规则，见[规则停用与删除](rule-deactivation.md)。
 
 2026-09-12 FlClash 迁移与优化以 [客户端性能基线](flclash-performance.md) 为准：桌面和安卓使用新文件名；通用末尾改为 cn_direct_light → gfw_precise → DIRECT，完整规则资产保留。工作白名单不接入新兜底，机场手动组保留。桌面 300 秒、安卓 600 秒，备用地区按需检测；以最终生成配置核对界面覆写。
 

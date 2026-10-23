@@ -6,10 +6,6 @@
 
 sources:
   reject:
-    adspower_reject.list:
-      preferred:
-        - repo: self
-          note: AdsPower 专项拒绝规则由 rules/app/adspower.txt 单一主清单派生，统一维护隐私追踪与可安全阻断端点
     os_update_reject.list:
       preferred:
         - repo: self
@@ -40,10 +36,6 @@ sources:
       preferred:
         - repo: self
           note: 小红书与微信专用域名精选直连，抖音复用 bytedance_direct；不扩大到整个腾讯
-    adspower_direct.list:
-      preferred:
-        - repo: self
-          note: AdsPower 专项直连规则由 rules/app/adspower.txt 单一主清单派生，承接代理检测与网络环境测试放行
     ai_cn_direct.list:
       preferred:
         - repo: self
@@ -116,11 +108,7 @@ sources:
     gfw_precise.list:
       preferred:
         - repo: Loyalsoldier/surge-rules
-          note: 只引用 gfw.txt 的具体域名，不引入顶级域泛匹配；本地补 Decodo 官方主域
-    adspower_proxy.list:
-      preferred:
-        - repo: self
-          note: AdsPower 专项节点选择规则由 rules/app/adspower.txt 单一主清单派生，承接必须走代理的核心服务
+          note: 只引用 gfw.txt 的具体域名，不引入顶级域泛匹配；同步时排除已撤销的 Webshare，保留 Decodo 官方主域
     onepassword_proxy.list:
       preferred:
         - repo: self
@@ -182,7 +170,7 @@ sources:
         - repo: self
           note: 用户指定的住宅代理服务与公开基准中的住宅/ISP 代理主域，统一绑定全地区自动选择；不使用关键词泛匹配
         - repo: AIMultiple residential proxy benchmark
-          note: 交叉核对公开住宅代理基准中的 Bright Data、Decodo、Oxylabs、Webshare、DataImpulse、NodeMaven、Byteful、SOAX 与 Infatica
+          note: 交叉核对公开住宅代理基准中的 Bright Data、Decodo、Oxylabs、DataImpulse、NodeMaven、Byteful、SOAX 与 Infatica；已撤销的 Webshare 不再收录
         - repo: official residential proxy provider websites
           note: 补充公开提供住宅或住宅代理 API 的服务主域，更新前先核对产品归属
     hk/alibaba_hk.list:

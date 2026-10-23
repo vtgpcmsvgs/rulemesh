@@ -196,8 +196,8 @@ def check(path: Path, lines: list[str]) -> list[str]:
         position, parts = selected[key][0]
         require(parts[2] == "DIRECT", f"{key} 必须直连。")
         require(ai_position < position < selected["google"][0][0], f"{key} 必须在 AI 之后、Google 广谱规则之前。")
-    # 停用只撤销配置调用和专用注册；保留源规则与产物，以便明确授权后恢复。
-    require(not any("adspower" in line.lower() for line in lines if line.strip() and not line.lstrip().startswith(("#", ";", "//"))), "AdsPower 已停用，配置不得保留调用、观察兜底或专用 provider / DNS 入口。")
+    # AdsPower 已按业务撤销要求删除，继续阻止旧配置恢复调用或专用注册。
+    require(not any("adspower" in line.lower() for line in lines if line.strip() and not line.lstrip().startswith(("#", ";", "//"))), "AdsPower 已删除，配置不得保留调用、观察兜底或专用 provider / DNS 入口。")
     for position, (_, parts) in enumerate(rules):
         if not parts:
             continue
