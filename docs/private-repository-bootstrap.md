@@ -84,4 +84,8 @@ if ($LASTEXITCODE -ne 0) { throw 'Git upstream comparison failed; stop sync' }
 
 ## 防回归检查
 
+2026-10-23 恢复过一次错误上传：远程四份配置被各 61 字节的无效表达式替代，而本地完整文件仍在。必须先保留本地逐字节备份，再按用户明确授权恢复并提交。优先用普通 Git 上传；确需 Contents API 时，在本地求出完整正文的 Base64 后作为结构化 `content` 值传入，不能上传 PowerShell 表达式本身。推送后同时核对远端提交和各文件 Git blob 哈希，不能只看 API 成功状态。`check_private_profile_integrity.py` 已接入 `tools/check.ps1`，在业务检查前拒绝缺失主体节、重复节、BOM 及编码异常；它是完整性门槛，不替代客户端语法和实机验证。
+
+私人仓库按字节保存配置，恢复时保留既有 CRLF/LF。检查旧 CRLF 文件可对单次 Git 命令增加 `-c core.whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol` 后运行 `diff --check`，只认可 CRLF 的 CR，继续检测其他空白错误；不得修改 `core.autocrlf` 来隐藏整文件差异。
+
 `tools/check_private_repository_registration.py` 会校验登记文件结构，以及 `AGENTS.md`、`README.md` 和本文之间的关键引用关系；`tools/check.ps1` 默认执行该检查。若私人仓库重命名、转移所有者、修改默认分支或改变本地布局，必须同时更新登记文件和相关说明。

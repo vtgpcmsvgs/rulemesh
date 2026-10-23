@@ -11,9 +11,36 @@ import check_performance_baseline as baseline
 import check_private_dns_precedence as parser
 import check_service_groups as service
 import build_rules
+import check_common_routes as common
 
 
 class AndroidStabilityTests(unittest.TestCase):
+    def chatgpt_fixture(self):
+        path, text = self.fixture()
+        ai = next(p[2] for _, p in parser._parse_mihomo_rules(text.splitlines()) if p[:2] == ["RULE-SET", "us_ai"])
+        rule = f"  - PROCESS-NAME,{android.CHATGPT_PACKAGE},{ai}\n"
+        return path, text, rule, ai
+
+    def test_chatgpt_unknown_destination_and_other_apps(self):
+        path, text, rule, ai = self.chatgpt_fixture()
+        self.assertEqual(baseline.check(path, text.splitlines()), [])
+        for network in ("tcp", "udp"):
+            for destination in ("unlisted-chatgpt-component.invalid", ""):
+                self.assertEqual(common.route(text.splitlines(), destination, android.CHATGPT_PACKAGE, network), (ai, "PROCESS-NAME"))
+            self.assertEqual(common.route(text.splitlines(), "unlisted-chatgpt-component.invalid", "com.android.chrome", network), ("DIRECT", "MATCH"))
+
+    def test_chatgpt_fallback_cannot_be_missing_duplicated_late_or_direct(self):
+        path, text, rule, ai = self.chatgpt_fixture()
+        self.assertEqual(android.check_chatgpt(path, text.splitlines()), [])
+        changes = [text.replace(rule, ""), text.replace(rule, "").replace(android.CHATGPT_MARKER, ""), text.replace(rule, rule * 2),
+                   text.replace(rule, "") + rule, text.replace(rule, rule.replace(ai, "DIRECT")),
+                   text.replace("find-process-mode: always", "find-process-mode: off"),
+                   text.replace(rule, f"  - AND,((PROCESS-NAME,{android.CHATGPT_PACKAGE}),(NETWORK,udp)),REJECT\n")]
+        for changed in changes:
+            self.assertNotEqual(changed, text)
+            self.assertTrue(android.check_chatgpt(path, changed.splitlines()))
+        self.assertTrue(android.check_chatgpt(Path("desktop.yaml"), text.splitlines()))
+
     def fixture(self):
         text = (ROOT / "docs/examples/mihomo-public.yaml").read_text(encoding="utf-8")
         # 公开模板保持自动；私人夹具复用完整例外清单，避免只转换 AI 而遗漏新增手动业务。
@@ -50,6 +77,12 @@ class AndroidStabilityTests(unittest.TestCase):
         self.assertEqual(text.count(anchor), 1)
         components = "  " + android.ALIPAY_MARKER + "\n" + "".join("  - " + rule + "\n" for rule in android.alipay_component_rules())
         text = text.replace(anchor, anchor + components, 1)
+        ai = next(p[2] for _, p in parser._parse_mihomo_rules(text.splitlines()) if p[:2] == ["RULE-SET", "us_ai"])
+        anchor = "  - RULE-SET,direct_cn_services,DIRECT\n"
+        self.assertEqual(text.count(anchor), 1)
+        text = text.replace(anchor, anchor + f"  - PROCESS-NAME,{android.CHATGPT_PACKAGE},{ai}\n", 1)
+        text = text.replace("find-process-mode: strict", "find-process-mode: always")
+        text = android.CHATGPT_MARKER + "\n" + text
         return Path(android.PROFILE), text
 
     def test_complete_profile_preserves_base_and_regional_contracts(self):

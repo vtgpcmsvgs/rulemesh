@@ -157,6 +157,9 @@
 
 ## 私有配置与脱敏
 
+- 2026-10-23 安卓 ChatGPT 使用精确包名 `com.openai.chatgpt` 兜底，绑定实际 `us_ai` 组并紧随 AI、国内精选两条入口；源与 FlClash 界面须为 `always`。FlClash 0.9.1 新装默认 `off`，未知 `strict` 也按 `off` 解析，不得沿用旧版反序列化结论。设置后完整重启 VPN 并核对实际规则、DNS 出口和业务返回，详见 `docs/android-network-repair.md`。
+- 私有配置提交前执行 `check_private_profile_integrity.py`（已接入全量检查），拒绝正文被上传表达式、编码文本或截断替代；API 上传完成不能替代远程 Git blob 哈希核对。私人旧 CRLF 按字节保留，单次 `diff --check` 可明确启用 `cr-at-eol`，不得改变 `core.autocrlf`。
+
 - `.rulemesh.local.json`、`%USERPROFILE%\Desktop\rulemesh-local` 整个私人仓库、私有 `policy-path`、真实机场订阅地址、Webhook、AccessKey、STS、`[MITM]` 证书参数、局域网设备分流规则都视为私有内容
 - 默认不要把私有文件内容或敏感值写回公开仓库，也不要在回复中完整回显真实密钥、签名、订阅 URL 或其他敏感参数
 - 即使需要在公开仓库里记录工作路由白名单维护约定，也只允许写“固定工作电脑”“白名单模式”“与 personal 永久不一致”这类抽象说明；不要把真实 `SRC-IP` 范围、私有设备标识、订阅地址或本地策略分组细节写回公开仓库

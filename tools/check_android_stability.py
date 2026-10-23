@@ -4,6 +4,36 @@ import re
 
 MARKER = "# RuleMesh 安卓下载保护：2026-09-14"
 PROFILE = "rulemesh-substore-mihomo-flclash-android.yaml"
+CHATGPT_MARKER = "# RuleMesh 安卓 ChatGPT 接管：2026-10-23"
+CHATGPT_PACKAGE = "com.openai.chatgpt"
+
+
+def allowed_chatgpt_rule(parts: list[str]) -> bool:
+    return len(parts) == 3 and parts[:2] == ["PROCESS-NAME", CHATGPT_PACKAGE]
+
+
+def check_chatgpt(path: Path, lines: list[str]) -> list[str]:
+    """按应用兜底未登记连接；界面 always 仍须运行时验收。"""
+    import check_private_dns_precedence as parser
+    rules = [parts for _, parts in parser._parse_mihomo_rules(lines)]
+    related = [p for p in rules if any(CHATGPT_PACKAGE in v for v in p)]
+    marked = CHATGPT_MARKER in lines
+    if not marked and not related and path.name != PROFILE:
+        return []
+    errors = []
+    if path.name != PROFILE:
+        errors.append("ChatGPT 包名兜底仅适用于安卓私有配置。")
+    if lines.count(CHATGPT_MARKER) != 1:
+        errors.append("ChatGPT 接管标记必须唯一。")
+    ai = [p[2] for p in rules if len(p) == 3 and p[:2] == ["RULE-SET", "us_ai"]]
+    if len(ai) != 1 or related != [["PROCESS-NAME", CHATGPT_PACKAGE, ai[0]]]:
+        errors.append("ChatGPT 必须有且仅有一条包名兜底并绑定 AI 美国组，保留 TCP/UDP。")
+    elif rules.index(related[0]) != 2:
+        errors.append("ChatGPT 包名兜底必须紧随 AI 与国内精选两条入口，早于广谱及拒绝规则。")
+    modes = [s.split(":", 1)[1].strip() for s in lines if s.startswith("find-process-mode:")]
+    if modes != ["always"]:
+        errors.append("安卓 ChatGPT 进程兜底要求 find-process-mode: always，并核对应用界面覆写。")
+    return errors
 ALIPAY_MARKER = "# RuleMesh 安卓支付宝组件保护：2026-09-16"
 ALIPAY_PACKAGE = "com.eg.android.AlipayGphone"
 ALIPAY_COMPONENT_HOSTS = (
@@ -55,7 +85,7 @@ def broker_target(rules: list[list[str]]) -> str:
 
 
 def active(path: Path, lines: list[str]) -> bool:
-    return path.name == PROFILE or MARKER in lines or any(line.strip() == ALIPAY_MARKER for line in lines)
+    return path.name == PROFILE or MARKER in lines or CHATGPT_MARKER in lines or any(line.strip() == ALIPAY_MARKER for line in lines)
 
 
 def alipay_component_rules() -> list[str]:
@@ -92,6 +122,7 @@ def check(path: Path, lines: list[str]) -> list[str]:
     business = service.MARKER in lines
     daily = common.MARKER in lines
     errors = []
+    errors.extend(check_chatgpt(path, lines))
 
     def require(ok, message):
         if not ok:

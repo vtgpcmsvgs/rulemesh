@@ -293,6 +293,19 @@ Invoke-PrivateRepositoryRegistrationValidation
 Write-Host "[check] validate DNS safety"
 Invoke-DnsSafetyValidation
 
+Write-Host "[check] validate private profile integrity"
+$integrityPython = Resolve-PythonCommand
+$integrityChecker = Join-Path $repoRoot "tools\check_private_profile_integrity.py"
+if ($integrityPython.Kind -eq "Launcher") {
+    & $integrityPython.Value -3 -B -X utf8 $integrityChecker
+}
+else {
+    & $integrityPython.Value -B -X utf8 $integrityChecker
+}
+if ($LASTEXITCODE -ne 0) {
+    throw "Private profile integrity validation failed."
+}
+
 Write-Host "[check] validate private DNS precedence"
 Invoke-PrivateDnsPrecedenceValidation
 

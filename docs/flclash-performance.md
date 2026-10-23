@@ -18,7 +18,7 @@
 - 安卓：`rulemesh-substore-mihomo-flclash-android.yaml`。
 - 两份文件位于独立私人仓库根目录；同步脚本与公开检查使用新文件名。文件级分享链接也必须切换到新文件名。
 - Windows 已核实 FlClash 0.8.97，数据目录为 `%APPDATA%/com.follow/clash`。配置元数据在 `database.sqlite`，选中项与界面覆写在 `shared_preferences.json`，导入原文在 `profiles/<id>.yaml`；根目录 `config.yaml` 是生成结果，不是编辑入口。
-- 默认保持标准覆写模式、DNS 覆写关闭、最终策略不单独覆写；导入本仓库规则与组。IPv6 关闭、TCP 并发开启。FlClash 0.8.97 的界面枚举只支持进程识别 `always/off`；手写 `strict` 会被反序列化为 `always`，不得宣称按需识别已在该版本生效。
+- 默认保持标准覆写模式、DNS 覆写关闭、最终策略不单独覆写；导入本仓库规则与组。IPv6 关闭、TCP 并发开启。FlClash 0.9.1 的界面枚举只支持进程识别 `always/off`，未知值（含 `strict`）按 `off` 处理；新安装默认关闭，需手动开启并核对内核 `always`，不能沿用旧版的反序列化结论。
 - 桌面配置文件已生成不代表安卓已加载。安卓导入或更新后必须单独核对实际运行配置及 VPN/DNS 接管；本机未连接安卓时，不宣称已完成手机运行验证。
 
 ## 规则加载
@@ -44,7 +44,7 @@
 - 桌面 provider 与自动组间隔 300 秒；安卓为 600 秒。订阅下载周期仍为 21,600 秒，规则下载周期保持原配置。
 - 实际承担流量的自动组保持 `lazy: false`；仅供手动备用的地区组使用 `lazy: true`。provider 保持主动检测。使用 provider 节点时，不能把 provider 数和组数相加推断实际重复请求次数。
 - 美国切换容差 100、全地区 50 保留。所有机场和有效节点仍可手动选择；单次短测不能证明晚高峰质量，不能据此永久删除节点或只留下少数节点。
-- 源文件保留 Mihomo 的 `find-process-mode: strict`。FlClash 0.8.97 实际保留 `always` 以支持前置 Google 等进程规则；不写入无效界面值，也不改为 off。将来客户端支持 strict 后需重新核对最终生成配置和运行态。
+- 桌面及公开模板源文件保留 Mihomo 的 `find-process-mode: strict`；私人安卓 ChatGPT 修复配置改为 `always`。FlClash 0.9.1 界面也必须开启查找进程，最终核对内核 `always` 以支持 Google、券商和 ChatGPT 包名规则。客户端升级后重新核对枚举、最终生成配置及运行态。
 - TUN 的 mixed 已对 TCP 使用系统栈。system 与 mixed 的取舍主要需评估 UDP；没有可比吞吐证据时保留 mixed，不把改字段当成实测性能提升。
 - 国内普通 DNS 与 AI 专用美国 DoH 分开验证。UDP DNS 测试可能被 TUN 劫持并命中缓存；只有确认实际出口、冷缓存和正确回应后，才能据此更换传输。AI DoH 的美国代理参数不变。
 

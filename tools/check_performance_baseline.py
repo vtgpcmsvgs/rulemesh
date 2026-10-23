@@ -215,6 +215,8 @@ def check(path: Path, lines: list[str]) -> list[str]:
                     expected_target = service.expected_service(parts, surge)
                 elif android_repair and android.allowed_hk_broker_rule(parts):
                     expected_target = android_broker_target
+                elif android_repair and android.allowed_chatgpt_rule(parts):
+                    expected_target = us
                 elif android_repair and android.allowed_stable_rule(parts):
                     expected_target = "Google" if business else google_stable
                 else:
@@ -273,8 +275,8 @@ def check(path: Path, lines: list[str]) -> list[str]:
         require(not groups[auto].filter_text, "全地区 url-test 组不得限定地区标签。")
         require("tcp-concurrent: true" in lines and "ipv6: false" in lines, "Mihomo 必须开启 TCP 并发并保留 IPv4 基线。")
         clashmi_ios = path.name == "rulemesh-substore-mihomo-clashmi-ios.yaml"
-        process_mode = "off" if clashmi_ios else "strict"
-        require(f"find-process-mode: {process_mode}" in lines, "iOS 关闭进程匹配；FlClash 源文件保留 strict 按需识别进程，界面覆写需实机验证。")
+        process_mode = "off" if clashmi_ios else "always" if android_repair and android.CHATGPT_MARKER in lines else "strict"
+        require(f"find-process-mode: {process_mode}" in lines, "iOS 关闭进程匹配；安卓 ChatGPT 接管使用 always；其他 Mihomo 源文件保留 strict 按需识别进程。界面覆写需实机验证。")
         values, policies = dns._parse_mihomo_dns(lines)
         require(values == DOMESTIC, "Mihomo 默认业务 DNS 应为国内双 DoH。")
         require(len(policies) == ((3 if business else 2) if android_repair else 1) and policies[0].providers == ("us_ai",), "Mihomo 仅保留 AI 专用 DNS policy；安卓业务分组可追加 YouTube 与 Google 专项。")
