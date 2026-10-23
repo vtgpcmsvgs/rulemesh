@@ -104,6 +104,25 @@ class PrivateSubscriptionSyncTests(unittest.TestCase):
         self.assertEqual(self.run_sync().returncode, 0)
         self.assertEqual(first, self.hashes())
 
+    def test_website_migration_keeps_confirmed_subscription_host(self):
+        self.write("private_subscription_direct.list", "DOMAIN,shared.example,SHARED\n")
+        self.assertEqual(self.run_sync().returncode, 0)
+        self.write("private_subscription_direct.list",
+                   "DOMAIN,new-website.example,WEBSITE\nDOMAIN,shared.example,SUBSCRIPTION\n")
+        self.assertEqual(self.run_sync().returncode, 0)
+        for name in SURGE_NAMES:
+            text = (self.directory / name).read_text("utf-8")
+            self.assertIn('DOMAIN,new-website.example,"自动组"', text)
+            self.assertIn("DOMAIN,shared.example,DIRECT", text)
+            self.assertNotIn("AND,", text)
+        for name in MIHOMO_NAMES:
+            text = (self.directory / name).read_text("utf-8")
+            self.assertIn("- DOMAIN,new-website.example,自动组", text)
+            self.assertIn("- DOMAIN,shared.example,DIRECT", text)
+            self.assertIn("    url: https://shared.example/subscription", text)
+            self.assertNotIn("url: https://new-website.example/", text)
+            self.assertIn("    proxy: DIRECT", text)
+
     def test_explicit_target_preserves_other_client(self):
         for target, untouched in (("surge", MIHOMO_NAMES), ("mihomo", SURGE_NAMES)):
             before = self.hashes()
