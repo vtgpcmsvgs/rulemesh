@@ -24,20 +24,20 @@ ALLOWED_DOMESTIC_NAMESERVER_POLICY_KEYS = {
 
 SURGE_CONFIG_NAMES = (
     "surge-public.conf",
-    "rulemesh-substore-surge-personal.conf",
-    "rulemesh-substore-surge-personal-company.conf",
-    "rulemesh-substore-surge-work-whitelist.conf",
+    "surge-home.conf",
+    "surge-company.conf",
+    "surge-work.conf",
 )
 MIHOMO_CONFIG_NAMES = (
     "mihomo-public.yaml",
-    "rulemesh-substore-mihomo-clashmi-ios.yaml",
-    "rulemesh-substore-mihomo-flclash-desktop.yaml",
-    "rulemesh-substore-mihomo-flclash-android.yaml",
+    "clashmi-ios.yaml",
+    "flclash-desktop.yaml",
+    "flclash-android.yaml",
 )
 MIHOMO_SINGLE_DNS_TRUTH_CONFIG_NAMES = (
-    "rulemesh-substore-mihomo-clashmi-ios.yaml",
-    "rulemesh-substore-mihomo-flclash-desktop.yaml",
-    "rulemesh-substore-mihomo-flclash-android.yaml",
+    "clashmi-ios.yaml",
+    "flclash-desktop.yaml",
+    "flclash-android.yaml",
 )
 MIHOMO_SINGLE_DNS_TRUTH_FORBIDDEN_KEYS = {
     "proxy-server-nameserver",
@@ -523,13 +523,13 @@ def default_paths(repo_root: Path) -> list[Path]:
         private_config_root = current if current.exists() else private_repo
         paths.extend(
             [
-                private_config_root / "rulemesh-substore-surge-personal.conf",
+                private_config_root / "surge-home.conf",
                 private_config_root
-                / "rulemesh-substore-surge-personal-company.conf",
-                private_config_root / "rulemesh-substore-surge-work-whitelist.conf",
-                private_config_root / "rulemesh-substore-mihomo-flclash-desktop.yaml",
-                private_config_root / "rulemesh-substore-mihomo-flclash-android.yaml",
-                private_config_root / "rulemesh-substore-mihomo-clashmi-ios.yaml",
+                / "surge-company.conf",
+                private_config_root / "surge-work.conf",
+                private_config_root / "flclash-desktop.yaml",
+                private_config_root / "flclash-android.yaml",
+                private_config_root / "clashmi-ios.yaml",
             ]
         )
 

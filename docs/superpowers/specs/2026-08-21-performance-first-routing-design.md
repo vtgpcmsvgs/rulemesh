@@ -102,21 +102,21 @@ OpenAI / ChatGPT 域名
 
 ### 私有仓库
 
-- `rulemesh-substore-surge-personal.conf`
+- `surge-home.conf`
   - 保留 `[Host]` 的 `cn_dns_domains -> 国内 DNS` 映射。
   - 将 `FINAL` 从美国自动选择组改为现有全地区自动选择组。
   - OpenAI 的美国专项规则保持原顺序和策略。
-- `rulemesh-substore-surge-work-whitelist.conf`
+- `surge-work.conf`
   - 为 `zsxq.com`、`yikaiying.com` 增加精确 DIRECT 入口。
   - 保持 `FINAL,REJECT`，不接入 `cn_direct`、`proxy/gfw` 或通用国际兜底。
-- `rulemesh-substore-mihomo-flclash-desktop.yaml`
+- `flclash-desktop.yaml`
   - 增加仅针对 `rule-set:cn_dns_domains` 的 `nameserver-policy`，复用现有国内加密 DNS。
   - 保持 `respect-rules: false`、`use-hosts: false`、`use-system-hosts: false`。
   - 保持 `proxy-server-nameserver`、`direct-nameserver`、`fallback` 缺失。
   - 将 `MATCH` 从美国自动选择组改为现有全地区自动选择组。
   - provider 与自动测速组统一为 `interval: 300`、`lazy: false`。
   - 全地区自动组保留较低切换阻尼；美国组降低过高阻尼，但仍避免相近节点频繁变更出口。
-- `rulemesh-substore-mihomo-flclash-android.yaml`
+- `flclash-android.yaml`
   - 应用相同 DNS 策略和 MATCH 变更。
   - 保持现有 `interval: 300`、`lazy: false`，只同步美国组阻尼调整。
 - `README.md` 与私有 `AGENTS.md`

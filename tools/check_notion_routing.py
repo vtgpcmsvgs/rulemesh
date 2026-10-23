@@ -19,7 +19,7 @@ def target(lines: list[str]) -> str:
 def check(path: Path, lines: list[str], auto: str) -> list[str]:
     errors = []
     surge = path.suffix == ".conf"
-    work = "work-whitelist" in path.name
+    work = path.name == parser.SURGE_WORK
     if surge:
         rules = [(i, [parser._scalar(p.strip()) for p in s.split(",")])
                  for i, s in parser._active_surge_section(lines, "Rule")]

@@ -3,7 +3,7 @@ from pathlib import Path
 import re
 
 MARKER = "# RuleMesh 安卓下载保护：2026-09-14"
-PROFILE = "rulemesh-substore-mihomo-flclash-android.yaml"
+PROFILE = "flclash-android.yaml"
 CHATGPT_MARKER = "# RuleMesh 安卓 ChatGPT 接管：2026-10-23"
 CHATGPT_PACKAGE = "com.openai.chatgpt"
 

@@ -44,7 +44,7 @@
 ```python
 def test_private_mihomo_accepts_approved_cn_dns_policy(self) -> None:
     path = self.write_temp(
-        "rulemesh-substore-mihomo-flclash-desktop.yaml",
+        "flclash-desktop.yaml",
         """ipv6: false
 dns:
   enable: true
@@ -139,17 +139,17 @@ git commit -m "test: 允许受控国内 DNS 策略"
 
 ```python
 def test_surge_personal_rejects_us_final(self) -> None:
-    path = self.write_temp("rulemesh-substore-surge-personal.conf", surge_fixture(final="US"))
+    path = self.write_temp("surge-home.conf", surge_fixture(final="US"))
     self.assertTrue(any("通用 FINAL" in item.message for item in validate_profile(path)))
 
 def test_surge_work_requires_exact_domestic_entries_and_reject_final(self) -> None:
-    path = self.write_temp("rulemesh-substore-surge-work-whitelist.conf", work_fixture())
+    path = self.write_temp("surge-work.conf", work_fixture())
     messages = [item.message for item in validate_profile(path)]
     self.assertTrue(any("zsxq.com" in message for message in messages))
     self.assertTrue(any("yikaiying.com" in message for message in messages))
 
 def test_mihomo_rejects_stale_health_and_us_match(self) -> None:
-    path = self.write_temp("rulemesh-substore-mihomo-flclash-desktop.yaml", mihomo_fixture())
+    path = self.write_temp("flclash-desktop.yaml", mihomo_fixture())
     messages = [item.message for item in validate_profile(path)]
     self.assertTrue(any("300" in message for message in messages))
     self.assertTrue(any("MATCH" in message for message in messages))
@@ -339,10 +339,10 @@ git commit -m "docs: 记录性能优先分流边界"
 ### Task 5: 修改四份私有配置并保留字节结构
 
 **Files:**
-- Modify: `C:/Users/zaife/Desktop/rulemesh-local/rulemesh-substore-surge-personal.conf:317`
-- Modify: `C:/Users/zaife/Desktop/rulemesh-local/rulemesh-substore-surge-work-whitelist.conf:102-292`
-- Modify: `C:/Users/zaife/Desktop/rulemesh-local/rulemesh-substore-mihomo-flclash-desktop.yaml:75-105,116-454,887`
-- Modify: `C:/Users/zaife/Desktop/rulemesh-local/rulemesh-substore-mihomo-flclash-android.yaml:75-104,116-454,887`
+- Modify: `C:/Users/zaife/Desktop/rulemesh-local/surge-home.conf:317`
+- Modify: `C:/Users/zaife/Desktop/rulemesh-local/surge-work.conf:102-292`
+- Modify: `C:/Users/zaife/Desktop/rulemesh-local/flclash-desktop.yaml:75-105,116-454,887`
+- Modify: `C:/Users/zaife/Desktop/rulemesh-local/flclash-android.yaml:75-104,116-454,887`
 - Modify: `C:/Users/zaife/Desktop/rulemesh-local/README.md`
 - Modify: `C:/Users/zaife/Desktop/rulemesh-local/AGENTS.md`
 
@@ -483,7 +483,7 @@ Expected: 构建 0 warning；全部测试与检查通过；`dist/` 只有三条�
 - [ ] **Step 3: 提交私有仓库**
 
 ```powershell
-git -C C:\Users\zaife\Desktop\rulemesh-local add -- rulemesh-substore-surge-personal.conf rulemesh-substore-surge-work-whitelist.conf rulemesh-substore-mihomo-flclash-desktop.yaml rulemesh-substore-mihomo-flclash-android.yaml README.md AGENTS.md
+git -C C:\Users\zaife\Desktop\rulemesh-local add -- surge-home.conf surge-work.conf flclash-desktop.yaml flclash-android.yaml README.md AGENTS.md
 git -C C:\Users\zaife\Desktop\rulemesh-local commit -m "feat: 切换为性能优先分流"
 ```
 

@@ -4,14 +4,14 @@
 
 ## 目标
 
-在不改变 `rulemesh-substore-surge-work-whitelist.conf` 文件及其远端规则语义的前提下，为两份 Surge Personal 配置建立一致的激进分流：Notion 与个人优先站点走香港自动、港交所参与者与老虎证券走香港自动、Apple 全域名直连、Outlook 邮箱直连、Microsoft Store 与其余 Microsoft 流量走美国；同时把家庭与公司 MITM 拆成两个兼容命名的文件。
+在不改变 `surge-work.conf` 文件及其远端规则语义的前提下，为两份 Surge Personal 配置建立一致的激进分流：Notion 与个人优先站点走香港自动、港交所参与者与老虎证券走香港自动、Apple 全域名直连、Outlook 邮箱直连、Microsoft Store 与其余 Microsoft 流量走美国；同时把家庭与公司 MITM 拆成两个兼容命名的文件。
 
 ## 配置文件边界
 
-- 家庭配置继续使用 `rulemesh-substore-surge-personal.conf`，保留现有 MITM 与引用路径。
-- 公司配置新增为 `rulemesh-substore-surge-personal-company.conf`，只替换用途注释与用户批准的公司 MITM。
+- 家庭配置继续使用 `surge-home.conf`，保留现有 MITM 与引用路径。
+- 公司配置新增为 `surge-company.conf`，只替换用途注释与用户批准的公司 MITM。
 - 两份 Personal 配置除用途注释和 `[MITM]` 两个字段外必须保持字节级语义一致。
-- `rulemesh-substore-surge-work-whitelist.conf` 不编辑，也不允许因共享规则扩张而改变其允许范围。
+- `surge-work.conf` 不编辑，也不允许因共享规则扩张而改变其允许范围。
 - 两份 Mihomo 私有配置不接入本次 Personal 激进规则。
 
 ## 公开规则分层

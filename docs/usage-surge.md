@@ -6,6 +6,8 @@
 
 ## 接入
 
+私人配置按用途使用 `surge-home.conf`（Personal 家庭）、`surge-company.conf`（Personal 公司）与 `surge-work.conf`（工作白名单）。重命名后已有文件路径或订阅链接需改用新名称；工作白名单的最终拒绝边界保持。
+
 1. 将模板中的示例 `policy-path` 换成自己的 Surge 聚合订阅地址。
 2. 将 `proxy-node-domains` 换成生产设备可访问的 Sub-Store 分享文件 URL。文件只能包含节点 server 域名，一行一个，过滤 IP、订阅地址与面板域名。
 3. 在 Surge Mac 启用 Enhanced Mode / VIF；profile 不使用 `dns-mode = fake-ip`。

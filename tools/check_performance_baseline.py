@@ -91,15 +91,15 @@ def check(path: Path, lines: list[str]) -> list[str]:
         if not ok:
             errors.append(message)
 
-    work = "work-whitelist" in path.name
+    work = path.name == dns.SURGE_WORK
     surge = path.suffix == ".conf"
     android_repair = not surge and android.active(path, lines)
     google_stable = android.stable_target(lines) if android_repair else ""
-    if path.name.startswith("rulemesh-substore-"):
+    if path.name in dns.PRIVATE_PROFILE_NAMES:
         for marker in ("PRIVATE_SUBSCRIPTION_DIRECT_START", "PRIVATE_SUBSCRIPTION_DIRECT_END"):
             require(sum(marker in line for line in lines) == 1, "私有订阅同步块的起止标记必须完整保留。")
     if surge:
-        if path.name.startswith("rulemesh-substore-"):
+        if path.name in dns.PRIVATE_PROFILE_NAMES:
             errors.extend(check_airport_groups(lines))
         for name in ("General", "Host", "Proxy Group", "Rule"):
             require(sum(line.strip() == f"[{name}]" for line in lines) == 1, f"Surge {name} 节必须唯一。")
@@ -274,7 +274,7 @@ def check(path: Path, lines: list[str]) -> list[str]:
     else:
         require(not groups[auto].filter_text, "全地区 url-test 组不得限定地区标签。")
         require("tcp-concurrent: true" in lines and "ipv6: false" in lines, "Mihomo 必须开启 TCP 并发并保留 IPv4 基线。")
-        clashmi_ios = path.name == "rulemesh-substore-mihomo-clashmi-ios.yaml"
+        clashmi_ios = path.name == "clashmi-ios.yaml"
         process_mode = "off" if clashmi_ios else "always" if android_repair and android.CHATGPT_MARKER in lines else "strict"
         require(f"find-process-mode: {process_mode}" in lines, "iOS 关闭进程匹配；安卓 ChatGPT 接管使用 always；其他 Mihomo 源文件保留 strict 按需识别进程。界面覆写需实机验证。")
         values, policies = dns._parse_mihomo_dns(lines)

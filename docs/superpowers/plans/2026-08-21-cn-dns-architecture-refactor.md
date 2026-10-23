@@ -14,7 +14,7 @@
 
 ## Global Constraints
 
-- `C:\Users\zaife\Desktop\rulemesh-local\rulemesh-substore-surge-work-whitelist.conf` 在本任务中必须保持 Git blob ID、文件内容、规则和 DNS 行为完全不变。
+- `C:\Users\zaife\Desktop\rulemesh-local\surge-work.conf` 在本任务中必须保持 Git blob ID、文件内容、规则和 DNS 行为完全不变。
 - 只修改 Surge Personal、Mihomo FlClash 桌面端、Mihomo FlClash 安卓端 三份性能配置；两份 Mihomo 的 DNS 结构必须一致。
 - OpenAI / ChatGPT 的 `ai-us` 路由继续固定美国策略，且 `ai-us` 必须优先使用海外 DNS。
 - 两份 Mihomo 保持 `ipv6: false`、`dns.ipv6: false`、`use-hosts: false`、`use-system-hosts: false`、`respect-rules: false`。
@@ -257,10 +257,10 @@ git commit -m "test: 守护 DNS 规则优先级"
 ### Task 4: 重构三份私有性能配置
 
 **Files:**
-- Modify: `C:\Users\zaife\Desktop\rulemesh-local\rulemesh-substore-surge-personal.conf`
-- Modify: `C:\Users\zaife\Desktop\rulemesh-local\rulemesh-substore-mihomo-flclash-desktop.yaml`
-- Modify: `C:\Users\zaife\Desktop\rulemesh-local\rulemesh-substore-mihomo-flclash-android.yaml`
-- Must not modify: `C:\Users\zaife\Desktop\rulemesh-local\rulemesh-substore-surge-work-whitelist.conf`
+- Modify: `C:\Users\zaife\Desktop\rulemesh-local\surge-home.conf`
+- Modify: `C:\Users\zaife\Desktop\rulemesh-local\flclash-desktop.yaml`
+- Modify: `C:\Users\zaife\Desktop\rulemesh-local\flclash-android.yaml`
+- Must not modify: `C:\Users\zaife\Desktop\rulemesh-local\surge-work.conf`
 
 **Interfaces:**
 - Consumes: 新性能型产物与 Task 3 推导的高优先级集合。
@@ -269,8 +269,8 @@ git commit -m "test: 守护 DNS 规则优先级"
 - [ ] **Step 1: 锁定工作白名单基线**
 
 ```powershell
-git -C C:\Users\zaife\Desktop\rulemesh-local rev-parse "HEAD:rulemesh-substore-surge-work-whitelist.conf"
-git -C C:\Users\zaife\Desktop\rulemesh-local hash-object rulemesh-substore-surge-work-whitelist.conf
+git -C C:\Users\zaife\Desktop\rulemesh-local rev-parse "HEAD:surge-work.conf"
+git -C C:\Users\zaife\Desktop\rulemesh-local hash-object surge-work.conf
 ```
 
 两个值必须相同；摘要只保存在内存。
@@ -302,7 +302,7 @@ Expected: 全部 PASS。
 - [ ] **Step 5: 确认工作白名单零变化**
 
 ```powershell
-git -C C:\Users\zaife\Desktop\rulemesh-local diff --exit-code -- rulemesh-substore-surge-work-whitelist.conf
+git -C C:\Users\zaife\Desktop\rulemesh-local diff --exit-code -- surge-work.conf
 git -C C:\Users\zaife\Desktop\rulemesh-local diff --check
 git -C C:\Users\zaife\Desktop\rulemesh-local status --short
 ```
@@ -410,13 +410,13 @@ Expected: 构建 0 warning；所有测试和三个检查器通过。
 比较任务前保存的 HEAD blob、当前工作树 hash 与当前 HEAD blob，并执行：
 
 ```powershell
-git -C C:\Users\zaife\Desktop\rulemesh-local diff --exit-code -- rulemesh-substore-surge-work-whitelist.conf
+git -C C:\Users\zaife\Desktop\rulemesh-local diff --exit-code -- surge-work.conf
 ```
 
 - [ ] **Step 4: 提交私有仓库**
 
 ```powershell
-git add -- AGENTS.md README.md rulemesh-substore-surge-personal.conf rulemesh-substore-mihomo-flclash-desktop.yaml rulemesh-substore-mihomo-flclash-android.yaml
+git add -- AGENTS.md README.md surge-home.conf flclash-desktop.yaml flclash-android.yaml
 git commit -m "feat: 扩展性能型中国 DNS"
 ```
 

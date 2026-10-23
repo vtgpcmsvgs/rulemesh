@@ -1,6 +1,6 @@
 # RuleMesh
 
-Clash Mi iOS 使用独立私有配置 `rulemesh-substore-mihomo-clashmi-ios.yaml`，由桌面业务配置派生；iOS TUN、DNS 覆写、600 秒测速与 ASN 兼容说明见 [Clash Mi iOS 接入](docs/clashmi-ios.md)。桌面或订阅更新后重新运行派生器，完整检查包含 iOS 一致性校验。
+Clash Mi iOS 使用独立私有配置 `clashmi-ios.yaml`，由桌面业务配置派生；iOS TUN、DNS 覆写、600 秒测速与 ASN 兼容说明见 [Clash Mi iOS 接入](docs/clashmi-ios.md)。桌面或订阅更新后重新运行派生器，完整检查包含 iOS 一致性校验。
 
 2026-09-27 当前业务选择层以 [八个业务组与 DNS 联动](docs/service-groups-refactor.md) 为准；下文保留历史基线及实测记录。
 
@@ -217,6 +217,19 @@ ai_us 同时承接 OpenAI、Claude、Copilot、Cursor、Grok、Windsurf、Augmen
 
 真实客户端配置的最终数据源是 GitHub 私人仓库 [`vtgpcmsvgs/rulemesh-local`](https://github.com/vtgpcmsvgs/rulemesh-local)，Windows 默认工作副本位于 `%USERPROFILE%\Desktop\rulemesh-local`。根目录 [`private-repository.json`](private-repository.json) 是这项对应关系的机器可读登记。
 
+主配置名只保留客户端与用途/平台：
+
+| 文件 | 用途 |
+| --- | --- |
+| `surge-home.conf` | Surge Personal 家庭版 |
+| `surge-company.conf` | Surge Personal 公司版 |
+| `surge-work.conf` | Surge 工作白名单，最终拒绝 |
+| `flclash-desktop.yaml` | FlClash 桌面版 |
+| `flclash-android.yaml` | FlClash 安卓版 |
+| `clashmi-ios.yaml` | Clash Mi iOS 派生版 |
+
+重命名只改变文件路径，规则与 DNS 保持原样。已有按旧路径导入的文件或订阅链接须改用新文件名；Git 重命名不会自动迁移客户端引用。
+
 同一 GitHub 账号已经登录，并不意味着另一台机器已经克隆该仓库，也不意味着新的 Codex 会话自动知道本地目录对应关系。若本机不存在 `rulemesh-local`，应先读取登记文件，通过 GitHub 确认私人仓库可访问，再克隆到登记路径；不得直接断言配置不存在或创建新的空仓库。完整恢复、校验与脱敏边界，以及设备码过期、凭据保存失败和 Git DNS 线程解析故障的恢复步骤，见 [docs/private-repository-bootstrap.md](docs/private-repository-bootstrap.md)。
 
 ## 本地私有配置
@@ -242,7 +255,7 @@ ai_us 同时承接 OpenAI、Claude、Copilot、Cursor、Grok、Windsurf、Augmen
 - 四份本地私有配置里，所有基于 `policy-path` / provider 的代理组默认共用同一套排除条件：`剩余流量`、`套餐到期`、`距离下次重置`、`过滤掉`、`Expire Date`、`Traffic Reset` 这类状态/提示项按前缀匹配，`直接连接` 这类独立占位项按整行精确匹配，`联系我们` 与 `1.2 GB | 50 GB` 这类提示继续专项匹配
 - 如果某个 provider 会给真实节点名追加统一前缀，不要把供应商名或独立占位项写成宽匹配，否则可能误伤真实节点
 - 详细背景、禁止事项与改动前检查清单见 [docs/proxy-group-filter-methodology.md](docs/proxy-group-filter-methodology.md)
-- 如果本地同时维护 FlClash 桌面端 与 FlClash 安卓端，建议分别维护 `rulemesh-substore-mihomo-flclash-desktop.yaml` 与 `rulemesh-substore-mihomo-flclash-android.yaml`
+- 如果本地同时维护 FlClash 桌面端 与 FlClash 安卓端，建议分别维护 `flclash-desktop.yaml` 与 `flclash-android.yaml`
 - 五份私有配置共享业务策略基线，但保留 Surge / Mihomo 自身的 DNS 与运行时语义，工作白名单也保持独立。
 - 两份 Mihomo 私有配置使用默认国内双 DoH、AI 专用美国 DoH 与独立节点 bootstrap；IPv4、关闭 hosts 混入和 respect-rules 的约束继续保留。
 - 旧版 2026-08-21 分层镜像 DNS 已由 2026-09-09 性能基线取代；不得按历史说明删除新版 AI 专用 policy 或必需的节点 bootstrap。

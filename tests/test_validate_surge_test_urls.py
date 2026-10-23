@@ -96,7 +96,7 @@ class ValidateSurgeTestUrlsTests(unittest.TestCase):
         self.addCleanup(temp_dir.cleanup)
         private_repo = Path(temp_dir.name) / "rulemesh-local"
         private_repo.mkdir()
-        profile = private_repo / "rulemesh-substore-surge-personal.conf"
+        profile = private_repo / "surge-home.conf"
         profile.write_text("[General]\n", encoding="utf-8")
 
         with (

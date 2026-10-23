@@ -8,9 +8,9 @@ FIXED = {"AI": "us", "Crypto": "tw", "Microsoft": "us", "香港券商": "hk"}
 MANUAL = ("Google", "YouTube", "Telegram", "Microsoft", "Apple")
 MANUAL_FIXED_SERVICES = frozenset({"AI", "Crypto", "香港券商"})
 MANUAL_FIXED_PROFILES = frozenset({
-    "rulemesh-substore-mihomo-clashmi-ios.yaml",
-    "rulemesh-substore-mihomo-flclash-desktop.yaml",
-    "rulemesh-substore-mihomo-flclash-android.yaml",
+    "clashmi-ios.yaml",
+    "flclash-desktop.yaml",
+    "flclash-android.yaml",
 })
 REGION_LABELS = {"us": "美国", "tw": "台湾", "hk": "香港"}
 REGIONS = {"🇭🇰 香港-自动选择": "hk", "🇨🇳 台湾-自动选择": "tw",
@@ -68,7 +68,7 @@ def check(path: Path, lines, groups, rules, auto):
     import check_private_dns_precedence as parser
     import check_performance_baseline as baseline
     surge = path.suffix == ".conf"
-    work = "work-whitelist" in path.name
+    work = path.name == parser.SURGE_WORK
     errors = []
 
     def require(ok, message):
@@ -202,7 +202,7 @@ def check(path: Path, lines, groups, rules, auto):
         require("direct/apple_direct" not in positions, "工作白名单不得引入 Personal 的 Apple 全域放行。")
     elif not surge:
         # 两份 FlClash 的既有更新拒绝不能被新增 Apple 入口绕过；公开模板沿用已有前置 Apple。
-        if path.name.startswith("rulemesh-substore-"):
+        if path.name in parser.MIHOMO_PROFILES:
             reject = [i for i, (_, p) in enumerate(rules) if p[:2] == ["RULE-SET", "reject_os_update"]]
             require(bool(reject) and bool(positions.get("direct/apple_direct")) and reject[0] < positions["direct/apple_direct"][0], "FlClash 的更新拒绝必须早于 Apple 业务入口。")
     if not surge:

@@ -61,7 +61,7 @@ class CommonRouteTests(unittest.TestCase):
         self.assertEqual([r for r in results if not r["passed"]], [])
 
     def test_private_contract_cannot_reintroduce_alias_or_download_bypass(self):
-        path = Path("rulemesh-substore-mihomo-flclash-android.yaml")
+        path = Path("flclash-android.yaml")
         good = [common.MARKER, "rules:", "  - MATCH,DIRECT"]
         self.assertEqual(common.profile_contract(path, good), [])
         for extra in ("  - PROCESS-NAME,com.android.providers.downloads,DIRECT",

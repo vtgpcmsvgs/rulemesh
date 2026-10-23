@@ -2,7 +2,9 @@
 
 ## 仓库重点
 
-- Clash Mi iOS 私有配置 `rulemesh-substore-mihomo-clashmi-ios.yaml` 由 `tools/derive_clashmi_profile.py` 从桌面配置及当前构建资产派生。先构建再派生；业务、机场与订阅同步块变更后重新派生，不手工维护第三套业务规则。iOS 进程匹配 off、检测周期 600 秒、TUN 交给应用、关闭 DNS/业务覆写，保留桌面 DNS 基线；阿里云 SSH 仅保留精确网段内联快照，不使用 ASN。静态检查与 iPhone 的实际 DNS/内存/连接验收分开报告，详见 `docs/clashmi-ios.md`。
+- 私人主配置统一使用“客户端 + 用途/平台”短名：`surge-home.conf`、`surge-company.conf`、`surge-work.conf`、`flclash-desktop.yaml`、`flclash-android.yaml`、`clashmi-ios.yaml`。前两份是 Personal 家庭/公司版，`surge-work.conf` 仍为独立工作白名单；检查器必须按明确文件清单识别私有配置，不再依赖旧公共前缀。
+
+- Clash Mi iOS 私有配置 `clashmi-ios.yaml` 由 `tools/derive_clashmi_profile.py` 从桌面配置及当前构建资产派生。先构建再派生；业务、机场与订阅同步块变更后重新派生，不手工维护第三套业务规则。iOS 进程匹配 off、检测周期 600 秒、TUN 交给应用、关闭 DNS/业务覆写，保留桌面 DNS 基线；阿里云 SSH 仅保留精确网段内联快照，不使用 ASN。静态检查与 iPhone 的实际 DNS/内存/连接验收分开报告，详见 `docs/clashmi-ios.md`。
 
 - 源规则只维护在 `rules/`
 - 构建产物只发布三条线：
@@ -101,6 +103,7 @@
 - 修改 `rulemesh-local` 前先确认工作区、当前分支和远程同步状态；修改完成后必须提交并推送，且只有远程推送成功并确认本地未领先远程时才算私有配置同步完成
 - 私有仓库可以完整纳管配置内容，但检查、提交和验证过程中仍不得在回复或日志中回显真实订阅地址、密钥、签名、证书参数或其他敏感值
 - 检查私有配置时，脱敏必须在命令或工具产生输出之前完成；不要先输出整行再事后遮盖。默认只查看字段名、命中计数、哈希或已经替换 URL、令牌、密钥与证书参数的片段
+- `.rulemesh.local.json` 诊断只允许输出键路径或字段存在性，不输出任何值；只替换 URL 的正则不能保护 `secret`、`access_key_id`、`access_key_secret` 等独立凭据字段，禁止用它包装整份 JSON 输出。
 - 私人仓库使用 `.gitattributes` 的 `* -text` 时，保留未修改行的既有换行风格；新增或重写行统一使用 LF，并在提交前运行 `git diff --check`，避免 CR 字符被识别为行尾空白
 - Git 差异审计保留仓库既有 `core.autocrlf` 和属性规则；不要为隐藏 LF/CRLF 提示临时设置 `core.autocrlf=false`，否则会将现有 CRLF 工作副本整文件误报为新增及行尾空白。输出过大时应捕获命令结果并汇总，不改变换行语义。
 - 修改私人仓库名称、所有者、默认分支、本地默认路径或布局候选时，必须同步更新 `private-repository.json`、`docs/private-repository-bootstrap.md`、`README.md`、本文件与对应检查脚本
@@ -115,10 +118,10 @@
 - 新增或调整默认对外使用的规则入口、规则顺序、策略含义或公开模板行为时，必须同步更新 `README.md`、`docs/usage-surge.md`、`docs/usage-mihomo.md`、`docs/examples/surge-public.conf`、`docs/examples/mihomo-public.yaml`
 - 若本次修改影响使用方式、规则组织、构建方式、产物结构或维护约定，必须同步更新相关文档
 - 2026-05-07 下线的两类激进 `reject` 入口不再恢复到源规则、公开模板或私有配置，除非用户明确要求重新启用
-- 私有 `rulemesh-substore-surge-work-whitelist.conf` 属于长期特化的工作路由白名单配置；它与两份 Surge Personal、`rulemesh-substore-mihomo-flclash-desktop.yaml`、`rulemesh-substore-mihomo-flclash-android.yaml` 从现在起允许永久不一致，不得因为“统一模板”或“对齐 personal 配置”而回滚
-- Surge Personal 固定维护家庭版 `rulemesh-substore-surge-personal.conf` 与公司版 `rulemesh-substore-surge-personal-company.conf`；两者只允许用途标识和 MITM 不同，路由与 DNS 结构必须同步。Personal 专用的 `personal_priority_hk`、`notion_hk`、`hk_securities_aggressive`、`apple_direct`、`outlook_direct` 不得同步进工作白名单；2026-09-16 Store 美国专项是已批准例外，在工作配置中必须晚于更新拒绝。
+- 私有 `surge-work.conf` 属于长期特化的工作路由白名单配置；它与两份 Surge Personal、`flclash-desktop.yaml`、`flclash-android.yaml` 从现在起允许永久不一致，不得因为“统一模板”或“对齐 personal 配置”而回滚
+- Surge Personal 固定维护家庭版 `surge-home.conf` 与公司版 `surge-company.conf`；两者只允许用途标识和 MITM 不同，路由与 DNS 结构必须同步。Personal 专用的 `personal_priority_hk`、`notion_hk`、`hk_securities_aggressive`、`apple_direct`、`outlook_direct` 不得同步进工作白名单；2026-09-16 Store 美国专项是已批准例外，在工作配置中必须晚于更新拒绝。
 - 工作配置也使用默认国内 DNS；可保留小型 cn_dns_domains，不引用性能型清单，DNS 调整不授予流量放行。
-- 维护 `rulemesh-substore-surge-work-whitelist.conf` 时，默认应维持“仅放行明确白名单入口，其余流量对工作电脑统一 REJECT”的原则；若要恢复广谱放行（如 `proxy/gfw`、广谱 `direct`、`FINAL` 兜底放行），必须得到用户明确确认
+- 维护 `surge-work.conf` 时，默认应维持“仅放行明确白名单入口，其余流量对工作电脑统一 REJECT”的原则；若要恢复广谱放行（如 `proxy/gfw`、广谱 `direct`、`FINAL` 兜底放行），必须得到用户明确确认
 - 工作白名单保留既有精确放行、设备条件与观察规则，新增 cn_social_direct 精确直连；AI 美国、Crypto/RPC 台湾、明确日本入口与香港券商保留地区，其他代理自动择优。AWS IP 和链式 SOCKS5 调用停用；最终保持 FINAL,REJECT，不恢复 cn_direct 或 gfw 广谱放行。
 - region/hk/wps_kdocs 按 2026-09-18 用户要求统一 DIRECT，取消香港地区展示出口要求；历史路径与 hk_wps_kdocs provider 名仅作兼容，不代表出口。七份配置均早于 Google 广谱，DNS 保持默认国内；工作白名单仅保留该专项放行，最终 REJECT 不变。
 - GitHub 在该工作路由文件中除 `github_ssh_direct` 外，还允许紧随其后保留 `DOMAIN,raw.githubusercontent.com` 下载入口与一条广覆盖 `DOMAIN-KEYWORD,github` 观察兜底；它们用于显式放行 GitHub Raw 规则产物下载，并发现 SSH / Raw 之外的漏网之鱼，不得被“去重”或“收敛”掉
@@ -163,7 +166,7 @@
 - `.rulemesh.local.json`、`%USERPROFILE%\Desktop\rulemesh-local` 整个私人仓库、私有 `policy-path`、真实机场订阅地址、Webhook、AccessKey、STS、`[MITM]` 证书参数、局域网设备分流规则都视为私有内容
 - 默认不要把私有文件内容或敏感值写回公开仓库，也不要在回复中完整回显真实密钥、签名、订阅 URL 或其他敏感参数
 - 即使需要在公开仓库里记录工作路由白名单维护约定，也只允许写“固定工作电脑”“白名单模式”“与 personal 永久不一致”这类抽象说明；不要把真实 `SRC-IP` 范围、私有设备标识、订阅地址或本地策略分组细节写回公开仓库
-- 若 `rulemesh-substore-mihomo-flclash-desktop.yaml` 出现“某个 provider 全部测速失败，但同一订阅直导 FlClash 桌面端 正常”的现象，默认先对比运行时 `dns:`，并通过 Mihomo API / 命名管道与日志确认实际生效配置；不要先把问题归因到节点失效，也不要只停留在更换测速 URL 这一层
+- 若 `flclash-desktop.yaml` 出现“某个 provider 全部测速失败，但同一订阅直导 FlClash 桌面端 正常”的现象，默认先对比运行时 `dns:`，并通过 Mihomo API / 命名管道与日志确认实际生效配置；不要先把问题归因到节点失效，也不要只停留在更换测速 URL 这一层
 - 新版 Mihomo 默认只允许 AI 专用 policy 与国内节点 bootstrap；安卓额外允许 YouTube、hk_google policy，并分别跟随对应业务选择组，详见 docs/android-network-repair.md。respect-rules: true、DNS fallback、direct-nameserver、proxy-server-nameserver-policy 继续禁止。不要把当前已批准 proxy-server-nameserver 误判为旧版回滚。
 - 若本地私有配置结构发生变化，必须同步更新 `.rulemesh.local.example.json` 与相关文档，但只允许写入脱敏占位值
 - 若任务需要参考私有配置，默认只说明字段名、用途与是否生效，不直接暴露真实值
@@ -230,7 +233,7 @@
 - ADB 读取、模拟点击、应用私有数据访问是三个独立能力；设备拒绝时按系统授权边界处理。UI/API 输出必须在输出前白名单脱敏。诊断复用解析器前检查字段定义，构建器传绝对源路径；第三方文件路径先枚举，任何错误立即中止依赖步骤。
 - 安卓 VPN 开关的保存值不等于生效值。修改或恢复后必须完整停止/启动 FlClash VPN，并用 tools/check_android_vpn_runtime.py 检查 Android 活动 VPN 不再携带旧 HTTP 代理；系统传输可能是 CELLULAR|VPN 或 WIFI|VPN，不能只匹配 Transports: VPN。业务验收覆盖用户实际失败的多个组件及应用重开，不能凭单页短暂成功宣称整个应用恢复。
 
-- 桌面、安卓唯一现用客户端均为 FlClash，对应私人文件为 rulemesh-substore-mihomo-flclash-desktop.yaml / rulemesh-substore-mihomo-flclash-android.yaml。以 docs/flclash-performance.md 为当前接入、测速、覆写与复测依据；旧客户端缓存和命名管道不能代表 FlClash 运行态。
+- 桌面、安卓唯一现用客户端均为 FlClash，对应私人文件为 flclash-desktop.yaml / flclash-android.yaml。以 docs/flclash-performance.md 为当前接入、测速、覆写与复测依据；旧客户端缓存和命名管道不能代表 FlClash 运行态。
 - 标准模式导入规则，DNS 覆写关闭；必须检查 preferences 中的 patchClashConfig 和生成 config.yaml。源文件进程匹配 strict；FlClash 0.8.97 界面只接受 always/off，实际保留 always 以支持进程规则，不能写入无效 strict 或直接 off。先检查客户端枚举再改字段，不能将内核支持等同于界面支持。
 - cn_direct_light 由构建自动推导，只适用于紧接 gfw_precise、最终 DIRECT 的末尾；工作白名单不调用。完整 cn_direct/gfw、AWS/链式和已停用 AdsPower 资产保留。
 - 校验 native validateConfig 只代表 YAML 能解析，需区分真正加载；provider 缓存须位于隔离 home 内。API 404 不能误报节点不可用，DNS UDP 被 TUN 缓存命中不能误报公网解析器更快。

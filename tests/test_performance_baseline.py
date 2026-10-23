@@ -44,7 +44,7 @@ class PerformanceBaselineTests(unittest.TestCase):
                 changed = text.replace(line, line.replace(',DIRECT', ',' + target))
                 self.assertTrue(any('最终兜底' in error for error in baseline.check(path, changed.splitlines())))
             if client == 'surge':
-                work = Path('work-whitelist.conf')
+                work = Path('surge-work.conf')
                 self.assertTrue(any('最终兜底' in error for error in baseline.check(work, text.splitlines())))
                 changed = text.replace(line, 'FINAL,REJECT')
                 self.assertFalse(any('最终兜底' in error for error in baseline.check(work, changed.splitlines())))
@@ -68,8 +68,9 @@ class PerformanceBaselineTests(unittest.TestCase):
 
     def test_platform_health_intervals_and_active_groups(self):
         _, text = self.fixture('mihomo')
-        desktop = Path('flclash-desktop.yaml')
-        android = Path('flclash-android.yaml')
+        # 这里只测公开模板的周期；避免与真实私有短名重合而触发完整私有检查。
+        desktop = Path('interval-flclash-desktop.yaml')
+        android = Path('interval-flclash-android.yaml')
         self.assertEqual(baseline.check(desktop, text.splitlines()), [])
         self.assertTrue(any('检测' in error for error in baseline.check(android, text.splitlines())))
         android_text = text.replace('interval: 300', 'interval: 600')
@@ -128,7 +129,7 @@ class PerformanceBaselineTests(unittest.TestCase):
 
     def test_private_profiles_require_subscription_sync_markers(self):
         _, text = self.fixture("surge")
-        errors = baseline.check(Path("rulemesh-substore-surge-personal.conf"), text.splitlines())
+        errors = baseline.check(Path("surge-home.conf"), text.splitlines())
         self.assertTrue(any("同步块" in error for error in errors))
 
     def test_airport_manual_groups_are_not_rule_reachability_garbage(self):

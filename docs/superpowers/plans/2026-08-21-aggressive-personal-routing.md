@@ -14,7 +14,7 @@
 
 ## Global Constraints
 
-- 不得编辑或间接扩张 `rulemesh-substore-surge-work-whitelist.conf` 的行为。
+- 不得编辑或间接扩张 `surge-work.conf` 的行为。
 - 公司 MITM 只进入私有仓库，任何输出只允许字段名、长度或不可逆摘要。
 - 新增源规则必须同步 `rules/upstream/sources.yaml` 与 `rules/upstream/merge.yaml`。
 - 公开源文件和文档使用中文，UTF-8 无 BOM；构建只能使用 `tools/build_rules.ps1`。
@@ -152,7 +152,7 @@ Expected: 更新 `rules/upstream/hkex/sehk_participant_websites.list`，失败�
 
 ```python
 def test_company_surge_personal_is_registered(self) -> None:
-    self.assertIn("rulemesh-substore-surge-personal-company.conf", PRIVATE_PROFILE_NAMES)
+    self.assertIn("surge-company.conf", PRIVATE_PROFILE_NAMES)
 ```
 
 - [ ] **Step 2: 运行相关测试并确认公司文件名缺失导致失败**
@@ -165,8 +165,8 @@ Expected: 至少一项断言因公司文件未登记而失败。
 
 ```python
 SURGE_PERSONAL_NAMES = {
-    "rulemesh-substore-surge-personal.conf",
-    "rulemesh-substore-surge-personal-company.conf",
+    "surge-home.conf",
+    "surge-company.conf",
 }
 ```
 
@@ -181,8 +181,8 @@ Expected: `OK`。
 ### Task 4: 拆分私有配置并接入激进规则
 
 **Files:**
-- Modify: `C:/Users/zaife/Desktop/rulemesh-local/rulemesh-substore-surge-personal.conf`
-- Create: `C:/Users/zaife/Desktop/rulemesh-local/rulemesh-substore-surge-personal-company.conf`
+- Modify: `C:/Users/zaife/Desktop/rulemesh-local/surge-home.conf`
+- Create: `C:/Users/zaife/Desktop/rulemesh-local/surge-company.conf`
 - Modify: `C:/Users/zaife/Desktop/rulemesh-local/sync_private_subscription_direct.ps1`
 - Modify: `C:/Users/zaife/Desktop/rulemesh-local/README.md`
 - Modify: `C:/Users/zaife/Desktop/rulemesh-local/AGENTS.md`
@@ -255,7 +255,7 @@ git push origin main
 - [ ] **Step 5: 提交并推送私有仓库**
 
 ```powershell
-git add -- rulemesh-substore-surge-personal.conf rulemesh-substore-surge-personal-company.conf sync_private_subscription_direct.ps1 README.md AGENTS.md
+git add -- surge-home.conf surge-company.conf sync_private_subscription_direct.ps1 README.md AGENTS.md
 git commit -m "feat: split personal surge profiles"
 git push origin main
 ```
