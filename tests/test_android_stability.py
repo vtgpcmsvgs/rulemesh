@@ -58,7 +58,18 @@ class AndroidStabilityTests(unittest.TestCase):
         broker_rule = '  - RULE-SET,hk_securities,香港券商\n'
         self.assertEqual(text.count(broker_rule), 1)
         text = text.replace(broker_rule, broker_rule + ''.join(f'  - PROCESS-NAME,{p},香港券商\n' for p in android.BROKER_PACKAGES))
-        # 业务层已由 Google/YouTube 香港节点筛选组承接；夹具只补安卓专属规则。
+        # 安卓 Google 独立默认美国；YouTube 与其他客户端仍保留香港默认。
+        google_start = text.index('  - name: "Google"\n')
+        google_end = text.index('  - name:', google_start + 1)
+        google_block = text[google_start:google_end]
+        us_line = '      - "🇺🇸 美国-自动选择"\n'
+        self.assertEqual(google_block.count(us_line), 1)
+        google_block = google_block.replace(us_line, '').replace('    proxies:\n', '    proxies:\n' + us_line, 1)
+        text = text[:google_start] + google_block + text[google_end:]
+        us_start = text.index('  - name: "🇺🇸 美国-自动选择"\n')
+        us_end = text.index('  - name:', us_start + 1)
+        us_block = text[us_start:us_end].replace('    lazy: true', '    lazy: false')
+        text = text[:us_start] + us_block + text[us_end:]
         for name in ("Google", "YouTube"):
             anchor = f'  - name: "{name}"\n    type: select\n    hidden: false\n'
             self.assertEqual(text.count(anchor), 1)
@@ -88,6 +99,23 @@ class AndroidStabilityTests(unittest.TestCase):
     def test_complete_profile_preserves_base_and_regional_contracts(self):
         path, text = self.fixture()
         self.assertEqual(baseline.check(path, text.splitlines()), [])
+
+    def test_google_us_default_does_not_change_youtube_or_six_region_candidates(self):
+        path, text = self.fixture()
+        groups = parser._parse_mihomo_groups(text.splitlines())
+        self.assertEqual(service.REGIONS[service.default_target('Google', groups)], 'us')
+        self.assertEqual(service.REGIONS[service.default_target('YouTube', groups)], 'hk')
+        self.assertEqual(set(groups['Google'].members), set(service.REGIONS))
+        start = text.index('  - name: "Google"\n')
+        end = text.index('  - name:', start + 1)
+        block = text[start:end]
+        us_line = '      - "🇺🇸 美国-自动选择"\n'
+        regressed = block.replace(us_line, '') + us_line
+        changed = text[:start] + regressed + text[end:]
+        self.assertTrue(any('默认' in e for e in baseline.check(path, changed.splitlines())))
+        changed = text.replace('  store-selected: true', '  store-selected: false')
+        self.assertNotEqual(changed, text)
+        self.assertTrue(any('store-selected' in e for e in baseline.check(path, changed.splitlines())))
 
     def test_download_processes_cannot_be_removed_or_shadowed(self):
         path, text = self.fixture()

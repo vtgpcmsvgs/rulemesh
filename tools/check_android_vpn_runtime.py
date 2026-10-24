@@ -1,10 +1,12 @@
 """只读核对 Android 实际 VPN，避免把保存的开关误当成已经生效。"""
 from pathlib import Path
+from html.parser import HTMLParser
 import argparse
 import json
 import re
 import shlex
 import subprocess
+from urllib.parse import urlsplit
 
 PACKAGE = "com.follow.clash"
 CHATGPT_TLS_COMMAND = (
@@ -13,6 +15,72 @@ CHATGPT_TLS_COMMAND = (
     '--write-out "\\nRM_CHATGPT_TLS %{http_code} %{ssl_verify_result} %{time_appconnect}\\n" '
     'https://android.chat.openai.com/'
 )
+GOOGLE_SEARCH_COMMAND = (
+    'curl --noproxy "*" --connect-timeout 4 --max-time 12 '
+    '--silent --show-error --location --max-redirs 5 --compressed '
+    '--proto =https --proto-redir =https '
+    '--user-agent "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 '
+    '(KHTML, like Gecko) Chrome/142.0.0.0 Mobile Safari/537.36" '
+    '--write-out "\\nRM_GOOGLE_SEARCH %{http_code} %{ssl_verify_result} '
+    '%{time_appconnect} %{num_redirects} %{url_effective}\\n" '
+    'https://www.google.com/'
+)
+
+
+class _GoogleSearchForm(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.in_search_form = False
+        self.present = False
+
+    def handle_starttag(self, tag, attrs):
+        fields = dict(attrs)
+        if tag == "form":
+            try:
+                action = urlsplit(fields.get("action") or "")
+                self.in_search_form = action.path == "/search" and action.hostname in {None, "google.com", "www.google.com"}
+            except ValueError:
+                self.in_search_form = False
+        if self.in_search_form and fields.get("name") == "q" and (
+                tag == "textarea" or tag == "input" and (fields.get("type") or "text").lower() in {"text", "search"}):
+            self.present = True
+
+    def handle_endtag(self, tag):
+        if tag == "form":
+            self.in_search_form = False
+
+
+def audit_google_search(raw: str, command_exit_code: int = 0) -> dict:
+    """移动 UA 跟随跳转并要求真实搜索表单；正文/完整 URL 仅在内存中解析。"""
+    markers = list(re.finditer(
+        r"^RM_GOOGLE_SEARCH (\d{3}) (\d+) (\d+(?:\.\d+)?) (\d+) (\S+)\s*$", raw, re.M))
+    status, verification, handshake, redirects, final_host = None, None, 0.0, None, None
+    https = search = False
+    if len(markers) == 1:
+        marker = markers[0]
+        status, verification = int(marker[1]), int(marker[2])
+        handshake, redirects = float(marker[3]), int(marker[4])
+        try:
+            url = urlsplit(marker[5])
+            final_host, https = url.hostname, url.scheme == "https"
+        except ValueError:
+            pass
+        body = raw[:marker.start()]
+        form = _GoogleSearchForm()
+        form.feed(body)
+        search = form.present
+    curl_errors = re.findall(r"curl: \((\d+)\)", raw)
+    passed = (command_exit_code == 0 and len(markers) == 1 and not curl_errors
+              and status == 200 and verification == 0 and handshake > 0 and https
+              and final_host in {"google.com", "www.google.com"} and search)
+    # 只输出固定主机角色，恶意/未知跳转中的主机也不得未经脱敏直接输出。
+    role = "google_com" if final_host in {"google.com", "www.google.com"} else (
+        "google_cn" if final_host and (final_host == "google.cn" or final_host.endswith(".google.cn")) else "other_or_unknown")
+    return {"http_status": status, "certificate_verify_result": verification,
+            "tls_handshake_completed": handshake > 0, "redirect_count": redirects,
+            "final_host_role": role, "search_form_present": search,
+            "curl_error_code": int(curl_errors[-1]) if curl_errors else None,
+            "command_exit_code": command_exit_code, "passed": bool(passed)}
 
 
 def audit_chatgpt_tls(raw: str, command_exit_code: int = 0) -> dict:
@@ -81,6 +149,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--adb", required=True, type=Path, help="已授权 USB 设备使用的 adb.exe 路径")
     parser.add_argument("--chatgpt-tls", action="store_true", help="另用手机 curl 核对 ChatGPT 主接口受信 TLS；不代表应用页面或消息成功")
+    parser.add_argument("--google-search", action="store_true", help="用移动 UA 跟随 Google 普通入口跳转并核对搜索表单；不改变浏览器 Cookie")
     args = parser.parse_args()
     if not args.adb.is_file():
         parser.error("ADB 文件不存在。")
@@ -108,6 +177,11 @@ def main() -> int:
                 command_exit_code=probe.returncode,
             )
             result["passed"] = result["passed"] and result["chatgpt_tls"]["passed"]
+        if args.google_search:
+            probe = run_shell("sh", "-c", shlex.quote(GOOGLE_SEARCH_COMMAND))
+            result["google_search"] = audit_google_search(
+                (probe.stdout + probe.stderr).decode("utf-8", errors="replace"), probe.returncode)
+            result["passed"] = result["passed"] and result["google_search"]["passed"]
     except (OSError, RuntimeError, ValueError, subprocess.TimeoutExpired) as error:
         print(json.dumps({"passed": False, "error_type": type(error).__name__}))
         return 1

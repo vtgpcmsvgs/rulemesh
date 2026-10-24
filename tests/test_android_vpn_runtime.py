@@ -4,7 +4,7 @@ import sys
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
-from check_android_vpn_runtime import audit_chatgpt_tls, audit_connectivity, package_uid
+from check_android_vpn_runtime import audit_chatgpt_tls, audit_connectivity, package_uid, audit_google_search
 
 
 class AndroidVpnRuntimeTests(unittest.TestCase):
@@ -73,6 +73,35 @@ class AndroidVpnRuntimeTests(unittest.TestCase):
         result = audit_chatgpt_tls("RM_CHATGPT_TLS 200 0 0.5\n", command_exit_code=28)
         self.assertFalse(result["passed"])
         self.assertEqual(result["command_exit_code"], 28)
+
+    def test_google_mobile_redirect_requires_com_search_and_trusted_tls(self):
+        body = '<html><form action="/search"><textarea name="q"></textarea></form></html>\n'
+        good = body + 'RM_GOOGLE_SEARCH 200 0 0.5 1 https://www.google.com/\n'
+        self.assertTrue(audit_google_search(good)["passed"])
+        for raw in (good.replace('www.google.com/', 'www.google.cn/m'),
+                    good.replace('www.google.com/', 'www.google.com.evil.invalid/'),
+                    good.replace('https:', 'http:'), good.replace('200 0', '404 0'),
+                    good.replace('200 0', '200 20'), good.replace('0.5', '0.0'),
+                    good.replace(body, ''), good + good, '', 'curl: (28) timeout\n' + good):
+            with self.subTest(raw=raw):
+                self.assertFalse(audit_google_search(raw)["passed"])
+        self.assertFalse(audit_google_search(good, 28)["passed"])
+
+    def test_google_challenge_hidden_query_or_script_is_not_a_search_form(self):
+        marker = '\nRM_GOOGLE_SEARCH 200 0 0.5 0 https://www.google.com/\n'
+        for body in ('<form action="/search"><input type="hidden" name="q"></form>',
+                     '<form action="/search"><input data-name="q"></form>',
+                     '<script>let s=\'<form action="/search"><textarea name="q"></textarea></form>\'</script>',
+                     '<form action="/sorry/"><textarea name="q"></textarea></form>',
+                     '<form action="https://private.invalid/search"><input name="q"></form>'):
+            self.assertFalse(audit_google_search(body + marker)["passed"])
+
+    def test_google_probe_redacts_unknown_url_and_query(self):
+        raw = '<input name="q">\nRM_GOOGLE_SEARCH 200 0 0.5 1 https://private.invalid/?token=secret\n'
+        result = audit_google_search(raw)
+        self.assertEqual(result["final_host_role"], 'other_or_unknown')
+        self.assertNotIn('private.invalid', str(result))
+        self.assertNotIn('secret', str(result))
 
 
 if __name__ == "__main__":

@@ -158,6 +158,8 @@
 
 ## 私有配置与脱敏
 
+- 2026-10-24 安卓 Google 默认选择美国自动组，保留六地区候选和 `profile.store-selected: true`；Google 专项海外 DoH 继续跟随 Google，YouTube 和其他客户端默认香港保持。原香港出口在移动 Chrome 返回受信 302 → google.cn/m → 404，美国对照恢复 200 与搜索框。验收必须检查移动 UA / Chrome 的普通入口、最终主机和搜索表单，不能用桌面 UA、204 或 `/ncr` 替代；复测还须包含完整重启和设备配置与源配置一致性。旧 profile 的已保存选择可能覆盖新 YAML 首项，导入后必须显式确认 Google 实际选择。ADB 标准服务不可用时可使用同一已授权 USB 调试接口，须核对客户端库与运行时位数；所有 USB 操作串行且等前置命令完成，UI 前台未就绪或层级采集失败的轮次作废。
+
 - 2026-10-23 安卓 ChatGPT 使用精确包名 `com.openai.chatgpt` 兜底，绑定实际 `us_ai` 组并紧随 AI、国内精选两条入口；源与 FlClash 界面须为 `always`。FlClash 0.9.1 新装默认 `off`，未知 `strict` 也按 `off` 解析，不得沿用旧版反序列化结论。设置后完整重启 VPN 并核对实际规则、DNS 出口和业务返回，详见 `docs/android-network-repair.md`。
 - 私有配置提交前执行 `check_private_profile_integrity.py`（已接入全量检查），拒绝正文被上传表达式、编码文本或截断替代；API 上传完成不能替代远程 Git blob 哈希核对。私人旧 CRLF 按字节保留，单次 `diff --check` 可明确启用 `cr-at-eol`，不得改变 `core.autocrlf`。
 
@@ -249,7 +251,7 @@
 - 2026-09-27 业务选择约定：Google、YouTube、Telegram、Apple 使用 select，手动选择香港、台湾、日本、韩国、新加坡、美国六个地区自动组，Apple 另追加 DIRECT。六地区组均为 url-test，覆盖所有 provider 的对应地区节点。AI 与 Microsoft 共享“美国-provider”自动子组；Microsoft 在所有配置中使用 select，手动选择美国子组或 DIRECT；AI、Crypto、香港券商仅两份私人 Mihomo 的父组使用 select，其余配置保留 url-test；Crypto 引用“台湾-provider”，香港券商引用“香港-provider”。这些子组均为 url-test，逐一对应机场来源；私人配置每个固定地区业务有七个子组。Surge 父组必须用显式成员名称，不能用 include-other-group 代替，否则会展开为节点列表。隐藏状态不再作为功能验收条件。DNS、规则顺序、Store 美国及工作白名单边界保持。
 - Surge 保留 `hidden=1/0` 参数兼容写法，但不得以此保证客户端隐藏效果；本轮用户取消隐藏验收。
 - proxy/youtube 使用审核后的专用域名，不能整包 INCLUDE 含 gvt1/gvt2、ggpht 和 IP 的上游；先于 Google 广谱，旧 google_hk 保留完整兼容。新增业务规则须测正例和共享 CDN 负例。
-- 安卓 Google 使用六地区手动选择组，默认香港自动，三个 Google 专属进程和 QUIC 保留；DNS policy 按 AI、YouTube、Google 顺序分别绑定对应业务组。普通桌面仅 AI policy，不机械扩散安卓策略。
+- 安卓 Google 使用六地区手动选择组，按 2026-10-24 修订默认美国自动，三个 Google 专属进程和 QUIC 保留；DNS policy 按 AI、YouTube、Google 顺序分别绑定对应业务组。普通桌面仅 AI policy，不机械扩散安卓策略。
 - Apple 普通配置手动选择六地区及 DIRECT、初始香港；两份 FlClash 的更新拒绝必须先于 Apple。工作只重绑既有 macOS 更新入口，禁止增加 Apple 全域放行。原机场手动组保留，Notion 统一复用香港自动选择。
 - 第三方配置的 DNS/hosts 也可能含凭证；只允许 tools/audit_reference_profile.py 白名单统计，不输出整节或解析异常原文。先准备任务专用依赖，不假设系统或捆绑 Python 自带 PyYAML。
 - 详见 docs/service-groups-refactor.md；组默认值、保存选择、文件发布和设备生效必须分开报告。

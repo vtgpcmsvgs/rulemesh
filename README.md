@@ -326,7 +326,7 @@ ai_us 同时承接 OpenAI、Claude、Copilot、Cursor、Grok、Windsurf、Augmen
 
 2026-09-27 业务选择约定：Google、YouTube、Telegram、Apple 使用 select，手动选择香港、台湾、日本、韩国、新加坡、美国六个地区自动组，Apple 另追加 DIRECT。六地区组均为 url-test，覆盖所有 provider 的对应地区节点。AI 与 Microsoft 共享“美国-provider”自动子组；Microsoft 在所有配置中使用 select，手动选择美国子组或 DIRECT；AI、Crypto、香港券商仅两份私人 Mihomo 的父组使用 select，其余配置保留 url-test；Crypto 引用“台湾-provider”，香港券商引用“香港-provider”。这些子组均为 url-test，逐一对应机场来源；私人配置每个固定地区业务有七个子组。Surge 父组必须用显式成员名称，不能用 include-other-group 代替，否则会展开为节点列表。隐藏状态不再作为功能验收条件。DNS、规则顺序、Store 美国及工作白名单边界保持。
 
-参考 naiixi 的配置分析、默认选择、DNS 出口及验证边界见 [业务策略组重构](docs/service-groups-refactor.md)。安卓 DNS policy 现为 AI → YouTube → Google，分别跟随美国、香港、香港业务选择。
+参考 naiixi 的配置分析、默认选择、DNS 出口及验证边界见 [业务策略组重构](docs/service-groups-refactor.md)。安卓 DNS policy 为 AI → YouTube → Google；2026-10-24 起默认分别跟随美国、香港、美国业务选择，仅安卓 Google 改用美国以避开原香港出口的 `google.cn/m` 重定向。保留六地区候选、选择持久化及其他客户端默认值；普通入口、移动 UA、搜索框和重启后的运行态验收见 [安卓修复说明](docs/android-network-repair.md)。
 
 2026-09-26 检查修复：业务组结构检查与原性能/DNS 基线同时执行，按 provider 核对来源、地区与主动测速，拒绝券商重复入口。香港券商统一规则补齐尊嘉精确域名与品牌兜底，不扩大到非券商香港优先站点。负向回归继续覆盖 DNS、顺序、兜底与工作白名单。
 

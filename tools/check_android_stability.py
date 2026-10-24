@@ -137,9 +137,12 @@ def check(path: Path, lines: list[str]) -> list[str]:
     _, health_groups, _ = performance.parse_mihomo(lines)
     stable = groups.get(target)
     if business:
+        profile_blocks = re.findall(r"(?m)^profile:\s*\n((?:[ \t]+[^\n]*\n|\n)*)", "\n".join(lines) + "\n")
+        require(len(profile_blocks) == 1 and re.findall(r"(?m)^  store-selected:\s*(\S+)\s*$", profile_blocks[0]) == ["true"],
+                "安卓必须保留 profile.store-selected: true；导入后另核对实际 Google 选择。")
         google = groups.get("Google")
         require(google is not None and google.group_type == "select" and set(google.members) == set(service.REGIONS), "安卓 Google 必须手动选择六地区自动组。")
-        require(target == next(iter(service.REGIONS)) and stable is not None and stable.group_type in {"url-test", "smart"}, "安卓 Google 默认必须使用香港自动组。")
+        require(service.REGIONS.get(target) == service.default_region("Google", path) and stable is not None and stable.group_type in {"url-test", "smart"}, "安卓 Google 默认必须使用美国自动组，避免原香港出口的 google.cn/m 重定向。")
         for name in ("Google", *service.REGIONS):
             candidate = groups.get(name)
             if candidate is None:
@@ -226,7 +229,7 @@ def check(path: Path, lines: list[str]) -> list[str]:
             pairs.append((policies[1], "YouTube"))
         for policy, outbound in pairs:
             expected = tuple(f"{endpoint}#{outbound}" for endpoint in ("https://cloudflare-dns.com/dns-query", "https://dns.google/dns-query"))
-            require(policy.nameservers == expected, "Google / YouTube 海外 DoH 必须跟随对应业务选择；默认使用香港自动组。")
+            require(policy.nameservers == expected, "Google / YouTube 海外 DoH 必须跟随各自业务选择，不能固定到旧地区。")
     require(not any(re.fullmatch(r'\s*-\s*[\"\']?(android\.clients\.google\.com|clients4\.google\.com)[\"\']?\s*', s) for s in lines),
             "Play API 不能被误当作联网探测主机加入 fake-ip-filter。")
     return list(dict.fromkeys(errors))

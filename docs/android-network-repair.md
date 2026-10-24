@@ -1,5 +1,23 @@
 # 安卓 FlClash 网络与 Google Play 下载修复
 
+## 2026-10-24 Chrome 跳转 google.cn/m
+
+本轮分类为安卓私人配置、设备运行设置、检查脚本与文档；不改源规则、上游登记或公开模板。私人当前配置实际位于 `C:\Users\zaife\Desktop\rulemesh-local` 根目录，手机使用移动数据、FlClash 0.9.1。
+
+手机存在唯一 FlClash VPN，无 HTTP 代理残留，内核为 rule / always，Google 实际选香港；Google 专项 Cloudflare/Google DoH 均通过 Google 组并收到返回，两个 Google 主机查询成功。移动 Chrome 关闭缓存后，普通 `https://www.google.com/` 收到受信证书签发者 WE2 对应的 302，跳至 `www.google.cn/m` 并返回 404。桌面式 curl UA 对相同入口可返回 200，因此不能用一次 curl 或 204 掩盖移动浏览器故障。
+
+只将 Google 业务选择改美国，同一浏览器、相同 Cookie 和普通入口即恢复 200、搜索框，无网络错误；裸域 HTTPS、www HTTPS、裸域 HTTP 三入口均通过。再切回香港，受信 302 → `.cn/m` → 404 复现。证据支持当前香港出口触发 Google 移动地区重定向；未独立测得出口 IP 的物理地理位置，不能把节点标签当作 Google 的地区判断或宣称 DNS 污染。没有使用 `/ncr`、清除浏览器数据、全局代理或 Chrome 整包代理作为修复。
+
+私人安卓源的 Google select 改为美国首项，保留六地区候选及 `profile.store-selected: true`，美国地区组保持主动检测；Google DNS policy 继续跟随 Google。AI、Crypto、香港券商、日本入口、国内 DNS、YouTube 和其他客户端默认值保持。静态检查与回归拒绝将安卓 Google 默认改回香港，仍拒绝 DIRECT 或删除地区候选。手机最初加载 87 条旧规则及旧策略组，私人源为 86 条；已通过官方导入独立新 profile，保留旧 profile 作回滚，不恢复整份旧备份。已有选择可覆盖 YAML 首项，必须同时核对实际选中 profile 和 Google 地区。
+
+最终运行态：新 profile 为 86 条规则；完整结束 FlClash 与 Chrome 后重开三轮，Google 美国选择均保留，旧负载均衡组不在活动配置。三轮连接就绪约 12.6、2.4、2.5 秒；第一轮就绪前有两次超时，不能声称完整冷启动立即联网。每轮就绪后 Chrome 普通首页均为 `www.google.com`、200、搜索框存在、无非取消的网络错误；第一轮三个普通入口均通过，第二轮实际搜索返回 200 与搜索结果页。第三轮首次 Chrome 调试接口尚未就绪的采集轮次作废，等待接口就绪后复测通过，未将工具错误计作业务结果。
+
+最终 DNS 查询 google.com / www.google.com 成功；捕获 Chrome 的 `RuleSet,hk_google` 经 Google 组返回数据，同时 Cloudflare 与 Google DoH 经 Google 组收到双向数据，实际组选择美国。没有独立验证出口 IP 物理地理位置或国内 DoH 的物理出口，也未测试 Wi-Fi、全部美国节点及本轮 Play 整包下载。收尾关闭临时控制器，官方备份 CRC 通过，选中 profile 的 YAML 与私人源逐字节一致；systemProxy、allowBypass 关闭，dnsHijacking 开启、always 保持，旧 profile 保留。用户既有不启用始终开启 VPN / 断网保护的选择继续保留。
+
+新增只读探测：`tools/check_android_vpn_runtime.py --adb <实际路径> --google-search`。工具使用移动 UA、受信 HTTPS、有限跳转与时限，要求普通入口最终为 google.com 的 200 且正文有搜索表单；只输出固定主机角色、HTTP 状态、计数和布尔值，原始 URL、Cookie 和正文不输出。它不改变 Chrome Cookie、不等同于 Chrome 前台验收，也不自动切换节点。若未来机场更换出口，单纯测速仍不足以证明 Google 移动搜索可用，应重跑该探测并检查 Chrome 的实际跳转。
+
+标准 ADB 在本机因 socketpair 错误不能启动，本轮复用同一已授权设备的直接 USB ADB 接口；32 位 AdbWinApi 必须搭配 32 位运行时。USB 操作必须串行，等前一命令退出再继续；前台未就绪、UI 层级超时或文件选择身份不明确的轮次作废，不能计作网络失败或成功。DocumentsUI 的返回键可能仅向上切换目录；取消或保存后必须重新确认已返回 FlClash，不能预设固定两次返回已退出。
+
 ## 2026-10-23 ChatGPT 冷启动 SSL 错误复测
 
 本轮属于安卓运行设置、只读检查工具、回归与文档；未改变源规则、上游登记、公开模板或私人 YAML。仍使用移动数据，FlClash 0.9.1、ChatGPT 1.2026.286。Google Play 未显示 ChatGPT 更新。
@@ -156,7 +174,7 @@ DNS 复测中，`chatgpt.com`、`play.googleapis.com`、`www.gw.com.cn`、`dsp.d
 
 ## 2026-09-25 业务选择层
 
-Google 规则、三个专属进程与 DNS 改接可见 Google select，候选为六个地区自动组，默认香港；保留 QUIC 与 600 秒主动检测。YouTube 专用域名前置且可独立切换，候选同样为六地区自动组，其共享 Play CDN 仍归 Google。DNS policy 变为 AI → YouTube → Google，分别绑定业务 select，避免切换视频出口后 DNS 仍固定旧组。保存选择须在设备核验。详见 [业务组说明](service-groups-refactor.md)。
+Google 规则、三个专属进程与 DNS 改接可见 Google select，候选为六个地区自动组；本节记录当时默认香港，已由上文 2026-10-24 安卓美国默认修订取代。保留 QUIC 与 600 秒主动检测。YouTube 专用域名前置且可独立切换，候选同样为六地区自动组，其共享 Play CDN 仍归 Google。DNS policy 变为 AI → YouTube → Google，分别绑定业务 select，避免切换视频出口后 DNS 仍固定旧组。保存选择须在设备核验。详见 [业务组说明](service-groups-refactor.md)。
 
 ## 2026-09-26 安卓券商香港分流
 

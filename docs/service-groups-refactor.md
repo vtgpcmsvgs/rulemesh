@@ -31,6 +31,8 @@
 | 入口 | 类型 | 候选 |
 | --- | --- | --- |
 | Google、YouTube、Telegram、Apple | select | 六地区 url-test 组，初始香港；Apple 另有 DIRECT |
+
+2026-10-24 安卓例外：仅 `rulemesh-flclash-android-20261023.yaml` 的 Google 首选改为美国自动组，并使该地区组主动检测；仍展示六地区候选。YouTube、Telegram、Apple 和其他客户端保留既定默认。Google DNS policy 继续引用 Google，实际地区随业务选择；保存选择可能覆盖首项，导入、完整重启后须另查实际选择与普通搜索入口，详见 [安卓 Google 修复](android-network-repair.md)。
 | AI | 私人 Mihomo 为 select，其余为 url-test | 美国-provider 自动子组 |
 | Microsoft | select | 同一套美国-provider 自动子组及 DIRECT |
 | Crypto | 私人 Mihomo 为 select，其余为 url-test | 台湾-provider 子组 |
