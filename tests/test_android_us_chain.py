@@ -20,7 +20,7 @@ def document():
             chain.KEY: {'version': 1, 'front': chain.FRONT, 'region': chain.REGION, 'exits': list(chain.EXITS)},
             'proxy-groups': [
                 {'name': chain.FRONT, 'type': 'select', 'hidden': False, 'use': ['fixture'], 'exclude-filter': '套餐'},
-                {'name': chain.REGION, **health, 'tolerance': 100, 'proxies': list(chain.EXITS)},
+                {'name': chain.REGION, **health, 'hidden': False, 'tolerance': 100, 'proxies': list(chain.EXITS)},
                 {'name': 'AI', 'type': 'select', 'proxies': [chain.REGION]},
                 {'name': 'Microsoft', 'type': 'select', 'proxies': [chain.REGION, 'DIRECT']},
                 {'name': 'Google', 'type': 'select', 'proxies': ['🇭🇰 香港-自动选择', chain.REGION]}]}
@@ -42,6 +42,17 @@ class AndroidUsChainTests(unittest.TestCase):
         self.assertTrue(dns._group_has_us_semantics('AI', groups, dns.APPROVED_MIHOMO_US_FILTERS))
         self.assertFalse(dns._group_has_us_semantics('AI', groups, baseline.region_filters('hk', False)))
         self.assertTrue(chain.check(Path('desktop.yaml'), text))
+
+    def test_final_exit_group_must_be_explicitly_visible(self):
+        for hidden in (True, None, 'false'):
+            data = document()
+            region = data['proxy-groups'][1]
+            if hidden is None:
+                region.pop('hidden')
+            else:
+                region['hidden'] = hidden
+            with self.subTest(hidden=hidden):
+                self.assertTrue(chain.validate(lines(data)))
 
     def test_wrong_cardinality_ports_missing_auth_and_direct_dialing_fail(self):
         changes = []

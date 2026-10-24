@@ -1,5 +1,7 @@
 # RuleMesh
 
+私人安卓美国最终组现显式显示五个落地，AI 仍引用“美国-自动选择”；独立 `RM-US-Front` 只负责选择前置机场，不增加网络跳数。显示与链路检查见 [任务收尾验收](docs/task-acceptance.md)。
+
 Clash Mi iOS 使用独立私有配置 `rulemesh-clashmi-ios-20261023.yaml`，由桌面业务配置派生；iOS TUN、DNS 覆写、600 秒测速与 ASN 兼容说明见 [Clash Mi iOS 接入](docs/clashmi-ios.md)。桌面或订阅更新后重新运行派生器，完整检查包含 iOS 一致性校验。
 
 2026-09-27 当前业务选择层以 [八个业务组与 DNS 联动](docs/service-groups-refactor.md) 为准；下文保留历史基线及实测记录。

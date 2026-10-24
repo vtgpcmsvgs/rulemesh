@@ -43,6 +43,7 @@ def validate(lines):
         assert not any(k in front for k in ('url', 'interval', 'tolerance', 'timeout', 'lazy'))
         region = groups[REGION]
         assert region['type'] == 'url-test' and region['proxies'] == list(EXITS)
+        assert region.get('hidden') is False
         assert not region.get('use') and not any(region.get(k) for k in ('include-all', 'include-all-providers', 'include-all-proxies'))
         assert region.get('lazy') is False and region.get('interval') == 600 and region.get('tolerance') == 100
         assert region.get('url') == 'https://www.google.com/generate_204'
