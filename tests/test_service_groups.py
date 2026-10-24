@@ -29,15 +29,6 @@ class ServiceGroupTests(unittest.TestCase):
         private_text = manual_text.replace(apple, '').replace('  - RULE-SET,reject_os_update,REJECT\n', '  - RULE-SET,reject_os_update,REJECT\n' + apple)
         for filename in service.MANUAL_FIXED_PROFILES:
             text = private_text.replace('interval: 300', 'interval: 600') if 'android' in filename else private_text
-            if filename == 'rulemesh-flclash-android-20261023.yaml':
-                start = text.index('  - name: "Google"\n')
-                end = text.index('  - name:', start + 1)
-                block = text[start:end]
-                us_line = '      - "🇺🇸 美国-自动选择"\n'
-                self.assertEqual(block.count(us_line), 1)
-                block = block.replace(us_line, '').replace('    proxies:\n', '    proxies:\n' + us_line, 1)
-                text = text[:start] + block + text[end:]
-
             def check(value):
                 lines = value.splitlines()
                 return service.check(Path(filename), lines, parser._parse_mihomo_groups(lines), parser._parse_mihomo_rules(lines), '♻️ 自动选择')

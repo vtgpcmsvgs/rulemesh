@@ -58,18 +58,22 @@ class AndroidStabilityTests(unittest.TestCase):
         broker_rule = '  - RULE-SET,hk_securities,香港券商\n'
         self.assertEqual(text.count(broker_rule), 1)
         text = text.replace(broker_rule, broker_rule + ''.join(f'  - PROCESS-NAME,{p},香港券商\n' for p in android.BROKER_PACKAGES))
-        # 安卓 Google 独立默认美国；YouTube 与其他客户端仍保留香港默认。
-        google_start = text.index('  - name: "Google"\n')
-        google_end = text.index('  - name:', google_start + 1)
-        google_block = text[google_start:google_end]
-        us_line = '      - "🇺🇸 美国-自动选择"\n'
-        self.assertEqual(google_block.count(us_line), 1)
-        google_block = google_block.replace(us_line, '').replace('    proxies:\n', '    proxies:\n' + us_line, 1)
-        text = text[:google_start] + google_block + text[google_end:]
-        us_start = text.index('  - name: "🇺🇸 美国-自动选择"\n')
-        us_end = text.index('  - name:', us_start + 1)
-        us_block = text[us_start:us_end].replace('    lazy: true', '    lazy: false')
-        text = text[:us_start] + us_block + text[us_end:]
+        # 普通 Google 默认香港；修复可用性时同样必须遵守用户地区要求。
+        import json
+        import yaml
+        hk = next(n for n, region in service.REGIONS.items() if region == 'hk')
+        names = ['HK mobile failure (1)', 'HK mobile failure +2']
+        text += f'\n{android.GOOGLE_HK_QUARANTINE}:\n' + ''.join('  - ' + json.dumps(n) + '\n' for n in names)
+        start = text.index(f'  - name: "{hk}"\n')
+        end = text.index('  - name:', start + 1)
+        block = text[start:end]
+        self.assertEqual(block.count('    hidden: true\n'), 1)
+        block = block.replace('    hidden: true\n', '    hidden: false\n')
+        rows = [s for s in block.splitlines() if s.startswith('    exclude-filter:')]
+        self.assertEqual(len(rows), 1)
+        existing = yaml.safe_load(rows[0])['exclude-filter']
+        replacement = '    exclude-filter: ' + json.dumps(existing + android.google_hk_exclusion(names), ensure_ascii=False)
+        text = text[:start] + block.replace(rows[0], replacement) + text[end:]
         for name in ("Google", "YouTube"):
             anchor = f'  - name: "{name}"\n    type: select\n    hidden: false\n'
             self.assertEqual(text.count(anchor), 1)
@@ -100,22 +104,50 @@ class AndroidStabilityTests(unittest.TestCase):
         path, text = self.fixture()
         self.assertEqual(baseline.check(path, text.splitlines()), [])
 
-    def test_google_us_default_does_not_change_youtube_or_six_region_candidates(self):
+    def test_google_hk_default_rejects_other_regions_and_preserves_saved_selection(self):
         path, text = self.fixture()
         groups = parser._parse_mihomo_groups(text.splitlines())
-        self.assertEqual(service.REGIONS[service.default_target('Google', groups)], 'us')
+        self.assertEqual(service.REGIONS[service.default_target('Google', groups)], 'hk')
         self.assertEqual(service.REGIONS[service.default_target('YouTube', groups)], 'hk')
         self.assertEqual(set(groups['Google'].members), set(service.REGIONS))
         start = text.index('  - name: "Google"\n')
         end = text.index('  - name:', start + 1)
         block = text[start:end]
-        us_line = '      - "🇺🇸 美国-自动选择"\n'
-        regressed = block.replace(us_line, '') + us_line
-        changed = text[:start] + regressed + text[end:]
-        self.assertTrue(any('默认' in e for e in baseline.check(path, changed.splitlines())))
+        for region in ('us', 'tw', 'jp', 'kr', 'sg'):
+            candidate = next(n for n, r in service.REGIONS.items() if r == region)
+            member_line = f'      - "{candidate}"\n'
+            self.assertEqual(block.count(member_line), 1)
+            regressed = block.replace(member_line, '').replace('    proxies:\n', '    proxies:\n' + member_line, 1)
+            changed = text[:start] + regressed + text[end:]
+            self.assertNotEqual(changed, text)
+            self.assertTrue(any('默认' in e for e in baseline.check(path, changed.splitlines())))
         changed = text.replace('  store-selected: true', '  store-selected: false')
         self.assertNotEqual(changed, text)
         self.assertTrue(any('store-selected' in e for e in baseline.check(path, changed.splitlines())))
+
+    def test_hk_quarantine_cannot_be_removed_or_detached_and_is_exact(self):
+        path, text = self.fixture()
+        hk = next(n for n, region in service.REGIONS.items() if region == 'hk')
+        self.assertEqual(android.check_google_hk_quarantine(text.splitlines(), hk), [])
+        import yaml
+        data = yaml.safe_load(text)
+        names = data[android.GOOGLE_HK_QUARANTINE]
+        group = next(g for g in data['proxy-groups'] if g['name'] == hk)
+        for name in names:
+            self.assertTrue(re.search(group['exclude-filter'], name))
+            self.assertFalse(re.search(group['exclude-filter'], name + ' legitimate sibling'))
+        for mutation in (text.replace(android.GOOGLE_HK_QUARANTINE, 'removed-quarantine'),
+                         text.replace('HK mobile failure (1)', 'different node'),
+                         text + f'\n{android.GOOGLE_HK_QUARANTINE}: []\n'):
+            errors = android.check_google_hk_quarantine(mutation.splitlines(), hk)
+            self.assertTrue(errors)
+            self.assertFalse(any(name in error for error in errors for name in names))
+        start = text.index(f'  - name: "{hk}"\n')
+        end = text.index('  - name:', start + 1)
+        block = text[start:end]
+        hidden = block.replace('    hidden: false\n', '    hidden: true\n')
+        self.assertNotEqual(block, hidden)
+        self.assertTrue(android.check_google_hk_quarantine((text[:start] + hidden + text[end:]).splitlines(), hk))
 
     def test_download_processes_cannot_be_removed_or_shadowed(self):
         path, text = self.fixture()

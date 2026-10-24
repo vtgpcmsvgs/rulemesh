@@ -32,7 +32,7 @@ GitHub SSH 精确直连在 Core / gfw 前；国内通用直连在 gfw 前。阿�
 ## DNS、测速与连接
 
 - `nameserver` 使用国内 AliDNS / DNSPod 双 DoH，减少国内 CDN 调度偏差。
-- 默认 `nameserver-policy` 为 `rule-set:us_ai`，两个海外 DoH 显式使用 `#AI`。安卓依次追加 `rule-set:proxy_youtube` 与 `rule-set:hk_google`，绑定 `#YouTube`、`#Google` 选择组，默认分别香港、美国（2026-10-24 修订）；桌面与公开模板仍只保留 AI policy。节点域名由国内 `proxy-server-nameserver` 独立 bootstrap，避免解析循环。
+- 默认 `nameserver-policy` 为 `rule-set:us_ai`，两个海外 DoH 显式使用 `#AI`。安卓依次追加 `rule-set:proxy_youtube` 与 `rule-set:hk_google`，绑定 `#YouTube`、`#Google` 选择组，默认均为香港（2026-10-24 用户确认）；桌面与公开模板仍只保留 AI policy。节点域名由国内 `proxy-server-nameserver` 独立 bootstrap，避免解析循环。
 - 保持 `respect-rules: false`、`use-hosts: false`、`use-system-hosts: false`、IPv4、fake-ip 和 ARC 缓存，不引入 fallback 或二级 policy。
 - `tcp-concurrent: true` 并发尝试多个目标 IP。全地区自动组不限制地区标签，套餐占位项仍由 `exclude-filter` 排除；桌面提供方与自动组每 300 秒检测、安卓每 600 秒；实际业务组主动检测，备用地区组按需检测。全地区容差 50、美国容差 100，使用 HTTPS 连通性探测；Microsoft 父组为 select，不设置组级测速字段。
 - 保留局域网、系统连通性探测和游戏所需 `fake-ip-filter`；不同终端可保留 `listen` 等运行字段差异。
@@ -41,7 +41,7 @@ GeoIP 使用 `geodata-mode: false`，`geox-url.mmdb` 直接引用 [MetaCubeX cou
 
 ## 客户端与维护
 
-安卓反复出现 Play 下载转圈时，采用 [安卓下载保护](android-network-repair.md)：Google 六地区选择组（2026-10-24 起默认美国自动）、同组海外 DNS、三个 Google 专属进程兜底，并保留 QUIC。Google 普通入口还须用移动 UA 验证最终主机与搜索表单，拒绝把 `google.cn/m` 跳转或 204 测速当成正常搜索。实机已发现拒绝 UDP/443 会导致 Cronet 协议错误及下载重试，不能强制其回退 TCP。手机使用全应用 VPN，关闭系统代理与允许绕过，开启 DNS 劫持；这些开关须在 FlClash 界面设置，不能仅导入 YAML。按 [2026-09-16 修订](common-network-reliability.md)，两份 FlClash 停用阿里系强制代理，安卓共享下载管理器按目的地分流，避免其他应用的国内下载绕海外；必须实机完成整包安装，不能只测商店首页。
+安卓反复出现 Play 下载转圈时，采用 [安卓下载保护](android-network-repair.md)：Google 六地区选择组（2026-10-24 用户确认默认香港自动）、同组海外 DNS、三个 Google 专属进程兜底，并保留 QUIC。Google 普通入口还须用移动 UA 验证最终主机与搜索表单，拒绝把 `google.cn/m` 跳转或 204 测速当成正常搜索。实机已发现拒绝 UDP/443 会导致 Cronet 协议错误及下载重试，不能强制其回退 TCP。手机使用全应用 VPN，关闭系统代理与允许绕过，开启 DNS 劫持；这些开关须在 FlClash 界面设置，不能仅导入 YAML。按 [2026-09-16 修订](common-network-reliability.md)，两份 FlClash 停用阿里系强制代理，安卓共享下载管理器按目的地分流，避免其他应用的国内下载绕海外；必须实机完成整包安装，不能只测商店首页。
 
 修改开关或恢复完整备份后，在仪表盘完整停止并启动 VPN，再验证 Android 当前 VPN 已无旧 HTTP 代理；仅核对保存值曾漏掉大智慧行情故障。可使用只读 `tools/check_android_vpn_runtime.py --adb <实际路径>`，然后复测多处原失败组件及应用重开。该运行态检查需要已授权的 USB 手机，不作为离线构建的强制步骤。
 
@@ -62,3 +62,5 @@ GeoIP 使用 `geodata-mode: false`，`geox-url.mmdb` 直接引用 [MetaCubeX cou
 Apple 与其他三个手动入口不设置周期测速字段；实际地区与 provider 子组沿用 HTTPS Google 204 探测，私人 FlClash 更新拒绝仍优先。
 
 AI DoH 使用 #AI；安卓额外按 YouTube → Google 配置各自 DNS 出口，分别跟随对应业务组。桌面不新增视频 DNS policy。新组第一项是初始默认，保存选择可能覆盖；下载速度与 204 延迟须分别验收。详见 [重构说明](service-groups-refactor.md)。
+
+2026-10-24 安卓香港故障隔离：移动搜索已确认会跳转 google.cn/m 的五条线路仅在私人安卓香港自动组中按精确节点名排除，保留原地区过滤和全部 provider 引用；私人 x-rulemesh-android-google-hk-blocked-nodes 记录清单，检查器要求 exclude-filter 与清单一致，防止订阅更新或配置维护恢复已知故障节点。该香港地区组也被安卓其他香港业务复用，其他客户端不变；新节点或同名节点更换出口后仍需移动搜索实测。详见 docs/android-network-repair.md。

@@ -6,6 +6,33 @@ MARKER = "# RuleMesh 安卓下载保护：2026-09-14"
 PROFILE = "rulemesh-flclash-android-20261023.yaml"
 CHATGPT_MARKER = "# RuleMesh 安卓 ChatGPT 接管：2026-10-23"
 CHATGPT_PACKAGE = "com.openai.chatgpt"
+GOOGLE_HK_QUARANTINE = "x-rulemesh-android-google-hk-blocked-nodes"
+
+
+def google_hk_exclusion(names: list[str]) -> str:
+    """精确隔离已实测故障节点；真实名称只保留在私人配置。"""
+    return "|^(?:" + "|".join(re.escape(name) for name in names) + ")$"
+
+
+def check_google_hk_quarantine(lines: list[str], target: str) -> list[str]:
+    import yaml
+    if sum(line.startswith(GOOGLE_HK_QUARANTINE + ":") for line in lines) != 1:
+        return ["安卓香港故障节点隔离清单必须存在且唯一。"]
+    try:
+        data = yaml.safe_load("\n".join(lines))
+        names = data.get(GOOGLE_HK_QUARANTINE)
+        valid = (isinstance(names, list) and bool(names) and
+                 all(isinstance(name, str) and bool(name.strip()) and "\n" not in name and "\r" not in name for name in names))
+        if not valid or len(set(names)) != len(names):
+            return ["安卓香港故障节点隔离清单必须非空、唯一且使用精确节点名。"]
+        groups = [g for g in data.get("proxy-groups", []) if g.get("name") == target]
+        if len(groups) != 1 or not str(groups[0].get("exclude-filter", "")).endswith(google_hk_exclusion(names)):
+            return ["安卓香港组必须精确排除已登记的移动 Google 故障节点，避免自动回退后复发。"]
+        if groups[0].get("hidden") is not False:
+            return ["安卓香港组必须显示，便于在客户端保存已验收节点；控制器临时选择不能替代持久化。"]
+    except (yaml.YAMLError, TypeError, AttributeError, ValueError):
+        return ["安卓香港故障隔离配置无法解析；私人内容已隐藏。"]
+    return []
 
 
 def allowed_chatgpt_rule(parts: list[str]) -> bool:
@@ -137,12 +164,13 @@ def check(path: Path, lines: list[str]) -> list[str]:
     _, health_groups, _ = performance.parse_mihomo(lines)
     stable = groups.get(target)
     if business:
+        errors.extend(check_google_hk_quarantine(lines, target))
         profile_blocks = re.findall(r"(?m)^profile:\s*\n((?:[ \t]+[^\n]*\n|\n)*)", "\n".join(lines) + "\n")
         require(len(profile_blocks) == 1 and re.findall(r"(?m)^  store-selected:\s*(\S+)\s*$", profile_blocks[0]) == ["true"],
                 "安卓必须保留 profile.store-selected: true；导入后另核对实际 Google 选择。")
         google = groups.get("Google")
         require(google is not None and google.group_type == "select" and set(google.members) == set(service.REGIONS), "安卓 Google 必须手动选择六地区自动组。")
-        require(service.REGIONS.get(target) == service.default_region("Google", path) and stable is not None and stable.group_type in {"url-test", "smart"}, "安卓 Google 默认必须使用美国自动组，避免原香港出口的 google.cn/m 重定向。")
+        require(service.REGIONS.get(target) == "hk" and stable is not None and stable.group_type in {"url-test", "smart"}, "安卓 Google 默认必须使用香港自动组；线路故障不能改变用户要求的地区。")
         for name in ("Google", *service.REGIONS):
             candidate = groups.get(name)
             if candidate is None:

@@ -31,12 +31,12 @@
 | 入口 | 类型 | 候选 |
 | --- | --- | --- |
 | Google、YouTube、Telegram、Apple | select | 六地区 url-test 组，初始香港；Apple 另有 DIRECT |
-
-2026-10-24 安卓例外：仅 `rulemesh-flclash-android-20261023.yaml` 的 Google 首选改为美国自动组，并使该地区组主动检测；仍展示六地区候选。YouTube、Telegram、Apple 和其他客户端保留既定默认。Google DNS policy 继续引用 Google，实际地区随业务选择；保存选择可能覆盖首项，导入、完整重启后须另查实际选择与普通搜索入口，详见 [安卓 Google 修复](android-network-repair.md)。
 | AI | 私人 Mihomo 为 select，其余为 url-test | 美国-provider 自动子组 |
 | Microsoft | select | 同一套美国-provider 自动子组及 DIRECT |
 | Crypto | 私人 Mihomo 为 select，其余为 url-test | 台湾-provider 子组 |
 | 香港券商 | 私人 Mihomo 为 select，其余为 url-test | 香港-provider 子组 |
+
+2026-10-24 用户确认安卓 Google 必须默认香港；先前美国对照不作为修复发布要求，源配置与静态检查已恢复香港默认，仍展示六地区候选。香港节点存在移动搜索可用性差异，应保存实测可用的香港线路。YouTube、Telegram、Apple 和其他客户端保留既定默认。Google DNS policy 继续引用 Google，实际地区随业务选择；保存选择可能覆盖首项，导入、完整重启后须另查实际选择与普通搜索入口，详见 [安卓 Google 修复](android-network-repair.md)。
 
 地区-provider 子组本身为 url-test，单一机场来源并限制地区；每个地区组汇集所有机场的同地区节点。AI 与 Microsoft 共享美国子组，避免重复探测。公开模板使用占位机场，不包含私人订阅或机场清单。既有机场手动入口保留。
 
@@ -89,3 +89,5 @@ Surge url-test 的 interval 是测试结果有效期，使用且结果过期时�
 ## 2026-09-27 防复发
 
 此前只检查解析后的组名集合，把 include-other-group 与显式引用视作同一种候选关系，遗漏了客户端会展平节点的实际语义。现在业务父组禁止 include-other-group 和 smart；检查器分别验证 select 与 url-test、共享美国子组、完整 provider 覆盖和地区限制。负例覆盖节点展平、smart 嵌套、遗漏机场、重复 YAML 字段和非六地区候选；保留 DNS 与工作拒绝边界测试。分块审计必须止于下一顶层节，避免把 rule-providers 的字段误认为最后一个策略组字段。
+
+2026-10-24 安卓香港故障隔离：移动搜索已确认会跳转 google.cn/m 的五条线路仅在私人安卓香港自动组中按精确节点名排除，保留原地区过滤和全部 provider 引用；私人 x-rulemesh-android-google-hk-blocked-nodes 记录清单，检查器要求 exclude-filter 与清单一致，防止订阅更新或配置维护恢复已知故障节点。该香港地区组也被安卓其他香港业务复用，其他客户端不变；新节点或同名节点更换出口后仍需移动搜索实测。详见 docs/android-network-repair.md。

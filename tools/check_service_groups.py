@@ -51,11 +51,6 @@ def default_target(name, groups):
     return chain[-1] if chain else ""
 
 
-def default_region(name: str, path: Path) -> str:
-    # 安卓移动 Google 在原香港出口返回受信 302 -> google.cn/m；只调整该客户端的 Google。
-    return "us" if name == "Google" and path.name == "rulemesh-flclash-android-20261023.yaml" else "hk"
-
-
 def identifier(parts, surge):
     from check_performance_baseline import BASE
     if len(parts) < 3 or parts[0] != "RULE-SET":
@@ -186,7 +181,8 @@ def check(path: Path, lines, groups, rules, auto):
 
     require(all(acyclic(s, set()) for s in SERVICES), "业务策略组的候选引用存在循环。")
     for name in ("Google", "YouTube", "Telegram"):
-        expected_region = default_region(name, path)
+        # 普通 Google 默认香港；线路故障不能以改变用户要求的地区作为修复。
+        expected_region = "hk"
         expected_target = next(n for n, region in REGIONS.items() if region == expected_region)
         require(default_target(name, groups) == expected_target, f"{name} 默认地区必须为 {expected_region} 自动组。")
     require(default_target("Apple", groups) in set(REGIONS), "Apple 默认必须使用地区自动组。")
