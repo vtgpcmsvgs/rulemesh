@@ -40,8 +40,8 @@
       "category": "direct",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 489,
-        "mihomo_classical": 489
+        "surge_rules": 487,
+        "mihomo_classical": 487
       },
       "dist": {
         "surge_rules": "dist/surge/rules/direct/alicloud_hk_ipv4_ssh22_direct.list",
@@ -92,8 +92,8 @@
       "category": "direct",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 120533,
-        "mihomo_classical": 120533
+        "surge_rules": 120248,
+        "mihomo_classical": 120248
       },
       "dist": {
         "surge_rules": "dist/surge/rules/direct/cn_direct.list",
@@ -105,8 +105,8 @@
       "category": "direct",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 10119,
-        "mihomo_classical": 10119
+        "surge_rules": 10117,
+        "mihomo_classical": 10117
       },
       "dist": {
         "surge_rules": "dist/surge/rules/direct/cn_direct_light.list",
@@ -209,8 +209,8 @@
       "category": "proxy",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 5262,
-        "mihomo_classical": 5262
+        "surge_rules": 5264,
+        "mihomo_classical": 5264
       },
       "dist": {
         "surge_rules": "dist/surge/rules/proxy/gfw.list",
@@ -222,8 +222,8 @@
       "category": "proxy",
       "classification": "domain-only",
       "counts": {
-        "surge_rules": 4433,
-        "mihomo_classical": 4433
+        "surge_rules": 4435,
+        "mihomo_classical": 4435
       },
       "dist": {
         "surge_rules": "dist/surge/rules/proxy/gfw_precise.list",
@@ -300,8 +300,8 @@
       "category": "region",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 1065,
-        "mihomo_classical": 1065
+        "surge_rules": 1068,
+        "mihomo_classical": 1068
       },
       "dist": {
         "surge_rules": "dist/surge/rules/region/hk/google_hk.list",
@@ -584,7 +584,7 @@
       "category": "dns",
       "classification": "dns-domain-set",
       "counts": {
-        "surge_dns_domains": 110511
+        "surge_dns_domains": 110228
       },
       "dist": {
         "surge_dns_domains": "dist/surge/dns/cn_performance_dns_domains.list"
