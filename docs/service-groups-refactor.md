@@ -2,7 +2,7 @@
 
 2026-10-24 可见性修订：私人安卓“美国-自动选择”显式可见，在代理页展示五个最终落地，AI 继续引用该组。`RM-US-Front` 保留独立的机场前置选择，避免与普通 Google 香港及通用手动组耦合；本地选择器不增加网络跳数。检查器和实机界面分别验收，其他客户端的组显示保持。
 
-2026-10-24 安卓专项覆盖下文美国 provider 子组约定：私人安卓美国地区组只含五个用户指定 SOCKS5 最终出口，AI 引用该组，Microsoft 引用该组与原有 DIRECT。拨号前置 `RM-US-Front` 单独手动选择机场线路，不能引用美国业务或五出口形成环；其他客户端继续使用原来的美国 provider 子组。Google 默认香港及其 DNS 联动保持，详见 [任务收尾验收](task-acceptance.md)。
+2026-10-24 安卓专项覆盖下文美国 provider 子组约定：私人安卓美国地区组只含五个用户指定 SOCKS5 最终出口，AI 引用该组，Microsoft 引用该组与原有 DIRECT。拨号前置 `RM-US-Front` 手动选择六个前置专用地区自动组，各组只收机场节点，不能引用美国业务或五出口形成环；其他客户端继续使用原来的美国 provider 子组。Google 默认香港及其 DNS 联动保持，详见 [任务收尾验收](task-acceptance.md)。
 
 同日最终冷启动修订：私人安卓共享香港地区组改为可见 select，保存已验收节点，避免 url-test 因初次健康失败自动回退。历史组名保留，其他五地区仍 url-test；Notion 及四个通用业务的香港选项共享这一手动选择。此例外不扩散到其他客户端。
 
@@ -96,4 +96,4 @@ Surge url-test 的 interval 是测试结果有效期，使用且结果过期时�
 
 此前只检查解析后的组名集合，把 include-other-group 与显式引用视作同一种候选关系，遗漏了客户端会展平节点的实际语义。现在业务父组禁止 include-other-group 和 smart；检查器分别验证 select 与 url-test、共享美国子组、完整 provider 覆盖和地区限制。负例覆盖节点展平、smart 嵌套、遗漏机场、重复 YAML 字段和非六地区候选；保留 DNS 与工作拒绝边界测试。分块审计必须止于下一顶层节，避免把 rule-providers 的字段误认为最后一个策略组字段。
 
-2026-10-24 安卓香港故障隔离：移动搜索已确认会跳转 google.cn/m 的五条线路仅在私人安卓香港自动组中按精确节点名排除，保留原地区过滤和全部 provider 引用；私人 x-rulemesh-android-google-hk-blocked-nodes 记录清单，检查器要求 exclude-filter 与清单一致，防止订阅更新或配置维护恢复已知故障节点。该香港地区组也被安卓其他香港业务复用，其他客户端不变；新节点或同名节点更换出口后仍需移动搜索实测。详见 docs/android-network-repair.md。
+2026-10-24 安卓香港隔离归因复核：五条历史香港隔离项继续保留；现存矩阵能确认三条受信 302 跳转 google.cn，另两条只有超时证据，不能统称五条已证实跳转。三条确认项在私人安卓对应 provider 的 exclude-filter 中按完整名称排除，登记来源和证据于 x-rulemesh-android-provider-quarantine；不删除整个 provider，其他客户端不变。香港业务仍手动固定已验收线路，前置专用香港自动组与之分离；新节点或同名节点更换出口后仍需移动搜索实测。详见 docs/android-network-repair.md。

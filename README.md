@@ -1,6 +1,6 @@
 # RuleMesh
 
-私人安卓美国最终组现显式显示五个落地，AI 仍引用“美国-自动选择”；独立 `RM-US-Front` 只负责选择前置机场，不增加网络跳数。显示与链路检查见 [任务收尾验收](docs/task-acceptance.md)。
+私人安卓美国最终组现显式显示五个落地，AI 仍引用“美国-自动选择”；独立 `RM-US-Front` 选择六个前置专用地区自动组，组内自动选机场，不增加网络跳数；与 Google 香港固定线路及美国最终落地分开。显示与链路检查见 [任务收尾验收](docs/task-acceptance.md)。
 
 Clash Mi iOS 使用独立私有配置 `rulemesh-clashmi-ios-20261023.yaml`，由桌面业务配置派生；iOS TUN、DNS 覆写、600 秒测速与 ASN 兼容说明见 [Clash Mi iOS 接入](docs/clashmi-ios.md)。桌面或订阅更新后重新运行派生器，完整检查包含 iOS 一致性校验。
 
@@ -338,4 +338,4 @@ ai_us 同时承接 OpenAI、Claude、Copilot、Cursor、Grok、Windsurf、Augmen
 
 Microsoft 在全部配置中手动选择美国自动子组或 DIRECT，父组不设置测速字段。运行态验证边界见 [客户端性能说明](docs/flclash-performance.md)。
 
-2026-10-24 安卓香港故障隔离：移动搜索已确认会跳转 google.cn/m 的五条线路仅在私人安卓香港自动组中按精确节点名排除，保留原地区过滤和全部 provider 引用；私人 x-rulemesh-android-google-hk-blocked-nodes 记录清单，检查器要求 exclude-filter 与清单一致，防止订阅更新或配置维护恢复已知故障节点。该香港地区组也被安卓其他香港业务复用，其他客户端不变；新节点或同名节点更换出口后仍需移动搜索实测。详见 docs/android-network-repair.md。
+2026-10-24 安卓香港隔离归因复核：五条历史香港隔离项继续保留；现存矩阵能确认三条受信 302 跳转 google.cn，另两条只有超时证据，不能统称五条已证实跳转。三条确认项在私人安卓对应 provider 的 exclude-filter 中按完整名称排除，登记来源和证据于 x-rulemesh-android-provider-quarantine；不删除整个 provider，其他客户端不变。香港业务仍手动固定已验收线路，前置专用香港自动组与之分离；新节点或同名节点更换出口后仍需移动搜索实测。详见 docs/android-network-repair.md。

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import base64
 import json
 import ipaddress
 from pathlib import Path
@@ -16,7 +17,7 @@ import uuid
 # Windows embeddable Python 的 ._pth 隔离模式不自动添加脚本目录。
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_android_vpn_runtime import GOOGLE_SEARCH_COMMAND, audit_connectivity, audit_google_search, package_uid
-from check_android_us_chain import EXITS, FRONT, REGION
+from check_android_us_chain import EXITS, FRONT, FRONT_GROUPS, REGION
 
 
 class AdbTransport:
@@ -128,6 +129,64 @@ def public_address(value):
         return None
 
 
+def front_runtime(proxies):
+    """界面可见的地区前置须在运行内核中存在；不输出真实机场节点名。"""
+    front = proxies.get(FRONT, {})
+    forbidden = {FRONT, REGION, *EXITS, 'DIRECT', 'AI', 'Google', 'Microsoft'}
+    return {
+        'front_region_selector': front.get('type') == 'Selector',
+        'front_six_regions_exact': front.get('all') == list(FRONT_GROUPS),
+        'front_active_region_known': front.get('now') in FRONT_GROUPS,
+        'front_regions_airport_only': all(
+            proxies.get(name, {}).get('type') == 'URLTest'
+            and bool(proxies[name].get('all'))
+            and not (set(proxies[name]['all']) & forbidden)
+            for name in FRONT_GROUPS),
+    }
+
+
+def quarantine_runtime(providers, quarantine):
+    """在实际 provider 列表核对已排除节点，空响应不能充当删除成功。"""
+    return (bool(quarantine) and all(name in providers and providers[name].get('proxies')
+            and not ({node.get('name') for node in providers[name]['proxies']} & set(blocked))
+            for name, blocked in quarantine.items()))
+
+
+def trace_evidence(raw, previous, name):
+    """快连接结束后会消失；仅使用请求进行中的新返回字节作为链路证据。"""
+    observed = False
+    for encoded in re.findall(r'(?m)^RM_CONN ([A-Za-z0-9+/=]+)$', raw):
+        try:
+            snapshot = json.loads(base64.b64decode(encoded, validate=True))
+        except (ValueError, TypeError):
+            continue
+        observed |= any(c.get('metadata', {}).get('host') == 'chatgpt.com'
+                        and 'AI' in c.get('chains', []) and name in c.get('chains', [])
+                        and c.get('download', 0) > previous.get(c.get('id'), 0)
+                        for c in snapshot.get('connections', []))
+    codes = re.findall(r'(?m)^RM_TRACE_CODE=(\d+)\s*$', raw)
+    if len(codes) != 1:
+        raise RuntimeError('Incomplete trace result')
+    return int(codes[0]), observed
+
+
+def trace_probe(device, controller, previous, name):
+    # 在手机内并行观察、在单个 USB shell 会话内顺序交付；不落盘原始连接或出口 IP。
+    query = ('curl --noproxy "*" --silent --max-time 2 -H ' +
+             shlex.quote('Authorization: Bearer ' + controller['secret']) + ' ' +
+             shlex.quote('http://127.0.0.1:' + str(controller['port']) + '/connections'))
+    command = ('( for n in ' + ' '.join(str(n) for n in range(20)) + '; do printf "RM_CONN "; ' + query +
+               ' | base64 | tr -d "\\n"; printf "\\n"; sleep 0.3; done ) & monitor=$!; '
+               'trace=$(curl --noproxy "*" --fail --silent --show-error --connect-timeout 10 --max-time 20 '
+               '--limit-rate 64 https://chatgpt.com/cdn-cgi/trace); trace_code=$?; wait "$monitor"; '
+               'printf "RM_TRACE_CODE=%s\\n" "$trace_code"; printf "%s\\n" "$trace"')
+    raw, shell_code = shell_result(device, command)
+    if shell_code:
+        raise RuntimeError('Trace collection failed')
+    code, observed = trace_evidence(raw, previous, name)
+    return raw, code, observed
+
+
 def collect(settings, expected):
     device = open_device(settings)
     result = {'state': 'unknown', 'passed': False, 'us_exits': []}
@@ -150,13 +209,15 @@ def collect(settings, expected):
             'lan_disabled': config.get('allow-lan') is False,
             'google_hk': proxies.get('Google', {}).get('now') == hk,
             'hk_manual_no_fallback': proxies.get(hk, {}).get('type') == 'Selector',
-            'front_manual_no_fallback': proxies.get(FRONT, {}).get('type') == 'Selector',
+            **front_runtime(proxies),
             'five_us_candidates': proxies.get(REGION, {}).get('all') == list(EXITS),
             'ai_uses_us_chain': proxies.get('AI', {}).get('now') == REGION,
             'google_rule': sum(r.get('type') == 'RuleSet' and r.get('payload') == 'hk_google' and r.get('proxy') == 'Google' for r in rules) == 1,
             'ai_rule': sum(r.get('type') == 'RuleSet' and r.get('payload') == 'us_ai' and r.get('proxy') == 'AI' for r in rules) == 1,
         }
-        result['providers'] = provider_health(get('/providers/proxies')['providers'], expected['providers'])
+        provider_data = get('/providers/proxies')['providers']
+        result['providers'] = provider_health(provider_data, expected['providers'])
+        result['runtime']['confirmed_bad_nodes_provider_excluded'] = quarantine_runtime(provider_data, expected['quarantine'])
         result['google'] = []
         result['stage'] = 'mobile_google'
         for path in ('/',):
@@ -197,7 +258,7 @@ def collect(settings, expected):
                     # 通过真实 AI 域名读取出口，禁止用默认 DIRECT 的查 IP 网站冒充美国业务出口。
                     previous = {c.get('id'): c.get('download', 0) for c in get('/connections').get('connections', [])}
                     for attempt in range(2):
-                        raw, code = shell_result(device, 'curl --noproxy "*" --fail --silent --show-error --connect-timeout 10 --max-time 20 https://chatgpt.com/cdn-cgi/trace')
+                        raw, code, observed = trace_probe(device, controller, previous, name)
                         if code == 0:
                             break
                     row['curl_exit'] = code
@@ -205,10 +266,7 @@ def collect(settings, expected):
                     fields = dict(re.findall(r'(?m)^([a-z_]+)=(.*)$', raw))
                     row['_ip'] = public_address(fields.get('ip'))  # 仅通过父子进程捕获管道交付，不写报告。
                     row['trace_us'] = fields.get('loc') == 'US'
-                    connections = get('/connections').get('connections', [])
-                    row['ai_chain_observed'] = any(c.get('metadata', {}).get('host') == 'chatgpt.com'
-                        and 'AI' in c.get('chains', []) and name in c.get('chains', [])
-                        and c.get('download', 0) > previous.get(c.get('id'), 0) for c in connections)
+                    row['ai_chain_observed'] = observed
                     row['selection_still_matches'] = get('/proxies')['proxies'][REGION]['now'] == name
                     row['passed'] = code == 0 and bool(row['_ip']) and row['trace_us'] and row['ai_chain_observed'] and row['selection_still_matches'] and type(row['delay']) is int and row['delay'] > 0
                 except Exception as error:

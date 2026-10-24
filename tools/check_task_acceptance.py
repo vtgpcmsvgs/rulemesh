@@ -72,6 +72,9 @@ def run(settings, directory, *, baseline_runner=subprocess.run, worker_runner=su
                     'providers': {name: body['health-check']['interval'] for name, body in document['proxy-providers'].items()}}
         google = next(g for g in document['proxy-groups'] if g['name'] == 'Google')
         expected['google_hk'] = google['proxies'][0]
+        expected['quarantine'] = {}
+        for entry in document[chain.QUARANTINE]['nodes']:
+            expected['quarantine'].setdefault(entry['provider'], []).append(entry['name'])
         payload = json.dumps({'settings': settings, 'expected': expected}, ensure_ascii=True)
         worker = worker_runner([settings.get('device_python', sys.executable), '-B', str(ROOT / 'tools/collect_android_acceptance.py'), '--worker'],
                                input=payload.encode('utf-8'), capture_output=True, timeout=420)

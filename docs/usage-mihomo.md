@@ -65,4 +65,4 @@ Apple 与其他三个手动入口不设置周期测速字段；实际地区与 p
 
 AI DoH 使用 #AI；安卓额外按 YouTube → Google 配置各自 DNS 出口，分别跟随对应业务组。桌面不新增视频 DNS policy。新组第一项是初始默认，保存选择可能覆盖；下载速度与 204 延迟须分别验收。详见 [重构说明](service-groups-refactor.md)。
 
-2026-10-24 安卓香港故障隔离：移动搜索已确认会跳转 google.cn/m 的五条线路仅在私人安卓香港自动组中按精确节点名排除，保留原地区过滤和全部 provider 引用；私人 x-rulemesh-android-google-hk-blocked-nodes 记录清单，检查器要求 exclude-filter 与清单一致，防止订阅更新或配置维护恢复已知故障节点。该香港地区组也被安卓其他香港业务复用，其他客户端不变；新节点或同名节点更换出口后仍需移动搜索实测。详见 docs/android-network-repair.md。
+2026-10-24 安卓香港隔离归因复核：五条历史香港隔离项继续保留；现存矩阵能确认三条受信 302 跳转 google.cn，另两条只有超时证据，不能统称五条已证实跳转。三条确认项在私人安卓对应 provider 的 exclude-filter 中按完整名称排除，登记来源和证据于 x-rulemesh-android-provider-quarantine；不删除整个 provider，其他客户端不变。香港业务仍手动固定已验收线路，前置专用香港自动组与之分离；新节点或同名节点更换出口后仍需移动搜索实测。详见 docs/android-network-repair.md。

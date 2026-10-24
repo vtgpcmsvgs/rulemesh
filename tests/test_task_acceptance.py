@@ -7,12 +7,47 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 import check_task_acceptance as acceptance
-from collect_android_acceptance import dns_evidence, provider_health, shell_result, public_address
+from collect_android_acceptance import dns_evidence, provider_health, shell_result, public_address, front_runtime, quarantine_runtime, trace_evidence
+from check_android_us_chain import FRONT, FRONT_GROUPS, REGION, EXITS
 from android_usb_transport import UsbAdb
 from android_chrome_probe import audit_page
 
 
 class TaskAcceptanceTests(unittest.TestCase):
+    def test_short_lived_connection_is_proved_during_transfer_without_accepting_old_bytes(self):
+        import base64
+        def sample(connections):
+            return 'RM_CONN '+base64.b64encode(json.dumps({'connections':connections}).encode()).decode()+'\n'
+        connection={'id':'fixture','metadata':{'host':'chatgpt.com'},'chains':['AI',EXITS[0]],'download':100}
+        raw=sample([])+sample([connection])+sample([])+'RM_TRACE_CODE=0\nloc=US\n'
+        self.assertEqual(trace_evidence(raw,{},EXITS[0]),(0,True))
+        self.assertEqual(trace_evidence(raw,{'fixture':100},EXITS[0]),(0,False))
+        self.assertEqual(trace_evidence(raw,{},EXITS[1]),(0,False))
+        connection['chains']=['DIRECT']
+        self.assertEqual(trace_evidence(sample([connection])+'RM_TRACE_CODE=0\n',{},EXITS[0]),(0,False))
+        with self.assertRaises(RuntimeError):trace_evidence(sample([]),{},EXITS[0])
+
+    def test_provider_exclusion_must_be_observed_and_cannot_pass_empty_data(self):
+        expected = {'fixture': ['bad-node']}
+        good = {'fixture': {'proxies': [{'name': 'good-node'}]}}
+        self.assertTrue(quarantine_runtime(good, expected))
+        for providers in ({}, {'fixture': {'proxies': []}},
+                          {'fixture': {'proxies': [{'name': 'good-node'}, {'name': 'bad-node'}]}}):
+            self.assertFalse(quarantine_runtime(providers, expected))
+        self.assertFalse(quarantine_runtime(good, {}))
+
+    def test_runtime_requires_six_airport_fronts_and_rejects_final_exit_cycles(self):
+        proxies = {FRONT: {'type': 'Selector', 'all': list(FRONT_GROUPS), 'now': FRONT_GROUPS[0]},
+                   **{name: {'type': 'URLTest', 'all': ['fixture-airport']} for name in FRONT_GROUPS}}
+        self.assertTrue(all(front_runtime(proxies).values()))
+        for target in (REGION, FRONT, EXITS[0], 'DIRECT'):
+            bad = copy.deepcopy(proxies); bad[FRONT_GROUPS[-1]]['all'] = [target]
+            self.assertFalse(all(front_runtime(bad).values()))
+        bad = copy.deepcopy(proxies); bad.pop(FRONT_GROUPS[0])
+        self.assertFalse(all(front_runtime(bad).values()))
+        bad = copy.deepcopy(proxies); bad[FRONT]['now'] = REGION
+        self.assertFalse(all(front_runtime(bad).values()))
+
     def test_exit_requires_a_real_public_address(self):
         for value in (None,'invalid','127.0.0.1','10.0.0.1','::1','192.0.2.1'):
             self.assertIsNone(public_address(value))
