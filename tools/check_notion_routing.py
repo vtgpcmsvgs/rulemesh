@@ -55,6 +55,8 @@ def check(path: Path, lines: list[str], auto: str) -> list[str]:
     providers = parser._parse_mihomo_providers(lines)
     if identifier not in providers or providers[identifier][1] != BASE + "mihomo/classical/region/hk/notion_hk.yaml":
         errors.append("Notion provider 必须引用规范公开产物。")
-    if hk is None or hk.group_type != "url-test":
-        errors.append("Notion 的香港目标组必须是 Mihomo url-test。")
+    import check_android_stability as android
+    manual_hk = path.name == android.PROFILE and any(s.startswith(android.GOOGLE_HK_QUARANTINE + ':') for s in lines)
+    if hk is None or hk.group_type != ('select' if manual_hk else 'url-test'):
+        errors.append("Notion 的香港目标组类型必须符合当前客户端的手动/自动约定。")
     return errors

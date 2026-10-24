@@ -65,7 +65,10 @@ def expected_service(parts, surge):
 def check(path: Path, lines, groups, rules, auto):
     import check_private_dns_precedence as parser
     import check_performance_baseline as baseline
+    import check_android_us_chain as chain
+    import check_android_stability as android
     surge = path.suffix == ".conf"
+    us_chain = not surge and path.name == chain.PROFILE and chain.present(lines)
     work = path.name == parser.SURGE_WORK
     errors = []
 
@@ -127,6 +130,9 @@ def check(path: Path, lines, groups, rules, auto):
             children = [child for child in group.members if child != "DIRECT"]
             require(group.members.count("DIRECT") == (1 if name == "Microsoft" else 0), f"{name} 的 DIRECT 候选数量不符合约定。")
             require(bool(children) and all(parser._group_has_us_semantics(child, groups, approved) for child in children), f"{name} 代理候选必须满足地区约束。")
+            if us_chain and FIXED[name] == 'us':
+                require(children == [chain.REGION], f"{name} 必须仅引用美国五出口组，禁止回退到机场落地。")
+                continue
             sources = []
             for child in children:
                 leaf = groups.get(child)
@@ -153,8 +159,12 @@ def check(path: Path, lines, groups, rules, auto):
 
     for name, region in REGIONS.items():
         group = groups.get(name)
-        require(group is not None and group.group_type == "url-test", "缺少地区自动测速组。")
+        manual_hk = path.name == android.PROFILE and region == 'hk' and any(s.startswith(android.GOOGLE_HK_QUARANTINE + ':') for s in lines)
+        require(group is not None and group.group_type == ('select' if manual_hk else 'url-test'), "地区组类型不符合客户端的手动香港/自动测速约束。")
         if group:
+            if us_chain and region == 'us':
+                require(group.members == list(chain.EXITS) and not group.has_external_source, "安卓美国地区组必须仅使用五个链式落地出口。")
+                continue
             require(group.has_external_source and not group.has_invalid_external_source and group.filter_text in baseline.region_filters(region, surge), "地区自动组必须保留正确地区过滤器和订阅来源。")
             require(all(member in groups or member == "DIRECT" for member in group.members), "地区自动组存在未知嵌套策略组。")
             if not surge:

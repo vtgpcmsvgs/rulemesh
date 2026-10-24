@@ -30,6 +30,8 @@ def check_google_hk_quarantine(lines: list[str], target: str) -> list[str]:
             return ["安卓香港组必须精确排除已登记的移动 Google 故障节点，避免自动回退后复发。"]
         if groups[0].get("hidden") is not False:
             return ["安卓香港组必须显示，便于在客户端保存已验收节点；控制器临时选择不能替代持久化。"]
+        if groups[0].get('type') != 'select' or any(k in groups[0] for k in ('url', 'interval', 'tolerance', 'timeout', 'lazy', 'expected-status')):
+            return ["安卓香港组必须手动固定已验收线路，禁止测速自动回退到未经移动搜索验收的节点。"]
     except (yaml.YAMLError, TypeError, AttributeError, ValueError):
         return ["安卓香港故障隔离配置无法解析；私人内容已隐藏。"]
     return []
@@ -146,6 +148,7 @@ def check(path: Path, lines: list[str]) -> list[str]:
     import check_private_performance as performance
     import check_common_routes as common
     import check_service_groups as service
+    import check_android_us_chain as chain
     business = service.MARKER in lines
     daily = common.MARKER in lines
     errors = []
@@ -170,13 +173,16 @@ def check(path: Path, lines: list[str]) -> list[str]:
                 "安卓必须保留 profile.store-selected: true；导入后另核对实际 Google 选择。")
         google = groups.get("Google")
         require(google is not None and google.group_type == "select" and set(google.members) == set(service.REGIONS), "安卓 Google 必须手动选择六地区自动组。")
-        require(service.REGIONS.get(target) == "hk" and stable is not None and stable.group_type in {"url-test", "smart"}, "安卓 Google 默认必须使用香港自动组；线路故障不能改变用户要求的地区。")
+        require(service.REGIONS.get(target) == "hk" and stable is not None and stable.group_type == 'select', "安卓 Google 默认必须使用香港手动组；禁止测速状态触发未验收节点回退。")
         for name in ("Google", *service.REGIONS):
             candidate = groups.get(name)
             if candidate is None:
                 continue
             if name != "Google":
-                require(candidate.filter_text in baseline.region_filters(service.REGIONS[name], False) and not candidate.members and candidate.has_external_source and not candidate.has_invalid_external_source and set(candidate.source_references) == set(parser._parse_mihomo_proxy_provider_names(lines)), "安卓 Google 地区过滤器与机场来源必须完整。")
+                if chain.present(lines) and name == chain.REGION:
+                    require(candidate.members == list(chain.EXITS) and not candidate.has_external_source, "安卓美国候选必须接入五出口链路。")
+                else:
+                    require(candidate.filter_text in baseline.region_filters(service.REGIONS[name], False) and not candidate.members and candidate.has_external_source and not candidate.has_invalid_external_source and set(candidate.source_references) == set(parser._parse_mihomo_proxy_provider_names(lines)), "安卓 Google 地区过滤器与机场来源必须完整。")
             end = next((i for i in range(candidate.line, len(lines)) if lines[i].startswith("  - name:") or re.match(r"^[\w-]+:", lines[i])), len(lines))
             require(not any(re.match(r"    disable-udp:\s*true", s) for s in lines[candidate.line:end]), "Google 必须保留 UDP 能力，不能强制 Cronet 回退。")
     else:

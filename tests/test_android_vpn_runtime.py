@@ -103,6 +103,14 @@ class AndroidVpnRuntimeTests(unittest.TestCase):
         self.assertNotIn('private.invalid', str(result))
         self.assertNotIn('secret', str(result))
 
+    def test_real_search_cannot_be_satisfied_by_a_homepage_redirect(self):
+        body = '<form action="/search"><textarea name="q"></textarea></form>\n'
+        home = body + 'RM_GOOGLE_SEARCH 200 0 0.5 0 https://www.google.com/\n'
+        self.assertTrue(audit_google_search(home, expected_path='/')['passed'])
+        self.assertFalse(audit_google_search(home, expected_path='/search')['passed'])
+        search = home.replace('https://www.google.com/', 'https://www.google.com/search?q=fixture')
+        self.assertTrue(audit_google_search(search, expected_path='/search')['passed'])
+
 
 if __name__ == "__main__":
     unittest.main()

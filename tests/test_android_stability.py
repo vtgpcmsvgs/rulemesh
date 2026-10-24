@@ -15,6 +15,15 @@ import check_common_routes as common
 
 
 class AndroidStabilityTests(unittest.TestCase):
+    def test_hong_kong_cannot_auto_fallback_after_a_cold_health_failure(self):
+        path,text=self.fixture()
+        hk=next(n for n,region in service.REGIONS.items() if region=='hk')
+        anchor=f'  - name: "{hk}"\n    type: select\n'
+        self.assertEqual(text.count(anchor),1)
+        self.assertEqual(baseline.check(path,text.splitlines()),[])
+        for replacement in (anchor.replace('select','url-test'),anchor+'    interval: 600\n'):
+            self.assertTrue(android.check(path,text.replace(anchor,replacement).splitlines()))
+
     def chatgpt_fixture(self):
         path, text = self.fixture()
         ai = next(p[2] for _, p in parser._parse_mihomo_rules(text.splitlines()) if p[:2] == ["RULE-SET", "us_ai"])
@@ -69,6 +78,9 @@ class AndroidStabilityTests(unittest.TestCase):
         block = text[start:end]
         self.assertEqual(block.count('    hidden: true\n'), 1)
         block = block.replace('    hidden: true\n', '    hidden: false\n')
+        block = block.replace('    type: url-test\n', '    type: select\n')
+        block, removed = re.subn(r'^    (url|interval|tolerance|timeout|lazy):.*\n', '', block, flags=re.M)
+        self.assertEqual(removed, 5)
         rows = [s for s in block.splitlines() if s.startswith('    exclude-filter:')]
         self.assertEqual(len(rows), 1)
         existing = yaml.safe_load(rows[0])['exclude-filter']

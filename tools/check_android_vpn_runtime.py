@@ -50,12 +50,13 @@ class _GoogleSearchForm(HTMLParser):
             self.in_search_form = False
 
 
-def audit_google_search(raw: str, command_exit_code: int = 0) -> dict:
+def audit_google_search(raw: str, command_exit_code: int = 0, *, expected_path: str | None = None) -> dict:
     """移动 UA 跟随跳转并要求真实搜索表单；正文/完整 URL 仅在内存中解析。"""
     markers = list(re.finditer(
         r"^RM_GOOGLE_SEARCH (\d{3}) (\d+) (\d+(?:\.\d+)?) (\d+) (\S+)\s*$", raw, re.M))
     status, verification, handshake, redirects, final_host = None, None, 0.0, None, None
     https = search = False
+    path_matches = expected_path is None
     if len(markers) == 1:
         marker = markers[0]
         status, verification = int(marker[1]), int(marker[2])
@@ -63,6 +64,7 @@ def audit_google_search(raw: str, command_exit_code: int = 0) -> dict:
         try:
             url = urlsplit(marker[5])
             final_host, https = url.hostname, url.scheme == "https"
+            path_matches = expected_path is None or url.path == expected_path
         except ValueError:
             pass
         body = raw[:marker.start()]
@@ -72,13 +74,14 @@ def audit_google_search(raw: str, command_exit_code: int = 0) -> dict:
     curl_errors = re.findall(r"curl: \((\d+)\)", raw)
     passed = (command_exit_code == 0 and len(markers) == 1 and not curl_errors
               and status == 200 and verification == 0 and handshake > 0 and https
-              and final_host in {"google.com", "www.google.com"} and search)
+              and final_host in {"google.com", "www.google.com"} and search and path_matches)
     # 只输出固定主机角色，恶意/未知跳转中的主机也不得未经脱敏直接输出。
     role = "google_com" if final_host in {"google.com", "www.google.com"} else (
         "google_cn" if final_host and (final_host == "google.cn" or final_host.endswith(".google.cn")) else "other_or_unknown")
     return {"http_status": status, "certificate_verify_result": verification,
             "tls_handshake_completed": handshake > 0, "redirect_count": redirects,
             "final_host_role": role, "search_form_present": search,
+            "expected_path_matched": path_matches,
             "curl_error_code": int(curl_errors[-1]) if curl_errors else None,
             "command_exit_code": command_exit_code, "passed": bool(passed)}
 

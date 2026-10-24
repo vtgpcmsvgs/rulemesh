@@ -1,5 +1,7 @@
 # Mihomo 使用说明
 
+2026-10-24 私人安卓新增用户明确授权的美国五出口链式例外；机场作为前置、五条 SOCKS5 作为最终出口，Google 仍默认香港。任务收尾须运行统一入口并分别验证订阅、真实 Chrome、DNS 与五出口连通和美国地区；用户要求信任这五 IP，不检测纯净度。缺少必要设备证据不算通过；步骤与边界见 [任务收尾验收](task-acceptance.md)。公开模板与其他客户端行为不变。
+
 iPhone 的 Clash Mi 使用独立 `rulemesh-clashmi-ios-20261023.yaml`，不要套用安卓应用进程规则。它保留桌面分流与 DNS 基线，测速周期 600 秒，TUN 交给应用管理；关闭 DNS/规则/代理组覆写并保留 TUN 覆写。阿里云 SSH 的 ASN 兜底转换为精确网段内联快照。导入、派生维护与设备验收见 [Clash Mi iOS](clashmi-ios.md)。此专项不改变公开模板。
 
 公开模板为 [mihomo-public.yaml](examples/mihomo-public.yaml)。公开模板、FlClash 桌面端 与 FlClash 安卓端 私有配置共同采用 [2026-09-09 性能基线](performance-baseline.md)。

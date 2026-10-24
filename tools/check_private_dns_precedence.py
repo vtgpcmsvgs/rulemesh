@@ -105,6 +105,7 @@ class _ProxyGroup:
     has_invalid_external_source: bool = False
     source_references: list[str] = field(default_factory=list)
     declares_source_references: bool = False
+    approved_us_chain_exit: bool = False
 
 
 def _dns_endpoint_hostname(value: str) -> str | None:
@@ -539,6 +540,12 @@ def _parse_mihomo_groups(lines: list[str]) -> dict[str, _ProxyGroup]:
         )
         parsed_group.has_external_source |= references_are_valid
         parsed_group.has_invalid_external_source |= not references_are_valid
+    # 只有完整通过专用结构检查的五个落地节点才可作为美国终点。
+    # 名称、SOCKS5 类型或 country 标签本身都不足以取得此资格。
+    import check_android_us_chain as chain
+    if chain.present(lines) and not chain.validate(lines):
+        for name in chain.EXITS:
+            groups[name] = _ProxyGroup(line=0, group_type='socks5', approved_us_chain_exit=True)
     return groups
 
 
@@ -699,6 +706,8 @@ def _group_has_us_semantics(
     group = groups.get(name)
     if group is None:
         return False
+    if group.approved_us_chain_exit:
+        return approved_filters == APPROVED_MIHOMO_US_FILTERS
     next_seen = seen | {name}
     semantic_members = [member for member in group.members if member not in group.included_members]
     members_are_us = bool(semantic_members) and all(
