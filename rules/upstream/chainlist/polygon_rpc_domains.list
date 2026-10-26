@@ -4,9 +4,9 @@
 # chainId: 137
 # 维护策略: 只增不减；保留历史已收录主机名，避免上游日常波动导致覆盖面回撤。
 # 规则展开: 每个主机名同时生成 DOMAIN 与 DOMAIN-WILDCARD，由统一 Crypto 台湾入口承接。
-# 本次抓取主机数: 31
-# 累计主机数: 46
-# 同步时间: 2026-10-25T06:36:25+00:00
+# 本次抓取主机数: 32
+# 累计主机数: 47
+# 同步时间: 2026-10-26T06:46:40+00:00
 
 DOMAIN,137.rpc.thirdweb.com
 DOMAIN-WILDCARD,*.137.rpc.thirdweb.com
@@ -14,6 +14,8 @@ DOMAIN,1rpc.io
 DOMAIN-WILDCARD,*.1rpc.io
 DOMAIN,api-polygon-mainnet-full.n.dwellir.com
 DOMAIN-WILDCARD,*.api-polygon-mainnet-full.n.dwellir.com
+DOMAIN,api.blockvectra.com
+DOMAIN-WILDCARD,*.api.blockvectra.com
 DOMAIN,api.zan.top
 DOMAIN-WILDCARD,*.api.zan.top
 DOMAIN,endpoints.omniatech.io

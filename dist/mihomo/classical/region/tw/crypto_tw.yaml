@@ -50,6 +50,8 @@ payload:
   - "DOMAIN-WILDCARD,*.1rpc.io"
   - "DOMAIN,api-polygon-mainnet-full.n.dwellir.com"
   - "DOMAIN-WILDCARD,*.api-polygon-mainnet-full.n.dwellir.com"
+  - "DOMAIN,api.blockvectra.com"
+  - "DOMAIN-WILDCARD,*.api.blockvectra.com"
   - "DOMAIN,api.zan.top"
   - "DOMAIN-WILDCARD,*.api.zan.top"
   - "DOMAIN,endpoints.omniatech.io"
