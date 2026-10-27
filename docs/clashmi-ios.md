@@ -1,6 +1,6 @@
 # Clash Mi iOS 专用配置
 
-使用私人仓库的 `rulemesh-clashmi-ios-20261023.yaml`。它以桌面版为业务基线，适配 iOS；不要直接导入安卓版本，后者包含 Google Play 和券商应用包名规则。
+使用私人仓库的 `rulemesh-clashmi-ios.yaml`。它以桌面版为业务基线，适配 iOS；不要直接导入安卓版本，后者包含 Google Play 和券商应用包名规则。
 
 ## 差异与维护边界
 

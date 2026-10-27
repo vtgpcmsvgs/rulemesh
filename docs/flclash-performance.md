@@ -16,8 +16,8 @@
 
 2026-09-16 用户进一步选择国内日常业务直连，两份 FlClash 停用阿里系代理调用和 provider；早先三个支付宝条件规则已撤下。安卓系统下载管理器不再整体走 Google 组，改按目的地规则判断；Google 三个专属进程、稳定组、DNS 与 QUIC 保持。详见 [常用业务连通性](common-network-reliability.md)。桌面仅同步源文件，本次仍不操作本机 FlClash；Surge 保持独立配置。
 
-- 桌面：`rulemesh-flclash-desktop-20261023.yaml`。
-- 安卓：`rulemesh-flclash-android-20261023.yaml`。
+- 桌面：`rulemesh-flclash-desktop.yaml`。
+- 安卓：`rulemesh-flclash-android.yaml`。
 - 两份文件位于独立私人仓库根目录；同步脚本与公开检查使用新文件名。文件级分享链接也必须切换到新文件名。
 - Windows 已核实 FlClash 0.8.97，数据目录为 `%APPDATA%/com.follow/clash`。配置元数据在 `database.sqlite`，选中项与界面覆写在 `shared_preferences.json`，导入原文在 `profiles/<id>.yaml`；根目录 `config.yaml` 是生成结果，不是编辑入口。
 - 默认保持标准覆写模式、DNS 覆写关闭、最终策略不单独覆写；导入本仓库规则与组。IPv6 关闭、TCP 并发开启。FlClash 0.9.1 的界面枚举只支持进程识别 `always/off`，未知值（含 `strict`）按 `off` 处理；新安装默认关闭，需手动开启并核对内核 `always`，不能沿用旧版的反序列化结论。

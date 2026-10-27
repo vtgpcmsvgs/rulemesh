@@ -28,8 +28,8 @@ class PrivateDnsPrecedenceTests(unittest.TestCase):
         self.assertEqual(
             precedence_checker.SURGE_PERSONAL_NAMES,
             {
-                "rulemesh-surge-home-20261023.conf",
-                "rulemesh-surge-company-20261023.conf",
+                "rulemesh-surge-home.conf",
+                "rulemesh-surge-company.conf",
             },
         )
         self.assertTrue(
@@ -155,7 +155,7 @@ class PrivateDnsPrecedenceTests(unittest.TestCase):
             f"RULE-SET,{ai_url},{ai_target}\n" if ai_url is not None else ""
         )
         return self.write_profile(
-            "rulemesh-surge-home-20261023.conf",
+            "rulemesh-surge-home.conf",
             f"""[Host]
 {host}
 
@@ -570,7 +570,7 @@ FINAL,AUTO
     use: [provider_a]
     filter: "(?i)香港|\\bhk\\b|美国|\\bus\\b"""
         return self.write_profile(
-            "rulemesh-flclash-desktop-20261023.yaml",
+            "rulemesh-flclash-desktop.yaml",
             f"""dns:
   nameserver:
     - https://cloudflare-dns.com/dns-query
@@ -1271,7 +1271,7 @@ rules:
 
     def test_work_profile_rejects_performance_dns_artifact(self) -> None:
         path = self.write_profile(
-            "rulemesh-surge-work-20261023.conf",
+            "rulemesh-surge-work.conf",
             """[Host]
 DOMAIN-SET:https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/surge/dns/cn_performance_dns_domains.list = server:https://dns.alidns.com/dns-query
 """,

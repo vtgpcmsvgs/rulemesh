@@ -267,13 +267,13 @@ $entries = Get-PrivateEntries -Path $sourcePath
 $ruleCount = @($entries | Where-Object { $_.Type -eq "rule" }).Count
 $targets = @()
 if ($Target -eq "surge" -or $Target -eq "all") {
-    $targets += @{ Path = (Join-Path $baseDir "rulemesh-surge-home-20261023.conf"); Mode = "surge" }
-    $targets += @{ Path = (Join-Path $baseDir "rulemesh-surge-company-20261023.conf"); Mode = "surge" }
-    $targets += @{ Path = (Join-Path $baseDir "rulemesh-surge-work-20261023.conf"); Mode = "surge" }
+    $targets += @{ Path = (Join-Path $baseDir "rulemesh-surge-home.conf"); Mode = "surge" }
+    $targets += @{ Path = (Join-Path $baseDir "rulemesh-surge-company.conf"); Mode = "surge" }
+    $targets += @{ Path = (Join-Path $baseDir "rulemesh-surge-work.conf"); Mode = "surge" }
 }
 if ($Target -eq "mihomo" -or $Target -eq "all") {
-    $targets += @{ Path = (Join-Path $baseDir "rulemesh-flclash-desktop-20261023.yaml"); Mode = "mihomo" }
-    $targets += @{ Path = (Join-Path $baseDir "rulemesh-flclash-android-20261023.yaml"); Mode = "mihomo" }
+    $targets += @{ Path = (Join-Path $baseDir "rulemesh-flclash-desktop.yaml"); Mode = "mihomo" }
+    $targets += @{ Path = (Join-Path $baseDir "rulemesh-flclash-android.yaml"); Mode = "mihomo" }
 }
 $plans = @(
     foreach ($targetConfig in $targets) {

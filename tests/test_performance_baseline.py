@@ -47,7 +47,7 @@ class PerformanceBaselineTests(unittest.TestCase):
                 changed = text.replace(line, line.replace(',DIRECT', ',' + target))
                 self.assertTrue(any('最终兜底' in error for error in baseline.check(path, changed.splitlines())))
             if client == 'surge':
-                work = Path('rulemesh-surge-work-20261023.conf')
+                work = Path('rulemesh-surge-work.conf')
                 self.assertTrue(any('最终兜底' in error for error in baseline.check(work, text.splitlines())))
                 changed = text.replace(line, 'FINAL,REJECT')
                 self.assertFalse(any('最终兜底' in error for error in baseline.check(work, changed.splitlines())))
@@ -132,7 +132,7 @@ class PerformanceBaselineTests(unittest.TestCase):
 
     def test_private_profiles_require_subscription_sync_markers(self):
         _, text = self.fixture("surge")
-        errors = baseline.check(Path("rulemesh-surge-home-20261023.conf"), text.splitlines())
+        errors = baseline.check(Path("rulemesh-surge-home.conf"), text.splitlines())
         self.assertTrue(any("同步块" in error for error in errors))
 
     def test_airport_manual_groups_are_not_rule_reachability_garbage(self):

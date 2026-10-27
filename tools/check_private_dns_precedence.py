@@ -15,22 +15,22 @@ from check_dns_safety import default_paths
 
 ROOT = Path(__file__).resolve().parents[1]
 PRIVATE_PROFILE_NAMES = {
-    "rulemesh-clashmi-ios-20261023.yaml",
-    "rulemesh-surge-home-20261023.conf",
-    "rulemesh-surge-company-20261023.conf",
-    "rulemesh-surge-work-20261023.conf",
-    "rulemesh-flclash-desktop-20261023.yaml",
-    "rulemesh-flclash-android-20261023.yaml",
+    "rulemesh-clashmi-ios.yaml",
+    "rulemesh-surge-home.conf",
+    "rulemesh-surge-company.conf",
+    "rulemesh-surge-work.conf",
+    "rulemesh-flclash-desktop.yaml",
+    "rulemesh-flclash-android.yaml",
 }
 SURGE_PERSONAL_NAMES = {
-    "rulemesh-surge-home-20261023.conf",
-    "rulemesh-surge-company-20261023.conf",
+    "rulemesh-surge-home.conf",
+    "rulemesh-surge-company.conf",
 }
-SURGE_WORK = "rulemesh-surge-work-20261023.conf"
+SURGE_WORK = "rulemesh-surge-work.conf"
 MIHOMO_PROFILES = {
-    "rulemesh-clashmi-ios-20261023.yaml",
-    "rulemesh-flclash-desktop-20261023.yaml",
-    "rulemesh-flclash-android-20261023.yaml",
+    "rulemesh-clashmi-ios.yaml",
+    "rulemesh-flclash-desktop.yaml",
+    "rulemesh-flclash-android.yaml",
 }
 ROUTING_CATEGORIES = {"reject", "proxy", "region"}
 AI_US_RULE_IDENTIFIER = "region/us/ai_us"

@@ -55,10 +55,10 @@ policy-regex-filter=^(?!.*剩余流量)(?!.*直接连接)(?!.*供应商名)...
 
 ## 同步范围
 
-- 解析后的私人当前配置目录中的 `rulemesh-flclash-desktop-20261023.yaml`
-- 解析后的私人当前配置目录中的 `rulemesh-flclash-android-20261023.yaml`
-- 解析后的私人当前配置目录中的家庭与公司两份 Surge Personal：`rulemesh-surge-home-20261023.conf`、`rulemesh-surge-company-20261023.conf`
-- 解析后的私人当前配置目录中的 `rulemesh-surge-work-20261023.conf`
+- 解析后的私人当前配置目录中的 `rulemesh-flclash-desktop.yaml`
+- 解析后的私人当前配置目录中的 `rulemesh-flclash-android.yaml`
+- 解析后的私人当前配置目录中的家庭与公司两份 Surge Personal：`rulemesh-surge-home.conf`、`rulemesh-surge-company.conf`
+- 解析后的私人当前配置目录中的 `rulemesh-surge-work.conf`
 - `docs/examples/mihomo-public.yaml`
 - `docs/examples/surge-public.conf`
 - `docs/usage-mihomo.md`

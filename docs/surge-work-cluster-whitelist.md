@@ -2,7 +2,7 @@
 
 2026-09-16：撤销阿里设备条件代理；新增的 `cn_services_direct` 仅精确放行国内 DNS 端点及新华三。WPS 按 2026-09-18 修订统一直连，Store 专项固定美国并位于既有更新拒绝之后；不改变最终 REJECT，不新增通用国内放行。详见[出口修订](scoped-egress-repair.md)。
 
-仅适用于私有 `rulemesh-surge-work-20261023.conf`。它长期独立于两份 Surge Personal、两份 Mihomo 与公开模板；不得为了统一模板取消白名单。
+仅适用于私有 `rulemesh-surge-work.conf`。它长期独立于两份 Surge Personal、两份 Mihomo 与公开模板；不得为了统一模板取消白名单。
 
 ## 当前放行边界
 

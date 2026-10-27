@@ -258,7 +258,7 @@ merge_plan:
       - personal_profiles_only
     notes:
       - 必须放在广告拒绝与中国直连前
-      - 不得接入 rulemesh-surge-work-20261023.conf
+      - 不得接入 rulemesh-surge-work.conf
 
   - id: hk-notion
     target: rules/region/hk/notion_hk.list

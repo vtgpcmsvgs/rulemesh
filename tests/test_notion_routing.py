@@ -68,4 +68,4 @@ class NotionRoutingTests(unittest.TestCase):
 
     def test_work_whitelist_does_not_gain_notion(self):
         _, lines, auto = self.fixture("surge")
-        self.assertTrue(notion.check(Path('rulemesh-surge-work-20261023.conf'), lines, auto))
+        self.assertTrue(notion.check(Path('rulemesh-surge-work.conf'), lines, auto))

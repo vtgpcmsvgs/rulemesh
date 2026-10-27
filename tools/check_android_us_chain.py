@@ -2,7 +2,7 @@
 from pathlib import Path
 
 KEY = 'x-rulemesh-android-us-chain'
-PROFILE = 'rulemesh-flclash-android-20261023.yaml'
+PROFILE = 'rulemesh-flclash-android.yaml'
 FRONT = 'RM-US-Front'
 FRONT_REGIONS = {'hk': '香港', 'tw': '台湾', 'jp': '日本', 'kr': '韩国', 'sg': '新加坡', 'us': '美国'}
 FRONT_GROUPS = tuple(f'前置-{label}-自动选择' for label in FRONT_REGIONS.values())

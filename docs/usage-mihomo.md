@@ -2,13 +2,13 @@
 
 2026-10-24 私人安卓新增用户明确授权的美国五出口链式例外；机场作为前置、五条 SOCKS5 作为最终出口，Google 仍默认香港。任务收尾须运行统一入口并分别验证订阅、真实 Chrome、DNS 与五出口连通和美国地区；用户要求信任这五 IP，不检测纯净度。缺少必要设备证据不算通过；步骤与边界见 [任务收尾验收](task-acceptance.md)。公开模板与其他客户端行为不变。
 
-iPhone 的 Clash Mi 使用独立 `rulemesh-clashmi-ios-20261023.yaml`，不要套用安卓应用进程规则。它保留桌面分流与 DNS 基线，测速周期 600 秒，TUN 交给应用管理；关闭 DNS/规则/代理组覆写并保留 TUN 覆写。阿里云 SSH 的 ASN 兜底转换为精确网段内联快照。导入、派生维护与设备验收见 [Clash Mi iOS](clashmi-ios.md)。此专项不改变公开模板。
+iPhone 的 Clash Mi 使用独立 `rulemesh-clashmi-ios.yaml`，不要套用安卓应用进程规则。它保留桌面分流与 DNS 基线，测速周期 600 秒，TUN 交给应用管理；关闭 DNS/规则/代理组覆写并保留 TUN 覆写。阿里云 SSH 的 ASN 兜底转换为精确网段内联快照。导入、派生维护与设备验收见 [Clash Mi iOS](clashmi-ios.md)。此专项不改变公开模板。
 
 公开模板为 [mihomo-public.yaml](examples/mihomo-public.yaml)。公开模板、FlClash 桌面端 与 FlClash 安卓端 私有配置共同采用 [2026-09-09 性能基线](performance-baseline.md)。
 
 ## 接入
 
-私人配置使用 `rulemesh-flclash-desktop-20261023.yaml`、`rulemesh-flclash-android-20261023.yaml` 与派生的 `rulemesh-clashmi-ios-20261023.yaml`。重命名后已有文件路径或订阅链接需改用新名称；桌面、安卓和 iOS 各自的 DNS 与应用设置保持。
+私人配置使用 `rulemesh-flclash-desktop.yaml`、`rulemesh-flclash-android.yaml` 与派生的 `rulemesh-clashmi-ios.yaml`。重命名后已有文件路径或订阅链接需改用新名称；桌面、安卓和 iOS 各自的 DNS 与应用设置保持。
 
 1. 替换示例 `proxy-providers` 订阅地址；每个机场下载都保持 `proxy: DIRECT`。按上游实际返回内容设置 User-Agent，不能把健康检查 URL 当成订阅地址。
 2. 使用 `behavior: classical` 与本仓库 `dist/mihomo/classical/` 产物；不要引用旧 domain/ipcidr 目录或源文件。

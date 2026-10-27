@@ -13,8 +13,8 @@ import check_private_dns_precedence as parser
 ROOT = Path(__file__).resolve().parents[1]
 CASES = Path(__file__).with_name("common_route_cases.json")
 MARKER = "# RuleMesh 日常连通性基线：2026-09-16"
-PRIVATE_NAMES = {f"rulemesh-flclash-{client}-20261023.yaml" for client in ("android", "desktop")}
-PRIVATE_NAMES.add("rulemesh-clashmi-ios-20261023.yaml")
+PRIVATE_NAMES = {f"rulemesh-flclash-{client}.yaml" for client in ("android", "desktop")}
+PRIVATE_NAMES.add("rulemesh-clashmi-ios.yaml")
 
 
 def split_rule(text: str) -> list[str]:

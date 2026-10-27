@@ -17,8 +17,8 @@ class PrivatePerformanceTests(unittest.TestCase):
         self.assertEqual(
             check_private_performance.SURGE_PERSONAL_NAMES,
             {
-                "rulemesh-surge-home-20261023.conf",
-                "rulemesh-surge-company-20261023.conf",
+                "rulemesh-surge-home.conf",
+                "rulemesh-surge-company.conf",
             },
         )
         self.assertTrue(
@@ -35,7 +35,7 @@ class PrivatePerformanceTests(unittest.TestCase):
 
     def test_surge_personal_rejects_us_final(self) -> None:
         path = self.write_temp(
-            "rulemesh-surge-home-20261023.conf",
+            "rulemesh-surge-home.conf",
             """[Proxy Group]
 全地区自动选择 = smart, policy-path=a
 美国自动选择 = smart, policy-path=b, policy-regex-filter=美国|US
@@ -51,7 +51,7 @@ FINAL,美国自动选择,dns-failed
 
     def test_surge_personal_requires_aggressive_rule_entries(self) -> None:
         path = self.write_temp(
-            "rulemesh-surge-company-20261023.conf",
+            "rulemesh-surge-company.conf",
             """[Proxy Group]
 自动选择 = smart, policy-path=a
 
@@ -77,7 +77,7 @@ FINAL,自动选择,dns-failed
 
     def test_surge_personal_accepts_aggressive_rule_order(self) -> None:
         path = self.write_temp(
-            "rulemesh-surge-company-20261023.conf",
+            "rulemesh-surge-company.conf",
             """[Proxy Group]
 自动选择 = smart, policy-path=a
 
@@ -102,7 +102,7 @@ FINAL,自动选择,dns-failed
 
     def test_surge_personal_requires_google_hk_before_reject(self) -> None:
         path = self.write_temp(
-            "rulemesh-surge-home-20261023.conf",
+            "rulemesh-surge-home.conf",
             """[Proxy Group]
 自动选择 = smart, policy-path=a
 香港自动选择 = smart, policy-path=b, policy-regex-filter=香港|HK
@@ -120,7 +120,7 @@ FINAL,自动选择,dns-failed
 
     def test_surge_work_requires_exact_domestic_entries(self) -> None:
         path = self.write_temp(
-            "rulemesh-surge-work-20261023.conf",
+            "rulemesh-surge-work.conf",
             """[Rule]
 RULE-SET,allowed,DIRECT
 FINAL,REJECT
@@ -136,7 +136,7 @@ FINAL,REJECT
 
     def test_mihomo_rejects_stale_health_and_us_match(self) -> None:
         path = self.write_temp(
-            "rulemesh-flclash-desktop-20261023.yaml",
+            "rulemesh-flclash-desktop.yaml",
             self.mihomo_fixture(interval=900, lazy="true", match="美国自动选择", tolerance=150),
         )
 
@@ -158,7 +158,7 @@ FINAL,REJECT
             "  - RULE-SET,hk_securities_aggressive,香港自动选择\n",
             "",
         )
-        path = self.write_temp("rulemesh-flclash-desktop-20261023.yaml", content)
+        path = self.write_temp("rulemesh-flclash-desktop.yaml", content)
 
         messages = [
             item.message for item in check_private_performance.validate_profile(path)
@@ -176,7 +176,7 @@ FINAL,REJECT
             "  hk_securities_aggressive:\n",
             "  unrelated_provider:\n",
         )
-        path = self.write_temp("rulemesh-flclash-desktop-20261023.yaml", content)
+        path = self.write_temp("rulemesh-flclash-desktop.yaml", content)
 
         messages = [
             item.message for item in check_private_performance.validate_profile(path)
@@ -194,7 +194,7 @@ FINAL,REJECT
             "dist/mihomo/classical/region/hk/hk_securities_aggressive.yaml",
             "dist/mihomo/classical/region/hk/hk_brokers.yaml",
         )
-        path = self.write_temp("rulemesh-flclash-desktop-20261023.yaml", content)
+        path = self.write_temp("rulemesh-flclash-desktop.yaml", content)
 
         messages = [
             item.message for item in check_private_performance.validate_profile(path)
@@ -212,7 +212,7 @@ FINAL,REJECT
             "RULE-SET,hk_securities_aggressive,香港自动选择",
             "RULE-SET,hk_securities_aggressive,自动选择",
         )
-        path = self.write_temp("rulemesh-flclash-desktop-20261023.yaml", content)
+        path = self.write_temp("rulemesh-flclash-desktop.yaml", content)
 
         messages = [
             item.message for item in check_private_performance.validate_profile(path)
@@ -232,7 +232,7 @@ FINAL,REJECT
             "  - RULE-SET,reject_adblock,REJECT\n"
             "  - RULE-SET,hk_securities_aggressive,香港自动选择\n",
         )
-        path = self.write_temp("rulemesh-flclash-android-20261023.yaml", content)
+        path = self.write_temp("rulemesh-flclash-android.yaml", content)
 
         messages = [
             item.message for item in check_private_performance.validate_profile(path)
@@ -250,7 +250,7 @@ FINAL,REJECT
             "RULE-SET,hk_google,香港自动选择",
             "RULE-SET,hk_google,美国自动选择",
         )
-        path = self.write_temp("rulemesh-flclash-android-20261023.yaml", content)
+        path = self.write_temp("rulemesh-flclash-android.yaml", content)
 
         messages = [item.message for item in check_private_performance.validate_profile(path)]
 
@@ -258,7 +258,7 @@ FINAL,REJECT
 
     def test_accepts_performance_first_profiles(self) -> None:
         personal = self.write_temp(
-            "rulemesh-surge-home-20261023.conf",
+            "rulemesh-surge-home.conf",
             """[Proxy Group]
 自动选择 = smart, policy-path=a
 美国自动选择 = smart, policy-path=b, policy-regex-filter=美国|US
@@ -280,7 +280,7 @@ FINAL,自动选择,dns-failed
 """,
         )
         work = self.write_temp(
-            "rulemesh-surge-work-20261023.conf",
+            "rulemesh-surge-work.conf",
             """[Proxy Group]
 香港自动选择 = smart, policy-path=a, policy-regex-filter=香港|HK
 
@@ -292,7 +292,7 @@ FINAL,REJECT
 """,
         )
         mihomo = self.write_temp(
-            "rulemesh-flclash-android-20261023.yaml",
+            "rulemesh-flclash-android.yaml",
             self.mihomo_fixture(interval=300, lazy="false", match="自动选择", tolerance=100),
         )
 

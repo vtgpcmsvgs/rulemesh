@@ -8,9 +8,9 @@ FIXED = {"AI": "us", "Crypto": "tw", "Microsoft": "us", "香港券商": "hk"}
 MANUAL = ("Google", "YouTube", "Telegram", "Microsoft", "Apple")
 MANUAL_FIXED_SERVICES = frozenset({"AI", "Crypto", "香港券商"})
 MANUAL_FIXED_PROFILES = frozenset({
-    "rulemesh-clashmi-ios-20261023.yaml",
-    "rulemesh-flclash-desktop-20261023.yaml",
-    "rulemesh-flclash-android-20261023.yaml",
+    "rulemesh-clashmi-ios.yaml",
+    "rulemesh-flclash-desktop.yaml",
+    "rulemesh-flclash-android.yaml",
 })
 REGION_LABELS = {"us": "美国", "tw": "台湾", "hk": "香港"}
 REGIONS = {"🇭🇰 香港-自动选择": "hk", "🇨🇳 台湾-自动选择": "tw",

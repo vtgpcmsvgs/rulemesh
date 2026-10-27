@@ -20,7 +20,7 @@ except ImportError:
     yaml = None
 
 ROOT = Path(__file__).resolve().parents[1]
-PROFILE_NAMES = ('rulemesh-flclash-desktop-20261023.yaml', 'rulemesh-flclash-android-20261023.yaml')
+PROFILE_NAMES = ('rulemesh-flclash-desktop.yaml', 'rulemesh-flclash-android.yaml')
 MAX_BYTES = 20 * 1024 * 1024
 
 

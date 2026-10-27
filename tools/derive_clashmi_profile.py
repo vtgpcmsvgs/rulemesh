@@ -12,8 +12,8 @@ from pathlib import Path
 import re
 import tempfile
 
-SOURCE_NAME = "rulemesh-flclash-desktop-20261023.yaml"
-TARGET_NAME = "rulemesh-clashmi-ios-20261023.yaml"
+SOURCE_NAME = "rulemesh-flclash-desktop.yaml"
+TARGET_NAME = "rulemesh-clashmi-ios.yaml"
 ROOT = Path(__file__).resolve().parents[1]
 RULE_BASE = "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/"
 HEADER = """# Clash Mi iOS 专用配置；由桌面配置派生，请勿单独修改业务规则。

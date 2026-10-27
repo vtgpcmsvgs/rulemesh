@@ -20,13 +20,13 @@
 本次重构影响：
 
 - 公开规则源、构建器、检查器、测试与文档。
-- 私有 `rulemesh-surge-home-20261023.conf`。
-- 私有 `rulemesh-flclash-desktop-20261023.yaml`。
-- 私有 `rulemesh-flclash-android-20261023.yaml`。
+- 私有 `rulemesh-surge-home.conf`。
+- 私有 `rulemesh-flclash-desktop.yaml`。
+- 私有 `rulemesh-flclash-android.yaml`。
 
 本次明确不影响：
 
-- 私有 `rulemesh-surge-work-20261023.conf` 的任何字节、规则、DNS 行为或引用资源。
+- 私有 `rulemesh-surge-work.conf` 的任何字节、规则、DNS 行为或引用资源。
 - OpenAI / ChatGPT 固定美国出口语义。
 - 机场 provider 的 `proxy: DIRECT`、请求头、订阅地址或节点内容。
 - Mihomo 的 `respect-rules: false`、单一默认海外 `nameserver`、`ipv6: false`、`use-hosts: false` 与 `use-system-hosts: false` 基线。
@@ -106,7 +106,7 @@ DNS 例外必须位于性能型中国 DNS 条目之前。这样可以覆盖已�
 
 ### 5. 工作白名单隔离
 
-`rulemesh-surge-work-20261023.conf`：
+`rulemesh-surge-work.conf`：
 
 - 文件不得修改。
 - 继续引用小型 `cn_dns_domains`，不得引用性能型产物。
