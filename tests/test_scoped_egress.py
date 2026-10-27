@@ -30,7 +30,8 @@ class ScopedEgressTests(unittest.TestCase):
         for domain in ('gxairlines.com', 'jxairport.com', 'auxair.com', 'poemlife.com',
                        'poemschina.com', 'likepoems.com', 'sunon-china.com', 'ngrok.cc',
                        'openailab.com', 'gemini530.net', 'kkcursor.com', 'rcolab.com',
-                       'cybertogether.net', 'sunorensolar.com', 'procetpoeinjector.com'):
+                       'cybertogether.net', 'sunorensolar.com', 'procetpoeinjector.com',
+                       'notgptzero.me', 'gptzero.me.example.org'):
             for candidate in (domain, 'www.' + domain):
                 self.assertFalse(self.ai_matches(candidate), candidate)
         for word in ('xai', 'poe', 'suno', 'openai', 'gemini', 'cursor', 'augment', 'together', 'claude'):
@@ -44,7 +45,8 @@ class ScopedEgressTests(unittest.TestCase):
                        'api.x.ai', 'grok.com', 'api.githubcopilot.com', 'copilot.microsoft.com',
                        'cursor.com', 'cursor.sh', 'codeium.com', 'augmentcode.com', 'trae.ai',
                        'perplexity.ai', 'poe.com', 'suno.com', 'suno.ai',
-                       'openai-api.arkoselabs.com', 'xai.chronosphere.io'):
+                       'openai-api.arkoselabs.com', 'xai.chronosphere.io',
+                       'gptzero.me', 'app.gptzero.me', 'api.gptzero.me', 'support.gptzero.me'):
             self.assertTrue(self.ai_matches(domain), domain)
         self.assertFalse(self.ai_matches('openai.com.example.org'))
         self.assertFalse(self.ai_matches('notopenai.com'))

@@ -201,7 +201,7 @@ python tools/build_rules.py
 
 Google 通用业务仍维护在 google_hk 兼容入口，完整同步 Google / FCM / YouTube 和官方 goog.json 地址空间；不扣除 GCP 客户地址。Google AI 经审核的产品域名在 ai_us，必须前置美国出口，避免被通用 IP 规则抢先覆盖。
 
-ai_us 同时承接 OpenAI、Claude、Copilot、Cursor、Grok、Windsurf、Augment 等海外平台，仅使用审核后的域名/后缀；上游快照用作候选，不直接引入关键词、共享云根域或 IP/ASN。国内 AI、Trae 中国大陆入口继续由 ai_cn_direct / bytedance_direct 直连。工作白名单不因通用模板变更自动加入国内 AI 入口。详细顺序以性能基线和模板为准。
+ai_us 同时承接 OpenAI、Claude、Copilot、Cursor、Grok、Windsurf、Augment、GPTZero 等海外平台，仅使用审核后的域名/后缀；上游快照用作候选，不直接引入关键词、共享云根域或 IP/ASN。GPTZero 的 `gptzero.me` 及子域（官网、应用、API、帮助）统一美国出口及 AI 专用 DNS，核对依据见[出口修订](docs/scoped-egress-repair.md)。国内 AI、Trae 中国大陆入口继续由 ai_cn_direct / bytedance_direct 直连。工作白名单不因通用模板变更自动加入国内 AI 入口。详细顺序以性能基线和模板为准。
 
 `region/multi/ai_relay` 承接用户指定的 modelflare.dev、sudocode.chat、sssaicode.com、xiu.ai、supado.com、xi-xu.me、easyapis.cc、ccapi.us，以及公开评测和截图核实的第三方中转/模型聚合服务，统一绑定全地区自动选择。OpenRouter 已从 `ai_us` 迁入，DNS 使用默认国内解析；共用母域仅登记服务主机，模型厂商原生 API 和纯推理/算力平台不并入。截图逐项分类与访问限制见 [AI 中转站分类](docs/ai-relay-classification.md)。`region/multi/payment_crypto` 承接 infini.money、Stripe 与主流支付/加密支付服务主域，同样绑定全地区自动选择。两者均只使用显式域名，不用关键词泛匹配。
 

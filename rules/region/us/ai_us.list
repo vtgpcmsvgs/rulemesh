@@ -115,3 +115,6 @@ DOMAIN-SUFFIX,replicate.com
 # 应用生成工具：官方产品入口。
 DOMAIN-SUFFIX,bolt.new
 DOMAIN-SUFFIX,lovable.dev
+
+# GPTZero：官网、应用、检测 API 与帮助入口，统一美国出口及 AI 专用 DNS。
+DOMAIN-SUFFIX,gptzero.me

@@ -17,7 +17,7 @@ iPhone 的 Clash Mi 使用独立 `rulemesh-clashmi-ios-20261023.yaml`，不要�
 
 ## 路由
 
-海外 AI（含 Gemini）固定美国并作为第一条有效规则；国内 AI、抖音、小红书、微信前置直连。Crypto / Polygon / BSC RPC 固定台湾，`opinion.trade` 保留日本访问例外，香港券商和香港证券保留香港。这些地区入口都早于 Google 官方完整地址空间。
+海外 AI（含 Gemini、GPTZero）固定美国并作为第一条有效规则；GPTZero 的 `gptzero.me` 及子域复用 `us_ai` 和 `rule-set:us_ai` 专用 DNS policy，更新规则 provider 后覆盖。国内 AI、抖音、小红书、微信前置直连。Crypto / Polygon / BSC RPC 固定台湾，`opinion.trade` 保留日本访问例外，香港券商和香港证券保留香港。这些地区入口都早于 Google 官方完整地址空间。
 
 香港券商统一由 `hk_securities` 规则集和“香港券商”策略组承接；AI、Crypto、Microsoft、香港券商按 provider 使用独立 `url-test` 子组，Microsoft 父组使用 `select`。Google、YouTube、Telegram、Apple 复用六个地区自动组。安卓已移除“Google 下载稳定”组，Google 下载相关规则统一进入 Google 业务组。
 

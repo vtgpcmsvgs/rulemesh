@@ -15,7 +15,7 @@
 
 ## 默认规则顺序
 
-1. 海外 AI 美国入口，包括 Google AI。
+1. 海外 AI 美国入口，包括 Google AI 与 GPTZero（`gptzero.me` 及子域）；GPTZero 复用 `[Host]` 的 AI 专用解析与美国 DoH 出口，更新 `ai_us` 外部资源后覆盖。
 2. 国内 DNS 与新华三精选直连固定第二条，再调用国内 AI、抖音、微信与小红书。
 3. 日本明确访问例外、Crypto 台湾、香港券商与 Personal 香港证券。
 

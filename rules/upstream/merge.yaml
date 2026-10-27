@@ -390,6 +390,7 @@ merge_plan:
       - retain_upstream_snapshots_as_review_candidates
     notes:
       - 统一承接 OpenAI / Claude / Gemini / Copilot / Cursor / Grok / Windsurf / Augment 等海外 AI 平台
+      - GPTZero 的 gptzero.me 及子域复用本入口与 AI 专用 DNS，不扩展共享登录、支付、统计或 CDN 根域
       - OpenRouter 等第三方模型聚合网关由 multi/ai_relay 承接，不再参与美国业务和 AI 专用 DNS
       - 客户端默认绑定美国地区策略，不再绑定台湾地区策略
       - Trae 只保留明确海外入口；DeepSeek、Trae 中国大陆入口与其他国内 AI 不并入该文件，而是优先交给 rules/direct/ai_cn_direct.list，再由直连兜底规则承接共享基础设施

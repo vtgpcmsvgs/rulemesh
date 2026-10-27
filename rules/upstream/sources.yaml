@@ -220,7 +220,7 @@ sources:
     us/ai_us.list:
       preferred:
         - repo: self
-          note: 审核后的海外 AI 服务域名边界，禁止关键词、通配符、共享云根域与 IP/ASN 扩围；美国出口及专用 DNS 共用，OpenRouter 聚合网关交给 multi/ai_relay
+          note: 审核后的海外 AI 服务域名边界，禁止关键词、通配符、共享云根域与 IP/ASN 扩围；美国出口及专用 DNS 共用，含已核对的 GPTZero gptzero.me 及子域；OpenRouter 聚合网关交给 multi/ai_relay，证据见 docs/scoped-egress-repair.md
         - repo: blackmatrix7/ios_rule_script
           note: OpenAI / Claude / Gemini / Copilot 候选来源，保留快照供审核，不再整包 INCLUDE
         - repo: SkywalkerJi/Clash-Rules

@@ -1,4 +1,4 @@
-# 出口修订与防误伤（2026-09-18 更新）
+# 出口修订与防误伤（2026-10-27 更新）
 
 2026-09-18 用户取消 WPS/金山文档香港出口要求，七份配置统一 DIRECT；其余地区例外继续按业务目的保留，并收敛无必要的代理和解析绕行。本说明优先于较早文档中 WPS 香港或自动择优、Store 自动择优、Surge 阿里设备代理和 AI 激进关键词的描述。
 
@@ -16,6 +16,8 @@
 WPS 已按用户最新要求直连；Store 美国仍是明确的业务例外，不能因为目标在国内或使用 `.cn` 域名就改直连。IP 出口本身不保证平台地区展示、账户地区或商店资格立即改变；对应业务状态要另行验收。
 
 ## 规则与 DNS
+
+2026-10-27 按用户要求将 GPTZero 加入美国入口。核对[官网](https://gptzero.me/)、[技术页](https://gptzero.me/technology)与[应用页](https://app.gptzero.me/)的链接及前端资源，确认 `gptzero.me`、`app.gptzero.me`、`api.gptzero.me`、`support.gptzero.me`；使用 `DOMAIN-SUFFIX,gptzero.me` 覆盖产品主域与子域。它与其他 AI 入口共用美国策略及 AI 专用 DNS，不把登录、支付、统计等共享平台根域一并加入。首轮默认自动请求受访问限制，显式浏览器 User-Agent 后官网与应用返回 HTTP 200；API 根路径返回 404，不据此判断检测 API 的业务可用性。静态匹配与设备实际 DNS、出口、登录和检测业务分开报告。
 
 AI 旧规则的 `xai` 会匹配 `gxairlines.com`、`auxair.com`，`poe`、`suno` 等也会匹配无关域名；上游 OpenAI/Gemini/Copilot 还会重新带入关键词、共享云与 IP/ASN。现在保持上游原始快照供审核，但不直接整包 INCLUDE；`ai_us` 仅用 DOMAIN/DOMAIN-SUFFIX，按平台保留真实服务及已确认的租户入口。`www.bing.com` 是 Copilot 与普通搜索共用的明确主机例外，仍使用美国；不扩大整个 Bing。
 
