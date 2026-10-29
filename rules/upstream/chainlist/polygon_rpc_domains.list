@@ -6,7 +6,7 @@
 # 规则展开: 每个主机名同时生成 DOMAIN 与 DOMAIN-WILDCARD，由统一 Crypto 台湾入口承接。
 # 本次抓取主机数: 32
 # 累计主机数: 47
-# 同步时间: 2026-10-28T07:11:31+00:00
+# 同步时间: 2026-10-29T07:33:03+00:00
 
 DOMAIN,137.rpc.thirdweb.com
 DOMAIN-WILDCARD,*.137.rpc.thirdweb.com
