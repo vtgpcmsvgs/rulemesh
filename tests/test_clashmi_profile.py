@@ -5,7 +5,7 @@ import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
-from derive_clashmi_profile import derive
+from derive_clashmi_profile import derive, WECOM_START, WECOM_END, WECOM_RULES, WECOM_DOMAINS
 
 SOURCE = """# 桌面配置
 find-process-mode: strict
@@ -38,6 +38,33 @@ rules:
 
 
 class ClashMiProfileTests(unittest.TestCase):
+    def test_existing_wecom_domains_survive_windows_process_removal(self):
+        block = WECOM_START + "\n" + "\n".join(WECOM_DOMAINS + WECOM_RULES) + "\n" + WECOM_END + "\n"
+        source = SOURCE.replace("rules:\n", "rules:\n" + block + "  - RULE-SET,direct_cn_social,DIRECT\n")
+        result = derive(source)
+        for rule in WECOM_DOMAINS:
+            self.assertIn(rule, result)
+        self.assertNotIn("PROCESS-NAME", result)
+        with self.assertRaises(ValueError):
+            derive(source.replace(WECOM_DOMAINS[0], "  - DOMAIN-SUFFIX,unknown.invalid,DIRECT"))
+
+    def test_windows_wecom_block_is_not_exported_to_ios(self):
+        block = WECOM_START + "\n" + "\n".join(WECOM_RULES) + "\n" + WECOM_END + "\n"
+        source = SOURCE.replace("rules:\n", "rules:\n" + block + "  - RULE-SET,direct_cn_social,DIRECT\n")
+        result = derive(source)
+        self.assertNotIn("PROCESS-NAME", result)
+        self.assertNotIn("RULEMESH_DESKTOP_WECOM", result)
+        self.assertIn("  - RULE-SET,direct_cn_social,DIRECT", result)
+        for invalid in (
+            source.replace("WXWork.exe,DIRECT", "WXWork.exe,自动"),
+            source.replace(WECOM_END + "\n", ""),
+            source.replace(WECOM_RULES[0], WECOM_RULES[0] + "\n" + WECOM_RULES[0]),
+            source.replace("  - RULE-SET,direct_cn_social,DIRECT\n", ""),
+            source.replace("  - MATCH,DIRECT", "  - PROCESS-NAME,unknown.exe,DIRECT\n  - MATCH,DIRECT"),
+        ):
+            with self.subTest(source=invalid), self.assertRaises(ValueError):
+                derive(invalid)
+
     def test_subscription_update_interval_is_not_health_interval(self):
         result = derive(SOURCE.replace("    interval: 86400", "    interval: 300"))
         self.assertEqual(result.count("interval: 300"), 2)

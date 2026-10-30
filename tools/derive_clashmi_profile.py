@@ -24,6 +24,38 @@ HEADER = """# Clash Mi iOS 专用配置；由桌面配置派生，请勿单独�
 # 维护与实机验收：公开仓库 docs/clashmi-ios.md。
 """
 
+WECOM_START = "  # >>> RULEMESH_DESKTOP_WECOM_DIRECT_START"
+WECOM_END = "  # <<< RULEMESH_DESKTOP_WECOM_DIRECT_END"
+WECOM_DOMAINS = tuple(
+    f"  - DOMAIN-SUFFIX,{name},DIRECT"
+    for name in ("work.weixin.qq.com", "weixin.qq.com", "qpic.cn", "gtimg.cn", "qlogo.cn", "wecom.work", "wecom.com.cn")
+)
+WECOM_RULES = tuple(
+    f"  - PROCESS-NAME,{name},DIRECT"
+    for name in ("WXWork.exe", "WXWorkWeb.exe", "WXWorkXNet.exe", "wecom.exe")
+)
+
+
+def strip_desktop_wecom_rules(rules: str) -> str:
+    """仅剥离已审核的 Windows 进程块；目的地域名仍由 cn_social_direct 承接。"""
+    lines = rules.splitlines(keepends=True)
+    starts = [i for i, line in enumerate(lines) if line.rstrip("\n") == WECOM_START]
+    ends = [i for i, line in enumerate(lines) if line.rstrip("\n") == WECOM_END]
+    if not starts and not ends:
+        return rules
+    if len(starts) != 1 or len(ends) != 1 or starts[0] >= ends[0]:
+        raise ValueError("桌面企业微信进程块标记必须唯一且完整。")
+    start, end = starts[0], ends[0]
+    block = [line.rstrip("\n") for line in lines[start + 1:end]
+             if line.strip() and not line.lstrip().startswith("#")]
+    if tuple(block) not in (WECOM_RULES, WECOM_DOMAINS + WECOM_RULES):
+        raise ValueError("桌面企业微信进程块含未经审核的规则。")
+    if "  - RULE-SET,direct_cn_social,DIRECT" not in rules.splitlines():
+        raise ValueError("企业微信目的地直连替代入口缺失。")
+    # Existing desktop domain additions remain meaningful on iOS; remove only Windows processes.
+    destinations = [line + "\n" for line in block if line in WECOM_DOMAINS]
+    return "".join(lines[:start] + destinations + lines[end + 1:])
+
 
 def derive(source: str, repo_root: Path = ROOT) -> str:
     """保留业务数据及规则顺序，仅变更明确列出的客户端字段。"""
@@ -43,6 +75,7 @@ def derive(source: str, repo_root: Path = ROOT) -> str:
         sections[match[1]] = source[match.start():end]
     if not re.fullmatch(r"find-process-mode: strict\s*", sections["find-process-mode"]):
         raise ValueError("桌面进程设置已变化，需要重新审核 iOS 派生。")
+    sections["rules"] = strip_desktop_wecom_rules(sections["rules"])
     if re.search(r"(?m)^\s*-\s*.*PROCESS-(?:NAME|PATH)", sections["rules"]):
         raise ValueError("桌面新增进程规则，需要先审核 iOS 的目的地替代规则。")
     sections["find-process-mode"] = "find-process-mode: off\n"
