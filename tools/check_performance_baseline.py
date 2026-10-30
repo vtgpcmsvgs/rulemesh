@@ -177,8 +177,8 @@ def check(path: Path, lines: list[str]) -> list[str]:
     )
     active = [line for line in lines if line.strip() and not line.lstrip().startswith(("#", ";", "//"))]
     # 链式拨号也可能挂在 url-test 组上，仅检查 RULE-SET 会漏检。
-    require(us_chain or not any(re.search(r"(?:^\s*dialer-proxy\s*:|(?:^|,)\s*underlying-proxy\s*=)", line) for line in active), "链式代理仅允许已登记的安卓美国五出口例外。")
-    require(us_chain or not any(re.search(r"(?:=\s*socks5\s*,|^\s*type:\s*['\"]?socks5['\"]?\s*$)", line, re.I) for line in active), "链式 SOCKS5 仅允许已登记的安卓美国五出口例外。")
+    require(us_chain or not any(re.search(r"(?:^\s*dialer-proxy\s*:|(?:^|,)\s*underlying-proxy\s*=)", line) for line in active), "链式代理仅允许已登记的安卓链式出口例外。")
+    require(us_chain or not any(re.search(r"(?:=\s*socks5\s*,|^\s*type:\s*['\"]?socks5['\"]?\s*$)", line, re.I) for line in active), "链式 SOCKS5 仅允许已登记的安卓链式出口例外。")
     require(not any("ips5" in line.lower() for line in active), "ips5 专项已删除，不得恢复调用、注册或 DNS 依赖。")
     require(not any(any(token in line for token in ("onepassword_proxy", "proxy_onepassword", "polygon_rpc_proxy", "bsc_rpc_proxy", "proxy_polygon_rpc", "proxy_bsc_rpc")) for line in active), "1Password/RPC 应并入通用入口，不得恢复专用 provider。")
     require(not any("alibaba_hk" in line or "hk_alibaba" in line for line in active), "阿里系强制代理已删除，不得保留调用、注册或解析依赖。")

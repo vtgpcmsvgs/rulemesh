@@ -11,13 +11,13 @@ import shlex
 import subprocess
 import sys
 import time
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit
 import uuid
 
 # Windows embeddable Python 的 ._pth 隔离模式不自动添加脚本目录。
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_android_vpn_runtime import GOOGLE_SEARCH_COMMAND, audit_connectivity, audit_google_search, package_uid
-from check_android_us_chain import EXITS, FRONT, FRONT_GROUPS, REGION
+from check_android_us_chain import EXITS, FRONT, FRONT_GROUPS, HK_EXITS, HK_REGION, REGION, US_EXITS
 
 
 class AdbTransport:
@@ -132,7 +132,7 @@ def public_address(value):
 def front_runtime(proxies):
     """界面可见的地区前置须在运行内核中存在；不输出真实机场节点名。"""
     front = proxies.get(FRONT, {})
-    forbidden = {FRONT, REGION, *EXITS, 'DIRECT', 'AI', 'Google', 'Microsoft'}
+    forbidden = {FRONT, REGION, HK_REGION, *EXITS, 'DIRECT', 'AI', 'Google', 'Microsoft'}
     return {
         'front_region_selector': front.get('type') == 'Selector',
         'front_six_regions_exact': front.get('all') == list(FRONT_GROUPS),
@@ -152,7 +152,7 @@ def quarantine_runtime(providers, quarantine):
             for name, blocked in quarantine.items()))
 
 
-def trace_evidence(raw, previous, name):
+def trace_evidence(raw, previous, name, hostname="chatgpt.com", required_groups=("AI",)):
     """快连接结束后会消失；仅使用请求进行中的新返回字节作为链路证据。"""
     observed = False
     for encoded in re.findall(r'(?m)^RM_CONN ([A-Za-z0-9+/=]+)$', raw):
@@ -160,8 +160,9 @@ def trace_evidence(raw, previous, name):
             snapshot = json.loads(base64.b64decode(encoded, validate=True))
         except (ValueError, TypeError):
             continue
-        observed |= any(c.get('metadata', {}).get('host') == 'chatgpt.com'
-                        and 'AI' in c.get('chains', []) and name in c.get('chains', [])
+        observed |= any(c.get('metadata', {}).get('host') == hostname
+                        and set(required_groups).issubset(c.get('chains', []))
+                        and 'DIRECT' not in c.get('chains', []) and name in c.get('chains', [])
                         and c.get('download', 0) > previous.get(c.get('id'), 0)
                         for c in snapshot.get('connections', []))
     codes = re.findall(r'(?m)^RM_TRACE_CODE=(\d+)\s*$', raw)
@@ -170,7 +171,7 @@ def trace_evidence(raw, previous, name):
     return int(codes[0]), observed
 
 
-def trace_probe(device, controller, previous, name):
+def trace_probe(device, controller, previous, name, url="https://chatgpt.com/cdn-cgi/trace", required_groups=("AI",)):
     # 在手机内并行观察、在单个 USB shell 会话内顺序交付；不落盘原始连接或出口 IP。
     query = ('curl --noproxy "*" --silent --max-time 2 -H ' +
              shlex.quote('Authorization: Bearer ' + controller['secret']) + ' ' +
@@ -178,18 +179,70 @@ def trace_probe(device, controller, previous, name):
     command = ('( for n in ' + ' '.join(str(n) for n in range(20)) + '; do printf "RM_CONN "; ' + query +
                ' | base64 | tr -d "\\n"; printf "\\n"; sleep 0.3; done ) & monitor=$!; '
                'trace=$(curl --noproxy "*" --fail --silent --show-error --connect-timeout 10 --max-time 20 '
-               '--limit-rate 64 https://chatgpt.com/cdn-cgi/trace); trace_code=$?; wait "$monitor"; '
+               '--limit-rate 64 ' + shlex.quote(url) + '); trace_code=$?; wait "$monitor"; '
                'printf "RM_TRACE_CODE=%s\\n" "$trace_code"; printf "%s\\n" "$trace"')
     raw, shell_code = shell_result(device, command)
     if shell_code:
         raise RuntimeError('Trace collection failed')
-    code, observed = trace_evidence(raw, previous, name)
+    code, observed = trace_evidence(raw, previous, name, urlsplit(url).hostname, required_groups)
     return raw, code, observed
+
+
+TRACE_TARGETS = {
+    'US': ('https://chatgpt.com/cdn-cgi/trace', 'https://claude.ai/cdn-cgi/trace',
+           'https://www.perplexity.ai/cdn-cgi/trace', 'https://www.cursor.com/cdn-cgi/trace'),
+    'HK': ('https://www.notion.so/cdn-cgi/trace', 'https://www.notion.com/cdn-cgi/trace'),
+}
+
+
+def exit_evidence(raw, code, observed, name, expected):
+    """信任用户登记的 IP 集合，不把登记本身当作实际观测；端口到美国 IP 的顺序未获确认。"""
+    region = 'US' if name in US_EXITS else 'HK'
+    fields = dict(re.findall(r'(?m)^([a-z_]+)=(.*)$', raw))
+    address = public_address(fields.get('ip'))
+    names = US_EXITS if region == 'US' else HK_EXITS
+    allowed = {expected['exit_identities'][n] for n in names}
+    identity_matches = address is not None and address in allowed and fields.get('loc') == region
+    return {'exit': EXITS.index(name) + 1, 'region': region, '_ip': address,
+            'observed_region': fields.get('loc'), 'business_chain_observed': observed,
+            'identity_matches': identity_matches, 'request_exit': code,
+            'passed': code == 0 and identity_matches and observed}
+
+
+def selection_snapshot(proxies):
+    # LoadBalance 无 now/fixed，也不实现 SelectAble。只读观测，不 PUT/DELETE 负载均衡组。
+    return {name: {key: proxies.get(name, {}).get(key) for key in ('type', 'all', 'now', 'fixed')}
+            for name in (REGION, HK_REGION, FRONT, 'AI', 'Google')}
+
+
+def regional_probes(device, controller, get, expected):
+    rows = {name: {'exit': EXITS.index(name) + 1, 'region': 'US' if name in US_EXITS else 'HK',
+                   'passed': False, 'state': 'not_observed'} for name in EXITS}
+    # 采用实际 AI / Notion 业务路径观测自然哈希分配；不能为验收修改路由或伪造选中状态。
+    for region, targets in TRACE_TARGETS.items():
+        names = US_EXITS if region == 'US' else HK_EXITS
+        required = ('AI', REGION) if region == 'US' else (HK_REGION,)
+        for url in targets:
+            if all(rows[name]['passed'] for name in names):
+                break
+            previous = {c.get('id'): c.get('download', 0) for c in get('/connections').get('connections', [])}
+            try:
+                raw, code, _ = trace_probe(device, controller, previous, names[0], url, required)
+                for name in names:
+                    _, observed = trace_evidence(raw, previous, name, urlsplit(url).hostname, required)
+                    candidate = exit_evidence(raw, code, observed, name, expected)
+                    if not rows[name]['passed'] and (observed or not rows[name].get('business_chain_observed')):
+                        rows[name] = candidate
+            except Exception as error:
+                for name in names:
+                    if not rows[name]['passed']:
+                        rows[name]['error_type'] = type(error).__name__
+    return list(rows.values())
 
 
 def collect(settings, expected):
     device = open_device(settings)
-    result = {'state': 'unknown', 'passed': False, 'us_exits': []}
+    result = {'state': 'unknown', 'passed': False, 'regional_exits': []}
     controller = settings['controller']
     if type(controller.get('port')) is not int or not 1024 <= controller['port'] <= 65535 or not isinstance(controller.get('secret'), str) or any(c in controller['secret'] for c in '\r\n'):
         device.close()
@@ -208,9 +261,12 @@ def collect(settings, expected):
             'mode_rule': config.get('mode') == 'rule', 'process_always': config.get('find-process-mode') == 'always',
             'lan_disabled': config.get('allow-lan') is False,
             'google_hk': proxies.get('Google', {}).get('now') == hk,
-            'hk_manual_no_fallback': proxies.get(hk, {}).get('type') == 'Selector',
+            'hk_single_exit_no_fallback': proxies.get(hk, {}).get('type') == 'LoadBalance',
             **front_runtime(proxies),
-            'five_us_candidates': proxies.get(REGION, {}).get('all') == list(EXITS),
+            'us_load_balance_candidates': proxies.get(REGION, {}).get('all') == list(US_EXITS)
+                and proxies.get(REGION, {}).get('type') == 'LoadBalance',
+            'hk_fixed_candidate': proxies.get(HK_REGION, {}).get('type') == 'LoadBalance'
+                and proxies.get(HK_REGION, {}).get('all') == list(HK_EXITS),
             'ai_uses_us_chain': proxies.get('AI', {}).get('now') == REGION,
             'google_rule': sum(r.get('type') == 'RuleSet' and r.get('payload') == 'hk_google' and r.get('proxy') == 'Google' for r in rules) == 1,
             'ai_rule': sum(r.get('type') == 'RuleSet' and r.get('payload') == 'us_ai' and r.get('proxy') == 'AI' for r in rules) == 1,
@@ -245,39 +301,13 @@ def collect(settings, expected):
         after = get('/connections').get('connections', [])
         result['dns'] = {'queries_succeeded': all(statuses), 'google_hk_doh_observed': dns_evidence(before, after, 'Google', hk),
                          'ai_us_doh_observed': dns_evidence(before, after, 'AI', REGION)}
-        saved = proxies[REGION].get('fixed', '')
-        result['stage'] = 'us_exits'
-        try:
-            for index, name in enumerate(EXITS, 1):
-                row = {'exit': index, 'passed': False}
-                try:
-                    health = get('/proxies/' + quote(name, safe='') + '/delay?timeout=12000&url=' + quote('https://www.google.com/generate_204', safe=''))
-                    row['delay'] = health.get('delay')
-                    change(device, controller, 'PUT', REGION, {'name': name})
-                    assert get('/proxies')['proxies'][REGION]['now'] == name
-                    # 通过真实 AI 域名读取出口，禁止用默认 DIRECT 的查 IP 网站冒充美国业务出口。
-                    previous = {c.get('id'): c.get('download', 0) for c in get('/connections').get('connections', [])}
-                    for attempt in range(2):
-                        raw, code, observed = trace_probe(device, controller, previous, name)
-                        if code == 0:
-                            break
-                    row['curl_exit'] = code
-                    row['attempts'] = attempt + 1
-                    fields = dict(re.findall(r'(?m)^([a-z_]+)=(.*)$', raw))
-                    row['_ip'] = public_address(fields.get('ip'))  # 仅通过父子进程捕获管道交付，不写报告。
-                    row['trace_us'] = fields.get('loc') == 'US'
-                    row['ai_chain_observed'] = observed
-                    row['selection_still_matches'] = get('/proxies')['proxies'][REGION]['now'] == name
-                    row['passed'] = code == 0 and bool(row['_ip']) and row['trace_us'] and row['ai_chain_observed'] and row['selection_still_matches'] and type(row['delay']) is int and row['delay'] > 0
-                except Exception as error:
-                    row['error_type'] = type(error).__name__
-                result['us_exits'].append(row)
-        finally:
-            change(device, controller, 'PUT', REGION, {'name': saved}) if saved else change(device, controller, 'DELETE', REGION)
-            result['selection_restored'] = get('/proxies')['proxies'][REGION].get('fixed', '') == saved
+        result['stage'] = 'regional_exits'
+        saved = selection_snapshot(proxies)
+        result['regional_exits'] = regional_probes(device, controller, get, expected)
+        result['selection_restored'] = selection_snapshot(get('/proxies')['proxies']) == saved
         checks = [result['vpn']['passed'], all(result['runtime'].values()), all(r['state'] == 'passed' for r in result['providers']),
                   all(r['passed'] for r in result['google']), result['chrome']['passed'], result['chrome']['cache_restored'], all(result['dns'].values()),
-                  len(result['us_exits']) == 5 and all(r['passed'] for r in result['us_exits']), result['selection_restored']]
+                  len(result['regional_exits']) == len(EXITS) and all(r['passed'] for r in result['regional_exits']), result['selection_restored']]
         result['passed'] = all(checks)
         result['state'] = 'passed' if result['passed'] else 'failed_or_unconfirmed'
         result['stage'] = 'complete'
@@ -297,7 +327,7 @@ def main():
         payload = json.load(sys.stdin)
         result = collect(payload['settings'], payload['expected'])
     except Exception as error:
-        result = {'passed': False, 'state': 'unknown', 'error_type': type(error).__name__, 'us_exits': []}
+        result = {'passed': False, 'state': 'unknown', 'error_type': type(error).__name__, 'regional_exits': []}
     print(json.dumps(result))
     return 0
 

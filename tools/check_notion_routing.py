@@ -46,7 +46,12 @@ def check(path: Path, lines: list[str], auto: str) -> list[str]:
     if LEGACY_GROUP in groups:
         errors.append("不得保留 Notion 专用策略组。")
     hk = groups.get(HK_GROUP)
-    if hk is None or not re.search(r"香港|hong kong|(?:^|[^a-z])hk(?:$|[^a-z])", hk.filter_text, re.IGNORECASE):
+    import check_android_us_chain as chain
+    android_chain_hk = path.name == chain.PROFILE and chain.present(lines) and not chain.validate(lines)
+    if android_chain_hk:
+        if hk is None or hk.group_type != "load-balance" or hk.members != list(chain.HK_EXITS) or hk.has_external_source:
+            errors.append("Notion 目标组必须固定到登记的香港链式落地。")
+    elif hk is None or not re.search(r"香港|hong kong|(?:^|[^a-z])hk(?:$|[^a-z])", hk.filter_text, re.IGNORECASE):
         errors.append("Notion 目标组必须具有香港节点过滤条件。")
     if surge:
         if hk is None or hk.group_type not in {"smart", "url-test"}:
@@ -57,6 +62,6 @@ def check(path: Path, lines: list[str], auto: str) -> list[str]:
         errors.append("Notion provider 必须引用规范公开产物。")
     import check_android_stability as android
     manual_hk = path.name == android.PROFILE and any(s.startswith(android.GOOGLE_HK_QUARANTINE + ':') for s in lines)
-    if hk is None or hk.group_type != ('select' if manual_hk else 'url-test'):
+    if hk is None or hk.group_type != ('load-balance' if android_chain_hk else 'select' if manual_hk else 'url-test'):
         errors.append("Notion 的香港目标组类型必须符合当前客户端的手动/自动约定。")
     return errors

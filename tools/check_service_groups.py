@@ -48,7 +48,17 @@ def default_chain(name, groups):
 
 def default_target(name, groups):
     chain = default_chain(name, groups)
-    return chain[-1] if chain else ""
+    target = chain[-1] if chain else ""
+    # 私人安卓链式地区组的香港终点是固定 SOCKS5 节点；业务默认值仍按地区组语义报告。
+    try:
+        import check_android_us_chain as android_chain
+        if target in android_chain.US_EXITS and getattr(groups.get(target), 'approved_us_chain_exit', False):
+            return android_chain.REGION
+        if target in android_chain.HK_EXITS and getattr(groups.get(target), 'approved_hk_chain_exit', False):
+            return android_chain.HK_REGION
+    except (ImportError, AttributeError):
+        pass
+    return target
 
 
 def identifier(parts, surge):
@@ -68,7 +78,7 @@ def check(path: Path, lines, groups, rules, auto):
     import check_android_us_chain as chain
     import check_android_stability as android
     surge = path.suffix == ".conf"
-    us_chain = not surge and path.name == chain.PROFILE and chain.present(lines)
+    us_chain = not surge and path.name == chain.PROFILE and chain.present(lines) and not chain.validate(lines)
     work = path.name == parser.SURGE_WORK
     errors = []
 
@@ -130,8 +140,9 @@ def check(path: Path, lines, groups, rules, auto):
             children = [child for child in group.members if child != "DIRECT"]
             require(group.members.count("DIRECT") == (1 if name == "Microsoft" else 0), f"{name} 的 DIRECT 候选数量不符合约定。")
             require(bool(children) and all(parser._group_has_us_semantics(child, groups, approved) for child in children), f"{name} 代理候选必须满足地区约束。")
-            if us_chain and FIXED[name] == 'us':
-                require(children == [chain.REGION], f"{name} 必须仅引用美国五出口组，禁止回退到机场落地。")
+            if us_chain and FIXED[name] in ('us', 'hk'):
+                target = chain.REGION if FIXED[name] == 'us' else chain.HK_REGION
+                require(children == [target], f"{name} 必须仅引用登记的地区链式落地组，禁止回退到机场落地。")
                 continue
             sources = []
             for child in children:
@@ -160,10 +171,18 @@ def check(path: Path, lines, groups, rules, auto):
     for name, region in REGIONS.items():
         group = groups.get(name)
         manual_hk = path.name == android.PROFILE and region == 'hk' and any(s.startswith(android.GOOGLE_HK_QUARANTINE + ':') for s in lines)
-        require(group is not None and group.group_type == ('select' if manual_hk else 'url-test'), "地区组类型不符合客户端的手动香港/自动测速约束。")
+        expected_region_type = ('load-balance' if us_chain and region in ('us', 'hk')
+                                else 'select' if (manual_hk or us_chain and region == 'hk')
+                                else 'url-test')
+        require(group is not None and group.group_type == expected_region_type, "地区组类型不符合客户端的手动香港/美国链式约束。")
         if group:
             if us_chain and region == 'us':
-                require(group.members == list(chain.EXITS) and not group.has_external_source, "安卓美国地区组必须仅使用五个链式落地出口。")
+                require(group.group_type == 'load-balance' and group.members == list(chain.US_EXITS) and not group.has_external_source,
+                        "安卓美国地区组必须仅使用两个 Comcast 链式落地出口。")
+                continue
+            if us_chain and region == 'hk':
+                require(group.group_type == 'load-balance' and group.members == list(chain.HK_EXITS) and not group.has_external_source,
+                        "安卓香港地区组必须仅使用一个 Lumen 链式落地出口。")
                 continue
             require(group.has_external_source and not group.has_invalid_external_source and group.filter_text in baseline.region_filters(region, surge), "地区自动组必须保留正确地区过滤器和订阅来源。")
             require(all(member in groups or member == "DIRECT" for member in group.members), "地区自动组存在未知嵌套策略组。")

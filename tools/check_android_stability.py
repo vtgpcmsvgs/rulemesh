@@ -167,20 +167,29 @@ def check(path: Path, lines: list[str]) -> list[str]:
     _, health_groups, _ = performance.parse_mihomo(lines)
     stable = groups.get(target)
     if business:
-        errors.extend(check_google_hk_quarantine(lines, target))
+        # 链式安卓配置的香港地区组已固定到用户指定 Lumen 落地；机场故障
+        # 隔离仍由链式登记校验，最终组不再承载 provider 的 exclude-filter。
+        import check_android_us_chain as chain
+        valid_chain = chain.present(lines) and not chain.validate(lines)
+        if not (valid_chain and target == chain.HK_REGION):
+            errors.extend(check_google_hk_quarantine(lines, target))
         profile_blocks = re.findall(r"(?m)^profile:\s*\n((?:[ \t]+[^\n]*\n|\n)*)", "\n".join(lines) + "\n")
         require(len(profile_blocks) == 1 and re.findall(r"(?m)^  store-selected:\s*(\S+)\s*$", profile_blocks[0]) == ["true"],
                 "安卓必须保留 profile.store-selected: true；导入后另核对实际 Google 选择。")
         google = groups.get("Google")
         require(google is not None and google.group_type == "select" and set(google.members) == set(service.REGIONS), "安卓 Google 必须手动选择六地区自动组。")
-        require(service.REGIONS.get(target) == "hk" and stable is not None and stable.group_type == 'select', "安卓 Google 默认必须使用香港手动组；禁止测速状态触发未验收节点回退。")
+        require(service.REGIONS.get(target) == "hk" and stable is not None and stable.group_type == ('load-balance' if valid_chain else 'select'), "安卓 Google 默认必须固定香港出口；禁止测速状态触发未验收节点回退。")
         for name in ("Google", *service.REGIONS):
             candidate = groups.get(name)
             if candidate is None:
                 continue
             if name != "Google":
-                if chain.present(lines) and name == chain.REGION:
-                    require(candidate.members == list(chain.EXITS) and not candidate.has_external_source, "安卓美国候选必须接入五出口链路。")
+                if valid_chain and name == chain.REGION:
+                    require(candidate.group_type == 'load-balance' and candidate.members == list(chain.US_EXITS) and not candidate.has_external_source,
+                            "安卓美国候选必须接入两个 Comcast 链式落地出口。")
+                elif valid_chain and name == chain.HK_REGION:
+                    require(candidate.group_type == 'load-balance' and candidate.members == list(chain.HK_EXITS) and not candidate.has_external_source,
+                            "安卓香港候选必须接入一个 Lumen 链式落地出口。")
                 else:
                     require(candidate.filter_text in baseline.region_filters(service.REGIONS[name], False) and not candidate.members and candidate.has_external_source and not candidate.has_invalid_external_source and set(candidate.source_references) == set(parser._parse_mihomo_proxy_provider_names(lines)), "安卓 Google 地区过滤器与机场来源必须完整。")
             end = next((i for i in range(candidate.line, len(lines)) if lines[i].startswith("  - name:") or re.match(r"^[\w-]+:", lines[i])), len(lines))

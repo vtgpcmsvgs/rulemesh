@@ -1,4 +1,4 @@
-"""任务收尾入口：完整仓库检查、订阅闸门、安卓业务/DNS 与五个美国出口。"""
+"""任务收尾入口：完整仓库检查、订阅闸门、安卓业务/DNS 与区域链式出口。"""
 from __future__ import annotations
 
 import argparse
@@ -25,11 +25,16 @@ def fingerprint(directory):
 def overall(report):
     """缺项、未知、恢复失败都不能通过；禁止复用旧设备证据替代本次采集。"""
     device = report.get('android', {})
-    exits = device.get('us_exits', [])
+    exits = device.get('regional_exits', [])
+    us_exits = [row for row in exits if row.get('region') == 'US']
+    hk_exits = [row for row in exits if row.get('region') == 'HK']
     return (report.get('baseline', {}).get('passed') is True and report.get('source_unchanged') is True
             and device.get('passed') is True and device.get('selection_restored') is True
-            and device.get('distinct_us_exit_count') == 5
-            and len(exits) == 5 and {r.get('exit') for r in exits} == set(range(1, 6))
+            and device.get('distinct_us_exit_count') == len(chain.US_EXITS)
+            and device.get('distinct_hk_exit_count') == len(chain.HK_EXITS)
+            and len(exits) == len(chain.EXITS) and {r.get('exit') for r in exits} == set(range(1, len(chain.EXITS) + 1))
+            and len(us_exits) == len(chain.US_EXITS) and len(hk_exits) == len(chain.HK_EXITS)
+            and {r.get('region') for r in exits} == {'US', 'HK'}
             and report.get('exit_identity_policy') == 'user-provided-trusted'
             and all(r.get('passed') is True for r in exits))
 
@@ -66,12 +71,16 @@ def run(settings, directory, *, baseline_runner=subprocess.run, worker_runner=su
         if not report['baseline']['passed']:
             return report
         if chain.validate((directory / chain.PROFILE).read_text('utf-8').splitlines()):
-            raise ValueError('Approved Android five-exit chain required')
-        print('[acceptance] collect fresh Android VPN, Google, DNS and five US exits; restore selection afterward', flush=True)
+            raise ValueError('Approved Android regional chain required')
+        print('[acceptance] collect fresh Android VPN, Google, DNS and two US plus one HK exit; observe without switching groups', flush=True)
         expected = {'google_hk': document['proxy-groups'][0].get('name'),
                     'providers': {name: body['health-check']['interval'] for name, body in document['proxy-providers'].items()}}
         google = next(g for g in document['proxy-groups'] if g['name'] == 'Google')
         expected['google_hk'] = google['proxies'][0]
+        expected['exit_identities'] = {
+            item['name']: item['ip']
+            for item in document[chain.KEY]['exit-identities']
+        }
         expected['quarantine'] = {}
         for entry in document[chain.QUARANTINE]['nodes']:
             expected['quarantine'].setdefault(entry['provider'], []).append(entry['name'])
@@ -82,16 +91,21 @@ def run(settings, directory, *, baseline_runner=subprocess.run, worker_runner=su
             raise RuntimeError('Device collector failed')
         device = json.loads(worker.stdout)
         report['android'] = device
-        # 用户明确要求信任指定五出口；不发送出口 IP 到风险数据库。
-        addresses = {row.pop('_ip', None) for row in device.get('us_exits', [])}
-        report['android']['distinct_us_exit_count'] = len(addresses - {None})
-        report['android']['passed'] &= len(addresses - {None}) == 5
+        # 用户明确要求信任指定出口；不发送出口 IP 到风险数据库。
+        regional = device.get('regional_exits', [])
+        us_addresses = {row.pop('_ip', None) for row in regional if row.get('region') == 'US'}
+        hk_addresses = {row.pop('_ip', None) for row in regional if row.get('region') == 'HK'}
+        report['android']['distinct_us_exit_count'] = len(us_addresses - {None})
+        report['android']['distinct_hk_exit_count'] = len(hk_addresses - {None})
+        # 缺少实际 IP 就是未验收；静态登记、Google 200 和健康延迟不能补足证据。
+        report['android']['passed'] &= (len(us_addresses - {None}) == len(chain.US_EXITS)
+                                         and len(hk_addresses - {None}) == len(chain.HK_EXITS))
         report['source_unchanged'] = fingerprint(directory) == source
     except Exception as error:
         report['error_type'] = type(error).__name__
     finally:
         # 出口 IP 只允许留在内存，连错误路径也不能写入最终报告。
-        for row in report.get('android', {}).get('us_exits', []):
+        for row in report.get('android', {}).get('regional_exits', []):
             row.pop('_ip', None)
         report['duration_seconds'] = round(time.monotonic() - began, 1)
         report['finished_at'] = datetime.now(timezone.utc).isoformat()

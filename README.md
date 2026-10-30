@@ -1,6 +1,6 @@
 # RuleMesh
 
-私人安卓美国最终组现显式显示五个落地，AI 仍引用“美国-自动选择”；独立 `RM-US-Front` 选择六个前置专用地区自动组，组内自动选机场，不增加网络跳数；与 Google 香港固定线路及美国最终落地分开。显示与链路检查见 [任务收尾验收](docs/task-acceptance.md)。
+私人安卓美国最终组现显式显示两个 Comcast 美国落地并使用一致性哈希负载均衡；香港最终组固定一个 Lumen 落地。AI 仍引用“美国-自动选择”，独立 `RM-US-Front` 选择六个前置专用地区自动组，组内自动选机场，不增加网络跳数；与 Google 香港固定线路及美国最终落地分开。香港券商也复用该香港出口。设计与范围见 [三出口迁移](docs/regional-exits-20261030.md)，显示与链路检查见 [任务收尾验收](docs/task-acceptance.md)。
 
 Clash Mi iOS 使用独立私有配置 `rulemesh-clashmi-ios.yaml`，由桌面业务配置派生；iOS TUN、DNS 覆写、600 秒测速与 ASN 兼容说明见 [Clash Mi iOS 接入](docs/clashmi-ios.md)。桌面或订阅更新后重新运行派生器，完整检查包含 iOS 一致性校验。
 
@@ -80,7 +80,7 @@ powershell -ExecutionPolicy Bypass -File tools/check.ps1
 
 这个脚本会串行执行构建、变更联动闸门、单元测试、私人机场订阅在线必检、`dist/` 目录结构校验、`dist/build-report.json` warning 校验，并在最后输出 `git status --short`。订阅检查先核对两份 Mihomo 的当前清单，再按相同 User-Agent 直连下载；HTTP 失败、解析失败、空节点列表、已过期或流量耗尽都会阻断完整检查。缺少私人配置、正式 YAML 依赖或 PowerShell 7 也会失败，不将未检查视为通过。到期或配额未提供会明确标记，下载通过不代表节点存活或设备 DNS 出口已验收。详见[订阅检查约定](docs/private-subscription-direct-sync.md)。
 
-每次任务收尾使用 `tools/check_task_acceptance.py --settings <公开仓库外本机JSON>`：包含上述完整检查，再验安卓实际 Google 香港、移动搜索跳转、DNS 与五个美国链式出口。信任用户给定五 IP，不检测纯净度；设备缺失和恢复失败均不能当通过。完整配置变更另做 Chrome/重启/备份一致性验收。2026-10-24 用户重新授权的美国五出口链路仅适用于私人安卓，普通 Google 默认香港、其他客户端不变。用法及判定标准见 [任务收尾验收](docs/task-acceptance.md)。
+每次任务收尾使用 `tools/check_task_acceptance.py --settings <公开仓库外本机JSON>`：包含上述完整检查，再验安卓实际 Google 香港、移动搜索跳转、DNS、两个美国链式出口和一个香港链式出口。信任用户登记的三个 IP，不检测纯净度；设备缺失和恢复失败均不能当通过。完整配置变更另做 Chrome/重启/备份一致性验收。当前链路仅适用于私人安卓，普通 Google 默认香港、其他客户端不变。用法及判定标准见 [任务收尾验收](docs/task-acceptance.md)。
 
 同日冷启动复测确认香港自动测速组会在初次健康失败后回退；私人安卓共享香港组最终使用可见 select 固定已验收线路，保留历史组名和全部香港来源，防止测速替换移动搜索验收结果。共享此香港组的其他安卓业务同时固定，其他客户端保持既定行为。
 其中 `tools/check_change_guardrails.py` 会先按“源规则 / 上游登记 / 公开说明模板 / 构建与检查脚本”等类别总结当前工作区变更；对于当前已明确的强关联项，会直接失败，例如：

@@ -7,13 +7,42 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 import check_task_acceptance as acceptance
-from collect_android_acceptance import dns_evidence, provider_health, shell_result, public_address, front_runtime, quarantine_runtime, trace_evidence
-from check_android_us_chain import FRONT, FRONT_GROUPS, REGION, EXITS
+from collect_android_acceptance import dns_evidence, provider_health, shell_result, public_address, front_runtime, quarantine_runtime, trace_evidence, exit_evidence, regional_probes, selection_snapshot
+from check_android_us_chain import FRONT, FRONT_GROUPS, REGION, HK_REGION, US_EXITS, HK_EXITS, EXITS
 from android_usb_transport import UsbAdb
 from android_chrome_probe import audit_page
 
 
 class TaskAcceptanceTests(unittest.TestCase):
+    def test_hk_identity_requires_observed_public_ip_region_and_chain(self):
+        expected = {'exit_identities': dict(zip(EXITS, ('8.8.8.8', '1.1.1.1', '9.9.9.9')))}
+        raw = 'ip=9.9.9.9\nloc=HK\n'
+        self.assertTrue(exit_evidence(raw, 0, True, HK_EXITS[0], expected)['passed'])
+        for content, code, chain_seen in (('', 0, True), (raw, 200, True), (raw, 0, False),
+                                          ('ip=9.9.9.9\nloc=US\n', 0, True),
+                                          ('ip=8.8.8.8\nloc=HK\n', 0, True)):
+            self.assertFalse(exit_evidence(content, code, chain_seen, HK_EXITS[0], expected)['passed'])
+
+    def test_natural_hash_observation_never_switches_load_balance(self):
+        import base64
+        from unittest.mock import patch
+        from urllib.parse import urlsplit
+        expected = {'exit_identities': dict(zip(EXITS, ('8.8.8.8', '1.1.1.1', '9.9.9.9')))}
+        seen = []
+        def probe(device, controller, previous, name, url, required):
+            leaf = EXITS[min(len(seen), 2)]; seen.append(leaf)
+            connection = {'id': str(len(seen)), 'metadata': {'host': urlsplit(url).hostname},
+                          'chains': [*required, leaf], 'download': 10}
+            encoded = base64.b64encode(json.dumps({'connections': [connection]}).encode()).decode()
+            raw = 'RM_CONN ' + encoded + '\nRM_TRACE_CODE=0\nip=' + expected['exit_identities'][leaf] + '\nloc=' + ('US' if leaf in US_EXITS else 'HK') + '\n'
+            return raw, 0, False
+        with patch('collect_android_acceptance.trace_probe', probe), patch('collect_android_acceptance.change', side_effect=AssertionError('No writes')):
+            rows = regional_probes(None, {}, lambda path: {'connections': []}, expected)
+        self.assertEqual(len(rows), 3)
+        self.assertTrue(all(row['passed'] for row in rows))
+        self.assertEqual(len({r['_ip'] for r in rows}), 3)
+        self.assertEqual(selection_snapshot({REGION: {'type': 'LoadBalance', 'all': list(US_EXITS)}})[REGION]['now'], None)
+
     def test_short_lived_connection_is_proved_during_transfer_without_accepting_old_bytes(self):
         import base64
         def sample(connections):
@@ -54,23 +83,25 @@ class TaskAcceptanceTests(unittest.TestCase):
         self.assertEqual(public_address('8.8.8.8'),'8.8.8.8')
     def report(self):
         return {'baseline': {'passed': True}, 'source_unchanged': True, 'exit_identity_policy': 'user-provided-trusted',
-                'android': {'passed': True, 'selection_restored': True, 'distinct_us_exit_count': 5,
-                            'us_exits': [{'exit': i, 'passed': True} for i in range(1, 6)]}}
+                'android': {'passed': True, 'selection_restored': True,
+                            'distinct_us_exit_count': len(US_EXITS), 'distinct_hk_exit_count': len(HK_EXITS),
+                            'regional_exits': [{'exit': i, 'region': 'US' if i <= len(US_EXITS) else 'HK', 'passed': True}
+                                               for i in range(1, len(EXITS) + 1)]}}
 
-    def test_every_required_gate_and_all_five_exits_must_pass(self):
+    def test_every_required_gate_and_all_regional_exits_must_pass(self):
         good = self.report()
         self.assertTrue(acceptance.overall(good))
         for key in ('baseline', 'android', 'source_unchanged'):
             bad = copy.deepcopy(good); bad.pop(key)
             self.assertFalse(acceptance.overall(bad))
-        for index in range(5):
-            bad = copy.deepcopy(good); bad['android']['us_exits'][index]['passed'] = False
+        for index in range(len(EXITS)):
+            bad = copy.deepcopy(good); bad['android']['regional_exits'][index]['passed'] = False
             self.assertFalse(acceptance.overall(bad))
-        bad = copy.deepcopy(good); bad['android']['us_exits'][4]['exit'] = 1
+        bad = copy.deepcopy(good); bad['android']['regional_exits'][-1]['exit'] = 1
         self.assertFalse(acceptance.overall(bad))
         good['android']['selection_restored'] = False
         self.assertFalse(acceptance.overall(good))
-        bad = self.report(); bad['android']['distinct_us_exit_count'] = 4
+        bad = self.report(); bad['android']['distinct_us_exit_count'] = 1
         self.assertFalse(acceptance.overall(bad))
 
     def test_stale_empty_or_future_provider_health_cannot_pass(self):
