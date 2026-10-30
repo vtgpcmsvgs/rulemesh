@@ -1,6 +1,7 @@
 # 业务策略组重构与 naiixi 配置分析
 
-2026-10-30 私人安卓链式出口更新：美国地区组只含两个 Comcast SOCKS5 落地并使用 `load-balance` 一致性哈希；香港地区组只含一个 Lumen 落地并使用可见的单节点 `load-balance`。`RM-US-Front` 仍是六地区机场前置选择器，AI/Microsoft 只能进入美国链式地区组，Google/YouTube/Telegram/Apple/Notion 继续复用香港固定组。
+2026-10-30 最终修订：全部六份私人配置统一单个美国 SOCKS5 落地；香港恢复普通机场线路，撤销此前两个 Comcast 与一个 Lumen 方案。美国 `RM-US-Front` 可见并选择六个独立机场前置地区组，不创建 `RM-HK-Front`。美国没有多节点负载均衡；Mihomo 保留单成员 load-balance 防止 TCP-only UDP 跳过规则，Surge 使用 underlying-proxy 与 UDP REJECT。登记升级为 `x-rulemesh-us-chain` 版本 4，真实端点和认证仅在私人仓库。 以 [美国单落地迁移](regional-exits-20261030.md) 为当前约定；下文较早的美国-provider 约定仅适用于公开模板或历史记录。
+
 
 下方 2026-10-24 的五出口记录仅作历史证据；当前结构以 [三出口迁移](regional-exits-20261030.md) 为准。
 

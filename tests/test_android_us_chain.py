@@ -12,8 +12,8 @@ import check_performance_baseline as baseline
 
 
 def document():
-    nodes = [{'name': name, 'type': 'socks5', 'server': 'fixture.invalid',
-              'port': chain.EXIT_PORTS[name], 'username': 'fixture-user', 'password': 'fixture-secret',
+    nodes = [{'name': name, 'type': 'socks5', 'server': '8.8.8.8',
+              'port': 1080, 'username': 'fixture-user', 'password': 'fixture-secret',
               'udp': False, 'dialer-proxy': chain.FRONT} for i, name in enumerate(chain.EXITS)]
     health = {'type': 'url-test', 'url': 'https://www.google.com/generate_204', 'interval': 600, 'lazy': False}
     blocked = ['fixture-bad[1]']
@@ -29,21 +29,17 @@ def document():
             chain.QUARANTINE: {'version': 1, 'nodes': [{'provider': 'fixture', 'name': blocked[0],
                 'reason': 'google_cn_redirect', 'evidence': {'http_status': 302, 'final_host_role': 'google_cn',
                     'tls_handshake_completed': True, 'certificate_verify_result': 0}}]},
-            chain.KEY: {'version': 3, 'front': chain.FRONT, 'front-regions': list(chain.FRONT_GROUPS),
-                        'regions': {'us': chain.REGION, 'hk': chain.HK_REGION},
-                        'us-exits': list(chain.US_EXITS), 'hk-exits': list(chain.HK_EXITS),
-                        'exits': list(chain.EXITS), 'exit-identities': [
-                            {'name': '美国-Comcast-01', 'region': 'US', 'city': 'Boston', 'asn': 7015, 'ip': '8.8.8.8', 'port': 10002},
-                            {'name': '美国-Comcast-02', 'region': 'US', 'city': 'Boston', 'asn': 7015, 'ip': '1.1.1.1', 'port': 10003},
-                            {'name': '香港-Lumen-01', 'region': 'HK', 'city': 'Hong Kong', 'asn': 10753, 'ip': '9.9.9.9', 'port': 10001},
+            chain.KEY: {'version': 4, 'front': chain.FRONT, 'front-regions': list(chain.FRONT_GROUPS),
+                        'region': chain.REGION, 'exits': list(chain.EXITS), 'exit-identities': [
+                            {'name': chain.EXITS[0], 'region': 'US', 'ip': '8.8.8.8', 'port': 1080},
                         ]},
             'proxy-groups': [
                 {'name': chain.FRONT, 'type': 'select', 'hidden': False, 'proxies': list(chain.FRONT_GROUPS)},
                 {'name': chain.REGION, 'type': 'load-balance', 'strategy': 'consistent-hashing', **{k: v for k, v in health.items() if k != 'type'}, 'hidden': False, 'proxies': list(chain.US_EXITS)},
-                {'name': chain.HK_REGION, **health, 'type': 'load-balance', 'strategy': 'consistent-hashing', 'hidden': False, 'proxies': list(chain.HK_EXITS)},
+                {'name': chain.HK_REGION, 'type': 'select', 'hidden': False, 'use': ['fixture'], 'filter': chain.front_region_filter('hk'), 'exclude-filter': '套餐'+google_hk_exclusion(blocked)},
                 {'name': 'AI', 'type': 'select', 'proxies': [chain.REGION]},
                 {'name': 'Microsoft', 'type': 'select', 'proxies': [chain.REGION, 'DIRECT']},
-                {'name': '香港券商', 'type': 'select', 'proxies': [chain.HK_REGION]},
+                {'name': '香港券商', 'type': 'select', 'proxies': ['香港-fixture']},
                 {'name': 'Google', 'type': 'select', 'proxies': [chain.HK_REGION, chain.REGION]}, *front_groups]}
 
 
@@ -56,21 +52,62 @@ def lines(data):
 
 
 class AndroidUsChainTests(unittest.TestCase):
+    def test_each_mihomo_client_uses_its_interval_and_hk_has_no_chain(self):
+        for profile in ('rulemesh-flclash-desktop.yaml', 'rulemesh-clashmi-ios.yaml', chain.PROFILE):
+            data = document()
+            interval = 300 if 'desktop' in profile else 600
+            for group in data['proxy-groups']:
+                if 'interval' in group:
+                    group['interval'] = interval
+            self.assertFalse(chain.check(Path(profile), lines(data)))
+            data['proxies'][0]['dialer-proxy'] = chain.HK_REGION
+            self.assertTrue(chain.check(Path(profile), lines(data)))
+
+    def test_surge_single_exit_semantics_and_no_front_cycles(self):
+        data = document()
+        definition = ['[General]', 'udp-policy-not-supported-behaviour = REJECT', '[Proxy]',
+                      'RM-US-Exit = socks5, 8.8.8.8, 1080, username=fixture, password=fixture, underlying-proxy=RM-US-Front, udp-relay=false',
+                      '[Proxy Group]', '✈️ fixture = select, policy-path=https://fixture.invalid/sub, include-all-proxies=0',
+                      chain.FRONT + ' = select, ' + ', '.join(chain.FRONT_GROUPS) + ', hidden=0',
+                      chain.REGION + ' = select, RM-US-Exit, hidden=0',
+                      'AI = url-test, ' + chain.REGION + ', interval=300, hidden=0',
+                      'Microsoft = select, ' + chain.REGION + ', DIRECT, hidden=0']
+        for code, name in zip(chain.FRONT_REGIONS, chain.FRONT_GROUPS):
+            definition.append(name + ' = url-test, include-all-proxies=0, include-other-group="✈️ fixture", '
+                              + 'policy-regex-filter=' + sorted(baseline.region_filters(code, True))[0]
+                              + ', hidden=0, interval=300')
+        definition += ['[Rule]', 'FINAL,REJECT', chain.SURGE_MARKER + json.dumps(data[chain.KEY])]
+        for profile in sorted(chain.PROFILES):
+            if profile.endswith('.conf'):
+                self.assertFalse(chain.check(Path(profile), definition))
+        groups = dns._parse_surge_groups(definition)
+        self.assertTrue(dns._group_has_us_semantics('AI', groups, dns.APPROVED_SURGE_US_FILTERS))
+        self.assertFalse(dns._group_has_us_semantics('AI', groups, baseline.region_filters('hk', True)))
+        for old, new in [('underlying-proxy=RM-US-Front', 'underlying-proxy=' + chain.REGION),
+                         ('udp-relay=false', 'udp-relay=true'),
+                         ('behaviour = REJECT', 'behaviour = DIRECT'),
+                         ('include-all-proxies=0', 'include-all-proxies=1'),
+                         ('include-other-group="✈️ fixture"', 'include-other-group="' + chain.REGION + '"')]:
+            mutated = [line.replace(old, new) for line in definition]
+            self.assertNotEqual(mutated, definition)
+            self.assertTrue(chain.validate_surge(mutated))
+        self.assertTrue(chain.validate_surge([line for line in definition if line != '[Proxy]']))
+
     def test_hk_brokers_and_all_final_groups_cannot_bypass_registered_exits(self):
         for name, key, value in ((chain.HK_REGION, 'include-all', True),
-                                 (chain.HK_REGION, 'type', 'select'),
+                                 (chain.HK_REGION, 'type', 'load-balance'),
                                  (chain.HK_REGION, 'filter', 'missing'),
                                  (chain.REGION, 'exclude-filter', '.*'),
                                  ('香港券商', 'proxies', ['airport-hk'])):
             data = document()
             next(g for g in data['proxy-groups'] if g['name'] == name)[key] = value
             self.assertTrue(chain.validate(lines(data)))
-        data = document(); data[chain.KEY]['exit-identities'][1]['ip'] = data[chain.KEY]['exit-identities'][0]['ip']
+        data = document(); data[chain.KEY]['exit-identities'].append(copy.deepcopy(data[chain.KEY]['exit-identities'][0]))
         self.assertTrue(chain.validate(lines(data)))
         data = document(); data['rules'] = ['DOMAIN,fixture.invalid,' + chain.US_EXITS[0]]
         self.assertTrue(chain.validate(lines(data)))
 
-    def test_authorized_two_us_and_one_hk_structure_and_only_us_semantics(self):
+    def test_authorized_single_us_structure_and_only_us_semantics(self):
         data = document(); text = lines(data)
         self.assertEqual(chain.check(Path(chain.PROFILE), text), [])
         groups = dns._parse_mihomo_groups(text)
@@ -79,7 +116,7 @@ class AndroidUsChainTests(unittest.TestCase):
         self.assertTrue(chain.check(Path('desktop.yaml'), text))
 
     def test_final_exit_group_must_be_explicitly_visible(self):
-        for index in (1, 2):
+        for index in (1,):
             for hidden in (True, None, 'false'):
                 data = document()
                 region = data['proxy-groups'][index]
@@ -161,6 +198,7 @@ class AndroidUsChainTests(unittest.TestCase):
         from check_android_stability import google_hk_exclusion
         hk_front = next(group for group in data['proxy-groups'] if group['name'] == chain.FRONT_GROUPS[0])
         hk_front['exclude-filter'] = '套餐'+google_hk_exclusion([displayed])
+        next(group for group in data['proxy-groups'] if group['name'] == chain.HK_REGION)['exclude-filter'] = '套餐'+google_hk_exclusion([displayed])
         self.assertEqual(chain.provider_match_name(provider, displayed), original)
         self.assertFalse(chain.validate(lines(data)))
         provider['exclude-filter'] = chain.quarantine_pattern([displayed])

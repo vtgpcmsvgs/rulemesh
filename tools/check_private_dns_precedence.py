@@ -386,6 +386,10 @@ def _parse_surge_groups(lines: list[str]) -> dict[str, _ProxyGroup]:
                 group.included_members.extend(included)
                 group.members.extend(included)
         groups[group_name] = group
+    import check_android_us_chain as chain
+    if chain.present(lines) and not chain.validate_surge(lines):
+        for name in chain.US_EXITS:
+            groups[name] = _ProxyGroup(line=0, group_type='socks5', approved_us_chain_exit=True)
     return groups
 
 
@@ -708,7 +712,9 @@ def _group_has_us_semantics(
     if group is None:
         return False
     if group.approved_us_chain_exit:
-        return approved_filters == APPROVED_MIHOMO_US_FILTERS
+        from check_performance_baseline import region_filters
+        us_filters = APPROVED_MIHOMO_US_FILTERS | APPROVED_SURGE_US_FILTERS | region_filters('us', True)
+        return bool(approved_filters) and approved_filters <= us_filters
     if group.approved_hk_chain_exit:
         from check_performance_baseline import region_filters
         return approved_filters == region_filters('hk', False)

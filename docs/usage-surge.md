@@ -1,5 +1,7 @@
 # Surge 使用说明
 
+2026-10-30 最终修订：全部六份私人配置统一单个美国 SOCKS5 落地；香港恢复普通机场线路，撤销此前两个 Comcast 与一个 Lumen 方案。美国 `RM-US-Front` 可见并选择六个独立机场前置地区组，不创建 `RM-HK-Front`。美国没有多节点负载均衡；Mihomo 保留单成员 load-balance 防止 TCP-only UDP 跳过规则，Surge 使用 underlying-proxy 与 UDP REJECT。登记升级为 `x-rulemesh-us-chain` 版本 4，真实端点和认证仅在私人仓库。 以 [美国单落地迁移](regional-exits-20261030.md) 为当前约定；下文较早的美国-provider 约定仅适用于公开模板或历史记录。
+
 当前公开参考配置是 [surge-public.conf](examples/surge-public.conf)，适合个人终端。五份私有配置与公开模板共同遵循 [2026-09-09 性能基线](performance-baseline.md)；工作白名单仍有独立放行边界。
 
 2026-09-14 [安卓网络修复](android-network-repair.md) 的 Google 稳定组、进程规则与 DNS 例外仅适用于安卓 FlClash。安卓已撤销会导致 Cronet 重试的 UDP/443 拒绝。Surge 继续复用 Google/Play 既有域名覆盖，不搬入 Mihomo 的字段，也不因安卓调整扩大工作白名单。

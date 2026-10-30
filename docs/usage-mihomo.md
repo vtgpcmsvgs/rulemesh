@@ -1,6 +1,7 @@
 # Mihomo 使用说明
 
-2026-10-30 私人安卓链式例外更新为两个 Comcast 美国 SOCKS5 负载均衡出口和一个 Lumen 香港固定出口；机场作为前置，Google 仍默认香港。任务收尾须运行统一入口并分别验证订阅、真实 Chrome、DNS、两个美国 AI trace 与一个香港 Notion trace 的真实 IP/地区/链路；用户要求信任登记 IP，不检测纯净度。缺少必要设备证据不算通过；步骤与边界见 [任务收尾验收](task-acceptance.md)。公开模板与其他客户端行为不变。
+2026-10-30 最终修订：全部六份私人配置统一单个美国 SOCKS5 落地；香港恢复普通机场线路，撤销此前两个 Comcast 与一个 Lumen 方案。美国 `RM-US-Front` 可见并选择六个独立机场前置地区组，不创建 `RM-HK-Front`。美国没有多节点负载均衡；Mihomo 保留单成员 load-balance 防止 TCP-only UDP 跳过规则，Surge 使用 underlying-proxy 与 UDP REJECT。登记升级为 `x-rulemesh-us-chain` 版本 4，真实端点和认证仅在私人仓库。 以 [美国单落地迁移](regional-exits-20261030.md) 为当前约定；下文较早的美国-provider 约定仅适用于公开模板或历史记录。
+
 
 iPhone 的 Clash Mi 使用独立 `rulemesh-clashmi-ios.yaml`，不要套用安卓应用进程规则。它保留桌面分流与 DNS 基线，测速周期 600 秒，TUN 交给应用管理；关闭 DNS/规则/代理组覆写并保留 TUN 覆写。阿里云 SSH 的 ASN 兜底转换为精确网段内联快照。导入、派生维护与设备验收见 [Clash Mi iOS](clashmi-ios.md)。此专项不改变公开模板。
 

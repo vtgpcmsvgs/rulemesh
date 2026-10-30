@@ -1,6 +1,7 @@
 # 2026-09-09 性能基线
 
-2026-10-30 安卓链式例外更新：仅 FlClash 安卓的美国地区、AI 和 Microsoft 美国候选使用两个 Comcast SOCKS5 落地的 `load-balance` 组；Google 及香港业务使用一个 Lumen SOCKS5 固定出口。机场前置为独立 select，禁止环和机场最终出口回退。其他客户端及旧 AWS 源资产不变；用户明确免除三个 IP 的纯净度检测，仍逐个验证区域链路。详见 [任务收尾验收](task-acceptance.md)。
+2026-10-30 最终修订：全部六份私人配置统一单个美国 SOCKS5 落地；香港恢复普通机场线路，撤销此前两个 Comcast 与一个 Lumen 方案。美国 `RM-US-Front` 可见并选择六个独立机场前置地区组，不创建 `RM-HK-Front`。美国没有多节点负载均衡；Mihomo 保留单成员 load-balance 防止 TCP-only UDP 跳过规则，Surge 使用 underlying-proxy 与 UDP REJECT。登记升级为 `x-rulemesh-us-chain` 版本 4，真实端点和认证仅在私人仓库。 以 [美国单落地迁移](regional-exits-20261030.md) 为当前约定；下文较早的美国-provider 约定仅适用于公开模板或历史记录。
+
 
 同日冷启动暴露香港 url-test 回退问题；私人安卓共享香港地区组最终采用可见 select 固定实测线路，保留历史组名引用、过滤器与全部机场来源，移除组级测速字段。其他客户端和五地区自动组保持原型。
 

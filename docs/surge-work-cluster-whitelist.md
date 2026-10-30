@@ -1,5 +1,7 @@
 # Surge 工作路由白名单约定
 
+2026-10-30 最终修订：全部六份私人配置统一单个美国 SOCKS5 落地；香港恢复普通机场线路，撤销此前两个 Comcast 与一个 Lumen 方案。美国 `RM-US-Front` 可见并选择六个独立机场前置地区组，不创建 `RM-HK-Front`。美国没有多节点负载均衡；Mihomo 保留单成员 load-balance 防止 TCP-only UDP 跳过规则，Surge 使用 underlying-proxy 与 UDP REJECT。登记升级为 `x-rulemesh-us-chain` 版本 4，真实端点和认证仅在私人仓库。 以 [美国单落地迁移](regional-exits-20261030.md) 为当前约定；下文较早的美国-provider 约定仅适用于公开模板或历史记录。
+
 2026-09-16：撤销阿里设备条件代理；新增的 `cn_services_direct` 仅精确放行国内 DNS 端点及新华三。WPS 按 2026-09-18 修订统一直连，Store 专项固定美国并位于既有更新拒绝之后；不改变最终 REJECT，不新增通用国内放行。详见[出口修订](scoped-egress-repair.md)。
 
 仅适用于私有 `rulemesh-surge-work.conf`。它长期独立于两份 Surge Personal、两份 Mihomo 与公开模板；不得为了统一模板取消白名单。

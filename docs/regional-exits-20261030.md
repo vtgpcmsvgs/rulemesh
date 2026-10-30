@@ -1,58 +1,48 @@
-# 私人安卓三出口迁移（2026-10-30）
+# 私人配置美国单落地迁移（2026-10-30 最终修订）
 
-本次针对原持有五个美国链式落地的 `rulemesh-flclash-android.yaml`。旧五出口全部退役，替换为用户登记的两个美国 Comcast 和一个香港 Lumen SOCKS5。真实 IP、认证信息和供应商身份仅保存在独立私人仓库。本次不新建源规则、上游登记或公开订阅，不将私人链式配置扩散到其他客户端。
+用户撤销本日早期三个出口方案，并明确要求全部私人客户端接入新美国单落地。六份文件包括两份 FlClash、Clash Mi iOS、两份 Surge Personal 与 Surge 工作白名单。香港恢复普通机场节点，不设香港链式前置。真实地址和认证仅存独立私人仓库；旧方案由 Git 历史追溯，不得拿旧测试作为本轮证据。
 
-## 拓扑与地区边界
-
-| 业务/入口 | 最终路径 |
+| 入口 | 最终路径 |
 | --- | --- |
-| AI、Microsoft 美国候选、Microsoft Store、六地区菜单中的美国 | 美国地区 `load-balance` → 两个 Comcast |
-| Google 默认、Notion、用户香港专项、香港券商、六地区菜单中的香港 | 香港地区单节点 `load-balance` → 唯一 Lumen |
-| 三个 SOCKS5 的拨号 | 可见 `RM-US-Front` → 六个前置专用地区 `url-test` → 机场 provider |
-| 地区例外 | Crypto 台湾、日本精确入口保持；Microsoft 的 DIRECT 仍为显式选项 |
-| 通用自动/手动机场组 | 延续非固定地区业务用途；不承诺这些入口最终落在某一地区 |
+| AI、Microsoft 美国候选、Store、六地区菜单的美国 | 美国最终组 → 唯一 RM-US-Exit |
+| 美国节点拨号 | RM-US-Front → 六个前置专用地区自动组 → 机场 |
+| Google 默认、Notion、香港地区 | 普通香港机场；安卓保留手动 select 与历史隔离 |
+| 香港券商 | 原香港-provider 自动子组 |
+| 地区例外 | Crypto 台湾、日本精确入口；Microsoft DIRECT 选项保留 |
+| 普通全地区自动/手动组 | 保留原用途，不限制在美国或香港 |
 
-保留两个历史地区组名称兼容规则和 DNS 引用。香港券商同时迁移，删除过时的香港-provider 最终子组；不能只替换 Google 共享香港组。前置只含机场，最终组只含购买的落地，完整候选图不得形成环。机场前置健康不等于完整 SOCKS5 链路健康。
+前置选择器控制如何连接美国落地，不改变最终出口地区。默认香港；各地区候选均只收机场，不引用业务组、最终出口或 DIRECT。桌面 300 秒、安卓/iOS 600 秒；前置 lazy true，美国容差 100、其余 50。Surge 的前置使用独立地区 url-test 与机场来源，300 秒。`RM-US-Front`、美国最终组明确可见；源文件可见性与客户端实际加载分别验收。
 
-美国采用 `consistent-hashing`，按目标主域名稳定分配到两个节点，并按存活状态选择。它不保证每个网站都用两个 IP，也不保证每段时间严格 50/50；这是为避免同一站点连接频繁换 IP 选择的取舍。`tolerance` 是 URL-test 的防抖参数，不放进负载均衡组。两节点同时失效不会加入机场或 DIRECT 最终出口。
+美国只有一成员，不再做流量分摊。Mihomo 保留单节点 `load-balance` 封装与 `udp: false`：TCP-only Selector 的 SupportUDP=false 可能导致匹配器跳过规则并落入 DIRECT，单节点 LB 保持匹配后失败。禁止 disable-udp。Surge 的单节点 select 使用 SOCKS5 underlying-proxy，显式 `udp-relay=false` 和 `[General] udp-policy-not-supported-behaviour = REJECT`。UDP 能力未经确认，不虚报支持；TCP 回退、语音、视频须实机验收。
 
-前置保留可见手动地区选择，默认香港；六地区子组自动测速，600 秒、lazy true，美国容差 100、其余 50。原名 `RM-US-Front` 现在由美国和香港三条链共用，仅为兼容保留，不增加额外网络跳数。
+默认国内 DNS、AI 海外 DoH 经美国出口、安卓 Google/YouTube DNS 跟随业务选择保持。供应商端点是 IP，无新增节点域名 bootstrap。工作版只调整既有美国入口的代理路径，规则节、白名单、最终 REJECT 不扩大。iOS 先构建再由桌面派生，保留 600 秒、进程 off、应用管理 TUN 和 DNS 基线。
 
-## DNS 和协议能力
+## 官方依据
 
-普通业务维持国内 DoH，AI 专用 DoH 通过美国组，安卓 Google 专用 DoH 通过香港业务组。节点域名仍使用独立国内 bootstrap；不改 `respect-rules`、hosts、IPv6 或规则优先级。配置层的 DNS 路径核对与实际设备的 DNS 连接证据分别报告。
+本轮读取 Surge 官方当前手册，旧 /policy/ 路径已经失效，改用目录导航确认的 /policies/ 路径：
 
-三条 SOCKS5 均按已确认的 TCP 能力设置 `udp: false`。香港采用单节点负载均衡封装：Mihomo v1.19.25 的 Selector 向上传递节点的 `SupportUDP=false`，路由匹配会继续下一条规则，最终可能落入 DIRECT；LoadBalance 保持匹配，UDP 在不支持的落地处失败。不得在美国/香港组设置 `disable-udp: true`，否则会重新引入规则跳过。不宣称 QUIC、语音视频或 Google/Cronet 已通过实机验证；保留既有无全局 UDP 拒绝的规则并不赋予节点 UDP 能力。
+- [Surge 链式代理和策略组前置](https://manual.nssurge.com/policies/parameters.html)
+- [Surge SOCKS5 认证格式](https://manual.nssurge.com/policies/socks5.html)
+- [Surge 不支持 UDP 的拒绝行为](https://manual.nssurge.com/policies/udp.html)
+- [Mihomo dialer-proxy](https://wiki.metacubex.one/config/proxies/dialer-proxy/)
+- [Mihomo 负载均衡](https://wiki.metacubex.one/config/proxy-groups/load-balance/)
 
-## 设计依据
+## 检查与本次问题处置
 
-依据 Mihomo 官方资料与当前设备基线版本源码核对：
+`check_android_us_chain.py` 保留历史模块名兼容调用，现验证六份私人配置的 v4 登记、唯一美国节点、节点与登记端点一致、认证、前置无环、香港无链、无旧出口和地区引用。公开模板保持机场通用方案。规则层、DNS、工作白名单的其他闸门继续执行，不以新标记跳过。
 
-- https://wiki.metacubex.one/config/proxy-groups/load-balance/
-- https://wiki.metacubex.one/config/proxies/dialer-proxy/
-- https://raw.githubusercontent.com/MetaCubeX/mihomo/v1.19.25/adapter/outboundgroup/loadbalance.go
-- https://raw.githubusercontent.com/MetaCubeX/mihomo/v1.19.25/hub/route/proxies.go
-- https://raw.githubusercontent.com/MetaCubeX/mihomo/v1.19.25/tunnel/tunnel.go
-- https://raw.githubusercontent.com/MetaCubeX/mihomo/v1.19.25/adapter/outboundgroup/selector.go
+工作版此前没有 [Proxy] 节；迁移应先验证节唯一性，再补节点节，不能假定所有 Surge 文件都已有内联节点。迁移写入前检查完整结构；失败时不写该文件。已存在的桌面嗅探改动保留，不从旧版本覆盖。
 
-官方负载均衡实现按目标主域名哈希、检查节点存活；LoadBalance 没有 Selector 的 Set 接口，也没有 URLTest 的 fixed/now 语义。验收不能通过 PUT 强行切换它，再把 200/204 或配置中的 IP 当成观测结果。
+早期发现桌面文件疑似截断时曾从 HEAD 恢复；复核恢复前备份、迁移前备份和企业微信任务记录，差异为该任务后来明确撤销的临时 TUN 网段排除，因此不恢复这些排除。现有企业微信嗅探排除项保留，iOS 按桌面派生。以后遇到疑似截断，应先重复读取、核对时间及哈希并保留字节备份；发现内容变化须先核对并发写入，不能直接用 git restore 覆盖工作副本。
 
-## 验证与防回归
+Git 自带解析器本轮出现 getaddrinfo 线程失败；系统 DNS 可正常解析。使用当前命令的 http.curloptResolve 指定经系统解析的 GitHub 地址后 fetch 恢复，不修改永久 Git/DNS 设置。此项属于本机工具链限制。
 
-- 结构检查覆盖三节点、唯一公网身份、端口、认证、地区组成员、香港券商、可见性及所有前置候选；只有完整验证的登记节点可取得地区语义。
-- 实机探测从真实 AI / Notion 业务 trace 读取 IP 和地区，并在请求期间记录链上的新返回字节；不修改生产路由或切换负载均衡组。若自然哈希未覆盖两个美国节点、trace 不可用或设备断开，则失败/未验收，禁止虚构完整性。
-- 用户只确认了两个美国端口的地区，未确认各自 IP 顺序。验证以用户指定的美国 IP 集合加两个不同实际公网 IP 为准，不猜测端口与 IP 的对应顺序。
-- 香港 Google 200、静态登记和机场延迟不能代替香港公网 IP；三出口均有同样严格的运行态身份要求。纯净度检测沿用用户此前不检测的约定。
-- 保留五出口历史记录用于追溯，历史成功不能替代本轮结果。收尾入口见 `task-acceptance.md`。
+供应商单节点 SOCKS5 HTTPS trace 实测返回登记 IP 与 US。首次握手失败后一次短重试成功，不能据此保证长期稳定或机场前置全链路。最终全量检查、三平台设备与 DNS 运行态结果必须单独记录，不把供应商直连测试写成客户端验收。
 
-本轮本地检查同时遇到既有桌面企业微信块的域名与 Windows 进程混排，导致待提交的 iOS 派生器严格匹配失败。配套修复仅剥离明确登记的 Windows 进程，保留已存在的目的地域名；未知域名、未知进程及缺少替代入口仍拒绝。对应回归防止为通过检查而丢失已有用户规则。该既有桌面/iOS 工作与本次安卓迁移分别保留，不混入出口迁移提交。
+## 本轮验收记录
 
-## 本轮可确认的结果
-
-供应商三端口通过带认证的 SOCKS5 实际请求核对，得到用户指定集合中的三个不同公网 IP，地区为两美国一香港，登记端口对应无需调整。此项是供应商端口测试，不冒充手机上的机场前置链路验收。
-
-官方 Mihomo v1.19.25 下载资产经发布方 SHA-256 校验，在任务专用临时目录执行完整安卓配置 `-t` 成功。完整本地检查及强制在线订阅闸门的结果以本轮验收报告为准。第一轮一次订阅传输失败在后续完整检查中恢复，未因此改动 provider 或豁免闸门。
-
-新增 `test_chain_udp_native.py` 可用已验证的原生 CLI 做回环正反对照。本机甚至 Python 自建 TCP 监听器的回环连接都超时，故该运行回归标记环境跳过，不能算作 UDP 无泄漏实测成功。香港单节点 LB 方案当前依据官方路由/组实现及静态约束；更换内核后须重新执行该原生回归。
-
-本轮 USB 设备连接返回 `UsbAdbError`，因此未导入或重载手机配置，手机 VPN、Chrome、DNS 实际出口和三条机场前置链路仍未验收；收尾入口明确返回失败。Git 发布与设备加载分别报告，不将更新后的源文件当作已运行的配置。
+- 构建完成：45 份源文件、0 条告警。完整 check.ps1 和在线订阅闸门通过；回归套件共 412 项，396 项通过、16 项按环境条件跳过。六配置 DNS 优先级、链式登记和跨客户端认证一致性通过。
+- 桌面、安卓、iOS 三份 YAML 均通过 Mihomo v1.19.25 原生语法检查。Surge 已完成结构检查，尚未在 Mac 内核加载验证。
+- check_task_acceptance.py 的基线通过，但安卓 USB/ADB 采集失败，无本轮设备证据，整体验收失败。iPhone、Mac 和各客户端 DNS 运行态未验收。
+- FlClash 桌面仍加载旧配置；导入操作遇到窗口激活失败，后续用户停止了桌面自动操作，因此没有确认新配置加载或界面显示。
+- 本机回环测试环境阻止了原生 UDP 回归测试，该项跳过而非通过。供应商直连 trace 不能替代机场前置、设备 DNS、移动 Google 搜索和业务冷启动验收。

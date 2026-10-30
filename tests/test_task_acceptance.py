@@ -14,14 +14,14 @@ from android_chrome_probe import audit_page
 
 
 class TaskAcceptanceTests(unittest.TestCase):
-    def test_hk_identity_requires_observed_public_ip_region_and_chain(self):
+    def test_us_identity_requires_observed_public_ip_region_and_chain(self):
         expected = {'exit_identities': dict(zip(EXITS, ('8.8.8.8', '1.1.1.1', '9.9.9.9')))}
-        raw = 'ip=9.9.9.9\nloc=HK\n'
-        self.assertTrue(exit_evidence(raw, 0, True, HK_EXITS[0], expected)['passed'])
+        raw = 'ip=8.8.8.8\nloc=US\n'
+        self.assertTrue(exit_evidence(raw, 0, True, US_EXITS[0], expected)['passed'])
         for content, code, chain_seen in (('', 0, True), (raw, 200, True), (raw, 0, False),
                                           ('ip=9.9.9.9\nloc=US\n', 0, True),
                                           ('ip=8.8.8.8\nloc=HK\n', 0, True)):
-            self.assertFalse(exit_evidence(content, code, chain_seen, HK_EXITS[0], expected)['passed'])
+            self.assertFalse(exit_evidence(content, code, chain_seen, US_EXITS[0], expected)['passed'])
 
     def test_natural_hash_observation_never_switches_load_balance(self):
         import base64
@@ -30,7 +30,7 @@ class TaskAcceptanceTests(unittest.TestCase):
         expected = {'exit_identities': dict(zip(EXITS, ('8.8.8.8', '1.1.1.1', '9.9.9.9')))}
         seen = []
         def probe(device, controller, previous, name, url, required):
-            leaf = EXITS[min(len(seen), 2)]; seen.append(leaf)
+            leaf = EXITS[0]; seen.append(leaf)
             connection = {'id': str(len(seen)), 'metadata': {'host': urlsplit(url).hostname},
                           'chains': [*required, leaf], 'download': 10}
             encoded = base64.b64encode(json.dumps({'connections': [connection]}).encode()).decode()
@@ -38,9 +38,9 @@ class TaskAcceptanceTests(unittest.TestCase):
             return raw, 0, False
         with patch('collect_android_acceptance.trace_probe', probe), patch('collect_android_acceptance.change', side_effect=AssertionError('No writes')):
             rows = regional_probes(None, {}, lambda path: {'connections': []}, expected)
-        self.assertEqual(len(rows), 3)
+        self.assertEqual(len(rows), 1)
         self.assertTrue(all(row['passed'] for row in rows))
-        self.assertEqual(len({r['_ip'] for r in rows}), 3)
+        self.assertEqual(len({r['_ip'] for r in rows}), 1)
         self.assertEqual(selection_snapshot({REGION: {'type': 'LoadBalance', 'all': list(US_EXITS)}})[REGION]['now'], None)
 
     def test_short_lived_connection_is_proved_during_transfer_without_accepting_old_bytes(self):
@@ -51,7 +51,7 @@ class TaskAcceptanceTests(unittest.TestCase):
         raw=sample([])+sample([connection])+sample([])+'RM_TRACE_CODE=0\nloc=US\n'
         self.assertEqual(trace_evidence(raw,{},EXITS[0]),(0,True))
         self.assertEqual(trace_evidence(raw,{'fixture':100},EXITS[0]),(0,False))
-        self.assertEqual(trace_evidence(raw,{},EXITS[1]),(0,False))
+        self.assertEqual(trace_evidence(raw,{},'unregistered-exit'),(0,False))
         connection['chains']=['DIRECT']
         self.assertEqual(trace_evidence(sample([connection])+'RM_TRACE_CODE=0\n',{},EXITS[0]),(0,False))
         with self.assertRaises(RuntimeError):trace_evidence(sample([]),{},EXITS[0])
@@ -97,11 +97,11 @@ class TaskAcceptanceTests(unittest.TestCase):
         for index in range(len(EXITS)):
             bad = copy.deepcopy(good); bad['android']['regional_exits'][index]['passed'] = False
             self.assertFalse(acceptance.overall(bad))
-        bad = copy.deepcopy(good); bad['android']['regional_exits'][-1]['exit'] = 1
+        bad = copy.deepcopy(good); bad['android']['regional_exits'][-1]['exit'] = 99
         self.assertFalse(acceptance.overall(bad))
         good['android']['selection_restored'] = False
         self.assertFalse(acceptance.overall(good))
-        bad = self.report(); bad['android']['distinct_us_exit_count'] = 1
+        bad = self.report(); bad['android']['distinct_us_exit_count'] = 0
         self.assertFalse(acceptance.overall(bad))
 
     def test_stale_empty_or_future_provider_health_cannot_pass(self):

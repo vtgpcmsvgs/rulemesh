@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def fingerprint(directory):
-    return {name: hashlib.sha256((directory / name).read_bytes()).hexdigest() for name in PROFILE_NAMES}
+    return {name: hashlib.sha256((directory / name).read_bytes()).hexdigest() for name in sorted(chain.PROFILES)}
 
 
 def overall(report):
@@ -34,7 +34,7 @@ def overall(report):
             and device.get('distinct_hk_exit_count') == len(chain.HK_EXITS)
             and len(exits) == len(chain.EXITS) and {r.get('exit') for r in exits} == set(range(1, len(chain.EXITS) + 1))
             and len(us_exits) == len(chain.US_EXITS) and len(hk_exits) == len(chain.HK_EXITS)
-            and {r.get('region') for r in exits} == {'US', 'HK'}
+            and {r.get('region') for r in exits} == {'US'}
             and report.get('exit_identity_policy') == 'user-provided-trusted'
             and all(r.get('passed') is True for r in exits))
 
@@ -72,7 +72,7 @@ def run(settings, directory, *, baseline_runner=subprocess.run, worker_runner=su
             return report
         if chain.validate((directory / chain.PROFILE).read_text('utf-8').splitlines()):
             raise ValueError('Approved Android regional chain required')
-        print('[acceptance] collect fresh Android VPN, Google, DNS and two US plus one HK exit; observe without switching groups', flush=True)
+        print('[acceptance] collect fresh Android VPN, Google, DNS and one US chain exit and ordinary Hong Kong airport routing; observe without switching groups', flush=True)
         expected = {'google_hk': document['proxy-groups'][0].get('name'),
                     'providers': {name: body['health-check']['interval'] for name, body in document['proxy-providers'].items()}}
         google = next(g for g in document['proxy-groups'] if g['name'] == 'Google')

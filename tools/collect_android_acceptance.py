@@ -196,7 +196,7 @@ TRACE_TARGETS = {
 
 
 def exit_evidence(raw, code, observed, name, expected):
-    """信任用户登记的 IP 集合，不把登记本身当作实际观测；端口到美国 IP 的顺序未获确认。"""
+    """只信任本轮登记的单个美国 IP；登记本身不是实际观测。"""
     region = 'US' if name in US_EXITS else 'HK'
     fields = dict(re.findall(r'(?m)^([a-z_]+)=(.*)$', raw))
     address = public_address(fields.get('ip'))
@@ -261,12 +261,10 @@ def collect(settings, expected):
             'mode_rule': config.get('mode') == 'rule', 'process_always': config.get('find-process-mode') == 'always',
             'lan_disabled': config.get('allow-lan') is False,
             'google_hk': proxies.get('Google', {}).get('now') == hk,
-            'hk_single_exit_no_fallback': proxies.get(hk, {}).get('type') == 'LoadBalance',
+            'hk_manual_airport': proxies.get(hk, {}).get('type') == 'Selector' and bool(proxies.get(hk, {}).get('all')),
             **front_runtime(proxies),
             'us_load_balance_candidates': proxies.get(REGION, {}).get('all') == list(US_EXITS)
                 and proxies.get(REGION, {}).get('type') == 'LoadBalance',
-            'hk_fixed_candidate': proxies.get(HK_REGION, {}).get('type') == 'LoadBalance'
-                and proxies.get(HK_REGION, {}).get('all') == list(HK_EXITS),
             'ai_uses_us_chain': proxies.get('AI', {}).get('now') == REGION,
             'google_rule': sum(r.get('type') == 'RuleSet' and r.get('payload') == 'hk_google' and r.get('proxy') == 'Google' for r in rules) == 1,
             'ai_rule': sum(r.get('type') == 'RuleSet' and r.get('payload') == 'us_ai' and r.get('proxy') == 'AI' for r in rules) == 1,
