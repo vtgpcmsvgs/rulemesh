@@ -9,8 +9,6 @@ PROFILES = {PROFILE, 'rulemesh-flclash-desktop.yaml',
             'rulemesh-surge-company.conf', 'rulemesh-surge-work.conf'}
 SURGE_MARKER = '# ' + KEY + ': '
 FRONT = 'RM-US-Front'
-FRONT_REGIONS = {'hk': '香港', 'tw': '台湾', 'jp': '日本', 'kr': '韩国', 'sg': '新加坡', 'us': '美国'}
-FRONT_GROUPS = tuple(f'前置-{label}-自动选择' for label in FRONT_REGIONS.values())
 QUARANTINE = 'x-rulemesh-android-provider-quarantine'
 REGION = '🇺🇸 美国-自动选择'
 HK_REGION = '🇭🇰 香港-自动选择'
@@ -79,9 +77,9 @@ def present(lines):
 
 
 def registration_valid(registration):
-    assert set(registration) == {'version', 'front', 'front-regions', 'region', 'exits', 'exit-identities'}
-    assert registration['version'] == 4
-    assert registration['front'] == FRONT and registration['front-regions'] == list(FRONT_GROUPS)
+    assert set(registration) == {'version', 'front', 'front-mode', 'region', 'exits', 'exit-identities'}
+    assert registration['version'] == 5
+    assert registration['front'] == FRONT and registration['front-mode'] == 'airport-select'
     assert registration['region'] == REGION and registration['exits'] == list(EXITS)
     identities = registration['exit-identities']
     assert len(identities) == 1
@@ -117,23 +115,19 @@ def validate(lines, interval=None):
         assert len(groups) == len(rows) and not (set(EXITS) & groups.keys())
         assert 'RM-HK-Front' not in groups
         front = groups[FRONT]
-        assert front == {'name': FRONT, 'type': 'select', 'hidden': False, 'proxies': list(FRONT_GROUPS)}
-        assert {n for n in groups if n.startswith('前置-')} == set(FRONT_GROUPS)
+        # Direct provider membership removes six duplicate UI groups and cannot point
+        # back to the final exit. Do not use include-all-proxies or business groups.
+        assert set(front) == {'name', 'type', 'hidden', 'use', 'exclude-filter'}
+        assert front['type'] == 'select' and front['hidden'] is False
+        assert set(front['use']) == set(data['proxy-providers']) and len(front['use']) == len(data['proxy-providers'])
+        assert isinstance(front['exclude-filter'], str) and front['exclude-filter']
+        assert not any(n.startswith('前置-') for n in groups)
         region = groups[REGION]
         cycle = region.get('interval')
         assert cycle in (300, 600) and (interval is None or cycle == interval)
-        for code, name in zip(FRONT_REGIONS, FRONT_GROUPS):
-            child = groups[name]
-            assert child['type'] == 'url-test' and child.get('hidden') is False
-            assert child['filter'] == front_region_filter(code) and child.get('exclude-filter')
-            assert set(child) <= {'name', 'type', 'hidden', 'filter', 'exclude-filter', 'use', 'url', 'interval', 'lazy', 'tolerance', 'timeout'}
-            assert set(child['use']) == set(data['proxy-providers']) and len(child['use']) == len(data['proxy-providers'])
-            assert child['url'] == 'https://www.google.com/generate_204'
-            assert child['interval'] == cycle and child['lazy'] is True
-            assert child['tolerance'] == (100 if code == 'us' else 50)
         # Singleton LB prevents TCP-only Selector causing UDP to skip to MATCH,DIRECT.
         assert region['type'] == 'load-balance' and region['proxies'] == list(US_EXITS)
-        assert region.get('hidden') is False and region.get('strategy') == 'consistent-hashing'
+        assert region.get('hidden') is True and region.get('strategy') == 'consistent-hashing'
         assert region.get('lazy') is False and region.get('url') == 'https://www.google.com/generate_204'
         assert set(region) <= {'name', 'type', 'proxies', 'strategy', 'hidden', 'url', 'interval', 'lazy', 'timeout'}
         assert groups['AI']['proxies'] == [REGION]
@@ -154,7 +148,7 @@ def validate(lines, interval=None):
             validate_quarantine(data)
             from check_android_stability import GOOGLE_HK_QUARANTINE, google_hk_exclusion
             suffix = google_hk_exclusion(data[GOOGLE_HK_QUARANTINE])
-            for group in (groups[FRONT_GROUPS[0]], hk):
+            for group in (front, hk):
                 assert group['exclude-filter'].endswith(suffix) and group['exclude-filter'].count(suffix) == 1
     except Exception:
         return ['私人美国单落地链式结构不完整或越界；私人字段与异常原文已隐藏。']
@@ -191,8 +185,7 @@ def validate_surge(lines):
         assert options['underlying-proxy'] == FRONT and options['udp-relay'] == 'false'
         groups = surge_definitions(lines, 'Proxy Group')
         assert 'RM-HK-Front' not in groups
-        assert groups[FRONT] == ['select', *FRONT_GROUPS, 'hidden=0']
-        assert groups[REGION] == ['select', EXITS[0], 'hidden=0']
+        assert groups[REGION] == ['select', EXITS[0], 'hidden=1']
         assert groups['Microsoft'] == ['select', REGION, 'DIRECT', 'hidden=0']
         assert groups['AI'][0] == 'url-test' and groups['AI'][1] == REGION
         assert not any('=' not in p for p in groups['AI'][2:])
@@ -203,17 +196,16 @@ def validate_surge(lines):
             opts = dict(p.split('=', 1) for p in groups[name][1:])
             assert opts.get('policy-path') and opts.get('include-all-proxies') == '0'
             assert 'include-other-group' not in opts and 'underlying-proxy' not in opts
-        assert {n for n in groups if n.startswith('前置-')} == set(FRONT_GROUPS)
-        from check_performance_baseline import region_filters
-        for code, name in zip(FRONT_REGIONS, FRONT_GROUPS):
-            child = groups[name]
-            assert child[0] == 'url-test'
-            opts = dict(p.split('=', 1) for p in child[1:])
-            assert opts['include-all-proxies'] == '0'
-            assert set(opts['include-other-group'].strip('"').split(',')) == airports
-            assert opts['policy-regex-filter'] in region_filters(code, True)
-            assert opts['hidden'] == '0' and opts['interval'] == '300'
-            assert 'underlying-proxy' not in opts
+        assert not any(n.startswith('前置-') for n in groups)
+        front = groups[FRONT]
+        assert front[0] == 'select'
+        opts = dict(p.split('=', 1) for p in front[1:])
+        assert len(opts) == len(front[1:])
+        assert set(opts) == {'include-all-proxies', 'include-other-group', 'policy-regex-filter', 'hidden'}
+        assert opts['include-all-proxies'] == '0' and opts['hidden'] == '0'
+        assert set(opts['include-other-group'].strip('"').split(',')) == airports
+        from check_performance_baseline import METADATA_FILTER
+        assert opts['policy-regex-filter'] == METADATA_FILTER
         for name, parts in groups.items():
             assert not any(p.startswith('underlying-proxy=') for p in parts)
         assert sum('underlying-proxy=' in s for s in lines if not s.lstrip().startswith('#')) == 1

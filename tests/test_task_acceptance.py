@@ -8,7 +8,7 @@ import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 import check_task_acceptance as acceptance
 from collect_android_acceptance import dns_evidence, provider_health, shell_result, public_address, front_runtime, quarantine_runtime, trace_evidence, exit_evidence, regional_probes, selection_snapshot
-from check_android_us_chain import FRONT, FRONT_GROUPS, REGION, HK_REGION, US_EXITS, HK_EXITS, EXITS
+from check_android_us_chain import FRONT, REGION, HK_REGION, US_EXITS, HK_EXITS, EXITS
 from android_usb_transport import UsbAdb
 from android_chrome_probe import audit_page
 
@@ -65,17 +65,18 @@ class TaskAcceptanceTests(unittest.TestCase):
             self.assertFalse(quarantine_runtime(providers, expected))
         self.assertFalse(quarantine_runtime(good, {}))
 
-    def test_runtime_requires_six_airport_fronts_and_rejects_final_exit_cycles(self):
-        proxies = {FRONT: {'type': 'Selector', 'all': list(FRONT_GROUPS), 'now': FRONT_GROUPS[0]},
-                   **{name: {'type': 'URLTest', 'all': ['fixture-airport']} for name in FRONT_GROUPS}}
-        self.assertTrue(all(front_runtime(proxies).values()))
-        for target in (REGION, FRONT, EXITS[0], 'DIRECT'):
-            bad = copy.deepcopy(proxies); bad[FRONT_GROUPS[-1]]['all'] = [target]
-            self.assertFalse(all(front_runtime(bad).values()))
-        bad = copy.deepcopy(proxies); bad.pop(FRONT_GROUPS[0])
-        self.assertFalse(all(front_runtime(bad).values()))
+    def test_runtime_requires_actual_provider_nodes_and_rejects_group_cycles(self):
+        proxies = {FRONT: {'type': 'Selector', 'all': ['fixture-airport'], 'now': 'fixture-airport'}}
+        providers = {'fixture': {'proxies': [{'name': 'fixture-airport'}]}}
+        self.assertTrue(all(front_runtime(proxies, providers).values()))
+        for target in (REGION, FRONT, EXITS[0], 'DIRECT', 'REJECT', 'unregistered-node'):
+            bad = copy.deepcopy(proxies); bad[FRONT]['all'] = [target]; bad[FRONT]['now'] = target
+            self.assertFalse(all(front_runtime(bad, providers).values()))
+        self.assertFalse(all(front_runtime(proxies, {}).values()))
         bad = copy.deepcopy(proxies); bad[FRONT]['now'] = REGION
-        self.assertFalse(all(front_runtime(bad).values()))
+        self.assertFalse(all(front_runtime(bad, providers).values()))
+        bad = copy.deepcopy(proxies); bad['前置-香港-自动选择'] = {'type': 'URLTest'}
+        self.assertFalse(all(front_runtime(bad, providers).values()))
 
     def test_exit_requires_a_real_public_address(self):
         for value in (None,'invalid','127.0.0.1','10.0.0.1','::1','192.0.2.1'):

@@ -17,7 +17,7 @@ import uuid
 # Windows embeddable Python 的 ._pth 隔离模式不自动添加脚本目录。
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_android_vpn_runtime import GOOGLE_SEARCH_COMMAND, audit_connectivity, audit_google_search, package_uid
-from check_android_us_chain import EXITS, FRONT, FRONT_GROUPS, HK_EXITS, HK_REGION, REGION, US_EXITS
+from check_android_us_chain import EXITS, FRONT, HK_EXITS, HK_REGION, REGION, US_EXITS
 
 
 class AdbTransport:
@@ -129,19 +129,17 @@ def public_address(value):
         return None
 
 
-def front_runtime(proxies):
-    """界面可见的地区前置须在运行内核中存在；不输出真实机场节点名。"""
+def front_runtime(proxies, providers):
+    """前置只展开实际 provider 节点；不把未知名称或嵌套业务组当作机场。"""
     front = proxies.get(FRONT, {})
-    forbidden = {FRONT, REGION, HK_REGION, *EXITS, 'DIRECT', 'AI', 'Google', 'Microsoft'}
+    candidates = front.get('all') or []
+    forbidden = {FRONT, REGION, HK_REGION, *EXITS, 'DIRECT', 'REJECT', 'AI', 'Google', 'Microsoft'}
+    airport_nodes = {node.get('name') for provider in providers.values() for node in provider.get('proxies', [])}
     return {
-        'front_region_selector': front.get('type') == 'Selector',
-        'front_six_regions_exact': front.get('all') == list(FRONT_GROUPS),
-        'front_active_region_known': front.get('now') in FRONT_GROUPS,
-        'front_regions_airport_only': all(
-            proxies.get(name, {}).get('type') == 'URLTest'
-            and bool(proxies[name].get('all'))
-            and not (set(proxies[name]['all']) & forbidden)
-            for name in FRONT_GROUPS),
+        'front_manual_selector': front.get('type') == 'Selector',
+        'front_active_airport_known': bool(candidates) and front.get('now') in candidates,
+        'front_airport_only': bool(candidates) and set(candidates) <= airport_nodes and not (set(candidates) & forbidden),
+        'front_no_obsolete_region_groups': not any(name.startswith('前置-') for name in proxies),
     }
 
 
@@ -256,20 +254,20 @@ def collect(settings, expected):
         config = get('/configs')
         proxies = get('/proxies')['proxies']
         rules = get('/rules')['rules']
+        provider_data = get('/providers/proxies')['providers']
         hk = expected['google_hk']
         result['runtime'] = {
             'mode_rule': config.get('mode') == 'rule', 'process_always': config.get('find-process-mode') == 'always',
             'lan_disabled': config.get('allow-lan') is False,
             'google_hk': proxies.get('Google', {}).get('now') == hk,
             'hk_manual_airport': proxies.get(hk, {}).get('type') == 'Selector' and bool(proxies.get(hk, {}).get('all')),
-            **front_runtime(proxies),
+            **front_runtime(proxies, provider_data),
             'us_load_balance_candidates': proxies.get(REGION, {}).get('all') == list(US_EXITS)
                 and proxies.get(REGION, {}).get('type') == 'LoadBalance',
             'ai_uses_us_chain': proxies.get('AI', {}).get('now') == REGION,
             'google_rule': sum(r.get('type') == 'RuleSet' and r.get('payload') == 'hk_google' and r.get('proxy') == 'Google' for r in rules) == 1,
             'ai_rule': sum(r.get('type') == 'RuleSet' and r.get('payload') == 'us_ai' and r.get('proxy') == 'AI' for r in rules) == 1,
         }
-        provider_data = get('/providers/proxies')['providers']
         result['providers'] = provider_health(provider_data, expected['providers'])
         result['runtime']['confirmed_bad_nodes_provider_excluded'] = quarantine_runtime(provider_data, expected['quarantine'])
         result['google'] = []

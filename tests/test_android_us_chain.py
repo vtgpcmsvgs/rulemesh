@@ -17,30 +17,24 @@ def document():
               'udp': False, 'dialer-proxy': chain.FRONT} for i, name in enumerate(chain.EXITS)]
     health = {'type': 'url-test', 'url': 'https://www.google.com/generate_204', 'interval': 600, 'lazy': False}
     blocked = ['fixture-bad[1]']
-    front_groups = [{'name': name, **health, 'hidden': False, 'lazy': True,
-                     'tolerance': 100 if code == 'us' else 50,
-                     'filter': chain.front_region_filter(code), 'use': ['fixture'],
-                     'exclude-filter': '套餐'}
-                    for code, name in zip(chain.FRONT_REGIONS, chain.FRONT_GROUPS)]
     from check_android_stability import google_hk_exclusion
-    front_groups[0]['exclude-filter'] = '套餐' + google_hk_exclusion(blocked)
     return {'proxies': nodes, 'proxy-providers': {'fixture': {'exclude-filter': chain.quarantine_pattern(blocked)}},
             'x-rulemesh-android-google-hk-blocked-nodes': blocked,
             chain.QUARANTINE: {'version': 1, 'nodes': [{'provider': 'fixture', 'name': blocked[0],
                 'reason': 'google_cn_redirect', 'evidence': {'http_status': 302, 'final_host_role': 'google_cn',
                     'tls_handshake_completed': True, 'certificate_verify_result': 0}}]},
-            chain.KEY: {'version': 4, 'front': chain.FRONT, 'front-regions': list(chain.FRONT_GROUPS),
+            chain.KEY: {'version': 5, 'front': chain.FRONT, 'front-mode': 'airport-select',
                         'region': chain.REGION, 'exits': list(chain.EXITS), 'exit-identities': [
                             {'name': chain.EXITS[0], 'region': 'US', 'ip': '8.8.8.8', 'port': 1080},
                         ]},
             'proxy-groups': [
-                {'name': chain.FRONT, 'type': 'select', 'hidden': False, 'proxies': list(chain.FRONT_GROUPS)},
-                {'name': chain.REGION, 'type': 'load-balance', 'strategy': 'consistent-hashing', **{k: v for k, v in health.items() if k != 'type'}, 'hidden': False, 'proxies': list(chain.US_EXITS)},
+                {'name': chain.FRONT, 'type': 'select', 'hidden': False, 'use': ['fixture'], 'exclude-filter': '套餐'+google_hk_exclusion(blocked)},
+                {'name': chain.REGION, 'type': 'load-balance', 'strategy': 'consistent-hashing', **{k: v for k, v in health.items() if k != 'type'}, 'hidden': True, 'proxies': list(chain.US_EXITS)},
                 {'name': chain.HK_REGION, 'type': 'select', 'hidden': False, 'use': ['fixture'], 'filter': chain.front_region_filter('hk'), 'exclude-filter': '套餐'+google_hk_exclusion(blocked)},
                 {'name': 'AI', 'type': 'select', 'proxies': [chain.REGION]},
                 {'name': 'Microsoft', 'type': 'select', 'proxies': [chain.REGION, 'DIRECT']},
                 {'name': '香港券商', 'type': 'select', 'proxies': ['香港-fixture']},
-                {'name': 'Google', 'type': 'select', 'proxies': [chain.HK_REGION, chain.REGION]}, *front_groups]}
+                {'name': 'Google', 'type': 'select', 'proxies': [chain.HK_REGION, chain.REGION]}]}
 
 
 def lines(data):
@@ -68,14 +62,10 @@ class AndroidUsChainTests(unittest.TestCase):
         definition = ['[General]', 'udp-policy-not-supported-behaviour = REJECT', '[Proxy]',
                       'RM-US-Exit = socks5, 8.8.8.8, 1080, username=fixture, password=fixture, underlying-proxy=RM-US-Front, udp-relay=false',
                       '[Proxy Group]', '✈️ fixture = select, policy-path=https://fixture.invalid/sub, include-all-proxies=0',
-                      chain.FRONT + ' = select, ' + ', '.join(chain.FRONT_GROUPS) + ', hidden=0',
-                      chain.REGION + ' = select, RM-US-Exit, hidden=0',
+                      chain.FRONT + ' = select, include-all-proxies=0, include-other-group="✈️ fixture", policy-regex-filter=' + baseline.METADATA_FILTER + ', hidden=0',
+                      chain.REGION + ' = select, RM-US-Exit, hidden=1',
                       'AI = url-test, ' + chain.REGION + ', interval=300, hidden=0',
                       'Microsoft = select, ' + chain.REGION + ', DIRECT, hidden=0']
-        for code, name in zip(chain.FRONT_REGIONS, chain.FRONT_GROUPS):
-            definition.append(name + ' = url-test, include-all-proxies=0, include-other-group="✈️ fixture", '
-                              + 'policy-regex-filter=' + sorted(baseline.region_filters(code, True))[0]
-                              + ', hidden=0, interval=300')
         definition += ['[Rule]', 'FINAL,REJECT', chain.SURGE_MARKER + json.dumps(data[chain.KEY])]
         for profile in sorted(chain.PROFILES):
             if profile.endswith('.conf'):
@@ -86,6 +76,7 @@ class AndroidUsChainTests(unittest.TestCase):
         for old, new in [('underlying-proxy=RM-US-Front', 'underlying-proxy=' + chain.REGION),
                          ('udp-relay=false', 'udp-relay=true'),
                          ('behaviour = REJECT', 'behaviour = DIRECT'),
+                         ('RM-US-Exit, hidden=1', 'RM-US-Exit, hidden=0'),
                          ('include-all-proxies=0', 'include-all-proxies=1'),
                          ('include-other-group="✈️ fixture"', 'include-other-group="' + chain.REGION + '"')]:
             mutated = [line.replace(old, new) for line in definition]
@@ -115,9 +106,9 @@ class AndroidUsChainTests(unittest.TestCase):
         self.assertFalse(dns._group_has_us_semantics('AI', groups, baseline.region_filters('hk', False)))
         self.assertTrue(chain.check(Path('desktop.yaml'), text))
 
-    def test_final_exit_group_must_be_explicitly_visible(self):
+    def test_final_exit_group_is_hidden_but_front_remains_visible(self):
         for index in (1,):
-            for hidden in (True, None, 'false'):
+            for hidden in (False, None, 'true'):
                 data = document()
                 region = data['proxy-groups'][index]
                 if hidden is None:
@@ -126,6 +117,8 @@ class AndroidUsChainTests(unittest.TestCase):
                     region['hidden'] = hidden
                 with self.subTest(index=index, hidden=hidden):
                     self.assertTrue(chain.validate(lines(data)))
+        data = document(); data['proxy-groups'][0]['hidden'] = True
+        self.assertTrue(chain.validate(lines(data)))
 
     def test_wrong_cardinality_ports_missing_auth_and_direct_dialing_fail(self):
         changes = []
@@ -139,7 +132,7 @@ class AndroidUsChainTests(unittest.TestCase):
                 self.assertNotIn('fixture-secret', json.dumps(chain.validate(lines(data))))
 
     def test_provider_leak_recursive_front_and_airport_fallback_fail(self):
-        for index, key, value in [(0, 'proxies', [chain.REGION]), (0, 'use', ['fixture']),
+        for index, key, value in [(0, 'proxies', [chain.REGION]), (0, 'use', ['unknown']),
                                   (1, 'use', ['fixture']), (1, 'proxies', list(chain.EXITS) + ['DIRECT']),
                                   (2, 'proxies', ['airport-hk']), (4, 'proxies', [chain.REGION])]:
             data = document(); data['proxy-groups'][index][key] = value
@@ -147,29 +140,26 @@ class AndroidUsChainTests(unittest.TestCase):
         data = document(); data['proxy-groups'][0]['dialer-proxy'] = chain.REGION
         self.assertTrue(chain.validate(lines(data)))
 
-    def test_all_front_regions_are_independent_airport_only_auto_groups(self):
+    def test_single_front_rejects_group_cycles_and_keeps_all_airport_sources(self):
         self.assertFalse(chain.validate(lines(document())))
-        for name in chain.FRONT_GROUPS:
-            for key, value in [('proxies', [chain.REGION]), ('proxies', [chain.FRONT]),
-                               ('proxies', list(chain.EXITS)), ('use', []), ('filter', '.*'),
-                               ('lazy', False), ('type', 'select'), ('include-all', True),
-                               ('interval', 300), ('hidden', True), ('tolerance', 999)]:
-                data = document(); next(g for g in data['proxy-groups'] if g['name'] == name)[key] = value
-                with self.subTest(region=name, field=key, value=value):
-                    self.assertTrue(chain.validate(lines(data)))
-        data = document(); data['proxy-groups'][0]['proxies'][-1] = chain.REGION
-        self.assertTrue(chain.validate(lines(data)))
-        data = document(); data['proxy-groups'].pop()
+        for key, value in [('proxies', [chain.REGION]), ('proxies', [chain.FRONT]),
+                           ('proxies', list(chain.EXITS)), ('proxies', ['DIRECT']),
+                           ('use', []), ('use', ['fixture', 'fixture']), ('filter', '.*'),
+                           ('type', 'url-test'), ('include-all', True), ('include-all-proxies', True),
+                           ('interval', 300), ('hidden', True), ('exclude-filter', '')]:
+            data = document(); data['proxy-groups'][0][key] = value
+            with self.subTest(field=key, value=value):
+                self.assertTrue(chain.validate(lines(data)))
+        data = document(); data['proxy-groups'].append({'name': '前置-香港-自动选择', 'type': 'url-test', 'use': ['fixture']})
         self.assertTrue(chain.validate(lines(data)))
 
-    def test_front_region_regex_matches_bare_country_codes_after_yaml_round_trip(self):
+    def test_business_hk_filter_still_matches_bare_country_code(self):
         import re
         parsed = yaml.safe_load('\n'.join(lines(document())))
         groups = {g['name']: g for g in parsed['proxy-groups']}
-        for code, name in zip(chain.FRONT_REGIONS, chain.FRONT_GROUPS):
-            pattern = groups[name]['filter']
-            self.assertIsNotNone(re.search(pattern, 'Airport '+code.upper()+' 01'))
-            self.assertIsNone(re.search(pattern, 'prefix'+code+'suffix'))
+        pattern = groups[chain.HK_REGION]['filter']
+        self.assertIsNotNone(re.search(pattern, 'Airport HK 01'))
+        self.assertIsNone(re.search(pattern, 'prefixhksuffix'))
 
     def test_timeout_is_not_redirect_and_provider_quarantine_is_exact(self):
         data = document(); evidence = data[chain.QUARANTINE]['nodes'][0]['evidence']
@@ -196,7 +186,7 @@ class AndroidUsChainTests(unittest.TestCase):
         record['name'] = displayed
         data['x-rulemesh-android-google-hk-blocked-nodes'] = [displayed]
         from check_android_stability import google_hk_exclusion
-        hk_front = next(group for group in data['proxy-groups'] if group['name'] == chain.FRONT_GROUPS[0])
+        hk_front = next(group for group in data['proxy-groups'] if group['name'] == chain.FRONT)
         hk_front['exclude-filter'] = '套餐'+google_hk_exclusion([displayed])
         next(group for group in data['proxy-groups'] if group['name'] == chain.HK_REGION)['exclude-filter'] = '套餐'+google_hk_exclusion([displayed])
         self.assertEqual(chain.provider_match_name(provider, displayed), original)

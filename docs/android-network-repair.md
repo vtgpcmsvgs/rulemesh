@@ -2,7 +2,7 @@
 
 ## 2026-10-30 最终单美国出口修订
 
-2026-10-30 最终修订：全部六份私人配置统一单个美国 SOCKS5 落地；香港恢复普通机场线路，撤销此前两个 Comcast 与一个 Lumen 方案。美国 `RM-US-Front` 可见并选择六个独立机场前置地区组，不创建 `RM-HK-Front`。美国没有多节点负载均衡；Mihomo 保留单成员 load-balance 防止 TCP-only UDP 跳过规则，Surge 使用 underlying-proxy 与 UDP REJECT。登记升级为 `x-rulemesh-us-chain` 版本 4，真实端点和认证仅在私人仓库。 设备入口只验一个美国 IP，香港恢复机场 select 与历史隔离。详情见 [美国单落地迁移](regional-exits-20261030.md)。
+2026-10-30 最终修订：全部六份私人配置统一单个美国 SOCKS5 落地；香港恢复普通机场线路，撤销此前两个 Comcast 与一个 Lumen 方案。美国只保留一个可见的 `RM-US-Front`，直接手动选择机场节点；删除六个前置地区组，隐藏单成员美国最终组，不创建 `RM-HK-Front`。美国没有多节点负载均衡；Mihomo 保留单成员 load-balance 防止 TCP-only UDP 跳过规则，Surge 使用 underlying-proxy 与 UDP REJECT。登记升级为 `x-rulemesh-us-chain` 版本 5（front-mode: airport-select），真实端点和认证仅在私人仓库。 设备入口只验一个美国 IP，香港恢复机场 select 与历史隔离。详情见 [美国单落地迁移](regional-exits-20261030.md)。
 
 ## 2026-10-24 六地区前置与线路归因复核
 
