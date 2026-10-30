@@ -44,9 +44,9 @@
 
 ## 六份私人配置单美国链式结构
 
-2026-10-30 最终修订：全部六份私人配置统一单个美国 SOCKS5 落地；香港恢复普通机场线路，撤销此前两个 Comcast 与一个 Lumen 方案。美国只保留一个可见的 `RM-US-Front`，直接手动选择机场节点；删除六个前置地区组，隐藏单成员美国最终组，不创建 `RM-HK-Front`。美国没有多节点负载均衡；Mihomo 保留单成员 load-balance 防止 TCP-only UDP 跳过规则，Surge 使用 underlying-proxy 与 UDP REJECT。登记升级为 `x-rulemesh-us-chain` 版本 5（front-mode: airport-select），真实端点和认证仅在私人仓库。
+2026-10-31 当前修订：全部六份私人配置统一单个美国 SOCKS5 落地；香港恢复普通机场线路，撤销此前两个 Comcast 与一个 Lumen 方案。美国只保留一个可见的 `RM-US-Front`，直接手动选择全部机场来源中的美国节点；删除六个前置地区组，隐藏单成员美国最终组，不创建 `RM-HK-Front`。美国没有多节点负载均衡；Mihomo 保留单成员 load-balance 防止 TCP-only UDP 跳过规则，Surge 使用 underlying-proxy 与 UDP REJECT。登记升级为 `x-rulemesh-us-chain` 版本 5（front-mode: airport-us-select），真实端点和认证仅在私人仓库。
 
-Mihomo 美国最终组显式 hidden: true，仅包含 RM-US-Exit；AI/Microsoft 的代理候选只引用它，Microsoft 保留 DIRECT。Surge 美国最终组为隐藏的单成员 select，AI 自动组复用该组。唯一可见前置 RM-US-Front 直接手动选择机场节点，不再有六个前置地区组。运行态须将全部候选与实际 provider 节点集合交叉核对；空列表、未知节点、嵌套业务组、DIRECT 或最终出口均失败。前置和业务香港组分离，首次选择不保证地区，更新后必须确认实际选中的机场节点。
+Mihomo 美国最终组显式 hidden: true，仅包含 RM-US-Exit；AI/Microsoft 的代理候选只引用它，Microsoft 保留 DIRECT。Surge 美国最终组为隐藏的单成员 select，AI 自动组复用该组。唯一可见前置 RM-US-Front 直接手动选择全部来源中的美国机场节点，不再有六个前置地区组。运行态须将全部候选与实际 provider 节点集合交叉核对，并逐个确认美国标签；空列表、非美国标签、未知节点、嵌套业务组、DIRECT 或最终出口均失败。前置和业务香港组分离，更新后必须确认实际选中的美国机场节点。
 
 安卓香港恢复可见 select，保留全部 provider 和历史精确隔离；其余客户端香港保持自动机场选择。香港券商恢复香港-provider 子组。源文件静态通过后仍须在界面核对加载的当前 profile、完整成员和保存选择。工作白名单最终 REJECT 不变。
 

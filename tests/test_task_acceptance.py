@@ -66,10 +66,10 @@ class TaskAcceptanceTests(unittest.TestCase):
         self.assertFalse(quarantine_runtime(good, {}))
 
     def test_runtime_requires_actual_provider_nodes_and_rejects_group_cycles(self):
-        proxies = {FRONT: {'type': 'Selector', 'all': ['fixture-airport'], 'now': 'fixture-airport'}}
-        providers = {'fixture': {'proxies': [{'name': 'fixture-airport'}]}}
+        proxies = {FRONT: {'type': 'Selector', 'all': ['fixture US 01'], 'now': 'fixture US 01'}}
+        providers = {'fixture': {'proxies': [{'name': 'fixture US 01'}, {'name': 'fixture HK 01'}]}}
         self.assertTrue(all(front_runtime(proxies, providers).values()))
-        for target in (REGION, FRONT, EXITS[0], 'DIRECT', 'REJECT', 'unregistered-node'):
+        for target in (REGION, FRONT, EXITS[0], 'DIRECT', 'REJECT', 'unregistered-node', 'fixture HK 01'):
             bad = copy.deepcopy(proxies); bad[FRONT]['all'] = [target]; bad[FRONT]['now'] = target
             self.assertFalse(all(front_runtime(bad, providers).values()))
         self.assertFalse(all(front_runtime(proxies, {}).values()))

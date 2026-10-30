@@ -25,6 +25,14 @@ def front_region_filter(code):
     return next(iter(region_filters(code, False))).replace('\\\\', '\\')
 
 
+def surge_front_filter():
+    """Surge 合并占位排除与美国标签；US 使用词边界，避免误收 RUSSIA 等名称。"""
+    from check_performance_baseline import METADATA_FILTER
+    us = front_region_filter('us')
+    assert us.startswith('(?i)')
+    return '(?i)' + METADATA_FILTER[:-3] + '.*(?:' + us[4:] + ').*$'
+
+
 def confirmed_redirect(evidence):
     """超时、未完成 TLS 和无归属的失败不能冒充已证实的 Google 跳转。"""
     return (isinstance(evidence, dict) and evidence.get('http_status') in (301, 302, 303, 307, 308)
@@ -79,7 +87,7 @@ def present(lines):
 def registration_valid(registration):
     assert set(registration) == {'version', 'front', 'front-mode', 'region', 'exits', 'exit-identities'}
     assert registration['version'] == 5
-    assert registration['front'] == FRONT and registration['front-mode'] == 'airport-select'
+    assert registration['front'] == FRONT and registration['front-mode'] == 'airport-us-select'
     assert registration['region'] == REGION and registration['exits'] == list(EXITS)
     identities = registration['exit-identities']
     assert len(identities) == 1
@@ -117,9 +125,14 @@ def validate(lines, interval=None):
         front = groups[FRONT]
         # Direct provider membership removes six duplicate UI groups and cannot point
         # back to the final exit. Do not use include-all-proxies or business groups.
-        assert set(front) == {'name', 'type', 'hidden', 'use', 'exclude-filter'}
+        assert set(front) == {'name', 'type', 'hidden', 'use', 'filter', 'exclude-filter'}
         assert front['type'] == 'select' and front['hidden'] is False
+        assert front['filter'] == front_region_filter('us')
         assert set(front['use']) == set(data['proxy-providers']) and len(front['use']) == len(data['proxy-providers'])
+        import re
+        for provider in data['proxy-providers'].values():
+            override = provider.get('override', {})
+            assert not re.search(front['filter'], override.get('additional-prefix', '') + ' ' + override.get('additional-suffix', ''))
         assert isinstance(front['exclude-filter'], str) and front['exclude-filter']
         assert not any(n.startswith('前置-') for n in groups)
         region = groups[REGION]
@@ -204,8 +217,7 @@ def validate_surge(lines):
         assert set(opts) == {'include-all-proxies', 'include-other-group', 'policy-regex-filter', 'hidden'}
         assert opts['include-all-proxies'] == '0' and opts['hidden'] == '0'
         assert set(opts['include-other-group'].strip('"').split(',')) == airports
-        from check_performance_baseline import METADATA_FILTER
-        assert opts['policy-regex-filter'] == METADATA_FILTER
+        assert opts['policy-regex-filter'] == surge_front_filter()
         for name, parts in groups.items():
             assert not any(p.startswith('underlying-proxy=') for p in parts)
         assert sum('underlying-proxy=' in s for s in lines if not s.lstrip().startswith('#')) == 1

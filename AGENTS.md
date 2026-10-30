@@ -89,7 +89,7 @@
 
 ## 仓库默认流程
 
-- 2026-10-30 最终修订：全部六份私人配置统一单个美国 SOCKS5 落地；香港恢复普通机场线路，撤销此前两个 Comcast 与一个 Lumen 方案。美国只保留一个可见的 `RM-US-Front`，直接手动选择机场节点；删除六个前置地区组，隐藏单成员美国最终组，不创建 `RM-HK-Front`。美国没有多节点负载均衡；Mihomo 保留单成员 load-balance 防止 TCP-only UDP 跳过规则，Surge 使用 underlying-proxy 与 UDP REJECT。登记升级为 `x-rulemesh-us-chain` 版本 5（front-mode: airport-select），真实端点和认证仅在私人仓库。
+- 2026-10-31 当前修订：全部六份私人配置统一单个美国 SOCKS5 落地；香港恢复普通机场线路，撤销此前两个 Comcast 与一个 Lumen 方案。美国只保留一个可见的 `RM-US-Front`，直接手动选择全部机场来源中的美国节点；删除六个前置地区组，隐藏单成员美国最终组，不创建 `RM-HK-Front`。美国没有多节点负载均衡；Mihomo 保留单成员 load-balance 防止 TCP-only UDP 跳过规则，Surge 使用 underlying-proxy 与 UDP REJECT。登记升级为 `x-rulemesh-us-chain` 版本 5（front-mode: airport-us-select），真实端点和认证仅在私人仓库。
 
 - 2026-10-24 要求的任务收尾验收（2026-10-30 更新单美国出口结构）：运行 `tools/check_task_acceptance.py --settings <公开仓库外本机JSON>`，先完整 `check.ps1`（含订阅下载/有效期/配额闸门），再采集本次安卓 VPN、移动 Google 普通首页/搜索、DNS、单个美国 AI trace 与香港普通机场路径 的实际 IP、地区和链路。用户明确要求信任登记的单个美国 IP，不检测纯净度。无设备或控制器时必须报告未验收并失败，禁止复用旧报告或以节点名称/204 代替。配置导入另验 Chrome、重启、备份源一致性；详见 docs/task-acceptance.md。
 - 此前仅限安卓的授权已由用户明确扩展到六份私人配置；公开模板不带私人链式资产，工作白名单不得扩大。

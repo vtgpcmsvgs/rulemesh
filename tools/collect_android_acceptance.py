@@ -17,7 +17,7 @@ import uuid
 # Windows embeddable Python 的 ._pth 隔离模式不自动添加脚本目录。
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_android_vpn_runtime import GOOGLE_SEARCH_COMMAND, audit_connectivity, audit_google_search, package_uid
-from check_android_us_chain import EXITS, FRONT, HK_EXITS, HK_REGION, REGION, US_EXITS
+from check_android_us_chain import EXITS, FRONT, HK_EXITS, HK_REGION, REGION, US_EXITS, front_region_filter
 
 
 class AdbTransport:
@@ -139,6 +139,7 @@ def front_runtime(proxies, providers):
         'front_manual_selector': front.get('type') == 'Selector',
         'front_active_airport_known': bool(candidates) and front.get('now') in candidates,
         'front_airport_only': bool(candidates) and set(candidates) <= airport_nodes and not (set(candidates) & forbidden),
+        'front_us_labels_only': bool(candidates) and all(isinstance(name, str) and re.search(front_region_filter('us'), name) for name in candidates),
         'front_no_obsolete_region_groups': not any(name.startswith('前置-') for name in proxies),
     }
 
