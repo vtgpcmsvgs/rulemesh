@@ -1,6 +1,6 @@
 # RuleMesh
 
-2026-10-31 当前修订：全部六份私人配置统一单个美国 SOCKS5 落地；香港恢复普通机场线路，撤销此前两个 Comcast 与一个 Lumen 方案。美国只保留一个可见的 `RM-US-Front`，直接手动选择全部机场来源中的美国节点；删除六个前置地区组，隐藏单成员美国最终组，不创建 `RM-HK-Front`。美国没有多节点负载均衡；Mihomo 保留单成员 load-balance 防止 TCP-only UDP 跳过规则，Surge 使用 underlying-proxy 与 UDP REJECT。登记升级为 `x-rulemesh-us-chain` 版本 5（front-mode: airport-us-select），真实端点和认证仅在私人仓库。 设计见 [美国单落地迁移](docs/regional-exits-20261030.md)，验收见 [任务收尾验收](docs/task-acceptance.md)。
+2026-10-31 当前修订：全部六份私人配置统一单个美国 SOCKS5 落地；香港业务使用普通机场线路，撤销此前两个 Comcast 与一个 Lumen 方案。美国仅显示一个 `美国线路入口`，按香港、台湾、新加坡、日本、美国、韩国的顺序选择 `经香港接入`、`经台湾接入`、`经新加坡接入`、`经日本接入`、`经美国接入`、`经韩国接入`，默认香港。六个辅助组隐藏且仅从全部机场 provider 中自动选择对应地区节点；切换接入地区不改变最终美国 IP，不复用业务地区组。美国最终组仍隐藏，不创建 `RM-HK-Front`。美国没有多节点负载均衡；Mihomo 保留单成员 load-balance 防止 TCP-only UDP 跳过规则，Surge 使用 underlying-proxy 与 UDP REJECT。登记升级为 `x-rulemesh-us-chain` 版本 6（front-mode: regional-airport-select），真实端点和认证仅在私人仓库。 设计见 [美国单落地迁移](docs/regional-exits-20261030.md)，验收见 [任务收尾验收](docs/task-acceptance.md)。
 
 Clash Mi iOS 使用独立私有配置 `rulemesh-clashmi-ios.yaml`，由桌面业务配置派生；iOS TUN、DNS 覆写、600 秒测速与 ASN 兼容说明见 [Clash Mi iOS 接入](docs/clashmi-ios.md)。桌面或订阅更新后重新运行派生器，完整检查包含 iOS 一致性校验。
 

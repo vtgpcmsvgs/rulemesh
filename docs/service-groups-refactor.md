@@ -1,9 +1,9 @@
 # 业务策略组重构与 naiixi 配置分析
 
-2026-10-31 当前修订：全部六份私人配置统一单个美国 SOCKS5 落地；香港恢复普通机场线路，撤销此前两个 Comcast 与一个 Lumen 方案。美国只保留一个可见的 `RM-US-Front`，直接手动选择全部机场来源中的美国节点；删除六个前置地区组，隐藏单成员美国最终组，不创建 `RM-HK-Front`。美国没有多节点负载均衡；Mihomo 保留单成员 load-balance 防止 TCP-only UDP 跳过规则，Surge 使用 underlying-proxy 与 UDP REJECT。登记升级为 `x-rulemesh-us-chain` 版本 5（front-mode: airport-us-select），真实端点和认证仅在私人仓库。 以 [美国单落地迁移](regional-exits-20261030.md) 为当前约定；下文较早的美国-provider 约定仅适用于公开模板或历史记录。
+2026-10-31 当前修订：全部六份私人配置统一单个美国 SOCKS5 落地；香港业务使用普通机场线路，撤销此前两个 Comcast 与一个 Lumen 方案。美国仅显示一个 `美国线路入口`，按香港、台湾、新加坡、日本、美国、韩国的顺序选择 `经香港接入`、`经台湾接入`、`经新加坡接入`、`经日本接入`、`经美国接入`、`经韩国接入`，默认香港。六个辅助组隐藏且仅从全部机场 provider 中自动选择对应地区节点；切换接入地区不改变最终美国 IP，不复用业务地区组。美国最终组仍隐藏，不创建 `RM-HK-Front`。美国没有多节点负载均衡；Mihomo 保留单成员 load-balance 防止 TCP-only UDP 跳过规则，Surge 使用 underlying-proxy 与 UDP REJECT。登记升级为 `x-rulemesh-us-chain` 版本 6（front-mode: regional-airport-select），真实端点和认证仅在私人仓库。 以 [美国单落地迁移](regional-exits-20261030.md) 为当前约定；下文较早的美国-provider 约定仅适用于公开模板或历史记录。
 
 
-下方 2026-10-24 的五出口记录仅作历史证据；当前结构以 [三出口迁移](regional-exits-20261030.md) 为准。
+下方 2026-10-24 的五出口记录仅作历史证据；当前结构以 [美国单落地与六地区入口](regional-exits-20261030.md) 为准。
 
 2026-10-24 可见性修订：私人安卓“美国-自动选择”显式可见，在代理页展示五个最终落地，AI 继续引用该组。`RM-US-Front` 保留独立的机场前置选择，避免与普通 Google 香港及通用手动组耦合；本地选择器不增加网络跳数。检查器和实机界面分别验收，其他客户端的组显示保持。
 

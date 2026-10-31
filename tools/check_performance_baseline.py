@@ -316,6 +316,9 @@ def check(path: Path, lines: list[str]) -> list[str]:
                 require(group.interval == health_interval and group.lazy == ('false' if used else 'true'), "自动组须采用客户端检测周期，实际业务组主动检测，备用地区组按需检测。")
                 is_us = (
                     groups[name].filter_text in region_filters("us", False)
+                    # Plain/single-quoted YAML keeps one regex backslash; the
+                    # legacy text contract stores the double-quoted spelling.
+                    or groups[name].filter_text == chain.front_region_filter("us")
                     or name in {"AI", "Microsoft"}
                     or any(name.startswith(prefix + "-") for prefix in ("AI", "Microsoft"))
                 )

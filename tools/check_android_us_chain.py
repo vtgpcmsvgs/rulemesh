@@ -8,7 +8,11 @@ PROFILES = {PROFILE, 'rulemesh-flclash-desktop.yaml',
             'rulemesh-clashmi-ios.yaml', 'rulemesh-surge-home.conf',
             'rulemesh-surge-company.conf', 'rulemesh-surge-work.conf'}
 SURGE_MARKER = '# ' + KEY + ': '
-FRONT = 'RM-US-Front'
+FRONT = '美国线路入口'
+LEGACY_FRONT = 'RM-US-Front'
+FRONT_REGIONS = {'hk': '经香港接入', 'tw': '经台湾接入', 'sg': '经新加坡接入',
+                 'jp': '经日本接入', 'us': '经美国接入', 'kr': '经韩国接入'}
+FRONT_GROUPS = tuple(FRONT_REGIONS.values())
 QUARANTINE = 'x-rulemesh-android-provider-quarantine'
 REGION = '🇺🇸 美国-自动选择'
 HK_REGION = '🇭🇰 香港-自动选择'
@@ -25,12 +29,12 @@ def front_region_filter(code):
     return next(iter(region_filters(code, False))).replace('\\\\', '\\')
 
 
-def surge_front_filter():
-    """Surge 合并占位排除与美国标签；US 使用词边界，避免误收 RUSSIA 等名称。"""
+def surge_front_filter(code):
+    """Surge 合并占位排除与地区标签；短地区代码使用词边界。"""
     from check_performance_baseline import METADATA_FILTER
-    us = front_region_filter('us')
-    assert us.startswith('(?i)')
-    return '(?i)' + METADATA_FILTER[:-3] + '.*(?:' + us[4:] + ').*$'
+    pattern = front_region_filter(code)
+    assert pattern.startswith('(?i)')
+    return '(?i)' + METADATA_FILTER[:-3] + '.*(?:' + pattern[4:] + ').*$'
 
 
 def confirmed_redirect(evidence):
@@ -85,9 +89,10 @@ def present(lines):
 
 
 def registration_valid(registration):
-    assert set(registration) == {'version', 'front', 'front-mode', 'region', 'exits', 'exit-identities'}
-    assert registration['version'] == 5
-    assert registration['front'] == FRONT and registration['front-mode'] == 'airport-us-select'
+    assert set(registration) == {'version', 'front', 'front-mode', 'front-regions', 'region', 'exits', 'exit-identities'}
+    assert registration['version'] == 6
+    assert registration['front'] == FRONT and registration['front-mode'] == 'regional-airport-select'
+    assert registration['front-regions'] == list(FRONT_GROUPS)
     assert registration['region'] == REGION and registration['exits'] == list(EXITS)
     identities = registration['exit-identities']
     assert len(identities) == 1
@@ -121,23 +126,29 @@ def validate(lines, interval=None):
         assert all(isinstance(node[k], str) and node[k] and '\r' not in node[k] and '\n' not in node[k] for k in ('server', 'username', 'password'))
         rows = data['proxy-groups']; groups = {g['name']: g for g in rows}
         assert len(groups) == len(rows) and not (set(EXITS) & groups.keys())
-        assert 'RM-HK-Front' not in groups
+        assert 'RM-HK-Front' not in groups and LEGACY_FRONT not in groups
         front = groups[FRONT]
-        # Direct provider membership removes six duplicate UI groups and cannot point
-        # back to the final exit. Do not use include-all-proxies or business groups.
-        assert set(front) == {'name', 'type', 'hidden', 'use', 'filter', 'exclude-filter'}
-        assert front['type'] == 'select' and front['hidden'] is False
-        assert front['filter'] == front_region_filter('us')
-        assert set(front['use']) == set(data['proxy-providers']) and len(front['use']) == len(data['proxy-providers'])
-        import re
-        for provider in data['proxy-providers'].values():
-            override = provider.get('override', {})
-            assert not re.search(front['filter'], override.get('additional-prefix', '') + ' ' + override.get('additional-suffix', ''))
-        assert isinstance(front['exclude-filter'], str) and front['exclude-filter']
+        # One visible selector; hidden regional helpers contain only airport nodes.
+        # Reusing a business region group could loop back through the final US exit.
+        assert front == {'name': FRONT, 'type': 'select', 'hidden': False, 'proxies': list(FRONT_GROUPS)}
         assert not any(n.startswith('前置-') for n in groups)
         region = groups[REGION]
         cycle = region.get('interval')
         assert cycle in (300, 600) and (interval is None or cycle == interval)
+        import re
+        assert {n for n in groups if n.startswith('经') and n.endswith('接入')} == set(FRONT_GROUPS)
+        for code, name in FRONT_REGIONS.items():
+            child = groups[name]
+            assert set(child) == {'name', 'type', 'hidden', 'filter', 'exclude-filter', 'use', 'url', 'interval', 'lazy', 'tolerance'}
+            assert child['type'] == 'url-test' and child['hidden'] is True
+            assert child['filter'] == front_region_filter(code)
+            assert set(child['use']) == set(data['proxy-providers']) and len(child['use']) == len(data['proxy-providers'])
+            assert isinstance(child['exclude-filter'], str) and child['exclude-filter']
+            assert child['url'] == 'https://www.google.com/generate_204' and child['interval'] == cycle
+            assert child['lazy'] is True and child['tolerance'] == (100 if code == 'us' else 50)
+            for provider in data['proxy-providers'].values():
+                override = provider.get('override', {})
+                assert not re.search(child['filter'], override.get('additional-prefix', '') + ' ' + override.get('additional-suffix', ''))
         # Singleton LB prevents TCP-only Selector causing UDP to skip to MATCH,DIRECT.
         assert region['type'] == 'load-balance' and region['proxies'] == list(US_EXITS)
         assert region.get('hidden') is True and region.get('strategy') == 'consistent-hashing'
@@ -161,7 +172,7 @@ def validate(lines, interval=None):
             validate_quarantine(data)
             from check_android_stability import GOOGLE_HK_QUARANTINE, google_hk_exclusion
             suffix = google_hk_exclusion(data[GOOGLE_HK_QUARANTINE])
-            for group in (front, hk):
+            for group in (groups[FRONT_REGIONS['hk']], hk):
                 assert group['exclude-filter'].endswith(suffix) and group['exclude-filter'].count(suffix) == 1
     except Exception:
         return ['私人美国单落地链式结构不完整或越界；私人字段与异常原文已隐藏。']
@@ -197,7 +208,7 @@ def validate_surge(lines):
         assert options['username'] and options['password']
         assert options['underlying-proxy'] == FRONT and options['udp-relay'] == 'false'
         groups = surge_definitions(lines, 'Proxy Group')
-        assert 'RM-HK-Front' not in groups
+        assert 'RM-HK-Front' not in groups and LEGACY_FRONT not in groups
         assert groups[REGION] == ['select', EXITS[0], 'hidden=1']
         assert groups['Microsoft'] == ['select', REGION, 'DIRECT', 'hidden=0']
         assert groups['AI'][0] == 'url-test' and groups['AI'][1] == REGION
@@ -211,13 +222,17 @@ def validate_surge(lines):
             assert 'include-other-group' not in opts and 'underlying-proxy' not in opts
         assert not any(n.startswith('前置-') for n in groups)
         front = groups[FRONT]
-        assert front[0] == 'select'
-        opts = dict(p.split('=', 1) for p in front[1:])
-        assert len(opts) == len(front[1:])
-        assert set(opts) == {'include-all-proxies', 'include-other-group', 'policy-regex-filter', 'hidden'}
-        assert opts['include-all-proxies'] == '0' and opts['hidden'] == '0'
-        assert set(opts['include-other-group'].strip('"').split(',')) == airports
-        assert opts['policy-regex-filter'] == surge_front_filter()
+        assert front == ['select', *FRONT_GROUPS, 'hidden=0']
+        assert {n for n in groups if n.startswith('经') and n.endswith('接入')} == set(FRONT_GROUPS)
+        for code, name in FRONT_REGIONS.items():
+            child = groups[name]
+            assert child[0] == 'url-test'
+            opts = dict(p.split('=', 1) for p in child[1:])
+            assert len(opts) == len(child[1:])
+            assert set(opts) == {'include-all-proxies', 'include-other-group', 'policy-regex-filter', 'hidden', 'interval'}
+            assert opts['include-all-proxies'] == '0' and opts['hidden'] == '1' and opts['interval'] == '300'
+            assert set(opts['include-other-group'].strip('"').split(',')) == airports
+            assert opts['policy-regex-filter'] == surge_front_filter(code)
         for name, parts in groups.items():
             assert not any(p.startswith('underlying-proxy=') for p in parts)
         assert sum('underlying-proxy=' in s for s in lines if not s.lstrip().startswith('#')) == 1

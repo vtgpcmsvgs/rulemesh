@@ -81,6 +81,25 @@ class PerformanceBaselineTests(unittest.TestCase):
         sleeping = text.replace('lazy: false', 'lazy: true')
         self.assertTrue(any('主动检测' in error for error in baseline.check(desktop, sleeping.splitlines())))
 
+    def test_us_helper_tolerance_handles_equivalent_yaml_filter_quotes(self):
+        import json
+        import yaml
+        import check_android_us_chain as chain
+        path, text = self.fixture('mihomo')
+        pattern = chain.front_region_filter('us')
+        for spelling in (pattern, "'" + pattern + "'", json.dumps(pattern, ensure_ascii=False)):
+            block = ('  - name: 入口示例\n    type: url-test\n    hidden: true\n'
+                     '    filter: ' + spelling + '\n    use: [provider_a]\n'
+                     '    url: https://www.google.com/generate_204\n'
+                     '    interval: 300\n    lazy: true\n    tolerance: 100\n')
+            self.assertEqual(yaml.safe_load(block)[0]['filter'], pattern)
+            self.assertEqual(text.count('proxy-groups:\n'), 1)
+            candidate = text.replace('proxy-groups:\n', 'proxy-groups:\n' + block, 1)
+            with self.subTest(filter_spelling=spelling):
+                self.assertEqual(baseline.check(path, candidate.splitlines()), [])
+                invalid = candidate.replace(block, block.replace('tolerance: 100', 'tolerance: 50'), 1)
+                self.assertTrue(any('切换容差' in error for error in baseline.check(path, invalid.splitlines())))
+
     def test_light_rules_require_adjacent_direct_tail(self):
         for client in ('surge', 'mihomo'):
             path, text = self.fixture(client)
