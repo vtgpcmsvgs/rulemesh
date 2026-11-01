@@ -103,6 +103,10 @@ sources:
           note: 合并 GitHub 核心 HTTPS 与 1Password 官方核心域名，客户端复用通用自动选择组
         - repo: 1Password Support
           note: 官方域名快照继续每日更新，不再注册 1Password 专用 provider
+    twitter.list:
+      preferred:
+        - repo: self
+          note: 从 global_media 已登记域名提取 Twitter/X 网页、API、短链与媒体入口；旧入口保留兼容，不纳入 xAI/Grok
     youtube.list:
       preferred:
         - repo: blackmatrix7/ios_rule_script

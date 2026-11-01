@@ -90,7 +90,7 @@ class ServiceGroupTests(unittest.TestCase):
         for client in ('surge', 'mihomo'):
             path, text = self.fixture(client)
             self.assertEqual(baseline.check(path, text.splitlines()), [])
-            for name in ('Google', 'YouTube', 'Telegram'):
+            for name in ('Google', 'YouTube', 'Twitter', 'Telegram'):
                 if client == 'surge':
                     old = next(s for s in text.splitlines() if s.startswith(name + ' ='))
                     changed = text.replace(old, old.replace(', hidden=0', ', DIRECT, hidden=0'))
@@ -234,6 +234,33 @@ class ServiceGroupTests(unittest.TestCase):
         for domain in ("redirector.gvt1.com", "redirector.gvt2.com", "lh3.ggpht.com", "play.googleapis.com", "gemini.google.com", "accounts.google.com"):
             self.assertFalse(any(common.matches(r, domain, "browser") for r in rules), domain)
         self.assertTrue(all(r.startswith("DOMAIN") for r in rules))
+
+    def test_twitter_reuses_existing_scope_and_excludes_ai_and_other_media(self):
+        rules = build_rules.build_source(ROOT / 'rules/proxy/twitter.list').outputs['surge_rules']
+        legacy = build_rules.build_source(ROOT / 'rules/region/hk/global_media.list').outputs['surge_rules']
+        self.assertTrue(set(rules).issubset(legacy))
+        for domain in ('x.com', 'api.x.com', 'twitter.com', 'api.twitter.com', 'twitter.jp', 't.co', 'pbs.twimg.com', 'video.twimg.com'):
+            self.assertTrue(any(common.matches(r, domain, 'browser') for r in rules), domain)
+        for domain in ('x.ai', 'grok.com', 'www.youtube.com', 'netflix.com', 'examplex.com', 'x.com.example.org'):
+            self.assertFalse(any(common.matches(r, domain, 'browser') for r in rules), domain)
+
+    def test_twitter_must_precede_broad_google_and_media_rules(self):
+        for client in ('surge', 'mihomo'):
+            path, text = self.fixture(client)
+            self.assertEqual(baseline.check(path, text.splitlines()), [])
+            lines = text.splitlines()
+            twitter = next(s for s in lines if s.startswith(('RULE-SET,', '  - RULE-SET,')) and ('/twitter.list,' in s or 'proxy_twitter,' in s))
+            for fallback, provider in (('google_hk', 'hk_google'), ('global_media', 'hk_global_media'), ('gfw_precise', 'proxy_gfw')):
+                anchor = next(s for s in lines if s.startswith(('RULE-SET,', '  - RULE-SET,')) and (f'/{fallback}.list,' in s or f'{provider},' in s))
+                # 只修改唯一完整规则行；模糊或过时锚点必须先失败，避免误改相似夹具。
+                self.assertEqual(text.count(twitter + '\n'), 1)
+                self.assertEqual(text.count(anchor + '\n'), 1)
+                changed = text.replace(twitter + '\n', '').replace(anchor + '\n', anchor + '\n' + twitter + '\n')
+                self.assertNotEqual(changed, text)
+                self.assertTrue(any('Twitter 必须早于' in e for e in baseline.check(path, changed.splitlines())))
+                # 任意前置兼容入口都会抢走业务，后面再重复一次不能掩盖它。
+                duplicate = text.replace(twitter + '\n', anchor + '\n' + twitter + '\n')
+                self.assertTrue(any('Twitter 必须早于' in e for e in baseline.check(path, duplicate.splitlines())))
 
     def test_visible_groups_cannot_be_removed_hidden_or_retyped(self):
         path, text = self.fixture()

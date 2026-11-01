@@ -1,0 +1,9 @@
+# 生成来源：rules/proxy/twitter.list
+# 类型：rules
+# 请勿直接编辑 dist。
+
+DOMAIN-SUFFIX,x.com
+DOMAIN-SUFFIX,t.co
+DOMAIN-SUFFIX,twimg.com
+DOMAIN-SUFFIX,twitter.com
+DOMAIN-SUFFIX,twitter.jp

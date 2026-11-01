@@ -46,6 +46,15 @@ merge_plan:
     notes:
       - 只保留用户指定域名和公开住宅代理基准/官方站点确认的服务主域，不使用关键词或代理节点 IP
 
+  - id: twitter
+    target: rules/proxy/twitter.list
+    purpose: Twitter/X 独立选点，优先于 Google 完整 IP、国际媒体与 GFW
+    strategy:
+      - existing_global_media_twitter_domains_only
+    notes:
+      - global_media 保留旧覆盖；不扩入 xAI/Grok 或共享 CDN，不扩大工作白名单
+      - DNS 沿用默认国内解析，不添加 AI 或 Google DNS policy
+
   - id: youtube
     target: rules/proxy/youtube.list
     purpose: YouTube 视频及资源独立选点，不被 Google 完整地址空间提前吞并

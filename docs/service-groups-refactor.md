@@ -33,15 +33,15 @@
 
 用户的使用体验说明这家机场值得作为线路候选；附件本身无法区分线路带宽、拥塞、路由质量与配置参数的贡献。没有同节点、同时间窗口的对照测试，不能声称重构后已获得同样吞吐。
 
-## 八个入口如何工作
+## 九个入口如何工作
 
 ### 2026-09-27 手动地区与自动机场分层
 
-2026-09-27 业务选择约定：Google、YouTube、Telegram、Apple 使用 select，手动选择香港、台湾、日本、韩国、新加坡、美国六个地区自动组，Apple 另追加 DIRECT。六地区组均为 url-test，覆盖所有 provider 的对应地区节点。AI 与 Microsoft 共享“美国-provider”自动子组；Microsoft 在所有配置中使用 select，手动选择美国子组或 DIRECT；AI、Crypto、香港券商仅两份私人 Mihomo 的父组使用 select，其余配置保留 url-test；Crypto 引用“台湾-provider”，香港券商引用“香港-provider”。这些子组均为 url-test，逐一对应机场来源；私人配置每个固定地区业务有七个子组。Surge 父组必须用显式成员名称，不能用 include-other-group 代替，否则会展开为节点列表。隐藏状态不再作为功能验收条件。DNS、规则顺序、Store 美国及工作白名单边界保持。
+2026-09-27 业务选择约定：Google、YouTube、Twitter、Telegram、Apple 使用 select，手动选择香港、台湾、日本、韩国、新加坡、美国六个地区自动组，Apple 另追加 DIRECT。六地区组均为 url-test，覆盖所有 provider 的对应地区节点。AI 与 Microsoft 共享“美国-provider”自动子组；Microsoft 在所有配置中使用 select，手动选择美国子组或 DIRECT；AI、Crypto、香港券商仅两份私人 Mihomo 的父组使用 select，其余配置保留 url-test；Crypto 引用“台湾-provider”，香港券商引用“香港-provider”。这些子组均为 url-test，逐一对应机场来源；私人配置每个固定地区业务有七个子组。Surge 父组必须用显式成员名称，不能用 include-other-group 代替，否则会展开为节点列表。隐藏状态不再作为功能验收条件。DNS、规则顺序、Store 美国及工作白名单边界保持。
 
 | 入口 | 类型 | 候选 |
 | --- | --- | --- |
-| Google、YouTube、Telegram、Apple | select | 六地区 url-test 组，初始香港；Apple 另有 DIRECT |
+| Google、YouTube、Twitter、Telegram、Apple | select | 六地区 url-test 组，初始香港；Apple 另有 DIRECT |
 | AI | 私人 Mihomo 为 select，其余为 url-test | 美国-provider 自动子组 |
 | Microsoft | select | 同一套美国-provider 自动子组及 DIRECT |
 | Crypto | 私人 Mihomo 为 select，其余为 url-test | 台湾-provider 子组 |
@@ -102,3 +102,5 @@ Surge url-test 的 interval 是测试结果有效期，使用且结果过期时�
 此前只检查解析后的组名集合，把 include-other-group 与显式引用视作同一种候选关系，遗漏了客户端会展平节点的实际语义。现在业务父组禁止 include-other-group 和 smart；检查器分别验证 select 与 url-test、共享美国子组、完整 provider 覆盖和地区限制。负例覆盖节点展平、smart 嵌套、遗漏机场、重复 YAML 字段和非六地区候选；保留 DNS 与工作拒绝边界测试。分块审计必须止于下一顶层节，避免把 rule-providers 的字段误认为最后一个策略组字段。
 
 2026-10-24 安卓香港隔离归因复核：五条历史香港隔离项继续保留；现存矩阵能确认三条受信 302 跳转 google.cn，另两条只有超时证据，不能统称五条已证实跳转。三条确认项在私人安卓对应 provider 的 exclude-filter 中按完整名称排除，登记来源和证据于 x-rulemesh-android-provider-quarantine；不删除整个 provider，其他客户端不变。香港业务仍手动固定已验收线路，前置专用香港自动组与之分离；新节点或同名节点更换出口后仍需移动搜索实测。详见 docs/android-network-repair.md。
+
+2026-11-01 Twitter/X：独立 `Twitter` 手动组复用 YouTube 的六地区候选，默认香港；`proxy/twitter` 前置于 Google 完整地址空间、国际媒体及 GFW。网页/API、t.co 短链与 twimg 图片/视频共用该选择，xAI/Grok 保留 AI 美国。普通 DNS 沿用默认国内解析，不添加 Twitter 专用 DNS policy；私人美国候选仍使用已登记单个美国落地，安卓香港沿用现有手动地区组。静态配置、客户端加载和实际 DNS/连接验收分别报告。

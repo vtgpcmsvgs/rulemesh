@@ -21,8 +21,8 @@
 2. 国内 DNS 与新华三精选直连固定第二条，再调用国内 AI、抖音、微信与小红书。
 3. 日本明确访问例外、Crypto 台湾、香港券商与 Personal 香港证券。
 
-香港券商统一使用“香港券商”策略组；Google、YouTube、Telegram、Apple 可从六个地区自动选择中切换。地区自动组供业务组引用，界面是否隐藏不影响候选层级。AI、Crypto、Microsoft 与香港券商均按 provider 拆分自动子组，Microsoft 父组手动选择。
-4. Google、YouTube、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个地区自动组；Apple 在六地区选项后追加 DIRECT。AI 与 Microsoft 按 provider 保留美国自动子组，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，AI、Crypto、香港券商不提供 DIRECT；Microsoft 父组使用 select，手动选择美国子组或 DIRECT。Google 保留官方完整地址空间。
+香港券商统一使用“香港券商”策略组；Google、YouTube、Twitter、Telegram、Apple 可从六个地区自动选择中切换。地区自动组供业务组引用，界面是否隐藏不影响候选层级。AI、Crypto、Microsoft 与香港券商均按 provider 拆分自动子组，Microsoft 父组手动选择。
+4. Google、YouTube、Twitter、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个地区自动组；Apple 在六地区选项后追加 DIRECT。AI 与 Microsoft 按 provider 保留美国自动子组，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，AI、Crypto、香港券商不提供 DIRECT；Microsoft 父组使用 select，手动选择美国子组或 DIRECT。Google 保留官方完整地址空间。
 5. Personal 精选规则与既有拒绝规则；Apple / Outlook 直连及 Microsoft Store 优先入口保持各自边界。
 6. 其他精确业务、GitHub SSH/Raw/Core、Polygon/BSC RPC、订阅端点与 DNS 出口。
 7. LAN、系统时间、阿里云 TCP/22 和其他国内直连。
@@ -30,7 +30,7 @@
 
 命中普通海外规则时使用全地区 smart 组，未命中规则的 `FINAL` 使用 DIRECT；AI 美国、Crypto/RPC 台湾、`opinion.trade` 日本、券商香港是明确例外。地区组仍可用于手动选择。AWS 地区 IP 与链式 SOCKS5 的专用资产及配置已删除。
 
-`global_media` 承接 X / Twitter 和媒体服务；Polymarket 已移入 Crypto 台湾。WPS/金山文档按 2026-09-18 修订统一 DIRECT，继续使用默认国内 DNS，Store 专项固定美国以满足地区 IP 要求；通用 Microsoft 保留美国代理候选并追加 DIRECT；Notion 在 Google 广谱前使用香港自动选择，默认国内 DNS 保留，详见 [Notion 网页优化](notion-network-optimization.md)。GoDaddy 由香港优先规则集承接；尊嘉证券优先命中统一香港券商规则集；supado.com 已迁入 AI 中转站规则集并使用全地区自动选择。国内 AI 由 `ai_cn_direct` 承接，不扩入海外 AI。AI 仅使用明确域名，详见[出口修订](scoped-egress-repair.md)。AI 中转站使用 `region/multi/ai_relay` 绑定全地区自动选择；支付与加密支付使用 `region/multi/payment_crypto` 绑定全地区自动选择；住宅代理与住宅代理 API 使用 `region/multi/residential_proxy` 绑定全地区自动选择，三者均不使用关键词泛匹配。
+`proxy/twitter` 承接 X / Twitter 独立选点，优先于 Google 完整地址空间与 `global_media`；`global_media` 保留 Twitter 旧覆盖兼容订阅并承接其他媒体服务；Polymarket 已移入 Crypto 台湾。WPS/金山文档按 2026-09-18 修订统一 DIRECT，继续使用默认国内 DNS，Store 专项固定美国以满足地区 IP 要求；通用 Microsoft 保留美国代理候选并追加 DIRECT；Notion 在 Google 广谱前使用香港自动选择，默认国内 DNS 保留，详见 [Notion 网页优化](notion-network-optimization.md)。GoDaddy 由香港优先规则集承接；尊嘉证券优先命中统一香港券商规则集；supado.com 已迁入 AI 中转站规则集并使用全地区自动选择。国内 AI 由 `ai_cn_direct` 承接，不扩入海外 AI。AI 仅使用明确域名，详见[出口修订](scoped-egress-repair.md)。AI 中转站使用 `region/multi/ai_relay` 绑定全地区自动选择；支付与加密支付使用 `region/multi/payment_crypto` 绑定全地区自动选择；住宅代理与住宅代理 API 使用 `region/multi/residential_proxy` 绑定全地区自动选择，三者均不使用关键词泛匹配。
 
 中转规则已补充 `easyapis.cc`、`ccapi.us` 与截图核实的第三方中转/聚合网关，见[逐项分类](ai-relay-classification.md)。OpenRouter 从 `ai_us` 迁入 `ai_relay`，使用全地区自动选择和默认国内 DNS；原生模型 API 与纯推理/算力平台不并入中转规则，共用母域只登记确认的服务主机。
 
@@ -71,8 +71,10 @@ GitHub Raw 继续保留独立海外解析入口 `raw.githubusercontent.com = ser
 
 ## 业务组选择（2026-09-25）
 
-2026-09-27 业务选择约定：Google、YouTube、Telegram、Apple 使用 select，手动选择香港、台湾、日本、韩国、新加坡、美国六个地区自动组，Apple 另追加 DIRECT。六地区组均为 url-test，覆盖所有 provider 的对应地区节点。AI 与 Microsoft 共享“美国-provider”自动子组；Microsoft 在所有配置中使用 select，手动选择美国子组或 DIRECT；AI、Crypto、香港券商仅两份私人 Mihomo 的父组使用 select，其余配置保留 url-test；Crypto 引用“台湾-provider”，香港券商引用“香港-provider”。这些子组均为 url-test，逐一对应机场来源；私人配置每个固定地区业务有七个子组。Surge 父组必须用显式成员名称，不能用 include-other-group 代替，否则会展开为节点列表。隐藏状态不再作为功能验收条件。DNS、规则顺序、Store 美国及工作白名单边界保持。
+2026-09-27 业务选择约定：Google、YouTube、Twitter、Telegram、Apple 使用 select，手动选择香港、台湾、日本、韩国、新加坡、美国六个地区自动组，Apple 另追加 DIRECT。六地区组均为 url-test，覆盖所有 provider 的对应地区节点。AI 与 Microsoft 共享“美国-provider”自动子组；Microsoft 在所有配置中使用 select，手动选择美国子组或 DIRECT；AI、Crypto、香港券商仅两份私人 Mihomo 的父组使用 select，其余配置保留 url-test；Crypto 引用“台湾-provider”，香港券商引用“香港-provider”。这些子组均为 url-test，逐一对应机场来源；私人配置每个固定地区业务有七个子组。Surge 父组必须用显式成员名称，不能用 include-other-group 代替，否则会展开为节点列表。隐藏状态不再作为功能验收条件。DNS、规则顺序、Store 美国及工作白名单边界保持。
 
 原机场手动组、节点 bootstrap、香港 Notion 规则和 Raw DNS 例外保留。导入后核对实际选择与 DNS 出口；参见 [完整说明](service-groups-refactor.md)。
 
 Microsoft 在全部配置中手动选择美国自动子组或 DIRECT，父组不设置测速字段。运行态验证边界见 [客户端性能说明](flclash-performance.md)。
+
+2026-11-01 Twitter/X：独立 `Twitter` 手动组复用 YouTube 的六地区候选，默认香港；`proxy/twitter` 前置于 Google 完整地址空间、国际媒体及 GFW。网页/API、t.co 短链与 twimg 图片/视频共用该选择，xAI/Grok 保留 AI 美国。普通 DNS 沿用默认国内解析，不添加 Twitter 专用 DNS policy；私人美国候选仍使用已登记单个美国落地，安卓香港沿用现有手动地区组。静态配置、客户端加载和实际 DNS/连接验收分别报告。

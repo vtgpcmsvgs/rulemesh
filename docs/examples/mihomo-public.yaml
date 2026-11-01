@@ -201,6 +201,17 @@ proxy-groups:
       - "🇸🇬 新加坡-自动选择"
       - "🇺🇸 美国-自动选择"
 
+  - name: "Twitter"
+    type: select
+    hidden: false
+    proxies:
+      - "🇭🇰 香港-自动选择"
+      - "🇨🇳 台湾-自动选择"
+      - "🇯🇵 日本-自动选择"
+      - "🇰🇷 韩国-自动选择"
+      - "🇸🇬 新加坡-自动选择"
+      - "🇺🇸 美国-自动选择"
+
   - name: "AI"
     type: url-test
     hidden: false
@@ -520,6 +531,17 @@ rule-providers:
     format: yaml
     url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/proxy/youtube.yaml"
     path: ./ruleset/proxy/youtube.yaml
+    interval: 86400
+    proxy: "♻️ 自动选择"
+
+
+
+  proxy_twitter:
+    type: http
+    behavior: classical
+    format: yaml
+    url: "https://raw.githubusercontent.com/vtgpcmsvgs/rulemesh/main/dist/mihomo/classical/proxy/twitter.yaml"
+    path: ./ruleset/proxy/twitter.yaml
     interval: 86400
     proxy: "♻️ 自动选择"
 
@@ -848,6 +870,7 @@ rules:
   - RULE-SET,hk_user_priority,🇭🇰 香港-自动选择
   - RULE-SET,hk_wps_kdocs,DIRECT
   - RULE-SET,hk_notion,🇭🇰 香港-自动选择
+  - RULE-SET,proxy_twitter,Twitter
   - RULE-SET,proxy_youtube,YouTube
   - RULE-SET,hk_google,Google
   - RULE-SET,direct_apple,Apple

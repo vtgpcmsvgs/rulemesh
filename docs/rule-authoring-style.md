@@ -97,7 +97,7 @@ DOMAIN-KEYWORD,...
 - `google_hk.list` 按 Google 通用服务、FCM、Play、YouTube 兼容覆盖与官方 IP 地址空间分组；Google AI 单独位于前置 `ai_us`，独立视频入口位于 `proxy/youtube`
 - `crypto_tw.list` 适合按 `交易所 / 接入基础设施`、`链上数据 / 区块浏览器`、`预测市场` 这类类别分组
 - `bytedance_direct.list` 适合按 `字节跳动 / ByteDance` 与 `抖音 / Douyin` 分组
-- `global_media.list` 按上游主体与 X/Twitter 分组；Polymarket 独立归入 `crypto_tw` 台湾入口。
+- `global_media.list` 按上游主体与 X/Twitter 兼容覆盖分组；`proxy/twitter.list` 提取既有五个专用域名用于前置独立选点，不扩入 xAI/Grok。Polymarket 独立归入 `crypto_tw` 台湾入口。
 
 不要默认把所有显式域名堆成一段、所有关键词再堆成另一段；这样后续找某个平台时要来回跳，不利于维护。
 

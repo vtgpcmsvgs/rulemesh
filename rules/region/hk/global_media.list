@@ -9,7 +9,7 @@
 # 国际流媒体通用主体：以上游快照为主，承接主流流媒体、视频站点与国际媒体服务。
 INCLUDE,upstream/blackmatrix7/global_media.list
 
-# X / Twitter：本地单独保留网页、短链与静态资源入口，避免回落到通用 gfw 出口。
+# X / Twitter：保留网页、短链与静态资源旧覆盖；新配置在本规则和 Google 广谱之前调用 proxy/twitter 独立选点。
 DOMAIN-SUFFIX,x.com
 DOMAIN-SUFFIX,t.co
 DOMAIN-SUFFIX,twimg.com

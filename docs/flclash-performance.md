@@ -1,6 +1,6 @@
 # FlClash 客户端与性能基线
 
-2026-09-27 当前业务选择层以 [八个业务组与 DNS 联动](service-groups-refactor.md) 为准；下文保留历史基线及实测记录。
+2026-11-01 当前业务选择层以 [九个业务组与 DNS 联动](service-groups-refactor.md) 为准，新增 Twitter 独立六地区选择；下文保留历史基线及实测记录。
 
 2026-09-16 用户已另外授权本机 FlClash 深度验收，记录见[桌面实测](flclash-desktop-validation-20260916.md)。下文早前“本次不操作桌面”和历史数量只描述各自迁移批次，不能覆盖本次桌面实测结论。
 

@@ -20,9 +20,9 @@ iPhone 的 Clash Mi 使用独立 `rulemesh-clashmi-ios.yaml`，不要套用安�
 
 海外 AI（含 Gemini、GPTZero）固定美国并作为第一条有效规则；GPTZero 的 `gptzero.me` 及子域复用 `us_ai` 和 `rule-set:us_ai` 专用 DNS policy，更新规则 provider 后覆盖。国内 AI、抖音、小红书、微信前置直连。Crypto / Polygon / BSC RPC 固定台湾，`opinion.trade` 保留日本访问例外，香港券商和香港证券保留香港。这些地区入口都早于 Google 官方完整地址空间。
 
-香港券商统一由 `hk_securities` 规则集和“香港券商”策略组承接；AI、Crypto、Microsoft、香港券商按 provider 使用独立 `url-test` 子组，Microsoft 父组使用 `select`。Google、YouTube、Telegram、Apple 复用六个地区自动组。安卓已移除“Google 下载稳定”组，Google 下载相关规则统一进入 Google 业务组。
+香港券商统一由 `hk_securities` 规则集和“香港券商”策略组承接；AI、Crypto、Microsoft、香港券商按 provider 使用独立 `url-test` 子组，Microsoft 父组使用 `select`。Google、YouTube、Twitter、Telegram、Apple 复用六个地区自动组。安卓已移除“Google 下载稳定”组，Google 下载相关规则统一进入 Google 业务组。
 
-WPS/金山文档按 2026-09-18 修订统一 DIRECT，继续使用默认国内 DNS，Microsoft Store 专项固定美国，通用 Microsoft 保留美国代理候选并追加 DIRECT。Notion 在 Google 广谱前使用 `hk_notion` 规则集并复用香港自动选择，覆盖网页、API、公开页与图片，沿用国内 DNS；详见 [Notion 网页优化](notion-network-optimization.md)。Google、YouTube、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个地区自动组；Apple 在六地区选项后追加 DIRECT。AI 与 Microsoft 按 provider 保留美国自动子组，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，AI、Crypto、香港券商不提供 DIRECT；Microsoft 父组使用 select，手动选择美国子组或 DIRECT。AI 中转站使用 `multi_ai_relay`，支付与加密支付使用 `multi_payment_crypto`，住宅代理与住宅代理 API 使用 `multi_residential_proxy`，三者绑定全地区自动选择。GoDaddy 由香港优先规则集承接；尊嘉证券优先命中统一香港券商规则集；supado.com 已迁入 `multi_ai_relay`。未命中前置规则时 `MATCH,DIRECT`。既有前置 DIRECT/REJECT 规则保持作用；Polymarket 从媒体入口移入 Crypto。AWS 地区 IP 与链式代理资产、provider、内联节点及拨号引用已删除。
+WPS/金山文档按 2026-09-18 修订统一 DIRECT，继续使用默认国内 DNS，Microsoft Store 专项固定美国，通用 Microsoft 保留美国代理候选并追加 DIRECT。Notion 在 Google 广谱前使用 `hk_notion` 规则集并复用香港自动选择，覆盖网页、API、公开页与图片，沿用国内 DNS；详见 [Notion 网页优化](notion-network-optimization.md)。Google、YouTube、Twitter、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个地区自动组；Apple 在六地区选项后追加 DIRECT。AI 与 Microsoft 按 provider 保留美国自动子组，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，AI、Crypto、香港券商不提供 DIRECT；Microsoft 父组使用 select，手动选择美国子组或 DIRECT。AI 中转站使用 `multi_ai_relay`，支付与加密支付使用 `multi_payment_crypto`，住宅代理与住宅代理 API 使用 `multi_residential_proxy`，三者绑定全地区自动选择。GoDaddy 由香港优先规则集承接；尊嘉证券优先命中统一香港券商规则集；supado.com 已迁入 `multi_ai_relay`。未命中前置规则时 `MATCH,DIRECT`。既有前置 DIRECT/REJECT 规则保持作用；Polymarket 从媒体入口移入 Crypto。AWS 地区 IP 与链式代理资产、provider、内联节点及拨号引用已删除。
 
 中转规则已补充 `easyapis.cc`、`ccapi.us` 与截图核实的第三方中转/聚合网关，见[逐项分类](ai-relay-classification.md)。OpenRouter 从 `us_ai` 迁入 `multi_ai_relay`，使用全地区自动选择；`rule-set:us_ai` 的 DNS policy 不再覆盖它，沿用默认国内 DNS。原生模型 API 与纯推理/算力平台不并入中转规则，共用母域只登记确认的服务主机。
 
@@ -60,10 +60,12 @@ GeoIP 使用 `geodata-mode: false`，`geox-url.mmdb` 直接引用 [MetaCubeX cou
 
 ## 业务组选择（2026-09-25）
 
-2026-09-27 业务选择约定：Google、YouTube、Telegram、Apple 使用 select，手动选择香港、台湾、日本、韩国、新加坡、美国六个地区自动组，Apple 另追加 DIRECT。六地区组均为 url-test，覆盖所有 provider 的对应地区节点。AI 与 Microsoft 共享“美国-provider”自动子组；Microsoft 在所有配置中使用 select，手动选择美国子组或 DIRECT；AI、Crypto、香港券商仅两份私人 Mihomo 的父组使用 select，其余配置保留 url-test；Crypto 引用“台湾-provider”，香港券商引用“香港-provider”。这些子组均为 url-test，逐一对应机场来源；私人配置每个固定地区业务有七个子组。Surge 父组必须用显式成员名称，不能用 include-other-group 代替，否则会展开为节点列表。隐藏状态不再作为功能验收条件。DNS、规则顺序、Store 美国及工作白名单边界保持。
+2026-09-27 业务选择约定：Google、YouTube、Twitter、Telegram、Apple 使用 select，手动选择香港、台湾、日本、韩国、新加坡、美国六个地区自动组，Apple 另追加 DIRECT。六地区组均为 url-test，覆盖所有 provider 的对应地区节点。AI 与 Microsoft 共享“美国-provider”自动子组；Microsoft 在所有配置中使用 select，手动选择美国子组或 DIRECT；AI、Crypto、香港券商仅两份私人 Mihomo 的父组使用 select，其余配置保留 url-test；Crypto 引用“台湾-provider”，香港券商引用“香港-provider”。这些子组均为 url-test，逐一对应机场来源；私人配置每个固定地区业务有七个子组。Surge 父组必须用显式成员名称，不能用 include-other-group 代替，否则会展开为节点列表。隐藏状态不再作为功能验收条件。DNS、规则顺序、Store 美国及工作白名单边界保持。
 
 Apple 与其他三个手动入口不设置周期测速字段；实际地区与 provider 子组沿用 HTTPS Google 204 探测，私人 FlClash 更新拒绝仍优先。
 
 AI DoH 使用 #AI；安卓额外按 YouTube → Google 配置各自 DNS 出口，分别跟随对应业务组。桌面不新增视频 DNS policy。新组第一项是初始默认，保存选择可能覆盖；下载速度与 204 延迟须分别验收。详见 [重构说明](service-groups-refactor.md)。
 
 2026-10-24 安卓香港隔离归因复核：五条历史香港隔离项继续保留；现存矩阵能确认三条受信 302 跳转 google.cn，另两条只有超时证据，不能统称五条已证实跳转。三条确认项在私人安卓对应 provider 的 exclude-filter 中按完整名称排除，登记来源和证据于 x-rulemesh-android-provider-quarantine；不删除整个 provider，其他客户端不变。香港业务仍手动固定已验收线路，前置专用香港自动组与之分离；新节点或同名节点更换出口后仍需移动搜索实测。详见 docs/android-network-repair.md。
+
+2026-11-01 Twitter/X：独立 `Twitter` 手动组复用 YouTube 的六地区候选，默认香港；`proxy/twitter` 前置于 Google 完整地址空间、国际媒体及 GFW。网页/API、t.co 短链与 twimg 图片/视频共用该选择，xAI/Grok 保留 AI 美国。普通 DNS 沿用默认国内解析，不添加 Twitter 专用 DNS policy；私人美国候选仍使用已登记单个美国落地，安卓香港沿用现有手动地区组。静态配置、客户端加载和实际 DNS/连接验收分别报告。

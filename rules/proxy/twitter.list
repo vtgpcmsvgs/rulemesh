@@ -1,0 +1,10 @@
+# Twitter / X 独立选点：负责网页、API、短链与图片/视频资源，不接管 xAI / Grok 或其他媒体。
+# 客户端顺序：AI 与地区例外之后，Google 完整地址空间、global_media 与 gfw 之前。
+# global_media 保留相同域名兼容旧订阅；新配置以前置本入口选择 Twitter 出口。
+
+# 沿用 global_media 已登记的 Twitter 专用域名，不扩大工作白名单。
+DOMAIN-SUFFIX,x.com
+DOMAIN-SUFFIX,t.co
+DOMAIN-SUFFIX,twimg.com
+DOMAIN-SUFFIX,twitter.com
+DOMAIN-SUFFIX,twitter.jp

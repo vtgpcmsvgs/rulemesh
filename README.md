@@ -161,9 +161,9 @@ python tools/build_rules.py
 
 - 海外 AI（含 Gemini、AI Studio、NotebookLM）固定美国，第一条规则优先匹配；国内 AI、抖音、小红书、微信直连。
 - Crypto、Polymarket、Polygon/BSC RPC 固定台湾；`opinion.trade` 保留日本访问例外，香港券商与 Personal 证券入口保留香港。明确地区要求优先于测速结果。
-- 香港券商统一使用 `region/hk/hk_securities` 规则集和“香港券商”策略组；AI、Crypto、Microsoft、香港券商的 provider 子组自动测速；Microsoft 父组手动选择。Google、YouTube、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个地区自动组；安卓不再单独维护“Google 下载稳定”策略组。
+- 香港券商统一使用 `region/hk/hk_securities` 规则集和“香港券商”策略组；AI、Crypto、Microsoft、香港券商的 provider 子组自动测速；Microsoft 父组手动选择。Google、YouTube、Twitter、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个地区自动组；安卓不再单独维护“Google 下载稳定”策略组。
 - 命中前置规则的其余海外代理业务使用全地区自动组；未命中规则的 FINAL/MATCH 按 2026-09-12 用户要求使用 DIRECT，仅工作白名单保持 REJECT，不再按国家标签限制候选节点；套餐占位项继续过滤。前置 DIRECT/REJECT 行为继续保留。
-- Google、YouTube、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个地区自动组；Apple 在六地区选项后追加 DIRECT。AI 与 Microsoft 按 provider 保留美国自动子组，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，AI、Crypto、香港券商不提供 DIRECT；Microsoft 父组使用 select，手动选择美国子组或 DIRECT。google_hk 兼容路径和完整官方 IP 地址空间保留，AI、国内精选及地区必需规则都在它前面。
+- Google、YouTube、Twitter、Telegram、Apple 展示香港、台湾、日本、韩国、新加坡、美国六个地区自动组；Apple 在六地区选项后追加 DIRECT。AI 与 Microsoft 按 provider 保留美国自动子组，Crypto 按 provider 选择台湾节点，香港券商按 provider 选择香港节点，AI、Crypto、香港券商不提供 DIRECT；Microsoft 父组使用 select，手动选择美国子组或 DIRECT。google_hk 兼容路径和完整官方 IP 地址空间保留，AI、国内精选及地区必需规则都在它前面。
 - 国内默认双 DoH，AI 单独通过美国解析；Mihomo 开启 TCP 并发，保留 ARC、fake-ip，桌面 300 秒、安卓 600 秒主动测速。默认国内 DNS 后不再重复加载十万条 DNS 专用清单。
 - 2026-10-23：Webshare 网站与其他 24 个住宅代理网站域名保留；删除 ips5 专项直连、五份 AWS 地区 IP、链式 SOCKS5 与阿里系强制代理的源规则、登记、专用同步代码及产物。私有链式节点、负载均衡池和拨号引用一起清理。1Password 官方快照合并到 proxy/general_proxy，Polygon/BSC RPC 快照合并到 region/tw/crypto_tw，继续上游更新；通用代理与 Crypto 台湾出口、默认国内 DNS 保持。AdsPower 资产继续保持删除。
 - GeoIP 直接使用 [MetaCubeX country.mmdb](https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/country.mmdb)，停止本仓库二次 Release 发布。未定制的公共资源优先活跃上游，自定义规则继续引用 dist。
@@ -330,7 +330,7 @@ ai_us 同时承接 OpenAI、Claude、Copilot、Cursor、Grok、Windsurf、Augmen
 
 ## 可见业务策略组
 
-2026-09-27 业务选择约定：Google、YouTube、Telegram、Apple 使用 select，手动选择香港、台湾、日本、韩国、新加坡、美国六个地区自动组，Apple 另追加 DIRECT。六地区组均为 url-test，覆盖所有 provider 的对应地区节点。AI 与 Microsoft 共享“美国-provider”自动子组；Microsoft 在所有配置中使用 select，手动选择美国子组或 DIRECT；AI、Crypto、香港券商仅两份私人 Mihomo 的父组使用 select，其余配置保留 url-test；Crypto 引用“台湾-provider”，香港券商引用“香港-provider”。这些子组均为 url-test，逐一对应机场来源；私人配置每个固定地区业务有七个子组。Surge 父组必须用显式成员名称，不能用 include-other-group 代替，否则会展开为节点列表。隐藏状态不再作为功能验收条件。DNS、规则顺序、Store 美国及工作白名单边界保持。
+2026-09-27 业务选择约定：Google、YouTube、Twitter、Telegram、Apple 使用 select，手动选择香港、台湾、日本、韩国、新加坡、美国六个地区自动组，Apple 另追加 DIRECT。六地区组均为 url-test，覆盖所有 provider 的对应地区节点。AI 与 Microsoft 共享“美国-provider”自动子组；Microsoft 在所有配置中使用 select，手动选择美国子组或 DIRECT；AI、Crypto、香港券商仅两份私人 Mihomo 的父组使用 select，其余配置保留 url-test；Crypto 引用“台湾-provider”，香港券商引用“香港-provider”。这些子组均为 url-test，逐一对应机场来源；私人配置每个固定地区业务有七个子组。Surge 父组必须用显式成员名称，不能用 include-other-group 代替，否则会展开为节点列表。隐藏状态不再作为功能验收条件。DNS、规则顺序、Store 美国及工作白名单边界保持。
 
 参考 naiixi 的配置分析、默认选择、DNS 出口及验证边界见 [业务策略组重构](docs/service-groups-refactor.md)。安卓 DNS policy 为 AI → YouTube → Google；2026-10-24 用户确认安卓 Google 默认香港，三项 DNS 默认分别跟随美国、香港、香港业务选择。香港候选须验证移动搜索并保存可用线路，不得以改变地区代替修复。保留六地区候选、选择持久化及其他客户端默认值；普通入口、移动 UA、搜索框和重启后的运行态验收见 [安卓修复说明](docs/android-network-repair.md)。
 
@@ -339,3 +339,5 @@ ai_us 同时承接 OpenAI、Claude、Copilot、Cursor、Grok、Windsurf、Augmen
 Microsoft 在全部配置中手动选择美国自动子组或 DIRECT，父组不设置测速字段。运行态验证边界见 [客户端性能说明](docs/flclash-performance.md)。
 
 2026-10-24 安卓香港隔离归因复核：五条历史香港隔离项继续保留；现存矩阵能确认三条受信 302 跳转 google.cn，另两条只有超时证据，不能统称五条已证实跳转。三条确认项在私人安卓对应 provider 的 exclude-filter 中按完整名称排除，登记来源和证据于 x-rulemesh-android-provider-quarantine；不删除整个 provider，其他客户端不变。香港业务仍手动固定已验收线路，前置专用香港自动组与之分离；新节点或同名节点更换出口后仍需移动搜索实测。详见 docs/android-network-repair.md。
+
+2026-11-01：新增 **Twitter** 策略组，和 YouTube 一样可手动切换香港、台湾、日本、韩国、新加坡、美国六地区候选，初始香港。`proxy/twitter` 覆盖 X/Twitter 网页、API、短链及图片/视频资源，早于 Google 广谱与国际媒体；DNS 沿用默认国内解析，xAI/Grok 继续走 AI。六份私人配置同步，工作白名单仅重绑既有 Twitter 范围。

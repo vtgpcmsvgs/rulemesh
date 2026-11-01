@@ -3,9 +3,9 @@ from pathlib import Path
 import re
 
 MARKER = "# RuleMesh 业务策略组：2026-09-25"
-SERVICES = ("Google", "YouTube", "AI", "Telegram", "Crypto", "Microsoft", "Apple", "香港券商")
+SERVICES = ("Google", "YouTube", "Twitter", "AI", "Telegram", "Crypto", "Microsoft", "Apple", "香港券商")
 FIXED = {"AI": "us", "Crypto": "tw", "Microsoft": "us", "香港券商": "hk"}
-MANUAL = ("Google", "YouTube", "Telegram", "Microsoft", "Apple")
+MANUAL = ("Google", "YouTube", "Twitter", "Telegram", "Microsoft", "Apple")
 MANUAL_FIXED_SERVICES = frozenset({"AI", "Crypto", "香港券商"})
 MANUAL_FIXED_PROFILES = frozenset({
     "rulemesh-clashmi-ios.yaml",
@@ -20,6 +20,7 @@ ROUTES = {
     "region/hk/hk_securities": "香港券商",
     "region/us/ai_us": "AI", "region/us/ai_dns_us": "AI",
     "region/hk/google_hk": "Google", "proxy/youtube": "YouTube",
+    "proxy/twitter": "Twitter",
     "region/hk/telegram": "Telegram", "region/tw/crypto_tw": "Crypto",
     "region/us/microsoft_us": "Microsoft", "direct/apple_direct": "Apple",
     "region/us/macos_update_us": "Apple",
@@ -27,6 +28,7 @@ ROUTES = {
 IDS = {
     "hk_securities": "region/hk/hk_securities",
     "us_ai": "region/us/ai_us", "hk_google": "region/hk/google_hk", "proxy_youtube": "proxy/youtube",
+    "proxy_twitter": "proxy/twitter", "hk_global_media": "region/hk/global_media", "proxy_gfw": "proxy/gfw_precise",
     "hk_telegram": "region/hk/telegram", "tw_crypto": "region/tw/crypto_tw",
     "us_microsoft": "region/us/microsoft_us", "direct_apple": "direct/apple_direct",
     "us_macos_update": "region/us/macos_update_us",
@@ -205,15 +207,18 @@ def check(path: Path, lines, groups, rules, auto):
         return group is None or all(acyclic(m, seen | {name}) for m in group.members if m in groups)
 
     require(all(acyclic(s, set()) for s in SERVICES), "业务策略组的候选引用存在循环。")
-    for name in ("Google", "YouTube", "Telegram"):
+    for name in ("Google", "YouTube", "Twitter", "Telegram"):
         # 普通 Google 默认香港；线路故障不能以改变用户要求的地区作为修复。
         expected_region = "hk"
         expected_target = next(n for n, region in REGIONS.items() if region == expected_region)
         require(default_target(name, groups) == expected_target, f"{name} 默认地区必须为 {expected_region} 自动组。")
     require(default_target("Apple", groups) in set(REGIONS), "Apple 默认必须使用地区自动组。")
     positions = {}
+    twitter_fallbacks = []
     for pos, (_, parts) in enumerate(rules):
         ident = identifier(parts, surge)
+        if ident in {"region/hk/global_media", "proxy/gfw_precise", "proxy/gfw"}:
+            twitter_fallbacks.append(pos)
         expected = ROUTES.get(ident)
         if expected:
             positions.setdefault(ident, []).append(pos)
@@ -224,6 +229,9 @@ def check(path: Path, lines, groups, rules, auto):
         require(len(positions.get(ident, [])) == 1, f"业务入口 {ident} 必须唯一存在。")
     if positions.get("proxy/youtube") and positions.get("region/hk/google_hk"):
         require(positions["proxy/youtube"][0] < positions["region/hk/google_hk"][0], "YouTube 必须早于 Google 广谱入口。")
+    if positions.get("proxy/twitter"):
+        later = twitter_fallbacks + positions.get("region/hk/google_hk", [])
+        require(all(positions["proxy/twitter"][0] < pos for pos in later), "Twitter 必须早于 Google、国际媒体和 GFW 入口。")
     if work:
         require("direct/apple_direct" not in positions, "工作白名单不得引入 Personal 的 Apple 全域放行。")
     elif not surge:
@@ -235,7 +243,7 @@ def check(path: Path, lines, groups, rules, auto):
         require(not any(re.match(r"^\s+-\s+(['\"])(['\"]).+\2\1\s*$", line) for line in lines), "Mihomo provider 引用不得嵌套两层 YAML 引号。")
         providers = parser._parse_mihomo_providers(lines)
         require(not ({"hk_brokers", "hk_securities_aggressive", "android_brokers_aggressive"} & providers.keys()), "券商统一入口不得残留旧 provider 注册。")
-        for name, ident in (("proxy_youtube", "proxy/youtube"), ("direct_apple", "direct/apple_direct"), ("hk_securities", "region/hk/hk_securities")):
+        for name, ident in (("proxy_youtube", "proxy/youtube"), ("proxy_twitter", "proxy/twitter"), ("direct_apple", "direct/apple_direct"), ("hk_securities", "region/hk/hk_securities")):
             require(name in providers and providers[name][1] == baseline.BASE + "mihomo/classical/" + ident + ".yaml", f"{name} 必须引用配套公开产物。")
     retired = ("region/hk/hk_brokers", "region/hk/hk_securities_aggressive", "region/hk/android_brokers_aggressive")
     require(not any(p[0] == "RULE-SET" and (p[1].removeprefix(baseline.BASE + "surge/rules/").removesuffix(".list") in retired if surge else p[1] in {"hk_brokers", "hk_securities_aggressive", "android_brokers_aggressive"}) for _, p in rules if len(p) >= 3), "券商统一入口不得重复调用旧规则集。")
