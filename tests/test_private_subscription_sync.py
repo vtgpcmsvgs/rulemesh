@@ -130,6 +130,29 @@ class PrivateSubscriptionSyncTests(unittest.TestCase):
             after = self.hashes()
             self.assertTrue(all(before[name] == after[name] for name in untouched))
 
+    def test_endpoint_change_preserves_unchanged_mixed_line_endings(self):
+        self.assertEqual(self.run_sync().returncode, 0)
+        originals = {}
+        for name in SURGE_NAMES + MIHOMO_NAMES:
+            lines = (self.directory / name).read_bytes().splitlines(keepends=True)
+            original = b"".join(line.rstrip(b"\r\n") +
+                                (b"\r\n" if index % 3 else b"\n")
+                                for index, line in enumerate(lines))
+            (self.directory / name).write_bytes(original)
+            originals[name] = original
+        self.write("private_subscription_direct.list",
+                   SOURCE.replace("subscription.example", "new-subscription.example"))
+        self.assertEqual(self.run_sync().returncode, 0)
+        for name, original in originals.items():
+            expected = b"".join(
+                line.replace(b"subscription.example", b"new-subscription.example").rstrip(b"\r\n") + b"\n"
+                if b"subscription.example" in line else line
+                for line in original.splitlines(keepends=True))
+            self.assertEqual((self.directory / name).read_bytes(), expected, name)
+        before = self.hashes()
+        self.assertEqual(self.run_sync().returncode, 0)
+        self.assertEqual(before, self.hashes())
+
     def test_legacy_two_fields_keep_shared_semantics(self):
         self.write("private_subscription_direct.list", "DOMAIN,shared.example\nIP-CIDR,192.0.2.7\n")
         self.assertEqual(self.run_sync().returncode, 0)

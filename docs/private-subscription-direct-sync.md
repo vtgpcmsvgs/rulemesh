@@ -143,6 +143,7 @@ AND,((PROCESS-NAME,chrome.exe),(DOMAIN-SUFFIX,example.com)),"🚀 节点选择"
 - `sync_private_subscription_direct.ps1` 优先保持 ASCII-only；Windows PowerShell 5.1 可能把 UTF-8 无 BOM 脚本中的中文或 emoji 按本地代码页误读，最终触发 `proxy not found`
 - 修改脚本后应确认脚本无 BOM、无非 ASCII 字符，并在 Windows PowerShell 5.1 下完成语法解析
 - 私人仓库使用 `.gitattributes` 的 `* -text` 时，未修改行保留既有换行；新增或重写行使用 LF，并用 `git diff --check` 防止 CR 被当成行尾空白
+- 同步器重建标记块时，按原文内容与出现顺序复用未修改行的换行符；只有新增或内容改变的行使用 LF。不得因端点变更把整个同步块的 CRLF 改写为 LF；混合换行与重复执行的字节一致性由回归测试保护。
 - 用 Mihomo 原生 `-t -d` 检查配置时，任务目录变量必须使用专用名称，例如 `$mihomoTestDir`；不要使用 PowerShell 大小写不敏感的 `$home` / `$HOME`
 - 运行前先确认 `-d` 解析后的绝对路径位于任务临时目录，运行后删除临时 provider 缓存与数据库；不得把验证产物写进用户主目录或客户端正式运行目录
 

@@ -203,6 +203,35 @@ function Build-ReplacementBlock {
     return ($lines -join $NewLine)
 }
 
+function Preserve-UnchangedLineEndings {
+    param(
+        [Parameter(Mandatory = $true)][string]$Original,
+        [Parameter(Mandatory = $true)][string]$Replacement
+    )
+    $endings = [System.Collections.Generic.Dictionary[string, System.Collections.Generic.Queue[string]]]::new([System.StringComparer]::Ordinal)
+    $linePattern = '(?<line>[^\r\n]*)(?<ending>\r?\n|$)'
+    foreach ($lineMatch in [regex]::Matches($Original, $linePattern)) {
+        if ($lineMatch.Length -eq 0) { continue }
+        $line = $lineMatch.Groups['line'].Value
+        if (-not $endings.ContainsKey($line)) {
+            $endings.Add($line, [System.Collections.Generic.Queue[string]]::new())
+        }
+        $endings[$line].Enqueue($lineMatch.Groups['ending'].Value)
+    }
+    $result = [System.Text.StringBuilder]::new()
+    foreach ($lineMatch in [regex]::Matches($Replacement, $linePattern)) {
+        if ($lineMatch.Length -eq 0) { continue }
+        $line = $lineMatch.Groups['line'].Value
+        $ending = $lineMatch.Groups['ending'].Value
+        if ($endings.ContainsKey($line) -and $endings[$line].Count -gt 0) {
+            $originalEnding = $endings[$line].Dequeue()
+            if ($ending.Length -gt 0 -and $originalEnding.Length -gt 0) { $ending = $originalEnding }
+        }
+        [void]$result.Append($line).Append($ending)
+    }
+    return $result.ToString()
+}
+
 function Get-EndpointProxyPolicy {
     param(
         [Parameter(Mandatory = $true)][string]$Content,
@@ -259,6 +288,7 @@ function Sync-Block {
     $sectionPattern = if ($Mode -eq "surge") { '(?ms)^\[Rule\]\r?\n(?<body>.*?)(?=^\[[^]\r\n]+\]\r?$|\z)' } else { '(?ms)^rules:\r?\n(?<body>.*?)(?=^[a-zA-Z][a-zA-Z0-9_-]*:|\z)' }
     $sections = [regex]::Matches($content, $sectionPattern)
     if ($sections.Count -ne 1 -or -not $regex.IsMatch($sections[0].Groups['body'].Value)) { throw "Sync block must be inside the unique rules section." }
+    $replacement = Preserve-UnchangedLineEndings -Original $regex.Match($content).Value -Replacement $replacement
     $updated = $regex.Replace($content, [System.Text.RegularExpressions.MatchEvaluator]{ param($match) $replacement }, 1)
     return [PSCustomObject]@{ Path = $Path; Original = $content; Updated = $updated }
 }
