@@ -1,6 +1,6 @@
 # Surge 工作路由白名单约定
 
-2026-10-31 当前修订：全部六份私人配置统一单个美国 SOCKS5 落地；香港业务使用普通机场线路，撤销此前两个 Comcast 与一个 Lumen 方案。美国仅显示一个 `美国线路入口`，按香港、台湾、新加坡、日本、美国、韩国的顺序选择 `经香港接入`、`经台湾接入`、`经新加坡接入`、`经日本接入`、`经美国接入`、`经韩国接入`，默认香港。六个辅助组隐藏且仅从全部机场 provider 中自动选择对应地区节点；切换接入地区不改变最终美国 IP，不复用业务地区组。美国最终组仍隐藏，不创建 `RM-HK-Front`。美国没有多节点负载均衡；Mihomo 保留单成员 load-balance 防止 TCP-only UDP 跳过规则，Surge 使用 underlying-proxy 与 UDP REJECT。登记升级为 `x-rulemesh-us-chain` 版本 6（front-mode: regional-airport-select），真实端点和认证仅在私人仓库。 以 [美国单落地迁移](regional-exits-20261030.md) 为当前约定；下文较早的美国-provider 约定仅适用于公开模板或历史记录。
+2026-11-07 当前修订：全部六份私人配置取消美国链式代理，直接使用机场美国节点。AI 的候选为逐机场美国自动组（美国-724、美国-kuibenvpn 等，低调显示美国-didiao、provider id 仍为 diidao）；Mihomo/iOS 的 AI 为 select，Surge 的 AI 保留 url-test 并显式引用这些子组。Microsoft 复用同一套美国子组并保留 DIRECT，Store 和六地区菜单的美国使用普通机场地区自动组。移除 SOCKS5 落地、美国线路入口、六个地区接入组、拨号字段、专用 UDP 拒绝及 x-rulemesh-us-chain 登记。Crypto 台湾、香港业务、日本入口、默认国内 DNS 和工作最终 REJECT 不变；设备验收保持 Wi-Fi，验证真实美国机场业务与 DNS，不固定旧购买 IP。 现行设计见 [美国机场节点方案](us-airport-direct-20261107.md)。
 
 2026-09-16：撤销阿里设备条件代理；新增的 `cn_services_direct` 仅精确放行国内 DNS 端点及新华三。WPS 按 2026-09-18 修订统一直连，Store 专项固定美国并位于既有更新拒绝之后；不改变最终 REJECT，不新增通用国内放行。详见[出口修订](scoped-egress-repair.md)。
 

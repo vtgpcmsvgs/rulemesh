@@ -103,9 +103,17 @@ def provider_health(providers, expected, now=None):
         fresh = 0
         for node in nodes:
             try:
-                latest = node.get('history', [])[-1]
-                age = (now - datetime.fromisoformat(latest['time'].replace('Z', '+00:00'))).total_seconds()
-                fresh += node.get('alive') is True and 0 <= age <= interval and latest.get('delay', 0) > 0
+                parsed = []
+                for entry in node.get('history', []):
+                    try:
+                        timestamp = datetime.fromisoformat(entry['time'].replace('Z', '+00:00'))
+                        if timestamp.tzinfo is not None:
+                            parsed.append((timestamp, entry))
+                    except (KeyError, ValueError, TypeError):
+                        continue
+                timestamp, latest = max(parsed, key=lambda item: item[0])
+                age = (now - timestamp).total_seconds()
+                fresh += node.get('alive') is True and 0 <= age <= max(2 * interval, 600) and latest.get('delay', 0) > 0
             except (KeyError, IndexError, ValueError, TypeError):
                 pass
         summaries.append({'provider': name, 'nodes': len(nodes), 'recent_alive': fresh,
@@ -221,6 +229,8 @@ def selection_snapshot(proxies):
 
 
 def regional_probes(device, controller, get, expected):
+    if expected.get('routing_mode') == 'airport-direct':
+        return airport_region_probe(device, controller, get, expected)
     rows = {name: {'exit': EXITS.index(name) + 1, 'region': 'US' if name in US_EXITS else 'HK',
                    'passed': False, 'state': 'not_observed'} for name in EXITS}
     # 采用实际 AI / Notion 业务路径观测自然哈希分配；不能为验收修改路由或伪造选中状态。
@@ -245,6 +255,63 @@ def regional_probes(device, controller, get, expected):
     return list(rows.values())
 
 
+def wifi_vpn_observed(raw, owner_uid):
+    """仅接受当前归属此应用且由 Wi-Fi 承载的已连接 VPN。"""
+    for line in raw.splitlines():
+        if not line.lstrip().startswith('NetworkAgentInfo{'):
+            continue
+        transport = re.search(r'\bTransports:\s*([A-Z]+(?:\|[A-Z]+)*)', line)
+        owner = re.search(r'\bOwnerUid:\s*(\d+)\b', line)
+        if (transport and owner and int(owner[1]) == owner_uid
+                and {'WIFI', 'VPN'} <= set(transport[1].split('|'))
+                and re.search(r'\bCONNECTED\b', line)):
+            return True
+    return False
+
+
+def airport_runtime(proxies, providers, expected):
+    """各美国子组只能使用本机场的美国节点，不得混入业务组或链式出口。"""
+    mapping = expected['us_children']
+    ai = proxies.get('AI', {})
+    checks = {'ai_airport_choices': ai.get('type') == 'Selector' and ai.get('all') == list(mapping)
+              and ai.get('now') in mapping,
+              'no_chain_groups': not any(name.startswith(('RM-US-', 'RM-HK-', '前置-'))
+                                        or name == FRONT or name in FRONT_GROUPS for name in proxies)}
+    for index, (name, provider) in enumerate(mapping.items()):
+        leaf = proxies.get(name, {})
+        candidates = leaf.get('all') or []
+        nodes = {n.get('name') for n in providers.get(provider, {}).get('proxies', [])}
+        checks['us_provider_' + str(index)] = (leaf.get('type') == 'URLTest' and bool(candidates)
+            and leaf.get('now') in candidates and set(candidates) <= nodes
+            and all(re.search(expected['us_filter'], n) for n in candidates))
+    return checks
+
+
+def airport_region_probe(device, controller, get, expected):
+    """观测当前 AI 美国机场出口；只验证地区与真实业务链，不固定 IP。"""
+    proxies = get('/proxies')['proxies']
+    child = proxies.get('AI', {}).get('now')
+    leaf = proxies.get(child, {}).get('now')
+    if child not in expected['us_children'] or not leaf:
+        return [{'exit': 1, 'region': 'US', 'passed': False, 'state': 'missing_airport_selection'}]
+    required = ('AI', child)
+    latest = {'exit': 1, 'region': 'US', 'passed': False, 'state': 'not_observed'}
+    for url in TRACE_TARGETS['US']:
+        previous = {c.get('id'): c.get('download', 0) for c in get('/connections').get('connections', [])}
+        try:
+            raw, code, observed = trace_probe(device, controller, previous, leaf, url, required)
+            fields = dict(re.findall(r'(?m)^([a-z_]+)=(.*)$', raw))
+            address = public_address(fields.get('ip'))
+            latest = {'exit': 1, 'region': 'US', '_ip': address, 'observed_region': fields.get('loc'),
+                      'business_chain_observed': observed, 'request_exit': code,
+                      'passed': code == 0 and address is not None and fields.get('loc') == 'US' and observed}
+            if latest['passed']:
+                break
+        except Exception as error:
+            latest['error_type'] = type(error).__name__
+    return [latest]
+
+
 def collect(settings, expected):
     device = open_device(settings)
     result = {'state': 'unknown', 'passed': False, 'regional_exits': []}
@@ -257,7 +324,11 @@ def collect(settings, expected):
     try:
         result['stage'] = 'vpn_and_runtime'
         uid = package_uid(device.shell('pm list packages -U com.follow.clash'))
-        result['vpn'] = audit_connectivity(device.shell('dumpsys connectivity'), uid)
+        connectivity = device.shell('dumpsys connectivity')
+        result['vpn'] = audit_connectivity(connectivity, uid)
+        if expected.get('required_transport') == 'wifi':
+            result['wifi_vpn_observed'] = wifi_vpn_observed(connectivity, uid)
+            result['vpn']['passed'] &= result['wifi_vpn_observed']
         config = get('/configs')
         proxies = get('/proxies')['proxies']
         rules = get('/rules')['rules']
@@ -275,6 +346,10 @@ def collect(settings, expected):
             'google_rule': sum(r.get('type') == 'RuleSet' and r.get('payload') == 'hk_google' and r.get('proxy') == 'Google' for r in rules) == 1,
             'ai_rule': sum(r.get('type') == 'RuleSet' and r.get('payload') == 'us_ai' and r.get('proxy') == 'AI' for r in rules) == 1,
         }
+        if expected.get('routing_mode') == 'airport-direct':
+            result['runtime'] = {k: v for k, v in result['runtime'].items()
+                                 if not k.startswith('front_') and k not in ('us_load_balance_candidates', 'ai_uses_us_chain')}
+            result['runtime'].update(airport_runtime(proxies, provider_data, expected))
         result['providers'] = provider_health(provider_data, expected['providers'])
         result['runtime']['confirmed_bad_nodes_provider_excluded'] = quarantine_runtime(provider_data, expected['quarantine'])
         result['google'] = []
@@ -293,7 +368,12 @@ def collect(settings, expected):
         # Google 搜索的原始 HTML 可能只有启用 JS 的页面；通过真实 Chrome 执行 JS 后验收。
         from android_chrome_probe import probe
         result['stage'] = 'chrome'
-        result['chrome'] = probe(device)
+        try:
+            result['chrome'] = probe(device)
+        except Exception as error:
+            # 浏览器缺失不能丢弃独立的 DNS 与美国业务证据；本轮整体仍失败。
+            result['chrome'] = {'passed': False, 'cache_restored': False,
+                                'state': 'unconfirmed', 'error_type': type(error).__name__}
         result['stage'] = 'dns'
         before = get('/connections').get('connections', [])
         statuses = []
@@ -302,15 +382,17 @@ def collect(settings, expected):
             get('/dns/query?name=rm-' + uuid.uuid4().hex + '.' + domain + '&type=A')
             statuses.append(get('/dns/query?name=' + domain + '&type=A').get('Status') == 0)
         after = get('/connections').get('connections', [])
+        ai_leaf = proxies.get('AI', {}).get('now') if expected.get('routing_mode') == 'airport-direct' else REGION
         result['dns'] = {'queries_succeeded': all(statuses), 'google_hk_doh_observed': dns_evidence(before, after, 'Google', hk),
-                         'ai_us_doh_observed': dns_evidence(before, after, 'AI', REGION)}
+                         'ai_us_doh_observed': dns_evidence(before, after, 'AI', ai_leaf)}
         result['stage'] = 'regional_exits'
         saved = selection_snapshot(proxies)
         result['regional_exits'] = regional_probes(device, controller, get, expected)
         result['selection_restored'] = selection_snapshot(get('/proxies')['proxies']) == saved
+        required_exits = 1 if expected.get('routing_mode') == 'airport-direct' else len(EXITS)
         checks = [result['vpn']['passed'], all(result['runtime'].values()), all(r['state'] == 'passed' for r in result['providers']),
                   all(r['passed'] for r in result['google']), result['chrome']['passed'], result['chrome']['cache_restored'], all(result['dns'].values()),
-                  len(result['regional_exits']) == len(EXITS) and all(r['passed'] for r in result['regional_exits']), result['selection_restored']]
+                  len(result['regional_exits']) == required_exits and all(r['passed'] for r in result['regional_exits']), result['selection_restored']]
         result['passed'] = all(checks)
         result['state'] = 'passed' if result['passed'] else 'failed_or_unconfirmed'
         result['stage'] = 'complete'

@@ -1,6 +1,6 @@
 # RuleMesh
 
-2026-10-31 当前修订：全部六份私人配置统一单个美国 SOCKS5 落地；香港业务使用普通机场线路，撤销此前两个 Comcast 与一个 Lumen 方案。美国仅显示一个 `美国线路入口`，按香港、台湾、新加坡、日本、美国、韩国的顺序选择 `经香港接入`、`经台湾接入`、`经新加坡接入`、`经日本接入`、`经美国接入`、`经韩国接入`，默认香港。六个辅助组隐藏且仅从全部机场 provider 中自动选择对应地区节点；切换接入地区不改变最终美国 IP，不复用业务地区组。美国最终组仍隐藏，不创建 `RM-HK-Front`。美国没有多节点负载均衡；Mihomo 保留单成员 load-balance 防止 TCP-only UDP 跳过规则，Surge 使用 underlying-proxy 与 UDP REJECT。登记升级为 `x-rulemesh-us-chain` 版本 6（front-mode: regional-airport-select），真实端点和认证仅在私人仓库。 设计见 [美国单落地迁移](docs/regional-exits-20261030.md)，验收见 [任务收尾验收](docs/task-acceptance.md)。
+2026-11-07 当前修订：全部六份私人配置取消美国链式代理，直接使用机场美国节点。AI 的候选为逐机场美国自动组（美国-724、美国-kuibenvpn 等，低调显示美国-didiao、provider id 仍为 diidao）；Mihomo/iOS 的 AI 为 select，Surge 的 AI 保留 url-test 并显式引用这些子组。Microsoft 复用同一套美国子组并保留 DIRECT，Store 和六地区菜单的美国使用普通机场地区自动组。移除 SOCKS5 落地、美国线路入口、六个地区接入组、拨号字段、专用 UDP 拒绝及 x-rulemesh-us-chain 登记。Crypto 台湾、香港业务、日本入口、默认国内 DNS 和工作最终 REJECT 不变；设备验收保持 Wi-Fi，验证真实美国机场业务与 DNS，不固定旧购买 IP。 现行设计见 [美国机场节点方案](docs/us-airport-direct-20261107.md)。
 
 Clash Mi iOS 使用独立私有配置 `rulemesh-clashmi-ios.yaml`，由桌面业务配置派生；iOS TUN、DNS 覆写、600 秒测速与 ASN 兼容说明见 [Clash Mi iOS 接入](docs/clashmi-ios.md)。桌面或订阅更新后重新运行派生器，完整检查包含 iOS 一致性校验。
 
@@ -80,7 +80,7 @@ powershell -ExecutionPolicy Bypass -File tools/check.ps1
 
 这个脚本会串行执行构建、变更联动闸门、单元测试、私人机场订阅在线必检、`dist/` 目录结构校验、`dist/build-report.json` warning 校验，并在最后输出 `git status --short`。订阅检查先核对两份 Mihomo 的当前清单，再按相同 User-Agent 直连下载；HTTP 失败、解析失败、空节点列表、已过期或流量耗尽都会阻断完整检查。缺少私人配置、正式 YAML 依赖或 PowerShell 7 也会失败，不将未检查视为通过。到期或配额未提供会明确标记，下载通过不代表节点存活或设备 DNS 出口已验收。详见[订阅检查约定](docs/private-subscription-direct-sync.md)。
 
-每次任务收尾使用 `tools/check_task_acceptance.py --settings <公开仓库外本机JSON>`：包含上述完整检查，再验安卓实际 Google 香港、移动搜索跳转、DNS、唯一美国链式出口及普通香港机场路径。信任用户登记的单个美国 IP，不检测纯净度；设备缺失和恢复失败均不能当通过。完整配置变更另做 Chrome/重启/备份一致性验收。当前单美国链路适用于全部六份私人配置，普通 Google 默认香港机场。用法及判定标准见 [任务收尾验收](docs/task-acceptance.md)。
+每次任务收尾使用 `tools/check_task_acceptance.py --settings <公开仓库外本机JSON>`：包含上述完整检查，再在 Wi-Fi 上验安卓实际 Google 香港、移动搜索跳转、DNS 与 AI 美国机场业务出口。不再比较旧固定 IP，不检测纯净度；设备缺失和恢复失败均不能当通过。完整配置变更另做 Chrome/重启/备份一致性验收。六份私人配置均直接使用机场节点，普通 Google 默认香港机场。用法及判定标准见 [任务收尾验收](docs/task-acceptance.md)。
 
 同日冷启动复测确认香港自动测速组会在初次健康失败后回退；私人安卓共享香港组最终使用可见 select 固定已验收线路，保留历史组名和全部香港来源，防止测速替换移动搜索验收结果。共享此香港组的其他安卓业务同时固定，其他客户端保持既定行为。
 其中 `tools/check_change_guardrails.py` 会先按“源规则 / 上游登记 / 公开说明模板 / 构建与检查脚本”等类别总结当前工作区变更；对于当前已明确的强关联项，会直接失败，例如：

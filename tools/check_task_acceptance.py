@@ -1,4 +1,4 @@
-"""任务收尾入口：完整仓库检查、订阅闸门、安卓业务/DNS 与区域链式出口。"""
+"""任务收尾入口：完整仓库检查、订阅闸门、Wi-Fi 安卓业务/DNS 与机场美国出口。"""
 from __future__ import annotations
 
 import argparse
@@ -28,6 +28,14 @@ def overall(report):
     exits = device.get('regional_exits', [])
     us_exits = [row for row in exits if row.get('region') == 'US']
     hk_exits = [row for row in exits if row.get('region') == 'HK']
+    if report.get('routing_mode') == 'airport-direct':
+        return (report.get('baseline', {}).get('passed') is True and report.get('source_unchanged') is True
+                and device.get('passed') is True and device.get('selection_restored') is True
+                and device.get('wifi_vpn_observed') is True
+                and report.get('exit_identity_policy') == 'airport-region-observation'
+                and len(exits) == 1 and exits[0].get('exit') == 1
+                and exits[0].get('region') == 'US' and exits[0].get('passed') is True
+                and device.get('distinct_us_exit_count') == 1)
     return (report.get('baseline', {}).get('passed') is True and report.get('source_unchanged') is True
             and device.get('passed') is True and device.get('selection_restored') is True
             and device.get('distinct_us_exit_count') == len(chain.US_EXITS)
@@ -40,7 +48,7 @@ def overall(report):
 
 
 def validate_settings(settings):
-    if not isinstance(settings, dict) or settings.get('exit_identity_policy') != 'user-provided-trusted':
+    if not isinstance(settings, dict) or settings.get('exit_identity_policy') not in ('user-provided-trusted', 'airport-region-observation'):
         raise ValueError('Explicit user-provided exit policy required')
     if bool(settings.get('adb')) == bool(settings.get('usb_api_directory')):
         raise ValueError('Select exactly one authorized device transport')
@@ -54,9 +62,15 @@ def run(settings, directory, *, baseline_runner=subprocess.run, worker_runner=su
     began = time.monotonic()
     source = fingerprint(directory)
     document = load_yaml((directory / chain.PROFILE).read_text('utf-8'))
+    import check_us_airport as airport
+    direct = airport.MARKER in (directory / chain.PROFILE).read_text('utf-8').splitlines()
     report = {'schema_version': 1, 'run_id': uuid.uuid4().hex, 'started_at': datetime.now(timezone.utc).isoformat(),
               'baseline': {'passed': False}, 'android': {'state': 'not_run', 'passed': False}, 'source_sha256': source,
               'exit_identity_policy': 'user-provided-trusted', 'purity_check': 'not_requested'}
+    if direct:
+        if settings.get('exit_identity_policy') != 'airport-region-observation' or settings.get('required_transport') != 'wifi':
+            raise ValueError('Airport acceptance requires explicit Wi-Fi observation settings')
+        report.update(routing_mode='airport-direct', exit_identity_policy='airport-region-observation')
     print('[acceptance] build, offline regressions and mandatory online subscription gate', flush=True)
     try:
         completed = baseline_runner(['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', str(ROOT / 'tools/check.ps1')],
@@ -70,17 +84,22 @@ def run(settings, directory, *, baseline_runner=subprocess.run, worker_runner=su
         # 不依赖打印完整日志；基线失败时原入口可重跑诊断，报告不回显私人内容。
         if not report['baseline']['passed']:
             return report
-        if chain.validate((directory / chain.PROFILE).read_text('utf-8').splitlines()):
-            raise ValueError('Approved Android regional chain required')
-        print('[acceptance] collect fresh Android VPN, Google, DNS and one US chain exit and ordinary Hong Kong airport routing; observe without switching groups', flush=True)
+        if (airport.validate(directory / chain.PROFILE, (directory / chain.PROFILE).read_text('utf-8').splitlines()) if direct
+                else chain.validate((directory / chain.PROFILE).read_text('utf-8').splitlines())):
+            raise ValueError('Approved Android routing configuration required')
+        print('[acceptance] collect fresh Android VPN, Google Hong Kong, DNS and actual US business routing', flush=True)
         expected = {'google_hk': document['proxy-groups'][0].get('name'),
                     'providers': {name: body['health-check']['interval'] for name, body in document['proxy-providers'].items()}}
         google = next(g for g in document['proxy-groups'] if g['name'] == 'Google')
         expected['google_hk'] = google['proxies'][0]
-        expected['exit_identities'] = {
+        expected['exit_identities'] = {} if direct else {
             item['name']: item['ip']
             for item in document[chain.KEY]['exit-identities']
         }
+        if direct:
+            expected.update(routing_mode='airport-direct', required_transport='wifi',
+                            us_children={airport.child_name(name): name for name in document['proxy-providers']})
+            expected['us_filter'] = next(g for g in document['proxy-groups'] if g['name'] == airport.US_GROUP)['filter']
         expected['quarantine'] = {}
         for entry in document[chain.QUARANTINE]['nodes']:
             expected['quarantine'].setdefault(entry['provider'], []).append(entry['name'])
@@ -98,8 +117,10 @@ def run(settings, directory, *, baseline_runner=subprocess.run, worker_runner=su
         report['android']['distinct_us_exit_count'] = len(us_addresses - {None})
         report['android']['distinct_hk_exit_count'] = len(hk_addresses - {None})
         # 缺少实际 IP 就是未验收；静态登记、Google 200 和健康延迟不能补足证据。
-        report['android']['passed'] &= (len(us_addresses - {None}) == len(chain.US_EXITS)
-                                         and len(hk_addresses - {None}) == len(chain.HK_EXITS))
+        required_us = 1 if direct else len(chain.US_EXITS)
+        required_hk = 0 if direct else len(chain.HK_EXITS)
+        report['android']['passed'] &= (len(us_addresses - {None}) == required_us
+                                         and len(hk_addresses - {None}) == required_hk)
         report['source_unchanged'] = fingerprint(directory) == source
     except Exception as error:
         report['error_type'] = type(error).__name__

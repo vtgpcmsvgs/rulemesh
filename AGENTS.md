@@ -89,9 +89,9 @@
 
 ## 仓库默认流程
 
-- 2026-10-31 当前修订：全部六份私人配置统一单个美国 SOCKS5 落地；香港业务使用普通机场线路，撤销此前两个 Comcast 与一个 Lumen 方案。美国仅显示一个 `美国线路入口`，按香港、台湾、新加坡、日本、美国、韩国的顺序选择 `经香港接入`、`经台湾接入`、`经新加坡接入`、`经日本接入`、`经美国接入`、`经韩国接入`，默认香港。六个辅助组隐藏且仅从全部机场 provider 中自动选择对应地区节点；切换接入地区不改变最终美国 IP，不复用业务地区组。美国最终组仍隐藏，不创建 `RM-HK-Front`。美国没有多节点负载均衡；Mihomo 保留单成员 load-balance 防止 TCP-only UDP 跳过规则，Surge 使用 underlying-proxy 与 UDP REJECT。登记升级为 `x-rulemesh-us-chain` 版本 6（front-mode: regional-airport-select），真实端点和认证仅在私人仓库。
+- 2026-11-07 当前修订：全部六份私人配置取消美国链式代理，直接使用机场美国节点。AI 的候选为逐机场美国自动组（美国-724、美国-kuibenvpn 等，低调显示美国-didiao、provider id 仍为 diidao）；Mihomo/iOS 的 AI 为 select，Surge 的 AI 保留 url-test 并显式引用这些子组。Microsoft 复用同一套美国子组并保留 DIRECT，Store 和六地区菜单的美国使用普通机场地区自动组。移除 SOCKS5 落地、美国线路入口、六个地区接入组、拨号字段、专用 UDP 拒绝及 x-rulemesh-us-chain 登记。Crypto 台湾、香港业务、日本入口、默认国内 DNS 和工作最终 REJECT 不变；设备验收保持 Wi-Fi，验证真实美国机场业务与 DNS，不固定旧购买 IP。 现行设计见 公开仓库 docs/us-airport-direct-20261107.md。
 
-- 2026-10-24 要求的任务收尾验收（2026-10-30 更新单美国出口结构）：运行 `tools/check_task_acceptance.py --settings <公开仓库外本机JSON>`，先完整 `check.ps1`（含订阅下载/有效期/配额闸门），再采集本次安卓 VPN、移动 Google 普通首页/搜索、DNS、单个美国 AI trace 与香港普通机场路径 的实际 IP、地区和链路。用户明确要求信任登记的单个美国 IP，不检测纯净度。无设备或控制器时必须报告未验收并失败，禁止复用旧报告或以节点名称/204 代替。配置导入另验 Chrome、重启、备份源一致性；详见 docs/task-acceptance.md。
+- 2026-10-24 要求的任务收尾验收（2026-10-30 更新单美国出口结构）：运行 `tools/check_task_acceptance.py --settings <公开仓库外本机JSON>`，先完整 `check.ps1`（含订阅下载/有效期/配额闸门），再在 Wi-Fi 上采集本次安卓 VPN、移动 Google 普通首页/搜索、DNS、美国机场 AI trace 与香港普通机场路径；不再要求匹配旧链式固定 IP，不检测纯净度。无设备或控制器时必须报告未验收并失败，禁止复用旧报告或以节点名称/204 代替。配置导入另验 Chrome、重启、备份源一致性；详见 docs/task-acceptance.md。
 - 此前仅限安卓的授权已由用户明确扩展到六份私人配置；公开模板不带私人链式资产，工作白名单不得扩大。
 - 2026-10-24 冷启动验收发现香港 url-test 的健康失败会触发未验收线路回退。私人安卓共享香港地区组改为可见 select，删除组级测速字段并保存实测线路；保留历史“香港-自动选择”组名兼容引用，其他客户端保持原型。Google/YouTube/Telegram/Apple/Notion 等共享香港选择随之固定；不能只修 Google 检查而漏掉 Notion 的组类型约束。线路失效由本轮设备验收明确报告，不自动跨节点或地区掩盖。
 
@@ -279,9 +279,9 @@
 
 2026-10-24 运行态复核补充：provider 的 exclude-filter 先于 override.additional-prefix / additional-suffix 生效，必须把界面显示名称还原为订阅原始名称后精确匹配，再从设备 provider 列表确认消失；正式 YAML 正则与文本检查器的反斜杠层级须分别校验。五出口探测在请求进行中采样活动连接并验证新返回字节，结束后连接消失不能被误判为业务链未命中；原始连接与出口 IP 只留在内存。对应负例覆盖名称前后缀和短连接，失败轮次保留。
 
-- 美国链式出口验收不切换 LoadBalance；仅采集本轮真实 AI trace IP/地区/连接字节。原生检查使用官方 Mihomo CLI 专用临时目录，不将 FlClashCore IPC 当 CLI。
+- 美国机场出口验收只读观测当前 AI 子组与真实业务地区、连接字节；不固定旧链式 IP。原生检查使用官方 Mihomo CLI 专用临时目录，不将 FlClashCore IPC 当 CLI。
 
-- 美国 TCP-only SOCKS5 在 Mihomo 使用单成员 load-balance，禁止 disable-udp；Surge 显式拒绝不支持的 UDP。香港恢复机场节点能力。原生回归与设备验收分别报告。
+- 2026-11-07 美国与香港均使用机场节点能力，不恢复已撤销的 TCP-only SOCKS5、单成员 load-balance 或专用 UDP 拒绝。原生回归与设备验收分别报告。
 
 - 2026-10-30 迁移防回归：Surge 工作版可能没有 [Proxy] 节，新增节点前检查全部节锚点唯一性；YAML 局部替换必须保留完整顶层节、旧未相关字段与字节备份。带重复块的替换优先用解析边界和函数替换，避免字符串转义控制字符。
 - 文件疑似截断时，先重复读取并核对修改时间及哈希、保存字节备份；内容发生变化须先核对并发写入及原有未提交改动，不得直接用 git restore 覆盖工作副本。

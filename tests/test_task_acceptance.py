@@ -117,9 +117,61 @@ class TaskAcceptanceTests(unittest.TestCase):
         def body(age, delay=12, alive=True):
             return {'fixture': {'proxies': [{'alive': alive, 'history': [{'time': (now - timedelta(seconds=age)).isoformat(), 'delay': delay}]}]}}
         self.assertEqual(provider_health(body(10), {'fixture': 600}, now)[0]['state'], 'passed')
-        for age, delay, alive in [(601, 12, True), (-1, 12, True), (10, 0, True), (10, 12, False)]:
+        for age, delay, alive in [(1201, 12, True), (-1, 12, True), (10, 0, True), (10, 12, False)]:
             self.assertEqual(provider_health(body(age, delay, alive), {'fixture': 600}, now)[0]['state'], 'unknown')
         self.assertEqual(provider_health({}, {'fixture': 600}, now)[0]['state'], 'unknown')
+
+    def test_airport_acceptance_requires_wifi_and_observed_us_business_exit(self):
+        good = {'routing_mode': 'airport-direct', 'exit_identity_policy': 'airport-region-observation',
+                'baseline': {'passed': True}, 'source_unchanged': True,
+                'android': {'passed': True, 'selection_restored': True, 'wifi_vpn_observed': True,
+                            'distinct_us_exit_count': 1,
+                            'regional_exits': [{'exit': 1, 'region': 'US', 'passed': True}]}}
+        self.assertTrue(acceptance.overall(good))
+        for field, value in [('wifi_vpn_observed', False), ('distinct_us_exit_count', 0),
+                             ('selection_restored', False), ('regional_exits', []),
+                             ('regional_exits', [{'exit': 1, 'region': 'HK', 'passed': True}]),
+                             ('regional_exits', [{'exit': 1, 'region': 'US', 'passed': False}])]:
+            bad = copy.deepcopy(good); bad['android'][field] = value
+            self.assertFalse(acceptance.overall(bad))
+        bad = copy.deepcopy(good); bad['exit_identity_policy'] = 'user-provided-trusted'
+        self.assertFalse(acceptance.overall(bad))
+
+    def test_missing_chrome_keeps_independent_dns_and_exit_evidence_but_fails(self):
+        from unittest.mock import patch
+        import collect_android_acceptance as collector
+        class Device:
+            def shell(self, command): return ''
+            def http(self, port, path, secret):
+                return {'/configs': {'mode': 'rule', 'find-process-mode': 'always', 'allow-lan': False},
+                        '/proxies': {'proxies': {'Google': {'now': 'HK'},
+                                                'HK': {'type': 'Selector', 'all': ['fixture']},
+                                                'AI': {'now': '美国-fixture'}}},
+                        '/rules': {'rules': [{'type': 'RuleSet', 'payload': p, 'proxy': g}
+                                            for p, g in [('hk_google', 'Google'), ('us_ai', 'AI')]]},
+                        '/providers/proxies': {'providers': {}},
+                        '/connections': {'connections': []}}.get(path, {'Status': 0})
+            def close(self): pass
+        expected = {'required_transport': 'wifi', 'routing_mode': 'airport-direct', 'google_hk': 'HK',
+                    'providers': {}, 'quarantine': {}, 'us_children': {'美国-fixture': 'fixture'}}
+        rows = [{'exit': 1, 'region': 'US', 'passed': True}]
+        with patch.object(collector, 'open_device', return_value=Device()), \
+             patch.object(collector, 'package_uid', return_value=123), \
+             patch.object(collector, 'audit_connectivity', return_value={'passed': True}), \
+             patch.object(collector, 'wifi_vpn_observed', return_value=True), \
+             patch.object(collector, 'airport_runtime', return_value={'valid': True}), \
+             patch.object(collector, 'quarantine_runtime', return_value=True), \
+             patch.object(collector, 'shell_result', return_value=('', 0)), \
+             patch.object(collector, 'audit_google_search', return_value={'passed': True}), \
+             patch('android_chrome_probe.probe', side_effect=RuntimeError('fixture unavailable')), \
+             patch.object(collector, 'dns_evidence', return_value=True), \
+             patch.object(collector, 'regional_probes', return_value=rows):
+            result = collector.collect({'controller': {'port': 9090, 'secret': 'fixture'}}, expected)
+        self.assertEqual(result['stage'], 'complete')
+        self.assertTrue(all(result['dns'].values()))
+        self.assertEqual(result['regional_exits'], rows)
+        self.assertFalse(result['chrome']['passed'])
+        self.assertFalse(result['passed'])
 
     def test_dns_requires_new_bytes_and_actual_business_chain(self):
         row = {'id': 'fixture', 'download': 100, 'chains': ['HK', 'Google'], 'metadata': {'host': 'dns.google'}}

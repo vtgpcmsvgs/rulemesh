@@ -95,6 +95,8 @@ def check(path: Path, lines: list[str]) -> list[str]:
     android_repair = not surge and android.active(path, lines)
     us_chain = path.name in chain.PROFILES and chain.present(lines)
     errors.extend(chain.check(path, lines))
+    import check_us_airport
+    errors.extend(check_us_airport.check(path, lines))
     google_stable = android.stable_target(lines) if android_repair else ""
     if path.name in dns.PRIVATE_PROFILE_NAMES:
         for marker in ("PRIVATE_SUBSCRIPTION_DIRECT_START", "PRIVATE_SUBSCRIPTION_DIRECT_END"):

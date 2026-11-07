@@ -24,6 +24,9 @@ def check(path: Path, raw: bytes) -> list[str]:
 def main() -> int:
     paths = [p for p in default_paths(ROOT) if p.name in PRIVATE_PROFILE_NAMES]
     findings = [{'profile': p.name, 'errors': check(p, p.read_bytes())} for p in paths]
+    import check_us_airport
+    findings.extend({'profile': p.name, 'errors': check_us_airport.validate(p, p.read_text(encoding='utf-8').splitlines())}
+                    for p in paths if p.name in check_us_airport.PROFILES)
     findings.extend(check_chain_consistency({p.name: p.read_text(encoding='utf-8').splitlines() for p in paths}))
     print(json.dumps({'checked': len(paths), 'findings': [f for f in findings if f['errors']]}, ensure_ascii=False))
     return int(any(f['errors'] for f in findings))
