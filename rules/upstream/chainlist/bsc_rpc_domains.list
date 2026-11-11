@@ -4,9 +4,9 @@
 # chainId: 56
 # 维护策略: 只增不减；保留历史已收录主机名，避免上游日常波动导致覆盖面回撤。
 # 规则展开: 每个主机名同时生成 DOMAIN 与 DOMAIN-WILDCARD，由统一 Crypto 台湾入口承接。
-# 本次抓取主机数: 53
-# 累计主机数: 68
-# 同步时间: 2026-11-10T08:43:59+00:00
+# 本次抓取主机数: 51
+# 累计主机数: 69
+# 同步时间: 2026-11-11T08:07:11+00:00
 
 DOMAIN,0.48.club
 DOMAIN-WILDCARD,*.0.48.club
@@ -26,6 +26,8 @@ DOMAIN,binance.llamarpc.com
 DOMAIN-WILDCARD,*.binance.llamarpc.com
 DOMAIN,binance.nodereal.io
 DOMAIN-WILDCARD,*.binance.nodereal.io
+DOMAIN,bnb-mainnet.rpc.thyme.sh
+DOMAIN-WILDCARD,*.bnb-mainnet.rpc.thyme.sh
 DOMAIN,bnb.api.onfinality.io
 DOMAIN-WILDCARD,*.bnb.api.onfinality.io
 DOMAIN,bnb.rpc.subquery.network

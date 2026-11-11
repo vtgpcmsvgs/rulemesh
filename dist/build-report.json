@@ -92,8 +92,8 @@
       "category": "direct",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 119837,
-        "mihomo_classical": 119837
+        "surge_rules": 119838,
+        "mihomo_classical": 119838
       },
       "dist": {
         "surge_rules": "dist/surge/rules/direct/cn_direct.list",
@@ -482,8 +482,8 @@
       "category": "region",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 260,
-        "mihomo_classical": 260
+        "surge_rules": 264,
+        "mihomo_classical": 264
       },
       "dist": {
         "surge_rules": "dist/surge/rules/region/tw/crypto_tw.list",
@@ -597,7 +597,7 @@
       "category": "dns",
       "classification": "dns-domain-set",
       "counts": {
-        "surge_dns_domains": 110181
+        "surge_dns_domains": 110182
       },
       "dist": {
         "surge_dns_domains": "dist/surge/dns/cn_performance_dns_domains.list"
