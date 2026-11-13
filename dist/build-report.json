@@ -92,8 +92,8 @@
       "category": "direct",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 119838,
-        "mihomo_classical": 119838
+        "surge_rules": 119831,
+        "mihomo_classical": 119831
       },
       "dist": {
         "surge_rules": "dist/surge/rules/direct/cn_direct.list",
@@ -105,8 +105,8 @@
       "category": "direct",
       "classification": "classical/mixed",
       "counts": {
-        "surge_rules": 9749,
-        "mihomo_classical": 9749
+        "surge_rules": 9742,
+        "mihomo_classical": 9742
       },
       "dist": {
         "surge_rules": "dist/surge/rules/direct/cn_direct_light.list",
