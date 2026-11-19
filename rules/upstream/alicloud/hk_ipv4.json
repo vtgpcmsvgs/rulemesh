@@ -1,5 +1,5 @@
 {
-  "syncToken": "2026-11-18T08:58:21+00:00",
+  "syncToken": "2026-11-19T09:15:06+00:00",
   "source": {
     "api": "DescribePublicIpAddress",
     "apiVersion": "2016-04-28",
@@ -11,23 +11,23 @@
   "ipVersion": "ipv4",
   "pageSize": 100,
   "pageCount": 9,
-  "reportedTotalCount": 852,
-  "fetchedEntryCount": 852,
-  "duplicateEntryCount": 3,
+  "reportedTotalCount": 849,
+  "fetchedEntryCount": 849,
+  "duplicateEntryCount": 0,
   "uniquePrefixCount": 849,
   "uniqueIpv4AddressCount": 1530928,
   "requestIds": [
-    "01A1EDE0-D311-3AD1-9613-1DFB166B9D91",
-    "01A1EDE0-D549-3EF3-B176-82FA4563D633",
-    "01A1EDE0-D7D6-3EAA-BD65-C73E6E73F72D",
-    "01A1EDE0-D9FC-3520-8845-021F6AE1B088",
-    "01A1EDE0-DC2B-3E73-8421-7576EFBFBE19",
-    "01A1EDE0-DE47-30E5-BB97-F132254BB5DA",
-    "01A1EDE0-E060-351C-83DD-8B8D4328BE93",
-    "01A1EDE0-E265-32C0-A36B-2C4EA0F379EC",
-    "01A1EDE0-E477-39AB-8629-390332A69B68"
+    "01A1F316-86A9-389E-8CE4-B9C6C6F50CB2",
+    "01A1F316-890E-3951-8CF5-D4CAFFD3B35E",
+    "01A1F316-8B2B-3136-9049-C93E6DD2F6F4",
+    "01A1F316-8D2C-35F6-B339-CAED698CF272",
+    "01A1F316-8F50-3D77-9E9D-2B698A1076D3",
+    "01A1F316-9162-39A2-88DC-E936FF677CBB",
+    "01A1F316-936B-3A64-9382-AD185184CF6E",
+    "01A1F316-9569-3DD8-AD03-61649802AD36",
+    "01A1F316-9795-3B98-A557-FE3E557E8153"
   ],
-  "syncedAt": "2026-11-18T08:58:21+00:00",
+  "syncedAt": "2026-11-19T09:15:06+00:00",
   "publicIpAddress": [
     "103.81.186.0/24",
     "103.81.187.0/24",
