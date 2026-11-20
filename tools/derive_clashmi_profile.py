@@ -1,6 +1,6 @@
 """从私人桌面配置派生 Clash Mi iOS 配置；只输出状态，不输出私有内容。
 
-使用标准库，避免本机 Python 未安装 PyYAML 时无法维护配置。
+常规派生使用标准库；桌面专用监听块使用 requirements-check.txt 的 PyYAML 校验。
 仅支持仓库现有的块式 YAML；重复顶层键和不符合预期的锚点直接拒绝。
 """
 from __future__ import annotations
@@ -73,6 +73,19 @@ def derive(source: str, repo_root: Path = ROOT) -> str:
     for index, match in enumerate(anchors):
         end = anchors[index + 1].start() if index + 1 < len(anchors) else len(source)
         sections[match[1]] = source[match.start():end]
+    if "listeners" in sections:
+        # A desktop loopback proxy is not an iOS VPN inbound. Validate before
+        # stripping so new or changed listeners cannot silently disappear.
+        import yaml
+        from check_desktop_upstream import check, validate_listener
+        if check(Path(SOURCE_NAME), source.splitlines()):
+            raise ValueError("桌面专用监听块需要重新审核。")
+        try:
+            document = yaml.safe_load(source)
+        except yaml.YAMLError:
+            raise ValueError("桌面监听配置 YAML 解析失败。") from None
+        validate_listener(document)
+        del sections["listeners"]
     if not re.fullmatch(r"find-process-mode: strict\s*", sections["find-process-mode"]):
         raise ValueError("桌面进程设置已变化，需要重新审核 iOS 派生。")
     sections["rules"] = strip_desktop_wecom_rules(sections["rules"])

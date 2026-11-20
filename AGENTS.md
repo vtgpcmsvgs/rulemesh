@@ -133,7 +133,7 @@
 - region/hk/wps_kdocs 按 2026-09-18 用户要求统一 DIRECT，取消香港地区展示出口要求；历史路径与 hk_wps_kdocs provider 名仅作兼容，不代表出口。七份配置均早于 Google 广谱，DNS 保持默认国内；工作白名单仅保留该专项放行，最终 REJECT 不变。
 - GitHub 在该工作路由文件中除 `github_ssh_direct` 外，还允许紧随其后保留 `DOMAIN,raw.githubusercontent.com` 下载入口与一条广覆盖 `DOMAIN-KEYWORD,github` 观察兜底；它们用于显式放行 GitHub Raw 规则产物下载，并发现 SSH / Raw 之外的漏网之鱼，不得被“去重”或“收敛”掉
 - GitHub Raw 下载链路默认还应保留独立 `[Host]` 解析例外；当前私有配置使用 `raw.githubusercontent.com = server:https://cloudflare-dns.com/dns-query`，避免规则产物下载回落到本地/国内系统 DNS；但这不是代理节点 bootstrap，不能影响 `proxy-node-domains` 继续使用 AliDNS DoH
-- AdsPower 已按 2026-10-23 用户业务撤销要求彻底删除，检查器拒绝恢复调用。Webshare 网站与其余 24 个住宅代理网站域名保留，网站访问和购买的 IP 必须分别确认；清理决定以 docs/business-rule-cleanup-20261023.md 为准。
+- AdsPower 已按 2026-10-23 用户业务撤销要求删除域名、进程与专用规则资产，检查器继续拒绝恢复这些调用。2026-11-20 用户另行授权私人桌面版独占的 `adspower-upstream` SOCKS5 入站（`type: socks`、`127.0.0.1:7898`），`proxy` 必须引用实际 `proxy_gfw` 使用的纯机场自动组；AdsPower 全局手动配置 SOCKS，不逐个维护环境代理端点，不改普通规则或 DNS。iOS 派生前校验并剥离桌面监听器；安卓、Surge 和公开通用模板不增加入口。文件构建与用户自行导入、DNS/连接验收分开报告。详见 docs/adspower-desktop-upstream.md。Webshare 网站与其余 24 个住宅代理网站域名保留，网站访问和购买的 IP 必须分别确认；历史清理见 docs/business-rule-cleanup-20261023.md。
 - Outlook 直连覆盖邮件、精确共享登录与认证资源，不扩大到 Microsoft 根域；共享认证也影响其他应用。2026-09-16 Microsoft Store 专项固定美国以满足地区 IP 条件，通用 Microsoft（含中国服务）保留美国代理候选并追加 DIRECT，默认国内 DNS 不变；工作及 FlClash 的既有更新拒绝仍优先。
 - 上述工作路由白名单特化只适用于工作路由文件本身，不自动扩散到两个 `personal` 配置，也不要把 `personal` 配置的通用结构反向覆盖到该工作路由文件
 - 只要工作路由白名单逻辑、适用范围、维护边界发生变化，必须同步更新 `docs/surge-work-cluster-whitelist.md`、`README.md` 与相关使用说明，避免后续失忆式回滚
