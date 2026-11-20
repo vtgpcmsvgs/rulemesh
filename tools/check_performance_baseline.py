@@ -167,13 +167,15 @@ def check(path: Path, lines: list[str]) -> list[str]:
     if not all(len(selected.get(key, [])) == 1 for key in ("ai", "domestic_services", "douyin", "social", "google", "wps")):
         return errors
     ai_position, ai_rule = selected["ai"][0]
+    import check_desktop_upstream
+    upstream_offset = 1 if check_desktop_upstream.present(path, lines) else 0
     us = ai_rule[2]
     allowed = dns.APPROVED_SURGE_US_FILTERS | {PUBLIC_US_FILTER} if surge else dns.APPROVED_MIHOMO_US_FILTERS
     require(dns._group_has_us_semantics(us, groups, frozenset(allowed)), "AI 必须绑定实际具有美国节点过滤条件的组。")
-    require(ai_position == 0, "AI 美国入口必须是第一条有效规则，防止 Google IP 或设备广谱规则抢先覆盖。")
+    require(ai_position == upstream_offset, "AI 美国入口必须是第一条业务规则；仅桌面 SOCKS5 专用入站可前置，防止 Google IP 或设备广谱规则抢先覆盖。")
     domestic_position, domestic_rule = selected["domestic_services"][0]
     require(
-        domestic_position == 1 and domestic_rule[2] == "DIRECT",
+        domestic_position == 1 + upstream_offset and domestic_rule[2] == "DIRECT",
         "国内 DNS 与新华三必须紧随 AI 直连，安卓券商进程级香港兜底应置于其后。",
     )
     active = [line for line in lines if line.strip() and not line.lstrip().startswith(("#", ";", "//"))]
@@ -204,7 +206,6 @@ def check(path: Path, lines: list[str]) -> list[str]:
         require(ai_position < position < selected["google"][0][0], f"{key} 必须在 AI 之后、Google 广谱规则之前。")
     # 2026-11-20: only the desktop loopback upstream is reauthorized;
     # retired destination/process assets remain blocked on every client.
-    import check_desktop_upstream
     errors.extend(check_desktop_upstream.check(path, lines))
     for position, (_, parts) in enumerate(rules):
         if not parts:

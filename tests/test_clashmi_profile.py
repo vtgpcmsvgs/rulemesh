@@ -39,19 +39,18 @@ rules:
 
 class ClashMiProfileTests(unittest.TestCase):
     def test_desktop_upstream_is_not_exported_to_ios(self):
-        import yaml
-        from check_desktop_upstream import NAME
-        listener = {"listeners": [{"name": NAME, "type": "socks", "listen": "127.0.0.1",
-                                    "port": 7898, "proxy": "自动"}]}
-        source = SOURCE + yaml.safe_dump(listener, allow_unicode=True, sort_keys=False)
+        from check_desktop_upstream import MARKER
+        source = MARKER + "\n" + SOURCE.replace("find-process-mode: strict", "socks-port: 7898\nallow-lan: false\nfind-process-mode: strict")
         source = source.replace("    lazy: false", "    lazy: false\n    use: [sample]")
+        source = source.replace("rules:\n", "rules:\n  - IN-PORT,7898,自动\n")
         source = source.replace("  - MATCH,DIRECT", "  - RULE-SET,proxy_gfw,自动\n  - MATCH,DIRECT")
         result = derive(source)
-        self.assertNotIn("listeners:", result)
-        self.assertNotIn(NAME, result)
+        self.assertNotIn("socks-port:", result)
+        self.assertNotIn("IN-PORT", result)
+        self.assertNotIn(MARKER, result)
         self.assertIn("  - MATCH,DIRECT", result)
         with self.assertRaises(ValueError):
-            derive(source.replace("127.0.0.1", "0.0.0.0"))
+            derive(source.replace("allow-lan: false", "allow-lan: true"))
 
     def test_existing_wecom_domains_survive_windows_process_removal(self):
         block = WECOM_START + "\n" + "\n".join(WECOM_DOMAINS + WECOM_RULES) + "\n" + WECOM_END + "\n"

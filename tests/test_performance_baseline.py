@@ -14,6 +14,28 @@ import build_rules
 
 
 class PerformanceBaselineTests(unittest.TestCase):
+    def test_desktop_upstream_precedes_business_without_relaxing_ai_order(self):
+        import yaml
+        import check_desktop_upstream as upstream
+        class IndentedDumper(yaml.SafeDumper):
+            def increase_indent(self, flow=False, indentless=False):
+                return super().increase_indent(flow, False)
+        _, text = self.fixture('mihomo')
+        document = yaml.safe_load(text)
+        target = next(r.split(',')[2] for r in document['rules'] if r.startswith('RULE-SET,proxy_gfw,'))
+        document.update({'socks-port': 7898, 'allow-lan': False})
+        document['rules'].insert(0, 'IN-PORT,7898,' + target)
+        def render():
+            return [baseline.MARKER, upstream.MARKER,
+                    *yaml.dump(document, Dumper=IndentedDumper, allow_unicode=True, sort_keys=False).splitlines()]
+        lines = render()
+        self.assertTrue(baseline.applies(lines))
+        errors = baseline.check(Path(upstream.DESKTOP), lines)
+        self.assertFalse(any('必须有且只有一个显式入口' in error for error in errors))
+        self.assertFalse(any('第一条业务规则' in error or 'AdsPower 已删除' in error for error in errors))
+        document['rules'][0], document['rules'][1] = document['rules'][1], document['rules'][0]
+        self.assertTrue(any('第一条业务规则' in error for error in baseline.check(Path(upstream.DESKTOP), render())))
+
     def test_adspower_removal_blocks_calls_and_orphan_providers(self):
         for client in ('surge', 'mihomo'):
             path, text = self.fixture(client)

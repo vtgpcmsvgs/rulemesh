@@ -1,4 +1,3 @@
-from copy import deepcopy
 from pathlib import Path
 import sys
 import unittest
@@ -10,15 +9,14 @@ import check_desktop_upstream as upstream
 
 
 def fixture():
-    return {"listeners": [{"name": upstream.NAME, "type": "socks", "listen": "127.0.0.1",
-                           "port": 7898, "proxy": "Automatic"}],
+    return {"socks-port": 7898, "allow-lan": False,
             "proxy-groups": [{"name": "Automatic", "type": "url-test", "use": ["airport"]}],
-            "rules": ["RULE-SET,proxy_gfw,Automatic", "MATCH,DIRECT"]}
+            "rules": ["IN-PORT,7898,Automatic", "RULE-SET,proxy_gfw,Automatic", "MATCH,DIRECT"]}
 
 
 class DesktopUpstreamTests(unittest.TestCase):
     def errors(self, document, name=upstream.DESKTOP):
-        return upstream.check(Path(name), yaml.safe_dump(document, allow_unicode=True).splitlines())
+        return upstream.check(Path(name), [upstream.MARKER, *yaml.safe_dump(document, allow_unicode=True).splitlines()])
 
     def test_only_desktop_can_use_the_loopback_upstream(self):
         self.assertEqual(self.errors(fixture()), [])
@@ -29,30 +27,31 @@ class DesktopUpstreamTests(unittest.TestCase):
         for rule in ("DOMAIN-KEYWORD,adspower,DIRECT", "PROCESS-NAME,AdsPower.exe,Automatic",
                      "RULE-SET,reject_adspower,REJECT"):
             document = fixture()
-            document["rules"].insert(0, rule)
+            document["rules"].insert(1, rule)
             self.assertTrue(self.errors(document))
         document = fixture()
         document["rule-providers"] = {"direct_adspower": {"type": "inline"}}
         self.assertTrue(self.errors(document))
 
-    def test_rejects_exposure_direct_routing_and_unreviewed_fields(self):
-        for key, value in (("listen", "0.0.0.0"), ("listen", "::"), ("type", "mixed"), ("type", "http"),
-                           ("port", 7890), ("port", "7898"), ("proxy", "DIRECT"),
-                           ("proxy", "Other"), ("rule", "unreviewed")):
+    def test_rejects_port_collision_exposure_and_direct_fallback(self):
+        for key, value in (("allow-lan", True), ("bind-address", "0.0.0.0"),
+                           ("mixed-port", 7898), ("port", 7898), ("socks-port", "7898"),
+                           ("listeners", [{"name": "duplicate", "type": "socks", "port": 7898}])):
             document = fixture()
-            document["listeners"][0][key] = value
+            document[key] = value
             self.assertTrue(self.errors(document))
         for change in ({"type": "select"}, {"proxies": ["DIRECT"]}, {"include-all": True},
                        {"include-all-proxies": True}, {"include-all-providers": True}, {"use": []}, {"use": "airport"}):
             document = fixture()
             document["proxy-groups"][0].update(change)
             self.assertTrue(self.errors(document))
-        document = fixture()
-        document["listeners"].append(deepcopy(document["listeners"][0]))
-        self.assertTrue(self.errors(document))
+        for rules in (["IN-PORT,7898,DIRECT"], ["MATCH,DIRECT"], ["IN-PORT,7898,Automatic"] * 2):
+            document = fixture()
+            document["rules"] = rules + document["rules"][1:]
+            self.assertTrue(self.errors(document))
 
     def test_missing_or_malformed_listener_fails_without_echoing_private_text(self):
-        lines = ["listeners: [", "secret: DO_NOT_PRINT_adspower"]
+        lines = [upstream.MARKER, "rules: [", "secret: DO_NOT_PRINT_adspower"]
         errors = upstream.check(Path(upstream.DESKTOP), lines)
         self.assertTrue(errors)
         self.assertNotIn("DO_NOT_PRINT", str(errors))

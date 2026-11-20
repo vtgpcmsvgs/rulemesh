@@ -7,15 +7,15 @@
 私人 `rulemesh-flclash-desktop.yaml` 增加以下脱敏结构，其中 `通用自动组` 必须换成该文件实际 `RULE-SET,proxy_gfw` 引用的既有机场自动组：
 
 ```yaml
-listeners:
-  - name: adspower-upstream
-    type: socks
-    listen: 127.0.0.1
-    port: 7898
-    proxy: 通用自动组
+# AdsPower desktop upstream: SOCKS5 7898
+socks-port: 7898
+allow-lan: false
+rules:
+  - IN-PORT,7898,通用自动组
+  # 下方原有业务规则顺序保持，AI 仍为第一条业务规则。
 ```
 
-Mihomo 的 SOCKS5 入站类型写作 `socks`，不要写成出站节点类型 `socks5`。`proxy` 直接指定出站组，进入该监听器的连接不再使用普通目的地规则决定 DIRECT；该组必须使用现有机场 provider，不能包含 DIRECT。监听地址仅为回环，不向局域网开放。普通系统代理、TUN、业务规则、地区例外、DNS 和末尾 MATCH,DIRECT 保留原有配置。
+复用 FlClash 已设置的 SOCKS5 7898；不再新建同端口的 `listeners`，避免端口冲突。Mihomo 的 `IN-PORT` 匹配代理入站端口，作为第一条有效规则把 7898 的所有连接交给既有纯机场自动组，该组不能包含 DIRECT。`allow-lan: false` 使普通代理端口只供本机访问。普通系统代理与 TUN 继续匹配其余业务规则，地区例外、DNS 和末尾 MATCH,DIRECT 保留原有配置。
 
 在 AdsPower「个人设置 → 本地设置」开启「使用系统代理连接代理」，将配置方式设为「手动配置 SOCKS」，地址为 `127.0.0.1`、端口为 `7898`，保存设置。它是 AdsPower 全局上游，不需要修改每个环境原有的 HTTP/SOCKS 代理地址、账号或密码。已打开的环境需关闭后重新打开，让新连接采用保存后的上游设置。
 
@@ -25,8 +25,9 @@ Mihomo 的 SOCKS5 入站类型写作 `socks`，不要写成出站节点类型 `s
 
 ## 验证与维护
 
-- 静态检查保护监听地址、SOCKS 类型、端口及实际自动组引用；拒绝恢复旧域名、进程、provider 或 DNS 入口。
-- iOS 派生器先校验该桌面监听器，再剥离整个监听节；安卓、iOS、Surge 与公开通用模板不增加该入口。
+- 静态检查保护本机访问范围、SOCKS 端口、首条入站规则及实际自动组引用；拒绝恢复旧域名、进程、provider 或 DNS 入口。
+- 新增说明标记必须放在原文件头之后，保留性能基线标记位于文件前三行的发现约定，不能因追加文件头误切换到旧版检查路径。
+- iOS 派生器先校验桌面专用入站，再剥离 SOCKS 端口字段与首条 IN-PORT 规则；安卓、iOS、Surge 与公开通用模板不增加该入口。
 - 构建使用 `tools/build_rules.ps1`，完整检查使用 `tools/check.ps1`，包括在线订阅闸门。配置文件构建成功和客户端实际加载分开报告。
 - 独立语法检查使用官方 Mihomo CLI 的 `-t -d <任务专用临时目录> -f <配置文件>`。FlClash 自带 `FlClashCore.exe` 是 IPC 服务入口，不支持标准 CLI 的 `-t`、`-v` 或 `--help`，不能用它替代原生校验器。
 - DNS 默认国内双 DoH 与 AI 专用海外解析基线保持；客户端导入后检查实际 DNS、系统代理检测及至少两个不同环境的完整代理链。HTTP 204、节点名称或静态检查不能代替这些验收。
@@ -35,6 +36,6 @@ Mihomo 的 SOCKS5 入站类型写作 `socks`，不要写成出站节点类型 `s
 
 ## 本次纠正
 
-检测显示相同 IP 只证明检测请求出口相同，不能直接判定 AdsPower 没有读取系统代理。逐个为远程代理端点补规则可以改变分流，但不满足用户要求的全局统一上游。应先核对应用支持的全局代理方式，再提供固定出站的本机入口，并用专门检查保护其作用范围。
+检测显示相同 IP 只证明检测请求出口相同，不能直接判定 AdsPower 没有读取系统代理。逐个为远程代理端点补规则可以改变分流，但不满足用户要求的全局统一上游。应先核对应用支持的全局代理方式和 FlClash 已配置的入站端口，再复用本机 SOCKS 入口并固定出站；不得在同一端口叠加 listeners。专门回归检查保护端口冲突、DIRECT 回退与 iOS 派生边界。
 
 参考：[AdsPower 系统代理配置](https://help.adspower.com/docs/Network-Diagnostics-System-Proxy-Supports-Customization)、[Mihomo 入站配置](https://wiki.metacubex.one/en/config/inbound/)。

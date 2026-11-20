@@ -35,7 +35,7 @@ def split_rule(text: str) -> list[str]:
     return parts
 
 
-def matches(rule: str, domain: str, process: str, network: str = "tcp", port: int = 443) -> bool:
+def matches(rule: str, domain: str, process: str, network: str = "tcp", port: int = 443, inbound_port: int = 0) -> bool:
     parts = split_rule(rule)
     kind, value = parts[0], parts[1] if len(parts) > 1 else ""
     if kind in {"AND", "OR", "NOT"}:
@@ -44,7 +44,7 @@ def matches(rule: str, domain: str, process: str, network: str = "tcp", port: in
         children = split_rule(value[1:-1])
         if not children or any(not (s.startswith("(") and s.endswith(")")) for s in children):
             raise ValueError("逻辑规则条件格式错误")
-        outcomes = [matches(s[1:-1], domain, process, network, port) for s in children]
+        outcomes = [matches(s[1:-1], domain, process, network, port, inbound_port) for s in children]
         if kind == "NOT":
             if len(outcomes) != 1:
                 raise ValueError("NOT 必须只有一个条件")
@@ -66,6 +66,9 @@ def matches(rule: str, domain: str, process: str, network: str = "tcp", port: in
         return network.lower() == value.lower()
     if kind == "DST-PORT":
         return str(port) == value
+    if kind == "IN-PORT":
+        # Default cases model ordinary/TUN traffic, not the explicit SOCKS upstream.
+        return str(inbound_port) == value
     if kind in {"IP-CIDR", "IP-CIDR6", "GEOIP", "IP-ASN"}:
         # 用例只覆盖域名阶段，没有伪造真实解析地址；仅允许明确不触发解析的 IP 条件。
         if "no-resolve" not in parts:
@@ -114,7 +117,7 @@ def inline_provider_rules(lines: list[str]) -> dict[str, tuple[str, ...]]:
     return result
 
 
-def route(lines: list[str], domain: str, process: str, network: str = "tcp") -> tuple[str, str]:
+def route(lines: list[str], domain: str, process: str, network: str = "tcp", inbound_port: int = 0) -> tuple[str, str]:
     providers = parser._parse_mihomo_providers(lines)
     inline = inline_provider_rules(lines)
     for _, fields in parser._parse_mihomo_rules(lines):
@@ -132,10 +135,10 @@ def route(lines: list[str], domain: str, process: str, network: str = "tcp") -> 
                 if not relative or not relative.startswith("/dist/mihomo/classical/"):
                     raise ValueError("规则集不是可核对的本仓库 classical 产物")
                 candidates = provider_rules(ROOT / relative.lstrip("/"))
-            hit = any(matches(r, domain, process, network) for r in candidates)
+            hit = any(matches(r, domain, process, network, inbound_port=inbound_port) for r in candidates)
             reason = identifier
         else:
-            hit = matches(",".join(parts[:-1]) if parts[-1] != "no-resolve" else ",".join(parts[:-2] + ["no-resolve"]), domain, process, network)
+            hit = matches(",".join(parts[:-1]) if parts[-1] != "no-resolve" else ",".join(parts[:-2] + ["no-resolve"]), domain, process, network, inbound_port=inbound_port)
             reason = parts[0]
         if hit:
             return target, reason

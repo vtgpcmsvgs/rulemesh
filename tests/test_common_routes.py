@@ -10,6 +10,17 @@ import check_common_routes as common
 
 
 class CommonRouteTests(unittest.TestCase):
+    def test_explicit_socks_upstream_does_not_change_other_inbound_routes(self):
+        lines = ['rules:', '  - IN-PORT,7898,PROXY', '  - DOMAIN,a.example,DIRECT', '  - MATCH,DIRECT']
+        for network in ('tcp', 'udp'):
+            self.assertEqual(common.route(lines, 'a.example', '', network), ('DIRECT', 'DOMAIN'))
+            self.assertEqual(common.route(lines, 'a.example', '', network, inbound_port=7890), ('DIRECT', 'DOMAIN'))
+            for domain in ('a.example', 'other.example'):
+                self.assertEqual(common.route(lines, domain, '', network, inbound_port=7898), ('PROXY', 'IN-PORT'))
+        condition = 'AND,((IN-PORT,7898),(DST-PORT,443))'
+        self.assertTrue(common.matches(condition, 'a.example', '', inbound_port=7898))
+        self.assertFalse(common.matches(condition, 'a.example', ''))
+
     def test_inline_classical_is_checked_in_rule_order(self):
         lines = ['rule-providers:', '  local:', '    type: inline',
                  '    behavior: classical', '    payload:',

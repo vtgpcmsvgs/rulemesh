@@ -1,6 +1,6 @@
 """从私人桌面配置派生 Clash Mi iOS 配置；只输出状态，不输出私有内容。
 
-常规派生使用标准库；桌面专用监听块使用 requirements-check.txt 的 PyYAML 校验。
+常规派生使用标准库；桌面专用入站使用 requirements-check.txt 的 PyYAML 校验。
 仅支持仓库现有的块式 YAML；重复顶层键和不符合预期的锚点直接拒绝。
 """
 from __future__ import annotations
@@ -73,19 +73,22 @@ def derive(source: str, repo_root: Path = ROOT) -> str:
     for index, match in enumerate(anchors):
         end = anchors[index + 1].start() if index + 1 < len(anchors) else len(source)
         sections[match[1]] = source[match.start():end]
-    if "listeners" in sections:
-        # A desktop loopback proxy is not an iOS VPN inbound. Validate before
-        # stripping so new or changed listeners cannot silently disappear.
+    from check_desktop_upstream import MARKER, check, validate_upstream
+    if MARKER in source.splitlines():
+        # Reuse the desktop SOCKS port; never export its bypass to iOS.
         import yaml
-        from check_desktop_upstream import check, validate_listener
         if check(Path(SOURCE_NAME), source.splitlines()):
-            raise ValueError("桌面专用监听块需要重新审核。")
+            raise ValueError("桌面专用入站需要重新审核。")
         try:
             document = yaml.safe_load(source)
         except yaml.YAMLError:
-            raise ValueError("桌面监听配置 YAML 解析失败。") from None
-        validate_listener(document)
-        del sections["listeners"]
+            raise ValueError("桌面入站配置 YAML 解析失败。") from None
+        validate_upstream(document)
+        del sections["socks-port"]
+        rule_lines = sections["rules"].splitlines(keepends=True)
+        sections["rules"] = "".join(line for line in rule_lines if not line.strip().startswith("- IN-PORT,7898,"))
+    if "listeners" in sections:
+        raise ValueError("桌面新增监听器需要重新审核，不能静默带入 iOS。")
     if not re.fullmatch(r"find-process-mode: strict\s*", sections["find-process-mode"]):
         raise ValueError("桌面进程设置已变化，需要重新审核 iOS 派生。")
     sections["rules"] = strip_desktop_wecom_rules(sections["rules"])
