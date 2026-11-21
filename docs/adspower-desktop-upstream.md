@@ -69,4 +69,14 @@ Windows 的普通系统代理端口保持原用途。AdsPower 使用全局手动
 - 更换此中继时只修改私人桌面 provider 的身份/连接参数；固定目标名、端口、隐藏及隔离约束保留。改变设计应同步配置备注、本页、AGENTS、检查器和测试，再确认其他配置未改变。
 - 构建/语法通过与运行验收分开。用户自行导入测试；检查系统代理出口、至少两个不同环境的完整链路及 DNS 实际出口。节点名称、HTTP 204 和静态检查不能替代链路/DNS 验收。
 
+## 2026-11-21 连接修复记录
+
+现象：AdsPower 显示未检测到系统代理，FlClash 日志却已记录 `InPort/7898 → 666clouds`，随后拨号超时。该证据说明本机 SOCKS 接入及规则已命中，不能据此恢复逐个代理端点规则，也不能把 TCP 超时直接归为 Reality 认证失败。
+
+服务端核对发现：用户新提供的管理服务器上 Xray 正常运行，代理端口对公网监听，UUID 与 SNI 匹配；桌面配置的 server、Reality 公钥和 short-id 则仍属于旧连接信息。修复仅将这三个字段与当前 Xray 入站对齐，没有修改正常运行的服务器服务或防火墙。服务器 Reality 私钥只用于内存中派生公钥并比对，SSH 密码与私钥均不写入仓库或日志。
+
+验证使用无 TUN、无系统代理覆写、无订阅的独立 Mihomo 临时进程，仅监听随机本机 SOCKS 端口，结束后关闭。修正参数后 HTTP/HTTPS 均成功，出口匹配用户指定服务器，三个 AdsPower 检测域名 `check.myclientip.com`、`check.adspower.com`、`ip-scan.adspower.net` 均返回 HTTP 200。首轮个别检测请求曾超时，服务端 DNS/TCP/HTTPS 与随后重试均成功，保留为该轮探测限制，不解释为永久封锁。服务器系统解析器包含 Google 与 Cloudflare DNS；未验证每次实际选择哪一个，不声称专用使用 8.8.8.8。本次没有操作 FlClash 导入界面或 AdsPower 环境，因此应用验收仍由用户执行。
+
+防复发：更换服务器、重装代理或重新生成 Reality 密钥后，必须从同一个当前入站同时核对 server、公钥、short-id、UUID、SNI 与 flow；不只更新 IP，也不从历史 URI 的 SSH fragment 推断当前代理身份。TCP 监听、普通进程的 TCP 可达和原生 `-t` 只覆盖各自阶段，不能证明整条链可用。没有日志时先核对客户端日志采集开关与级别，再重现；空日志不证明请求未进入代理。
+
 参考：[AdsPower 系统代理配置](https://help.adspower.com/docs/Network-Diagnostics-System-Proxy-Supports-Customization)、[Mihomo 入站](https://wiki.metacubex.one/en/config/inbound/)、[inline provider](https://wiki.metacubex.one/en/config/proxy-providers/)、[策略组 hidden](https://wiki.metacubex.one/en/config/proxy-groups/)、[VLESS](https://wiki.metacubex.one/en/config/proxies/vless/)。
