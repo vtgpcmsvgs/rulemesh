@@ -218,6 +218,8 @@ def check(path: Path, lines: list[str]) -> list[str]:
             if position not in fixed_positions.values():
                 if is_ai or is_ai_dns:
                     expected_target = us
+                elif (upstream_offset and position == 0 and parts == ["IN-PORT", "7898", check_desktop_upstream.PROVIDER]):
+                    expected_target = check_desktop_upstream.PROVIDER
                 elif parts[:2] == (["RULE-SET", "hk_notion"] if not surge else ["RULE-SET", BASE + "surge/rules/region/hk/notion_hk.list"]):
                     expected_target = notion_target
                 elif business and service.expected_service(parts, surge):
@@ -311,6 +313,8 @@ def check(path: Path, lines: list[str]) -> list[str]:
         require(tuple(node_dns) == DOMESTIC, "指定代理的 AI DoH 必须配套独立国内节点 bootstrap，避免解析循环。")
         require(not any(name in {"cn-dns-domains", "cn-performance-dns-domains"} for name in providers), "Mihomo 不应重复加载 DNS 专用域名清单。")
         health, parsed_groups, _ = performance.parse_mihomo(lines)
+        if upstream_offset:
+            health = [item for item in health if not re.fullmatch(r"  666clouds:\s*", lines[item.line - 1])]
         health_interval = '600' if 'flclash-android' in path.name or clashmi_ios else '300'
         require(bool(health) and all(item.interval == health_interval and item.lazy == "false" for item in health), "机场健康检查应为桌面 300 秒、安卓/iOS 600 秒主动检测。")
         for name, group in parsed_groups.items():
@@ -337,7 +341,9 @@ def check(path: Path, lines: list[str]) -> list[str]:
             if active:
                 provider_count += bool(re.match(r"^  [^\s#][^:]*:\s*$", line))
                 direct_count += bool(re.fullmatch(r"    proxy:\s*[\"']?DIRECT[\"']?", line))
-        require(provider_count > 0 and provider_count == direct_count, "所有机场 provider 的下载出站必须为 DIRECT。")
+        # The validated desktop inline relay has no subscription download.
+        local_count = int(upstream_offset and any(re.fullmatch(r"  666clouds:\s*", line) for line in lines))
+        require(provider_count > local_count and provider_count - local_count == direct_count, "所有机场 provider 的下载出站必须为 DIRECT。")
         require(not any("http://www.google.com/generate_204" in line for line in lines if not line.lstrip().startswith("#")), "Mihomo 测速必须使用 HTTPS。")
     if android_repair:
         errors.extend(android.check(path, lines))

@@ -40,17 +40,26 @@ rules:
 class ClashMiProfileTests(unittest.TestCase):
     def test_desktop_upstream_is_not_exported_to_ios(self):
         from check_desktop_upstream import MARKER
+        from test_desktop_upstream import relay_blocks
         source = MARKER + "\n" + SOURCE.replace("find-process-mode: strict", "socks-port: 7898\nallow-lan: false\nfind-process-mode: strict")
         source = source.replace("    lazy: false", "    lazy: false\n    use: [sample]")
-        source = source.replace("rules:\n", "rules:\n  - IN-PORT,7898,自动\n")
+        source = source.replace("rules:\n", "rules:\n  - IN-PORT,7898,666clouds\n")
+        for section, block in relay_blocks().items():
+            source = source.replace(section + ":\n", section + ":\n" + block)
         source = source.replace("  - MATCH,DIRECT", "  - RULE-SET,proxy_gfw,自动\n  - MATCH,DIRECT")
         result = derive(source)
         self.assertNotIn("socks-port:", result)
         self.assertNotIn("IN-PORT", result)
         self.assertNotIn(MARKER, result)
+        self.assertNotIn("666clouds", result)
         self.assertIn("  - MATCH,DIRECT", result)
         with self.assertRaises(ValueError):
             derive(source.replace("allow-lan: false", "allow-lan: true"))
+        with self.assertRaises(ValueError):
+            derive(source.replace("  # <<< RULEMESH_DESKTOP_666CLOUDS_PROVIDER\n", ""))
+        with self.assertRaises(ValueError):
+            derive(source.replace("  # <<< RULEMESH_DESKTOP_666CLOUDS_PROVIDER\n", "")
+                  .replace("proxy-groups:\n", "  # <<< RULEMESH_DESKTOP_666CLOUDS_PROVIDER\nproxy-groups:\n"))
 
     def test_existing_wecom_domains_survive_windows_process_removal(self):
         block = WECOM_START + "\n" + "\n".join(WECOM_DOMAINS + WECOM_RULES) + "\n" + WECOM_END + "\n"

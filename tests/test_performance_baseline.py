@@ -23,8 +23,8 @@ class PerformanceBaselineTests(unittest.TestCase):
         _, text = self.fixture('mihomo')
         document = yaml.safe_load(text)
         target = next(r.split(',')[2] for r in document['rules'] if r.startswith('RULE-SET,proxy_gfw,'))
-        document.update({'socks-port': 7898, 'allow-lan': False})
-        document['rules'].insert(0, 'IN-PORT,7898,' + target)
+        from test_desktop_upstream import install
+        install(document)
         def render():
             return [baseline.MARKER, upstream.MARKER,
                     *yaml.dump(document, Dumper=IndentedDumper, allow_unicode=True, sort_keys=False).splitlines()]

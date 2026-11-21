@@ -14,6 +14,19 @@ import check_service_groups as service
 
 
 class ServiceGroupTests(unittest.TestCase):
+    def test_desktop_local_relay_does_not_expand_airport_coverage_or_health_checks(self):
+        from test_desktop_upstream import relay_blocks
+        from check_desktop_upstream import MARKER
+        _, original = self.fixture()
+        path = Path('rulemesh-flclash-desktop.yaml')
+        expected = baseline.check(path, original.splitlines())
+        self.assertEqual(original.count('allow-lan: false'), 1)
+        text = MARKER + '\nsocks-port: 7898\n' + original
+        for section, block in relay_blocks().items():
+            text = text.replace(section + ':\n', section + ':\n' + block)
+        text = text.replace('rules:\n', 'rules:\n  - IN-PORT,7898,666clouds\n')
+        self.assertEqual(baseline.check(path, text.splitlines()), expected)
+
     def test_only_private_mihomo_fixed_services_are_manual_with_automatic_children(self):
         public_path, original = self.fixture()
         manual_text = original

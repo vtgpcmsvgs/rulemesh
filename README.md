@@ -4,7 +4,7 @@
 
 Clash Mi iOS 使用独立私有配置 `rulemesh-clashmi-ios.yaml`，由桌面业务配置派生；iOS TUN、DNS 覆写、600 秒测速与 ASN 兼容说明见 [Clash Mi iOS 接入](docs/clashmi-ios.md)。桌面或订阅更新后重新运行派生器，完整检查包含 iOS 一致性校验。
 
-2026-11-20 私人 FlClash 桌面版增加 [AdsPower 统一 SOCKS5 上游](docs/adspower-desktop-upstream.md)：仅本机 `127.0.0.1:7898` 固定使用既有机场自动组，在 AdsPower 全局设置一次。旧 AdsPower 域名、进程与专用规则资产保持删除；其他客户端不增加此入口。
+2026-11-21 私人 FlClash 桌面版固定 [AdsPower 统一 SOCKS5 上游](docs/adspower-desktop-upstream.md)：仅本机 `127.0.0.1:7898` 固定使用桌面专属隐藏 `666clouds` 单节点中继，在 AdsPower 全局设置一次。旧 AdsPower 域名、进程与专用规则资产保持删除；其他客户端不增加此入口。
 
 2026-09-27 当前业务选择层以 [八个业务组与 DNS 联动](docs/service-groups-refactor.md) 为准；下文保留历史基线及实测记录。
 

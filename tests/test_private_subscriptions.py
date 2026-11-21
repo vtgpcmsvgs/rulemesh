@@ -43,6 +43,26 @@ proxy-groups:
 
 
 class PrivateSubscriptionsTests(unittest.TestCase):
+    def test_only_validated_desktop_inline_relay_is_exempt_from_airport_parity(self):
+        from test_desktop_upstream import install
+        from check_desktop_upstream import MARKER, PROVIDER
+        data = install(checker.load_yaml(CONFIG))
+        text = MARKER + '\n' + checker.yaml.safe_dump(data)
+        self.assertEqual(checker.manifest(text, checker.PROFILE_NAMES[0]), checker.manifest(CONFIG))
+        for profile in (None, checker.PROFILE_NAMES[1]):
+            with self.assertRaises(checker.CheckError):
+                checker.manifest(text, profile)
+        with self.assertRaises(checker.CheckError):
+            checker.manifest(text.replace(MARKER, ''), checker.PROFILE_NAMES[0])
+        data['proxy-providers'][PROVIDER]['payload'] = []
+        with self.assertRaises(checker.CheckError):
+            checker.manifest(MARKER + '\n' + checker.yaml.safe_dump(data), checker.PROFILE_NAMES[0])
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            for name, value in zip(checker.PROFILE_NAMES, (text, CONFIG)):
+                (directory / name).write_text(value, encoding='utf-8')
+            self.assertEqual(len(checker.aligned_manifest(directory)), 1)
+
     def row(self, **changes):
         result = {'name': 'example', 'status': 200, 'body': NODES, 'userinfo': '', 'error': False}
         result.update(changes)

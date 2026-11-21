@@ -98,6 +98,14 @@ def check(path: Path, lines, groups, rules, auto):
 
     expected_sources = ({source(g) for n, g in groups.items() if g.group_type == "select" and g.has_external_source and (n.startswith("✈️ ") or n.startswith("机场 "))}
                         if surge else set(parser._parse_mihomo_proxy_provider_names(lines)))
+    if not surge:
+        from check_desktop_upstream import PROVIDER, airport_providers
+        if PROVIDER in expected_sources:
+            from check_private_subscriptions import load_yaml
+            try:
+                expected_sources = set(airport_providers(load_yaml('\n'.join(lines)), path))
+            except (ValueError, TypeError, KeyError, AttributeError):
+                require(False, "桌面本地中继边界校验失败。")
     require(bool(expected_sources), "缺少已登记的机场订阅来源。")
     definitions = ([parser._scalar(line.split("=", 1)[0]) for _, line in parser._active_surge_section(lines, "Proxy Group") if "=" in line]
                    if surge else [parser._scalar(line.split(":", 1)[1]) for line in lines if line.startswith("  - name:")])
