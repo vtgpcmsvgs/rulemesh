@@ -65,21 +65,11 @@ class Provider:
     agent: tuple[str, ...] = field(repr=False)
 
 
-def manifest(text: str, profile: str | None = None) -> dict[str, Provider]:
+def manifest(text: str) -> dict[str, Provider]:
     document = load_yaml(text)
     providers = document.get('proxy-providers') if isinstance(document, dict) else None
     if not isinstance(providers, dict) or not providers:
         raise CheckError('缺少非空 proxy-providers。')
-    from check_desktop_upstream import PROVIDER, MARKER, airport_providers
-    if PROVIDER in providers:
-        try:
-            if MARKER not in text.splitlines():
-                raise ValueError
-            providers = airport_providers(document, Path(profile or 'unknown'))
-        except (ValueError, TypeError, KeyError, AttributeError):
-            raise CheckError('桌面本地中继边界校验失败；未发送订阅请求。') from None
-    if not providers:
-        raise CheckError('缺少非空机场订阅清单。')
     result = {}
     for name, spec in providers.items():
         if not isinstance(name, str) or not re.fullmatch(r'[A-Za-z0-9_-]+', name):
@@ -116,7 +106,7 @@ def manifest(text: str, profile: str | None = None) -> dict[str, Provider]:
 
 def aligned_manifest(directory: Path) -> list[Provider]:
     try:
-        desktop, android = (manifest((directory / name).read_text('utf-8'), name) for name in PROFILE_NAMES)
+        desktop, android = (manifest((directory / name).read_text('utf-8')) for name in PROFILE_NAMES)
     except (OSError, UnicodeError):
         raise CheckError('两份私人 Mihomo 配置缺失或不可读；必检不能跳过。') from None
     if desktop != android:

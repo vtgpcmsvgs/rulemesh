@@ -1,6 +1,6 @@
 # Mihomo 使用说明
 
-2026-11-21 私人桌面版支持 [AdsPower 统一 SOCKS5 上游](adspower-desktop-upstream.md)，在 AdsPower 全局指定本机 `127.0.0.1:7898` 即可共用隐藏 `666clouds` 固定中继。该可选入口不加入公开通用模板、安卓或 iOS，也不恢复旧 AdsPower 域名与进程规则。
+2026-11-20 私人桌面版支持 [AdsPower 统一 SOCKS5 上游](adspower-desktop-upstream.md)，在 AdsPower 全局指定本机 `127.0.0.1:7898` 即可共用机场上游。该可选入口不加入公开通用模板、安卓或 iOS，也不恢复旧 AdsPower 域名与进程规则。
 
 2026-11-07 当前修订：全部六份私人配置取消美国链式代理，直接使用机场美国节点。AI 的候选为逐机场美国自动组（美国-724、美国-kuibenvpn 等，低调显示美国-didiao、provider id 仍为 diidao）；Mihomo/iOS 的 AI 为 select，Surge 的 AI 保留 url-test 并显式引用这些子组。Microsoft 复用同一套美国子组并保留 DIRECT，Store 和六地区菜单的美国使用普通机场地区自动组。移除 SOCKS5 落地、美国线路入口、六个地区接入组、拨号字段、专用 UDP 拒绝及 x-rulemesh-us-chain 登记。Crypto 台湾、香港业务、日本入口、默认国内 DNS 和工作最终 REJECT 不变；设备验收保持 Wi-Fi，验证真实美国机场业务与 DNS，不固定旧购买 IP。 现行设计见 [美国机场节点方案](us-airport-direct-20261107.md)。
 

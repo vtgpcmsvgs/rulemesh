@@ -33,16 +33,6 @@ class UsAirportTests(unittest.TestCase):
         self.assertEqual(airport.validate(self.path, lines(document())), [])
         self.assertEqual(airport.child_name('diidao'), '美国-didiao')
 
-    def test_desktop_relay_is_excluded_from_us_business_candidates(self):
-        from test_desktop_upstream import install
-        from check_desktop_upstream import MARKER, PROVIDER
-        data = install(document())
-        rendered = [MARKER, *lines(data)]
-        self.assertEqual(airport.validate(self.path, rendered), [])
-        self.assertTrue(airport.validate(Path('rulemesh-flclash-android.yaml'), rendered))
-        data['proxy-groups'][0]['proxies'].append(PROVIDER)
-        self.assertTrue(airport.validate(self.path, [MARKER, *lines(data)]))
-
     def test_chain_restoration_and_parent_bypasses_are_rejected(self):
         cases = []
         for key, value in [('proxies', [{'name': 'RM-US-Exit', 'type': 'socks5', 'password': 'fixture-secret'}]),

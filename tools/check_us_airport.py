@@ -53,8 +53,7 @@ def validate(path: Path, lines):
         else:
             data = load_yaml('\n'.join(lines))
             assert not data.get('proxies')
-            from check_desktop_upstream import airport_providers
-            providers = airport_providers(data, path)
+            providers = data['proxy-providers']
             groups = {g['name']: g for g in data['proxy-groups']}
             assert len(groups) == len(data['proxy-groups'])
             children = [child_name(name) for name in providers]

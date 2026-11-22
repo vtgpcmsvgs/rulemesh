@@ -1,6 +1,6 @@
 # FlClash 客户端与性能基线
 
-2026-11-21 私人桌面配置按用户授权修订 [AdsPower 统一 SOCKS5 上游](adspower-desktop-upstream.md)，监听本机 `127.0.0.1:7898` 并固定使用隐藏 `666clouds` 单节点中继。它不恢复旧 AdsPower 规则资产；其他客户端和普通分流基线保留。本轮由用户自行导入配置及实测。
+2026-11-20 私人桌面配置按用户授权新增 [AdsPower 统一 SOCKS5 上游](adspower-desktop-upstream.md)，监听本机 `127.0.0.1:7898` 并固定使用既有机场自动组。它不恢复旧 AdsPower 规则资产；其他客户端和普通分流基线保留。本轮由用户自行导入配置及实测。
 
 2026-11-01 当前业务选择层以 [九个业务组与 DNS 联动](service-groups-refactor.md) 为准，新增 Twitter 独立六地区选择；下文保留历史基线及实测记录。
 

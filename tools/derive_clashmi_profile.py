@@ -62,12 +62,6 @@ def derive(source: str, repo_root: Path = ROOT) -> str:
     if source.startswith("\ufeff"):
         raise ValueError("源配置含 BOM。")
     source = source.replace("\r\n", "\n")
-    from check_desktop_upstream import MARKER, check, strip_relay_blocks
-    has_upstream = MARKER in source.splitlines()
-    if check(Path(SOURCE_NAME), source.splitlines()):
-        raise ValueError("桌面专用入站需要重新审核。")
-    if has_upstream:
-        source = strip_relay_blocks(source)
     anchors = list(re.finditer(r"(?m)^([a-zA-Z][\w-]*):", source))
     names = [match[1] for match in anchors]
     if len(names) != len(set(names)):
@@ -79,8 +73,17 @@ def derive(source: str, repo_root: Path = ROOT) -> str:
     for index, match in enumerate(anchors):
         end = anchors[index + 1].start() if index + 1 < len(anchors) else len(source)
         sections[match[1]] = source[match.start():end]
-    if has_upstream:
+    from check_desktop_upstream import MARKER, check, validate_upstream
+    if MARKER in source.splitlines():
         # Reuse the desktop SOCKS port; never export its bypass to iOS.
+        import yaml
+        if check(Path(SOURCE_NAME), source.splitlines()):
+            raise ValueError("桌面专用入站需要重新审核。")
+        try:
+            document = yaml.safe_load(source)
+        except yaml.YAMLError:
+            raise ValueError("桌面入站配置 YAML 解析失败。") from None
+        validate_upstream(document)
         del sections["socks-port"]
         rule_lines = sections["rules"].splitlines(keepends=True)
         sections["rules"] = "".join(line for line in rule_lines if not line.strip().startswith("- IN-PORT,7898,"))
